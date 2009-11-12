@@ -33,6 +33,7 @@ all_modules = (
     'routing/static-routing',
     'routing/list-routing',
     'mobility',
+    'noc',
     'devices/wifi',
     'helper',
     'contrib/stats',

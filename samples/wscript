@@ -33,6 +33,10 @@ def build(bld):
     obj = bld.create_ns3_program('main-simple',
                                  ['node', 'internet-stack', 'onoff'])
     obj.source = 'main-simple.cc'
+    
+    obj = bld.create_ns3_program('main-simple-noc',
+                                 ['node', 'internet-stack', 'onoff'])
+    obj.source = 'main-simple-noc.cc'
 
     obj = bld.create_ns3_program('main-grid-topology',
                                  ['core', 'simulator', 'mobility', 'internet-stack'])
