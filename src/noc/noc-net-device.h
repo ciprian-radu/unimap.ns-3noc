@@ -27,11 +27,13 @@
 #include <string>
 #include "noc-channel.h"
 #include "ns3/traced-callback.h"
+#include "noc-routing-protocol.h"
 
 namespace ns3
 {
 
   class NocChannel;
+  class NocRoutingProtocol;
 
   /**
    * \ingroup netdevice
@@ -106,6 +108,18 @@ namespace ns3
     SendFrom(Ptr<Packet> packet, const Address& source, const Address& dest,
         uint16_t protocolNumber);
 
+    /**
+     * \brief Response callback for the NoC routing protocol. This will be executed when routing information is ready.
+     *
+     * \param success     True is route found. TODO: diagnose routing errors
+     * \param packet      Packet to send
+     * \param src         Source MAC address
+     * \param dst         Destination MAC address
+     * \param protocol    Protocol ID
+     */
+    void
+    DoSend(bool success, Ptr<Packet> packet, Mac48Address src, Mac48Address dst, uint16_t protocol);
+
     virtual Ptr<Node>
     GetNode(void) const;
 
@@ -127,6 +141,17 @@ namespace ns3
     virtual bool
     SupportsSendFrom(void) const;
 
+    ///\name Protocols
+    //\{
+    /// Register routing protocol to be used. Protocol must be already installed on this NoC net device.
+    void
+    SetRoutingProtocol(Ptr<NocRoutingProtocol> protocol);
+
+    /// Access current routing protocol
+    Ptr<NocRoutingProtocol>
+    GetRoutingProtocol() const;
+    //\}
+
   protected:
     virtual void
     DoDispose(void);
@@ -145,6 +170,11 @@ namespace ns3
     uint32_t m_ifIndex;
 
     Mac48Address m_address;
+
+    /**
+     * The routing protocol (currently for a 2D mesh topology)
+     */
+    Ptr<NocRoutingProtocol> m_routingProtocol;
 
     /**
      * The trace source fired when packets are sent.
