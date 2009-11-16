@@ -91,15 +91,15 @@ main (int argc, char *argv[])
   apps.Start (Seconds (1.0));
   apps.Stop (Seconds (10.0));
 
-//  // create an On Off application, on node 3, which sends messages to node 0
-//  socket.SetSingleDevice (devs.Get (3)->GetIfIndex ());  // assign this socket to node 3
-//  socket.SetPhysicalAddress (devs.Get (0)->GetAddress ());
-////  socket.SetProtocol (3); // I don't know yet what this could be for
-//  nocOnoff.SetAttribute ("Remote", AddressValue (socket));
-//  nocOnoff.SetAttribute ("OffTime", RandomVariableValue (ConstantVariable (0.0)));
-//  apps = nocOnoff.Install (nodes.Get (3));
-//  apps.Start (Seconds (1.0));
-//  apps.Stop (Seconds (10.0));
+  // create an On Off application, on node 3, which sends messages to node 0
+  socket.SetSingleDevice (devs.Get (3)->GetIfIndex ());  // assign this socket to node 3
+  socket.SetPhysicalAddress (devs.Get (0)->GetAddress ());
+//  socket.SetProtocol (3); // I don't know yet what this could be for
+  nocOnoff.SetAttribute ("Remote", AddressValue (socket)); // this is just to change the destination address (from node 1 to 0) because we use the same instance of NoC On Off application
+  nocOnoff.SetAttribute ("OffTime", RandomVariableValue (ConstantVariable (0.0)));
+  apps = nocOnoff.Install (nodes.Get (3));
+  apps.Start (Seconds (1.0));
+  apps.Stop (Seconds (10.0));
 
   PacketSinkHelper sink = PacketSinkHelper ("ns3::PacketSocketFactory", socket);
   apps = sink.Install (nodes.Get (0));
