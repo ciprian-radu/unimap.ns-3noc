@@ -19,6 +19,9 @@
  */
 
 #include "noc-header.h"
+#include "ns3/log.h"
+
+NS_LOG_COMPONENT_DEFINE ("NoC-Header");
 
 namespace ns3
 {
