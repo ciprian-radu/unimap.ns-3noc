@@ -34,6 +34,7 @@
 #include "ns3/node-module.h"
 #include "ns3/helper-module.h"
 #include "ns3/noc-module.h"
+#include "ns3/mobility-helper.h"
 
 using namespace ns3;
 
@@ -115,6 +116,18 @@ main (int argc, char *argv[])
   std::ofstream os;
   os.open ("noc-packet-socket.tr", std::ios_base::binary | std::ios_base::out);
   noc.EnableAsciiAll (os);
+
+  // Setup mobility - static grid topology
+  MobilityHelper mobility;
+  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
+                                 "MinX", DoubleValue (0.0),
+                                 "MinY", DoubleValue (0.0),
+                                 "DeltaX", DoubleValue (10),
+                                 "DeltaY", DoubleValue (10),
+                                 "GridWidth", UintegerValue (2),
+                                 "LayoutType", StringValue ("RowFirst"));
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.Install (nodes);
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();
