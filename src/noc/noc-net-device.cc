@@ -25,6 +25,8 @@
 #include "ns3/trace-source-accessor.h"
 #include "ns3/log.h"
 
+NS_LOG_COMPONENT_DEFINE ("NoCNetDevice");
+
 namespace ns3
 {
 
@@ -47,7 +49,7 @@ namespace ns3
   }
 
   NocNetDevice::NocNetDevice() :
-    m_channel(0), m_node(0), m_mtu(0xffff), m_ifIndex(0)
+    m_channel(0), m_node(0), m_mtu(0xffff), m_ifIndex(0), m_routingProtocol(0), m_routing_warn(false)
   {
   }
 
@@ -181,37 +183,74 @@ namespace ns3
   void
   NocNetDevice::SetRoutingProtocol (Ptr<NocRoutingProtocol> protocol)
   {
-//    NS_LOG_FUNCTION_NOARGS ();
+    std::ostringstream oss;
+    oss << "Setting a '" << protocol->GetName () << "' routing protocol for the NoC net device";
+    if (m_node != 0)
+      {
+      oss << " of node " << m_node->GetId ();
+      }
+    NS_LOG_FUNCTION (oss.str());
     NS_ASSERT_MSG (PeekPointer (protocol->GetNocNetDevice ()) == this,
-        "Routing protocol must be installed on mesh point to be useful.");
+        "Routing protocol must be installed on this NoC net device to be useful.");
     m_routingProtocol = protocol;
   }
 
   Ptr<NocRoutingProtocol>
-  NocNetDevice::GetRoutingProtocol () const
+  NocNetDevice::GetRoutingProtocol ()
   {
+    if (m_routingProtocol == 0 && !m_routing_warn)
+      {
+        std::ostringstream oss;
+        oss << "No routing protocol is defined for the NoC net device of node " << m_node->GetId ()
+            << " (with address " << m_address << ")";
+        NS_LOG_WARN(oss.str());
+        m_routing_warn = true;
+      }
     return m_routingProtocol;
   }
 
   bool
-  NocNetDevice::Send(Ptr<Packet> packet, const Address& dest,
-      uint16_t protocolNumber)
+  NocNetDevice::Send(Ptr<Packet> packet, const Address& dest, uint16_t protocolNumber)
   {
+    bool result;
+
     Mac48Address to = Mac48Address::ConvertFrom(dest);
     m_sendTrace (packet);
-    return m_routingProtocol->RequestRoute (m_ifIndex, m_address, to, packet, protocolNumber, MakeCallback (
-        &NocNetDevice::DoSend, this));
+
+    if (GetRoutingProtocol () == 0)
+      {
+        DoSend(false, packet, m_address, to, protocolNumber);
+        result = true;
+      }
+    else
+      {
+        result = GetRoutingProtocol()->RequestRoute(m_ifIndex, m_address, to,
+            packet, protocolNumber, MakeCallback(&NocNetDevice::DoSend, this));
+      }
+    return result;
   }
 
   bool
   NocNetDevice::SendFrom(Ptr<Packet> packet, const Address& source,
       const Address& dest, uint16_t protocolNumber)
   {
+    bool result;
+
     Mac48Address to = Mac48Address::ConvertFrom(dest);
     Mac48Address from = Mac48Address::ConvertFrom(source);
     m_sendTrace (packet);
-    return m_routingProtocol->RequestRoute (m_ifIndex, from, to, packet, protocolNumber, MakeCallback (
-        &NocNetDevice::DoSend, this));
+
+    if (GetRoutingProtocol () == 0)
+      {
+        DoSend(false, packet, from, to, protocolNumber);
+        result = true;
+      }
+    else
+      {
+        result = GetRoutingProtocol()->RequestRoute(m_ifIndex, from, to,
+            packet, protocolNumber, MakeCallback(&NocNetDevice::DoSend, this));
+      }
+    return result;
   }
 
   void

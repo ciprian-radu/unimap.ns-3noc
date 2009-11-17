@@ -149,7 +149,7 @@ namespace ns3
 
     /// Access current routing protocol
     Ptr<NocRoutingProtocol>
-    GetRoutingProtocol() const;
+    GetRoutingProtocol();
     //\}
 
   protected:
@@ -175,6 +175,11 @@ namespace ns3
      * The routing protocol (currently for a 2D mesh topology)
      */
     Ptr<NocRoutingProtocol> m_routingProtocol;
+
+    /**
+     * When no routing protocol is set for this noC device a warning is triggered only once.
+     */
+    bool m_routing_warn;
 
     /**
      * The trace source fired when packets are sent.

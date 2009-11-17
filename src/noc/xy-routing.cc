@@ -18,49 +18,39 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#include "ns3/log.h"
-#include "noc-routing-protocol.h"
-#include "noc-net-device.h"
+#include "xy-routing.h"
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (NocRoutingProtocol);
-
-  NocRoutingProtocol::NocRoutingProtocol(std::string name)
-  {
-    m_name = name;
-  }
+  NS_OBJECT_ENSURE_REGISTERED (XyRouting);
 
   TypeId
-  NocRoutingProtocol::GetTypeId(void)
+  XyRouting::GetTypeId(void)
   {
-    static TypeId tid = TypeId("ns3::NocRoutingProtocol")
-        .SetParent<Object> ();
+    static TypeId tid = TypeId("ns3::XyRouting")
+        .SetParent<NocRoutingProtocol> ();
     return tid;
   }
 
-  NocRoutingProtocol::~NocRoutingProtocol()
+  // we could easily name the protocol "XY", but using __FILE__ should be more useful for debugging
+  XyRouting::XyRouting() : NocRoutingProtocol(__FILE__)
   {
-    m_nocNetDevice = 0;
+
   }
 
-  void
-  NocRoutingProtocol::SetNocNetDevice(Ptr<NocNetDevice> nocNetDevice)
+  XyRouting::~XyRouting()
   {
-    m_nocNetDevice = nocNetDevice;
+
   }
 
-  Ptr<NocNetDevice>
-  NocRoutingProtocol::GetNocNetDevice() const
+  bool
+  XyRouting::RequestRoute(uint32_t sourceIface, const Mac48Address source,
+      const Mac48Address destination, Ptr<Packet> packet,
+      uint16_t protocolType, RouteReplyCallback routeReply)
   {
-    return m_nocNetDevice;
-  }
-
-  std::string
-  NocRoutingProtocol::GetName() const
-  {
-   return m_name;
+    routeReply (true, packet, source, destination, protocolType);
+    return true;
   }
 
 } // namespace ns3

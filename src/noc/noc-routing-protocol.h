@@ -46,6 +46,8 @@ namespace ns3
     static TypeId
     GetTypeId();
 
+    NocRoutingProtocol(std::string name);
+
     virtual
     ~NocRoutingProtocol();
 
@@ -91,7 +93,7 @@ namespace ns3
      */
     virtual bool
     RequestRoute(uint32_t sourceIface, const Mac48Address source,
-        const Mac48Address destination, Ptr<const Packet> packet,
+        const Mac48Address destination, Ptr<Packet> packet,
         uint16_t protocolType, RouteReplyCallback routeReply) = 0;
 
     /**
@@ -106,11 +108,23 @@ namespace ns3
     Ptr<NocNetDevice>
     GetNocNetDevice() const;
 
+    /**
+     * \return the name of this routing protocol
+     */
+    std::string
+    GetName() const;
+
   protected:
     /**
      * the NoC net device to which this routing protocol is assigned to
      */
     Ptr<NocNetDevice> m_nocNetDevice;
+
+  private:
+    /**
+     * the name of the routing protocol
+     */
+    std::string m_name;
   };
 
 } // namespace ns3

@@ -20,6 +20,8 @@
 
 #include "noc-helper.h"
 #include "ns3/config.h"
+#include "ns3/noc-routing-protocol.h"
+#include "ns3/xy-routing.h"
 
 namespace ns3
 {
@@ -80,6 +82,11 @@ namespace ns3
         dev->SetAddress(Mac48Address::Allocate());
         dev->SetChannel(channel);
         (*i)->AddDevice(dev);
+
+        Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
+        routingProtocol->SetNocNetDevice(dev);
+        dev->SetRoutingProtocol(routingProtocol);
+
         devices.Add(dev);
       }
     return devices;
