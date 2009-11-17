@@ -18,49 +18,34 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#include "ns3/log.h"
+#ifndef XYROUTING_H_
+#define XYROUTING_H_
+
 #include "noc-routing-protocol.h"
-#include "noc-net-device.h"
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (NocRoutingProtocol);
-
-  NocRoutingProtocol::NocRoutingProtocol(std::string name)
+  class XyRouting : public NocRoutingProtocol
   {
-    m_name = name;
-  }
+  public:
 
-  TypeId
-  NocRoutingProtocol::GetTypeId(void)
-  {
-    static TypeId tid = TypeId("ns3::NocRoutingProtocol")
-        .SetParent<Object> ();
-    return tid;
-  }
+    static TypeId
+    GetTypeId();
 
-  NocRoutingProtocol::~NocRoutingProtocol()
-  {
-    m_nocNetDevice = 0;
-  }
+    XyRouting();
 
-  void
-  NocRoutingProtocol::SetNocNetDevice(Ptr<NocNetDevice> nocNetDevice)
-  {
-    m_nocNetDevice = nocNetDevice;
-  }
+    virtual
+    ~XyRouting();
 
-  Ptr<NocNetDevice>
-  NocRoutingProtocol::GetNocNetDevice() const
-  {
-    return m_nocNetDevice;
-  }
+    virtual bool
+    RequestRoute(uint32_t sourceIface, const Mac48Address source,
+        const Mac48Address destination, Ptr<Packet> packet,
+        uint16_t protocolType, RouteReplyCallback routeReply);
 
-  std::string
-  NocRoutingProtocol::GetName() const
-  {
-   return m_name;
-  }
+  private:
+  };
 
 } // namespace ns3
+
+#endif /* XYROUTING_H_ */

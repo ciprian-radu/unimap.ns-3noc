@@ -87,10 +87,10 @@ main (int argc, char *argv[])
   cmd.Parse (argc, argv);
 
   Ipv4Address remoteIp (remote.c_str ());
-  Ipv4Address localIp ("1.2.3.4");
+  Ipv4Address localIp ("137.250.172.124");
   NS_ABORT_MSG_IF (localIp == "1.2.3.4", "You must change the local IP address before running this example");
 
-  Ipv4Mask localMask ("255.255.255.0");
+  Ipv4Mask localMask ("255.255.248.0");
 
   //
   // Since we are using a real piece of hardware we need to use the realtime
@@ -169,7 +169,7 @@ main (int argc, char *argv[])
   // the default gateway on your host and add it below, replacing the 
   // "1.2.3.4" string.
   //
-  Ipv4Address gateway ("1.2.3.4");
+  Ipv4Address gateway ("137.250.168.250");
   NS_ABORT_MSG_IF (gateway == "1.2.3.4", "You must change the gateway IP address before running this example");
 
   Ipv4StaticRoutingHelper ipv4RoutingHelper;

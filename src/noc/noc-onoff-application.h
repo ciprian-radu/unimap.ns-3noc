@@ -102,12 +102,12 @@ private:
   //helpers
   void CancelEvents ();
 
-  void Construct (Ptr<Node> n,
-                  const Address &remote,
-                  std::string tid,
-                  const RandomVariable& ontime,
-                  const RandomVariable& offtime,
-                  uint32_t size);
+//  void Construct (Ptr<Node> n,
+//                  const Address &remote,
+//                  std::string tid,
+//                  const RandomVariable& ontime,
+//                  const RandomVariable& offtime,
+//                  uint32_t size);
 
 
   // Event handlers
