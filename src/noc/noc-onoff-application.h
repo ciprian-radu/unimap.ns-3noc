@@ -22,8 +22,8 @@
 // George F. Riley, Georgia Tech, Spring 2007
 // Adapted from ApplicationOnOff in GTNetS.
 
-#ifndef __onoff_application_h__
-#define __onoff_application_h__
+#ifndef __noc_onoff_application_h__
+#define __noc_onoff_application_h__
 
 #include "ns3/address.h"
 #include "ns3/application.h"

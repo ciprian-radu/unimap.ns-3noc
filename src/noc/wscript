@@ -12,6 +12,8 @@ def build(bld):
         'noc-helper.cc',
         'noc-on-off-helper.cc',
         'noc-onoff-application.cc',
+        'noc-application.cc',
+        'noc-application-helper.cc',
         ]
 
     headers = bld.new_task_gen('ns3header')
@@ -26,5 +28,7 @@ def build(bld):
         'noc-helper.h',
         'noc-on-off-helper.h',
         'noc-onoff-application.h',
+        'noc-application.h',
+        'noc-application-helper.h',
         ]
 

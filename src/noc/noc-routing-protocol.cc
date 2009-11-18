@@ -22,6 +22,8 @@
 #include "noc-routing-protocol.h"
 #include "noc-net-device.h"
 
+NS_LOG_COMPONENT_DEFINE ("NocRoutingProtocol");
+
 namespace ns3
 {
 

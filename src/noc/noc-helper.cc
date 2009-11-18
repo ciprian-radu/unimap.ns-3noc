@@ -22,6 +22,9 @@
 #include "ns3/config.h"
 #include "ns3/noc-routing-protocol.h"
 #include "ns3/xy-routing.h"
+#include "ns3/log.h"
+
+NS_LOG_COMPONENT_DEFINE ("NocHelper");
 
 namespace ns3
 {
