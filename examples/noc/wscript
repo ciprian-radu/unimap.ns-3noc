@@ -3,3 +3,6 @@
 def build(bld):
     obj = bld.create_ns3_program('noc-packet-socket', ['noc', 'internet-stack'])
     obj.source = 'noc-packet-socket.cc'
+
+    obj = bld.create_ns3_program('noc-packet', ['noc', 'internet-stack'])
+    obj.source = 'noc-packet.cc'

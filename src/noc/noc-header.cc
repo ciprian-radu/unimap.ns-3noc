@@ -21,10 +21,12 @@
 #include "noc-header.h"
 #include "ns3/log.h"
 
-NS_LOG_COMPONENT_DEFINE ("NoC-Header");
+NS_LOG_COMPONENT_DEFINE ("NocHeader");
 
 namespace ns3
 {
+
+  NS_OBJECT_ENSURE_REGISTERED (NocHeader);
 
   NocHeader::NocHeader()
   {

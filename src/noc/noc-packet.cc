@@ -22,7 +22,7 @@
 #include "ns3/log.h"
 #include "noc-header.h"
 
-NS_LOG_COMPONENT_DEFINE ("NoC-Packet");
+NS_LOG_COMPONENT_DEFINE ("NocPacket");
 
 namespace ns3
 {

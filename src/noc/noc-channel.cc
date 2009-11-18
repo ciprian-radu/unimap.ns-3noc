@@ -22,9 +22,14 @@
 #include "noc-net-device.h"
 #include "noc-packet.h"
 #include "ns3/simulator.h"
+#include "ns3/log.h"
+
+NS_LOG_COMPONENT_DEFINE ("NocChannel");
 
 namespace ns3
 {
+
+  NS_OBJECT_ENSURE_REGISTERED (NocChannel);
 
   TypeId
   NocChannel::GetTypeId(void)

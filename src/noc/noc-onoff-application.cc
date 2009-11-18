@@ -155,7 +155,7 @@ void NocOnOffApplication::StopApplication() // Called at time specified by Stop
     }
   else
     {
-      NS_LOG_WARN("OnOffApplication found null socket to close in StopApplication");
+      NS_LOG_WARN("NocOnOffApplication found null socket to close in StopApplication");
     }
 }
 
