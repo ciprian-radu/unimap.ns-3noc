@@ -85,6 +85,9 @@ namespace ns3
     NetDeviceContainer
     Install(NodeContainer nodes);
 
+    NetDeviceContainer
+    Install2DMesh(NodeContainer nodes, uint32_t hSize);
+
   private:
 
     static void

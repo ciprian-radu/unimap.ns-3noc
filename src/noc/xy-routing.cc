@@ -52,6 +52,8 @@ namespace ns3
       const Mac48Address destination, Ptr<Packet> packet,
       uint16_t protocolType, RouteReplyCallback routeReply)
   {
+    NS_LOG_FUNCTION_NOARGS();
+
     routeReply (true, packet, source, destination, protocolType);
     return true;
   }

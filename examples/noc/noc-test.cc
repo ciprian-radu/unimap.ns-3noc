@@ -60,7 +60,7 @@ main (int argc, char *argv[])
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
   NocHelper noc;
-  NetDeviceContainer devs = noc.Install (nodes, channel);
+  NetDeviceContainer devs = noc.Install2DMesh (nodes, 4);
 
   for (int i = 0; i < 4; ++i) {
     std::cout << "(MAC) address of node " << i << " is " << devs.Get(i)->GetAddress() << std::endl;
@@ -72,9 +72,9 @@ main (int argc, char *argv[])
   apps.Start (Seconds (0.0));
   apps.Stop (Seconds (1.0));
 
-  apps = nocAppHelper.Install (nodes.Get (3));
-  apps.Start (Seconds (0.0));
-  apps.Stop (Seconds (2.0));
+//  apps = nocAppHelper.Install (nodes.Get (3));
+//  apps.Start (Seconds (0.0));
+//  apps.Stop (Seconds (2.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-test.tr file
