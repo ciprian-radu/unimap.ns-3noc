@@ -31,7 +31,8 @@
 #include "ns3/trace-source-accessor.h"
 #include "ns3/udp-socket-factory.h"
 #include <cstdlib>
-#include <stdlib.h>
+#include <bitset>
+#include "stdio.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocApplication");
 
@@ -207,12 +208,8 @@ namespace ns3
     uint32_t sourceY = sourceNodeId % m_hSize;
 
     // FIXME this is just a traffic pattern (of many)
-
-//    char * s;
-//    itoa(sourceX, s, 2);
-
-    uint32_t destinationX = 1;
-    uint32_t destinationY = 1;
+    uint32_t destinationX = reverseBits(sourceX);
+    uint32_t destinationY = reverseBits(sourceY);
     uint32_t destinationNodeId = destinationX * m_hSize + destinationY;
     Address destinationAddress;
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i != m_devices.End(); ++i)
@@ -238,18 +235,40 @@ namespace ns3
       }
     relativeX = relativeX & std::abs((int) (destinationX - sourceX));
     relativeY = relativeY & std::abs((int) (destinationY - sourceY));
-
-    Ptr<NetDevice> netDevice = node->GetDevice (0);
-    Address address = netDevice->GetAddress ();
+    // end traffic pattern
 
     Ptr<NocPacket> packet = Create<NocPacket> (relativeX, relativeY, sourceX, sourceY, m_pktSize);
     m_txTrace(packet);
+    Ptr<NetDevice> netDevice = node->GetDevice (0);
     netDevice->Send(packet, destinationAddress, 0);
 
     m_totBytes += m_pktSize;
     m_lastStartTime = Simulator::Now();
     m_residualBits = 0;
     ScheduleNextTx();
+  }
+
+  unsigned long
+  NocApplication::reverseBits (uint32_t number)
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    std::bitset<32> b(number);
+    double log = 0;
+    if (number > 0)
+      {
+        log = log2(number);
+      }
+    std::string binary(b.to_string().substr(32 - floor(log + 1)));
+    std::bitset<32> bits(binary);
+    for (unsigned int i = 0; i < binary.size(); ++i) {
+      bits.flip(i);
+    }
+    unsigned long reversedNumber = bits.to_ulong();
+    NS_LOG_DEBUG(number << " " << b.to_string().substr(32 - floor(log + 1)) << " "
+        << reversedNumber << " " << bits.to_string());
+
+    return reversedNumber;
   }
 
 } // Namespace ns3
