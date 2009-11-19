@@ -101,6 +101,92 @@ namespace ns3
     return Install(nodes, CreateObject<NocChannel> ());
   }
 
+  NetDeviceContainer
+  NocHelper::Install2DMesh(NodeContainer nodes, uint32_t hSize)
+  {
+    NetDeviceContainer devices;
+    Ptr<NocChannel> channel = 0;
+    Ptr<NocNetDevice> netDevice;
+
+    // create the horizontal channels (and net devices)
+    for (unsigned int i = 0; i < nodes.GetN(); ++i)
+      {
+        if (channel != 0)
+          {
+            netDevice = CreateObject<NocNetDevice> ();
+            netDevice->SetAddress(Mac48Address::Allocate());
+            netDevice->SetChannel(channel);
+            Ptr<NocRoutingProtocol> routingProtocol =
+                CreateObject<XyRouting> ();
+            routingProtocol->SetNocNetDevice(netDevice);
+            netDevice->SetRoutingProtocol(routingProtocol);
+            devices.Add(netDevice);
+            nodes.Get(i)->AddDevice(netDevice);
+          }
+
+        if (i > 0 && i % hSize != 0)
+          {
+            channel = CreateObject<NocChannel> ();
+            netDevice = CreateObject<NocNetDevice> ();
+            netDevice->SetAddress(Mac48Address::Allocate());
+            netDevice->SetChannel(channel);
+            Ptr<NocRoutingProtocol> routingProtocol =
+                CreateObject<XyRouting> ();
+            routingProtocol->SetNocNetDevice(netDevice);
+            netDevice->SetRoutingProtocol(routingProtocol);
+            devices.Add(netDevice);
+            nodes.Get(i)->AddDevice(netDevice);
+          }
+        else
+          {
+            channel = 0;
+          }
+      }
+
+    // create the vertical channels (and net devices)
+    channel = 0;
+    std::vector< Ptr<NocChannel> > columnChannels(hSize);
+    for (unsigned int i = 0; i < nodes.GetN() / hSize; i = i + hSize)
+      {
+        for (unsigned int j = 0; j < hSize; ++j)
+          {
+            if (columnChannels[j] != 0)
+              {
+                channel = columnChannels[j];
+                netDevice = CreateObject<NocNetDevice> ();
+                netDevice->SetAddress(Mac48Address::Allocate());
+                netDevice->SetChannel(channel);
+                Ptr<NocRoutingProtocol> routingProtocol = CreateObject<
+                    XyRouting> ();
+                routingProtocol->SetNocNetDevice(netDevice);
+                netDevice->SetRoutingProtocol(routingProtocol);
+                devices.Add(netDevice);
+                nodes.Get(i * hSize + j)->AddDevice(netDevice);
+              }
+            channel = CreateObject<NocChannel> ();
+            netDevice = CreateObject<NocNetDevice> ();
+            netDevice->SetAddress(Mac48Address::Allocate());
+            netDevice->SetChannel(channel);
+            Ptr<NocRoutingProtocol> routingProtocol =
+                CreateObject<XyRouting> ();
+            routingProtocol->SetNocNetDevice(netDevice);
+            netDevice->SetRoutingProtocol(routingProtocol);
+            devices.Add(netDevice);
+            nodes.Get(i * hSize + j)->AddDevice(netDevice);
+            if (i < nodes.GetN() / hSize - 1)
+              {
+                columnChannels[j] = channel;
+              }
+            else
+              {
+                columnChannels[j] = 0;
+              }
+          }
+      }
+
+    return devices;
+  }
+
   void
   NocHelper::AsciiTxEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
       const Packet> packet)
