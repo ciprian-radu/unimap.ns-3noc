@@ -17,8 +17,8 @@
  *
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
-#ifndef NOC_ON_OFF_HELPER_H
-#define NOC_ON_OFF_HELPER_H
+#ifndef NOC_APPLICATION_HELPER_H
+#define NOC_APPLICATION_HELPER_H
 
 #include <stdint.h>
 #include <string>
@@ -111,5 +111,5 @@ namespace ns3
 
 } // namespace ns3
 
-#endif /* NOC_ON_OFF_HELPER_H */
+#endif /* NOC_APPLICATION_HELPER_H */
 
