@@ -85,6 +85,7 @@ private:
   void ScheduleNextTx();
   void ScheduleStartEvent();
   void Ignore(Ptr<Socket>);
+  static unsigned long reverseBits (uint32_t number);
 };
 
 } // namespace ns3

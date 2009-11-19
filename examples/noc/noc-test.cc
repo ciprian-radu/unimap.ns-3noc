@@ -22,7 +22,6 @@
 //       |     |    |    |
 //     =====================
 //
-// - Tracing of queues and packet receptions to file "noc-packet-sink.tr"
 
 #include <iostream>
 #include <fstream>
@@ -38,7 +37,7 @@
 
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE ("NocPacketExample");
+NS_LOG_COMPONENT_DEFINE ("NocTest");
 
 int
 main (int argc, char *argv[])
@@ -49,7 +48,7 @@ main (int argc, char *argv[])
   // Here, we will explicitly create four nodes.
   NS_LOG_INFO ("Create nodes.");
   NodeContainer nodes;
-  nodes.Create (4);
+  nodes.Create (16);
 
   PacketSocketHelper packetSocket;
   packetSocket.Install (nodes);
@@ -68,39 +67,33 @@ main (int argc, char *argv[])
   }
 
   NS_LOG_INFO ("Create Applications.");
-  NocApplicationHelper nocAppHelper ("ns3::PacketSocketFactory", devs, 2);
+  NocApplicationHelper nocAppHelper ("ns3::PacketSocketFactory", devs, 4);
   ApplicationContainer apps = nocAppHelper.Install (nodes.Get (0));
-  apps.Start (Seconds (1.0));
-  apps.Stop (Seconds (10.0));
+  apps.Start (Seconds (0.0));
+  apps.Stop (Seconds (1.0));
 
-//  // create an On Off application, on node 3, which sends messages to node 0
-//  socket.SetSingleDevice (devs.Get (3)->GetIfIndex ());  // assign this socket to node 3
-//  socket.SetPhysicalAddress (devs.Get (0)->GetAddress ());
-////  socket.SetProtocol (3); // I don't know yet what this could be for
-//  nocOnoff.SetAttribute ("Remote", AddressValue (socket)); // this is just to change the destination address (from node 1 to 0) because we use the same instance of NoC On Off application
-//  nocOnoff.SetAttribute ("OffTime", RandomVariableValue (ConstantVariable (0.0)));
-//  apps = nocOnoff.Install (nodes.Get (3));
-//  apps.Start (Seconds (1.0));
-//  apps.Stop (Seconds (10.0));
+  apps = nocAppHelper.Install (nodes.Get (3));
+  apps.Start (Seconds (0.0));
+  apps.Stop (Seconds (2.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
-  // Trace output will be sent to the noc-packet-socket.tr file
+  // Trace output will be sent to the noc-test.tr file
   NS_LOG_INFO ("Configure Tracing.");
   std::ofstream os;
-  os.open ("noc-packet.tr", std::ios_base::binary | std::ios_base::out);
+  os.open ("noc-test.tr", std::ios_base::binary | std::ios_base::out);
   noc.EnableAsciiAll (os);
 
-  // Setup mobility - static grid topology
-  MobilityHelper mobility;
-  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
-                                 "MinX", DoubleValue (0.0),
-                                 "MinY", DoubleValue (0.0),
-                                 "DeltaX", DoubleValue (10),
-                                 "DeltaY", DoubleValue (10),
-                                 "GridWidth", UintegerValue (2),
-                                 "LayoutType", StringValue ("RowFirst"));
-  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobility.Install (nodes);
+//  // Setup mobility - static grid topology
+//  MobilityHelper mobility;
+//  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
+//                                 "MinX", DoubleValue (0.0),
+//                                 "MinY", DoubleValue (0.0),
+//                                 "DeltaX", DoubleValue (10),
+//                                 "DeltaY", DoubleValue (10),
+//                                 "GridWidth", UintegerValue (2),
+//                                 "LayoutType", StringValue ("RowFirst"));
+//  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+//  mobility.Install (nodes);
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();
