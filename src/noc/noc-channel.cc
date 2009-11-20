@@ -23,6 +23,7 @@
 #include "noc-packet.h"
 #include "ns3/simulator.h"
 #include "ns3/log.h"
+#include "ns3/node.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocChannel");
 
@@ -34,9 +35,9 @@ namespace ns3
   TypeId
   NocChannel::GetTypeId(void)
   {
-    static TypeId tid =
-        TypeId("ns3::NocChannel") .SetParent<Channel> () .AddConstructor<
-            NocChannel> ();
+    static TypeId tid = TypeId("ns3::NocChannel")
+        .SetParent<Channel> ()
+        .AddConstructor<NocChannel> ();
     return tid;
   }
 
@@ -45,19 +46,16 @@ namespace ns3
   }
 
   void
-  NocChannel::Send(Ptr<Packet> p, uint16_t protocol, Mac48Address to,
-      Mac48Address from, Ptr<NocNetDevice> sender)
+  NocChannel::Send(Ptr<Packet> p, uint16_t protocol, Mac48Address to, Mac48Address from, Ptr<NocNetDevice> sender)
   {
-    for (std::vector<Ptr<NocNetDevice> >::const_iterator i = m_devices.begin(); i
-        != m_devices.end(); ++i)
+    NS_LOG_DEBUG("number of devices for node " << sender->GetNode()->GetId() << " is " << m_devices.size());
+    for (std::vector<Ptr<NocNetDevice> >::const_iterator i = m_devices.begin(); i != m_devices.end(); ++i)
       {
         Ptr<NocNetDevice> tmp = *i;
-        if (tmp == sender)
+        if (tmp != sender)
           {
-            continue;
+            Simulator::ScheduleNow(&NocNetDevice::Receive, tmp, p->Copy(), protocol, to, from);
           }
-        Simulator::ScheduleNow(&NocNetDevice::Receive, tmp, p->Copy(),
-            protocol, to, from);
       }
   }
 

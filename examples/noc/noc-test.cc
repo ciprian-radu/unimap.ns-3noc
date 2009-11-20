@@ -1,5 +1,7 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
+ * Copyright (c) 2009 Systems and Networking, University of Augsburg, Germany
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -12,15 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
 // This example is based on the CSMA example csma-packet-socket.cc
 //
-// Network topology
+// Network topology: 2D mesh
 //
-//       n0    n1   n2   n3
-//       |     |    |    |
-//     =====================
+//
 //
 
 #include <iostream>
@@ -39,6 +41,9 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("NocTest");
 
+uint32_t numberOfNodes = 16;
+uint32_t hSize = 4;
+
 int
 main (int argc, char *argv[])
 {
@@ -48,7 +53,7 @@ main (int argc, char *argv[])
   // Here, we will explicitly create four nodes.
   NS_LOG_INFO ("Create nodes.");
   NodeContainer nodes;
-  nodes.Create (16);
+  nodes.Create (numberOfNodes);
 
   PacketSocketHelper packetSocket;
   packetSocket.Install (nodes);
@@ -60,14 +65,10 @@ main (int argc, char *argv[])
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
   NocHelper noc;
-  NetDeviceContainer devs = noc.Install2DMesh (nodes, 4);
-
-  for (int i = 0; i < 4; ++i) {
-    std::cout << "(MAC) address of node " << i << " is " << devs.Get(i)->GetAddress() << std::endl;
-  }
+  NetDeviceContainer devs = noc.Install2DMesh (nodes, hSize);
 
   NS_LOG_INFO ("Create Applications.");
-  NocApplicationHelper nocAppHelper ("ns3::PacketSocketFactory", devs, 4);
+  NocApplicationHelper nocAppHelper ("ns3::PacketSocketFactory", devs, hSize);
   ApplicationContainer apps = nocAppHelper.Install (nodes.Get (0));
   apps.Start (Seconds (0.0));
   apps.Stop (Seconds (1.0));

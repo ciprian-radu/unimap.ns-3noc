@@ -212,29 +212,47 @@ namespace ns3
     uint32_t destinationY = reverseBits(sourceY);
     uint32_t destinationNodeId = destinationX * m_hSize + destinationY;
     Address destinationAddress;
+    std::vector<Ptr<NetDevice> > possibleDestinationNetDevices;
+    std::vector<Ptr<NetDevice> >::iterator it;
+    it = possibleDestinationNetDevices.begin();
+
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i != m_devices.End(); ++i)
       {
         Ptr<Node> tmpNode = (*i)->GetNode ();
-        if (destinationNodeId == tmpNode->GetId())
+        if (destinationNodeId == tmpNode->GetId ())
           {
-            destinationAddress = (*i)->GetAddress();
-            break;
+            it = possibleDestinationNetDevices.insert (it, (*i));
           }
       }
+    NS_ASSERT_MSG(possibleDestinationNetDevices.size () > 0, "No possible net device destinations!");
+    NS_LOG_DEBUG ("possible net device destinations:");
+    for (it = possibleDestinationNetDevices.begin(); it < possibleDestinationNetDevices.end(); it++)
+      {
+        NS_LOG_DEBUG ("\t" << (*it)->GetAddress());
+      }
+    // FIXME We can have maximum 4 possible net devices (channels, input ports) as destinations (N, E, S, W)
+    // how to decide which one to take?
+    // should we decide this here? (it should be the router's job)
+    //
+    // we could just pick the first destination net device, and then the routing will change it (based in the routing mechanism)
+    destinationAddress = possibleDestinationNetDevices[0]->GetAddress ();
+    NS_LOG_DEBUG ("A packet is sent from node " << sourceNodeId << " to node " << destinationNodeId
+        << " (destination MAC address " << destinationAddress << ")");
+
     uint32_t relativeX = 0;
     uint32_t relativeY = 0;
-    if (destinationX - sourceX < 0)
+    if (destinationX < sourceX)
       {
         // 0 = East; 1 = West
-        relativeX = relativeX & 0x08;
+        relativeX = 8; // 1000 (in binary)
       }
-    if (destinationY - sourceY < 0)
+    if (destinationY < sourceY)
       {
         // 0 = South; 1 = North
-        relativeY = relativeY & 0x08;
+        relativeY = 8; // 1000 (in binary)
       }
-    relativeX = relativeX & std::abs((int) (destinationX - sourceX));
-    relativeY = relativeY & std::abs((int) (destinationY - sourceY));
+    relativeX = relativeX | std::abs((int) (destinationX - sourceX));
+    relativeY = relativeY | std::abs((int) (destinationY - sourceY));
     // end traffic pattern
 
     Ptr<NocPacket> packet = Create<NocPacket> (relativeX, relativeY, sourceX, sourceY, m_pktSize);
