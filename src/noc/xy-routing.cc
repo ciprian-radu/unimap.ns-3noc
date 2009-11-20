@@ -53,6 +53,10 @@ namespace ns3
       uint16_t protocolType, RouteReplyCallback routeReply)
   {
     NS_LOG_FUNCTION_NOARGS();
+    NS_LOG_DEBUG("source " << source << " destination " << destination << " packet (on next line)");
+    // FIXME print the packet only for DEBUG log level
+    packet->Print(std::clog);
+    std::clog << std::endl;
 
     routeReply (true, packet, source, destination, protocolType);
     return true;

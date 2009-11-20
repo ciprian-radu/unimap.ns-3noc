@@ -116,22 +116,20 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
-            Ptr<NocRoutingProtocol> routingProtocol =
-                CreateObject<XyRouting> ();
+            Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
             routingProtocol->SetNocNetDevice(netDevice);
             netDevice->SetRoutingProtocol(routingProtocol);
             devices.Add(netDevice);
             nodes.Get(i)->AddDevice(netDevice);
           }
 
-        if (i > 0 && i % hSize != 0)
+        if (i == 0 || (i > 0 && (i + 1) % hSize != 0))
           {
             channel = CreateObject<NocChannel> ();
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
-            Ptr<NocRoutingProtocol> routingProtocol =
-                CreateObject<XyRouting> ();
+            Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
             routingProtocol->SetNocNetDevice(netDevice);
             netDevice->SetRoutingProtocol(routingProtocol);
             devices.Add(netDevice);
@@ -146,7 +144,7 @@ namespace ns3
     // create the vertical channels (and net devices)
     channel = 0;
     std::vector< Ptr<NocChannel> > columnChannels(hSize);
-    for (unsigned int i = 0; i < nodes.GetN() / hSize; i = i + hSize)
+    for (unsigned int i = 0; i < nodes.GetN(); i = i + hSize)
       {
         for (unsigned int j = 0; j < hSize; ++j)
           {
@@ -156,25 +154,23 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
-                Ptr<NocRoutingProtocol> routingProtocol = CreateObject<
-                    XyRouting> ();
+                Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
                 routingProtocol->SetNocNetDevice(netDevice);
                 netDevice->SetRoutingProtocol(routingProtocol);
                 devices.Add(netDevice);
-                nodes.Get(i * hSize + j)->AddDevice(netDevice);
+                nodes.Get(i + j)->AddDevice(netDevice);
               }
-            channel = CreateObject<NocChannel> ();
-            netDevice = CreateObject<NocNetDevice> ();
-            netDevice->SetAddress(Mac48Address::Allocate());
-            netDevice->SetChannel(channel);
-            Ptr<NocRoutingProtocol> routingProtocol =
-                CreateObject<XyRouting> ();
-            routingProtocol->SetNocNetDevice(netDevice);
-            netDevice->SetRoutingProtocol(routingProtocol);
-            devices.Add(netDevice);
-            nodes.Get(i * hSize + j)->AddDevice(netDevice);
-            if (i < nodes.GetN() / hSize - 1)
+            if (i < nodes.GetN() - hSize)
               {
+                channel = CreateObject<NocChannel> ();
+                netDevice = CreateObject<NocNetDevice> ();
+                netDevice->SetAddress(Mac48Address::Allocate());
+                netDevice->SetChannel(channel);
+                Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
+                routingProtocol->SetNocNetDevice(netDevice);
+                netDevice->SetRoutingProtocol(routingProtocol);
+                devices.Add(netDevice);
+                nodes.Get(i + j)->AddDevice(netDevice);
                 columnChannels[j] = channel;
               }
             else
@@ -183,6 +179,16 @@ namespace ns3
               }
           }
       }
+
+    NS_LOG_DEBUG ("Printing the 2D mesh topology (channels <-> net devices <-> nodes)...");
+    for (uint32_t i = 0; i < devices.GetN(); ++i)
+      {
+        Ptr<NetDevice> device = devices.Get(i);
+        NS_LOG_DEBUG ("\tNode " << device->GetNode()->GetId() <<
+            " has a net device with (MAC) address " << device->GetAddress() <<
+            " connected to channel " << device->GetChannel()->GetId());
+      }
+    NS_LOG_DEBUG ("Done with printing the 2D mesh topology.");
 
     return devices;
   }

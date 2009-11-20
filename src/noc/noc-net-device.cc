@@ -84,6 +84,12 @@ namespace ns3
       {
         m_receiveTrace(packet);
       }
+    else
+      {
+        // the packet is intended for another node => route the packet
+      GetRoutingProtocol()->RequestRoute(m_ifIndex, m_address, to,
+          packet, protocol, MakeCallback(&NocNetDevice::DoSend, this));
+      }
   }
 
   void
@@ -184,12 +190,12 @@ namespace ns3
   NocNetDevice::SetRoutingProtocol (Ptr<NocRoutingProtocol> protocol)
   {
     std::ostringstream oss;
-    oss << "Setting a '" << protocol->GetName () << "' routing protocol for the NoC net device";
+    oss << "Setting a '" << protocol->GetName () << "' routing protocol for the NoC net device with (MAC) address " << m_address;
     if (m_node != 0)
       {
       oss << " of node " << m_node->GetId ();
       }
-    NS_LOG_FUNCTION (oss.str());
+    NS_LOG_DEBUG (oss.str());
     NS_ASSERT_MSG (PeekPointer (protocol->GetNocNetDevice ()) == this,
         "Routing protocol must be installed on this NoC net device to be useful.");
     m_routingProtocol = protocol;
