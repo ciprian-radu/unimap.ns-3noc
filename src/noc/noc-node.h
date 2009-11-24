@@ -18,39 +18,60 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef XYROUTING_H_
-#define XYROUTING_H_
+#ifndef NOCNODE_H_
+#define NOCNODE_H_
 
-#include "noc-routing-protocol.h"
+#include "ns3/node.h"
+#include "noc-packet.h"
 #include "noc-net-device.h"
+#include "noc-routing-protocol.h"
 
 namespace ns3
 {
 
-  class XyRouting : public NocRoutingProtocol
+  class NocRoutingProtocol;
+  class NocNetDevice;
+
+  class NocNode : public Node
   {
   public:
-
-    enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
 
     static TypeId
     GetTypeId();
 
-    XyRouting();
+    NocNode();
+
+    NocNode(uint32_t systemId);
 
     virtual
-    ~XyRouting();
+    ~NocNode();
 
-    virtual bool
-    RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
-        Ptr<Packet> packet, RouteReplyCallback routeReply);
+    ///\name Protocols
+    //\{
+    /// Register routing protocol.
+    void
+    SetRoutingProtocol(Ptr<NocRoutingProtocol> protocol);
+
+    /// Access current routing protocol
+    Ptr<NocRoutingProtocol>
+    GetRoutingProtocol();
+    //\}
+
+    void
+    Send (Ptr<Packet>, Ptr<NocNode>);
+
+    void
+    DoSend (Ptr<Packet>, Ptr<NetDevice>, Ptr<NetDevice>);
 
   private:
 
-    Ptr<NocNetDevice>
-    GetNetDevice(const Ptr<NocNode> node, const int routingDirection);
+    /**
+     * The routing protocol
+     */
+    Ptr<NocRoutingProtocol> m_routingProtocol;
+
   };
 
 } // namespace ns3
 
-#endif /* XYROUTING_H_ */
+#endif /* NOCNODE_H_ */

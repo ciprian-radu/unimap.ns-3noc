@@ -27,6 +27,7 @@
 #include "ns3/simulator.h"
 #include "ns3/socket-factory.h"
 #include "ns3/noc-packet.h"
+#include "ns3/noc-net-device.h"
 #include "ns3/uinteger.h"
 #include "ns3/trace-source-accessor.h"
 #include "ns3/udp-socket-factory.h"
@@ -65,9 +66,6 @@ namespace ns3
                 "no packet is sent again. The value zero means that there is no limit.",
                 UintegerValue(0), MakeUintegerAccessor(&NocApplication::m_maxBytes),
                 MakeUintegerChecker<uint32_t> ())
-            .AddAttribute("Protocol",
-                "The type of protocol to use.", TypeIdValue(UdpSocketFactory::GetTypeId()),
-                MakeTypeIdAccessor(&NocApplication::m_tid), MakeTypeIdChecker())
             .AddTraceSource("Tx", "A new packet is created and is sent",
                 MakeTraceSourceAccessor(&NocApplication::m_txTrace));
     return tid;
@@ -201,43 +199,28 @@ namespace ns3
     NS_LOG_LOGIC ("sending packet at " << Simulator::Now ());
     NS_ASSERT (m_sendEvent.IsExpired ());
 
-    Ptr<Node> node = GetNode ();
-    uint32_t sourceNodeId = node->GetId ();
+    Ptr<NocNode> sourceNode = GetNode ()->GetObject<NocNode> ();
+    uint32_t sourceNodeId = sourceNode->GetId ();
     NS_ASSERT_MSG (sourceNodeId < 64, "max. 64 nodes (8x8 2D mesh) are allowed by this packet format");
     uint32_t sourceX = sourceNodeId / m_hSize;
     uint32_t sourceY = sourceNodeId % m_hSize;
 
     // FIXME this is just a traffic pattern (of many)
-    uint32_t destinationX = reverseBits(sourceX);
-    uint32_t destinationY = reverseBits(sourceY);
+    uint32_t destinationX = ReverseBits(sourceX);
+    uint32_t destinationY = ReverseBits(sourceY);
     uint32_t destinationNodeId = destinationX * m_hSize + destinationY;
-    Address destinationAddress;
-    std::vector<Ptr<NetDevice> > possibleDestinationNetDevices;
-    std::vector<Ptr<NetDevice> >::iterator it;
-    it = possibleDestinationNetDevices.begin();
-
-    for (NetDeviceContainer::Iterator i = m_devices.Begin(); i != m_devices.End(); ++i)
+    Ptr<NocNode> destinationNode;
+    for (NetDeviceContainer::Iterator i = m_devices.Begin(); i
+        != m_devices.End(); ++i)
       {
-        Ptr<Node> tmpNode = (*i)->GetNode ();
-        if (destinationNodeId == tmpNode->GetId ())
+        Ptr<Node> tmpNode = (*i)->GetNode();
+        if (destinationNodeId == tmpNode->GetId())
           {
-            it = possibleDestinationNetDevices.insert (it, (*i));
+            destinationNode = tmpNode->GetObject<NocNode> ();
+            break;
           }
       }
-    NS_ASSERT_MSG(possibleDestinationNetDevices.size () > 0, "No possible net device destinations!");
-    NS_LOG_DEBUG ("possible net device destinations:");
-    for (it = possibleDestinationNetDevices.begin(); it < possibleDestinationNetDevices.end(); it++)
-      {
-        NS_LOG_DEBUG ("\t" << (*it)->GetAddress());
-      }
-    // FIXME We can have maximum 4 possible net devices (channels, input ports) as destinations (N, E, S, W)
-    // how to decide which one to take?
-    // should we decide this here? (it should be the router's job)
-    //
-    // we could just pick the first destination net device, and then the routing will change it (based in the routing mechanism)
-    destinationAddress = possibleDestinationNetDevices[0]->GetAddress ();
-    NS_LOG_DEBUG ("A packet is sent from node " << sourceNodeId << " to node " << destinationNodeId
-        << " (destination MAC address " << destinationAddress << ")");
+    NS_LOG_DEBUG ("A packet is sent from node " << sourceNodeId << " to node " << destinationNodeId);
 
     uint32_t relativeX = 0;
     uint32_t relativeY = 0;
@@ -257,8 +240,7 @@ namespace ns3
 
     Ptr<NocPacket> packet = Create<NocPacket> (relativeX, relativeY, sourceX, sourceY, m_pktSize);
     m_txTrace(packet);
-    Ptr<NetDevice> netDevice = node->GetDevice (0);
-    netDevice->Send(packet, destinationAddress, 0);
+    sourceNode->Send (packet, destinationNode);
 
     m_totBytes += m_pktSize;
     m_lastStartTime = Simulator::Now();
@@ -267,7 +249,7 @@ namespace ns3
   }
 
   unsigned long
-  NocApplication::reverseBits (uint32_t number)
+  NocApplication::ReverseBits (uint32_t number)
   {
     NS_LOG_FUNCTION_NOARGS ();
 

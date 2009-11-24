@@ -20,7 +20,7 @@
 
 #include "ns3/log.h"
 #include "noc-routing-protocol.h"
-#include "noc-net-device.h"
+#include "noc-node.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocRoutingProtocol");
 
@@ -44,19 +44,19 @@ namespace ns3
 
   NocRoutingProtocol::~NocRoutingProtocol()
   {
-    m_nocNetDevice = 0;
+    m_nocNode = 0;
   }
 
   void
-  NocRoutingProtocol::SetNocNetDevice(Ptr<NocNetDevice> nocNetDevice)
+  NocRoutingProtocol::SetNocNode(Ptr<NocNode> nocNode)
   {
-    m_nocNetDevice = nocNetDevice;
+    m_nocNode = nocNode;
   }
 
-  Ptr<NocNetDevice>
-  NocRoutingProtocol::GetNocNetDevice() const
+  Ptr<NocNode>
+  NocRoutingProtocol::GetNocNode() const
   {
-    return m_nocNetDevice;
+    return m_nocNode;
   }
 
   std::string

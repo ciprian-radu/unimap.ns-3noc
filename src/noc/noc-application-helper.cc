@@ -29,11 +29,10 @@
 namespace ns3
 {
 
-  NocApplicationHelper::NocApplicationHelper(std::string protocol, NetDeviceContainer devices, uint32_t hSize)
+  NocApplicationHelper::NocApplicationHelper(NetDeviceContainer devices, uint32_t hSize)
   {
     m_devices = devices;
     m_factory.SetTypeId("ns3::NocApplication");
-    m_factory.Set("Protocol", StringValue(protocol));
     m_factory.Set("HSize", UintegerValue(hSize));
   }
 

@@ -24,19 +24,21 @@
 #include "ns3/object.h"
 #include "ns3/mac48-address.h"
 #include "noc-packet.h"
+#include "noc-node.h"
 #include "noc-net-device.h"
 
 namespace ns3
 {
 
+  class NocNode;
   class NocNetDevice;
 
   /**
    *
    * \brief Interface for the routing protocol used by NoC net devices
    *
-   * Every routing protocol for NoCs must implement this interface. Each device (NocNetDevice) is supposed
-   * to know of a single routing protocol to work with, see NocNetDevice::SetRoutingProtocol ().
+   * Every routing protocol for NoCs must implement this interface. Each NoC node is supposed
+   * to know of a single routing protocol to work with, see NocNode::SetRoutingProtocol ().
    *
    */
   class NocRoutingProtocol : public Object
@@ -67,11 +69,9 @@ namespace ns3
      *
      */
     typedef Callback<void,/* return type */
-    bool, /* flag */
     Ptr<Packet> , /* packet */
-    Mac48Address,/* src */
-    Mac48Address,/* dst */
-    uint16_t /* protocol */
+    Ptr<NetDevice>,/* src */
+    Ptr<NetDevice>/* dst */
     > RouteReplyCallback;
 
     /**
@@ -81,7 +81,6 @@ namespace ns3
      * reply callback will be called when routing information will be available.
      *
      * \return true if a valid route is already known
-     * \param sourceIface the incoming interface of the packet
      * \param source        source address
      * \param destination   destination address
      * \param packet        the packet to be resolved (needed the whole packet, because
@@ -92,21 +91,20 @@ namespace ns3
      *                      to really send packet using routing information.
      */
     virtual bool
-    RequestRoute(uint32_t sourceIface, const Mac48Address source,
-        const Mac48Address destination, Ptr<Packet> packet,
-        uint16_t protocolType, RouteReplyCallback routeReply) = 0;
+    RequestRoute(const Ptr<NocNode> source,
+        const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
 
     /**
-     * set the NoC net device to which this routing protocol is assigned to
+     * set the NoC node to which this routing protocol is assigned to
      */
     void
-    SetNocNetDevice(Ptr<NocNetDevice> nocNetDevice);
+    SetNocNode(Ptr<NocNode> nocNode);
 
     /**
-     * \return the NoC net device to which this routing protocol is assigned to
+     * \return the NoC node to which this routing protocol is assigned to
      */
-    Ptr<NocNetDevice>
-    GetNocNetDevice() const;
+    Ptr<NocNode>
+    GetNocNode() const;
 
     /**
      * \return the name of this routing protocol
@@ -116,9 +114,9 @@ namespace ns3
 
   protected:
     /**
-     * the NoC net device to which this routing protocol is assigned to
+     * the NoC node to which this routing protocol is assigned to
      */
-    Ptr<NocNetDevice> m_nocNetDevice;
+    Ptr<NocNode> m_nocNode;
 
   private:
     /**

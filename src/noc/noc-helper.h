@@ -29,7 +29,9 @@
 namespace ns3
 {
 
-  class NocHelper
+  class NocChannel;
+
+  class NocHelper : public Object
   {
   public:
 
@@ -88,6 +90,9 @@ namespace ns3
     NetDeviceContainer
     Install2DMesh(NodeContainer nodes, uint32_t hSize);
 
+    Ptr<NocNetDevice>
+    FindNetDeviceByAddress (Mac48Address address);
+
   private:
 
     static void
@@ -118,6 +123,8 @@ namespace ns3
     static void
     AsciiDropEvent(Ptr<AsciiWriter> writer, std::string path,
         Ptr<const Packet> packet);
+
+    NetDeviceContainer m_devices;
   };
 
 } // namespace ns3

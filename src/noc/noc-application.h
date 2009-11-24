@@ -78,14 +78,13 @@ private:
   EventId         m_startEvent;         // Event id for next start event
   EventId         m_sendEvent;          // Event id of pending send packet event
   bool            m_sending;            // True if currently in sending state
-  TypeId          m_tid;
   TracedCallback<Ptr<const Packet> > m_txTrace;
   
 private:
   void ScheduleNextTx();
   void ScheduleStartEvent();
   void Ignore(Ptr<Socket>);
-  static unsigned long reverseBits (uint32_t number);
+  static unsigned long ReverseBits (uint32_t number);
 };
 
 } // namespace ns3

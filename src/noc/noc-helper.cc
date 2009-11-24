@@ -78,7 +78,6 @@ namespace ns3
   NetDeviceContainer
   NocHelper::Install(NodeContainer nodes, Ptr<NocChannel> channel)
   {
-    NetDeviceContainer devices;
     for (NodeContainer::Iterator i = nodes.Begin(); i != nodes.End(); ++i)
       {
         Ptr<NocNetDevice> dev = CreateObject<NocNetDevice> ();
@@ -86,13 +85,18 @@ namespace ns3
         dev->SetChannel(channel);
         (*i)->AddDevice(dev);
 
-        Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
-        routingProtocol->SetNocNetDevice(dev);
-        dev->SetRoutingProtocol(routingProtocol);
+        Ptr<NocNode> nocNode = (*i)->GetObject<NocNode> ();
+        if (nocNode->GetRoutingProtocol () == 0)
+          {
+            Ptr<NocRoutingProtocol> routingProtocol =
+                CreateObject<XyRouting> ();
+            routingProtocol->SetNocNode(nocNode);
+            nocNode->SetRoutingProtocol(routingProtocol);
+          }
 
-        devices.Add(dev);
+        m_devices.Add(dev);
       }
-    return devices;
+    return m_devices;
   }
 
   NetDeviceContainer
@@ -104,9 +108,20 @@ namespace ns3
   NetDeviceContainer
   NocHelper::Install2DMesh(NodeContainer nodes, uint32_t hSize)
   {
-    NetDeviceContainer devices;
     Ptr<NocChannel> channel = 0;
     Ptr<NocNetDevice> netDevice;
+
+    for (unsigned int i = 0; i < nodes.GetN(); ++i)
+      {
+        Ptr<NocNode> nocNode = nodes.Get (i)->GetObject<NocNode> ();
+        if (nocNode->GetRoutingProtocol() == 0)
+          {
+            Ptr<NocRoutingProtocol> routingProtocol =
+                CreateObject<XyRouting> ();
+            routingProtocol->SetNocNode(nocNode);
+            nocNode->SetRoutingProtocol(routingProtocol);
+          }
+      }
 
     // create the horizontal channels (and net devices)
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
@@ -116,10 +131,10 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
+            netDevice->SetRoutingDirection(XyRouting::WEST);
             Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
-            routingProtocol->SetNocNetDevice(netDevice);
-            netDevice->SetRoutingProtocol(routingProtocol);
-            devices.Add(netDevice);
+            m_devices.Add(netDevice);
+            netDevice->SetNocHelper (this);
             nodes.Get(i)->AddDevice(netDevice);
           }
 
@@ -129,10 +144,10 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
+            netDevice->SetRoutingDirection(XyRouting::EAST);
             Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
-            routingProtocol->SetNocNetDevice(netDevice);
-            netDevice->SetRoutingProtocol(routingProtocol);
-            devices.Add(netDevice);
+            m_devices.Add(netDevice);
+            netDevice->SetNocHelper (this);
             nodes.Get(i)->AddDevice(netDevice);
           }
         else
@@ -154,10 +169,10 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
+                netDevice->SetRoutingDirection(XyRouting::NORTH);
                 Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
-                routingProtocol->SetNocNetDevice(netDevice);
-                netDevice->SetRoutingProtocol(routingProtocol);
-                devices.Add(netDevice);
+                m_devices.Add(netDevice);
+                netDevice->SetNocHelper (this);
                 nodes.Get(i + j)->AddDevice(netDevice);
               }
             if (i < nodes.GetN() - hSize)
@@ -166,10 +181,10 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
+                netDevice->SetRoutingDirection(XyRouting::SOUTH);
                 Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
-                routingProtocol->SetNocNetDevice(netDevice);
-                netDevice->SetRoutingProtocol(routingProtocol);
-                devices.Add(netDevice);
+                m_devices.Add(netDevice);
+                netDevice->SetNocHelper (this);
                 nodes.Get(i + j)->AddDevice(netDevice);
                 columnChannels[j] = channel;
               }
@@ -181,16 +196,31 @@ namespace ns3
       }
 
     NS_LOG_DEBUG ("Printing the 2D mesh topology (channels <-> net devices <-> nodes)...");
-    for (uint32_t i = 0; i < devices.GetN(); ++i)
+    for (uint32_t i = 0; i < m_devices.GetN(); ++i)
       {
-        Ptr<NetDevice> device = devices.Get(i);
+        Ptr<NetDevice> device = m_devices.Get(i);
         NS_LOG_DEBUG ("\tNode " << device->GetNode()->GetId() <<
             " has a net device with (MAC) address " << device->GetAddress() <<
             " connected to channel " << device->GetChannel()->GetId());
       }
     NS_LOG_DEBUG ("Done with printing the 2D mesh topology.");
 
-    return devices;
+    return m_devices;
+  }
+
+  Ptr<NocNetDevice>
+  NocHelper::FindNetDeviceByAddress (Mac48Address address)
+  {
+    Ptr<NocNetDevice> nocNetDevice = 0;
+    for (unsigned int i = 0; i < m_devices.GetN(); ++i) {
+      Ptr<NetDevice> netDevice = m_devices.Get (i);
+      Mac48Address macAddress = Mac48Address::ConvertFrom(netDevice->GetAddress ());
+      if (macAddress == address)
+        {
+          nocNetDevice = netDevice->GetObject<NocNetDevice> ();
+        }
+    }
+    return nocNetDevice;
   }
 
   void
