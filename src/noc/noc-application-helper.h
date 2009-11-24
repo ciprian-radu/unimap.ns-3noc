@@ -43,14 +43,10 @@ namespace ns3
     /**
      * Create a NocApplicationHelper to make it easier to work with NoC applications
      *
-     * \param protocol the name of the protocol to use to send traffic
-     *        by the applications. This string identifies the socket
-     *        factory type used to create sockets for the applications.
-     *        A typical value would be ns3::UdpSocketFactory.
      * \param devices the net devices from the NoC network
      *
      */
-    NocApplicationHelper(std::string protocol, NetDeviceContainer devices, uint32_t hSize);
+    NocApplicationHelper(NetDeviceContainer devices, uint32_t hSize);
 
     /**
      * Helper function used to set the underlying application attributes.

@@ -28,12 +28,14 @@
 #include "noc-channel.h"
 #include "ns3/traced-callback.h"
 #include "noc-routing-protocol.h"
+#include "noc-helper.h"
 
 namespace ns3
 {
 
   class NocChannel;
   class NocRoutingProtocol;
+  class NocHelper;
 
   /**
    * \ingroup netdevice
@@ -49,8 +51,7 @@ namespace ns3
     NocNetDevice();
 
     void
-    Receive(Ptr<Packet> packet, uint16_t protocol, Mac48Address to,
-        Mac48Address from);
+    Receive(Ptr<Packet> packet, uint16_t protocol, Mac48Address to, Mac48Address from);
 
     void
     SetChannel(Ptr<NocChannel> channel);
@@ -81,6 +82,18 @@ namespace ns3
     IsLinkUp(void) const;
 
     virtual void
+    SetRoutingDirection (int routingDirection);
+
+    virtual int
+    GetRoutingDirection () const;
+
+    virtual void
+    SetNocHelper (Ptr<NocHelper> nocHelper);
+
+    virtual Ptr<NocHelper>
+    GetNocHelper () const;
+
+    virtual void
     AddLinkChangeCallback(Callback<void> callback);
 
     virtual bool
@@ -108,18 +121,6 @@ namespace ns3
     SendFrom(Ptr<Packet> packet, const Address& source, const Address& dest,
         uint16_t protocolNumber);
 
-    /**
-     * \brief Response callback for the NoC routing protocol. This will be executed when routing information is ready.
-     *
-     * \param success     True is route found. TODO: diagnose routing errors
-     * \param packet      Packet to send
-     * \param src         Source MAC address
-     * \param dst         Destination MAC address
-     * \param protocol    Protocol ID
-     */
-    void
-    DoSend(bool success, Ptr<Packet> packet, Mac48Address src, Mac48Address dst, uint16_t protocol);
-
     virtual Ptr<Node>
     GetNode(void) const;
 
@@ -141,17 +142,6 @@ namespace ns3
     virtual bool
     SupportsSendFrom(void) const;
 
-    ///\name Protocols
-    //\{
-    /// Register routing protocol to be used. Protocol must be already installed on this NoC net device.
-    void
-    SetRoutingProtocol(Ptr<NocRoutingProtocol> protocol);
-
-    /// Access current routing protocol
-    Ptr<NocRoutingProtocol>
-    GetRoutingProtocol();
-    //\}
-
   protected:
     virtual void
     DoDispose(void);
@@ -172,14 +162,18 @@ namespace ns3
     Mac48Address m_address;
 
     /**
-     * The routing protocol (currently for a 2D mesh topology)
+     * The NoC topology
      */
-    Ptr<NocRoutingProtocol> m_routingProtocol;
+    Ptr<NocHelper> m_nocHelper;
 
     /**
-     * When no routing protocol is set for this noC device a warning is triggered only once.
+     * Marks to what direction this NoC net device can route packets to.
+     * This field should take the value from an enum (enumeration) taken
+     * from each particular routing protocol.
+     *
+     * Value 0 (zero) should always mean no routing direction.
      */
-    bool m_routing_warn;
+    int m_routingDirection;
 
     /**
      * The trace source fired when packets are sent.

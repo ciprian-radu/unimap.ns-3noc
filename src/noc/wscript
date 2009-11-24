@@ -5,6 +5,7 @@ def build(bld):
     noc.source = [
         'noc-header.cc',
         'noc-packet.cc',
+        'noc-node.cc',
         'noc-net-device.cc',
         'noc-channel.cc',
         'noc-routing-protocol.cc',
@@ -21,6 +22,7 @@ def build(bld):
     headers.source = [
         'noc-header.h',
         'noc-packet.h',
+        'noc-node.h',
         'noc-net-device.h',
         'noc-channel.h',
         'noc-routing-protocol.h',

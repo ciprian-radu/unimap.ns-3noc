@@ -480,7 +480,6 @@
 <target name="run hello-simulator" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 <buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
 <buildArguments>--run hello-simulator</buildArguments>
-<buildTarget/>
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 <runAllBuilders>true</runAllBuilders>
@@ -968,7 +967,6 @@
 <target name="run hello-simulator" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 <buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
 <buildArguments>--run hello-simulator</buildArguments>
-<buildTarget/>
 <stopOnError>true</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 <runAllBuilders>true</runAllBuilders>

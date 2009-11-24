@@ -20,6 +20,7 @@
 
 #include "xy-routing.h"
 #include "ns3/log.h"
+#include "noc-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("XyRouting");
 
@@ -48,18 +49,143 @@ namespace ns3
   }
 
   bool
-  XyRouting::RequestRoute(uint32_t sourceIface, const Mac48Address source,
-      const Mac48Address destination, Ptr<Packet> packet,
-      uint16_t protocolType, RouteReplyCallback routeReply)
+  XyRouting::RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
+      Ptr<Packet> packet, RouteReplyCallback routeReply)
   {
     NS_LOG_FUNCTION_NOARGS();
-    NS_LOG_DEBUG("source " << source << " destination " << destination << " packet (on next line)");
-    // FIXME print the packet only for DEBUG log level
-    packet->Print(std::clog);
-    std::clog << std::endl;
+    std::stringstream ss;
+    packet->Print(ss);
+    NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
+        << ", packet " << ss);
 
-    routeReply (true, packet, source, destination, protocolType);
+    NocHeader nocHeader;
+    packet->RemoveHeader (nocHeader);
+
+    uint8_t xDistance = nocHeader.GetXDistance ();
+    bool isEast = (xDistance & 0x08) != 0x08;
+    int xOffset = xDistance & 0x07;
+
+    uint8_t yDistance = nocHeader.GetYDistance ();
+    bool isSouth = (xDistance & 0x08) != 0x08;
+    int yOffset = yDistance & 0x07;
+
+    Direction xDirection = NONE;
+    Direction yDirection = NONE;
+    NS_LOG_DEBUG("xOffset " << xOffset);
+    NS_LOG_DEBUG("yOffset " << yOffset);
+    if (xOffset != 0) // note that we prefer the X direction
+      {
+        xOffset--;
+        if (isEast)
+          {
+            NS_ASSERT_MSG(xOffset >= 0, "A packet going to East will have the offset < 0");
+            xDirection = EAST;
+          }
+        else
+          {
+            NS_ASSERT_MSG(xOffset >= 0, "A packet going to West will have the offset < 0");
+            xDirection = WEST;
+          }
+        nocHeader.SetXDistance(isEast ? xOffset : xOffset | 0x08);
+      }
+    else
+      {
+        if (yOffset != 0)
+          {
+            yOffset--;
+            if (isSouth)
+              {
+                NS_ASSERT_MSG(yOffset >= 0, "A packet going to South will have the offset < 0");
+                yDirection = SOUTH;
+              }
+            else
+              {
+                NS_ASSERT_MSG(yOffset >= 0, "A packet going to North will have the offset < 0");
+                yDirection = NORTH;
+              }
+            nocHeader.SetYDistance(isSouth ? yOffset : yOffset | 0x08);
+          }
+      }
+    NS_LOG_DEBUG("new xDistance " << (int) nocHeader.GetXDistance());
+    NS_LOG_DEBUG("new yDistance " << (int) nocHeader.GetYDistance());
+
+    packet->AddHeader (nocHeader);
+
+    packet->Print(ss);
+    NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
+        << ", packet " << ss);
+
+    Ptr<NocNetDevice> sourceNetDevice;
+    Ptr<NocNetDevice> destinationNetDevice;
+    switch (xDirection) {
+      case EAST:
+        sourceNetDevice = GetNetDevice(source, EAST);
+        NS_ASSERT(sourceNetDevice != 0);
+        destinationNetDevice = GetNetDevice(destination, WEST);
+        NS_ASSERT(destinationNetDevice != 0);
+        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        break;
+      case WEST:
+        sourceNetDevice = GetNetDevice(source, WEST);
+        NS_ASSERT(sourceNetDevice != 0);
+        destinationNetDevice = GetNetDevice(destination, EAST);
+        NS_ASSERT(destinationNetDevice != 0);
+        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        break;
+      case NORTH:
+        NS_LOG_ERROR("A NORTH direction is not allowed as a horizontal direction");
+        break;
+      case SOUTH:
+        NS_LOG_ERROR("A SOUTH direction is not allowed as a horizontal direction");
+        break;
+      case NONE:
+      default:
+        break;
+    }
+
+    switch (yDirection) {
+      case NORTH:
+        sourceNetDevice = GetNetDevice(source, NORTH);
+        NS_ASSERT(sourceNetDevice != 0);
+        destinationNetDevice = GetNetDevice(destination, SOUTH);
+        NS_ASSERT(destinationNetDevice != 0);
+        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        break;
+      case SOUTH:
+        sourceNetDevice = GetNetDevice(source, SOUTH);
+        NS_ASSERT(sourceNetDevice != 0);
+        destinationNetDevice = GetNetDevice(destination, NORTH);
+        NS_ASSERT(destinationNetDevice != 0);
+        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        break;
+      case EAST:
+        NS_LOG_ERROR("A EAST direction is not allowed as a vertical direction");
+        break;
+      case WEST:
+        NS_LOG_ERROR("A WEST direction is not allowed as a vertical direction");
+        break;
+      case NONE:
+      default:
+        break;
+    }
+
     return true;
+  }
+
+  Ptr<NocNetDevice>
+  XyRouting::GetNetDevice(const Ptr<NocNode> node, const int routingDirection)
+  {
+    Ptr<NocNetDevice> netDevice = 0;
+    for (unsigned int i = 0; i < node->GetNDevices (); ++i)
+      {
+        Ptr<NocNetDevice> tmpNetDevice = node->GetDevice (i)->GetObject<NocNetDevice> ();
+        if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+          {
+            netDevice = tmpNetDevice;
+            break;
+          }
+      }
+    return netDevice;
   }
 
 } // namespace ns3
