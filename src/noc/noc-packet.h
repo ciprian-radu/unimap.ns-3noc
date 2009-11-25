@@ -36,6 +36,10 @@ namespace ns3
   private:
   };
 
+  std::ostream& operator<< (std::ostream& os, NocPacket &packet);
+
+  std::ostream& operator<< (std::ostream& os, Ptr<NocPacket> packet);
+
 } // namespace ns3
 
 #endif /* NOCPACKET_H_ */

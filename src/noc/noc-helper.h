@@ -25,6 +25,7 @@
 #include "ns3/net-device-container.h"
 #include "ns3/node-container.h"
 #include "ns3/ascii-writer.h"
+#include "ns3/object-factory.h"
 
 namespace ns3
 {
@@ -34,6 +35,11 @@ namespace ns3
   class NocHelper : public Object
   {
   public:
+
+    NocHelper ();
+
+    void
+    SetChannelAttribute (std::string n1, const AttributeValue &v1);
 
     /**
      * \param os output stream
@@ -125,6 +131,8 @@ namespace ns3
         Ptr<const Packet> packet);
 
     NetDeviceContainer m_devices;
+
+    ObjectFactory m_channelFactory;
   };
 
 } // namespace ns3

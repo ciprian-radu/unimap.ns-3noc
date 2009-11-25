@@ -59,16 +59,11 @@ main (int argc, char *argv[])
   }
 //  nodes.Create (numberOfNodes);
 
-  PacketSocketHelper packetSocket;
-  packetSocket.Install (nodes);
-
-  // create the shared medium used by all NoC devices.
-  NS_LOG_INFO ("Create channels.");
-  Ptr<NocChannel> channel = CreateObject<NocChannel> ();
-
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocHelper> noc = CreateObject<NocHelper> ();
+  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate (5000000)));
+  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
   NetDeviceContainer devs = noc->Install2DMesh (nodes, hSize);
 
   NS_LOG_INFO ("Create Applications.");
