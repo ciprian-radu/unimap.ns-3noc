@@ -56,7 +56,7 @@ namespace ns3
     std::stringstream ss;
     packet->Print(ss);
     NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
-        << ", packet " << ss);
+        << ", packet " << ss.str ());
 
     NocHeader nocHeader;
     packet->RemoveHeader (nocHeader);
@@ -113,7 +113,7 @@ namespace ns3
 
     packet->Print(ss);
     NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
-        << ", packet " << ss);
+        << ", packet " << ss.str ());
 
     Ptr<NocNetDevice> sourceNetDevice;
     Ptr<NocNetDevice> destinationNetDevice;

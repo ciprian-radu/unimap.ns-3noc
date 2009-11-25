@@ -51,7 +51,7 @@ namespace ns3
     NocNetDevice();
 
     void
-    Receive(Ptr<Packet> packet, uint16_t protocol, Mac48Address to, Mac48Address from);
+    Receive(Ptr<Packet> packet, Mac48Address to, Mac48Address from);
 
     void
     SetChannel(Ptr<NocChannel> channel);
@@ -147,6 +147,12 @@ namespace ns3
     DoDispose(void);
 
   private:
+
+    /**
+     * Device ID returned by the channel when this device is added to it
+     */
+    uint32_t m_deviceId;
+
     Ptr<NocChannel> m_channel;
 
     NetDevice::ReceiveCallback m_rxCallback;

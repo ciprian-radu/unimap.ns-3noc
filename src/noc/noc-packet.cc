@@ -35,4 +35,16 @@ namespace ns3
     AddHeader(nocHeader);
   }
 
+  std::ostream& operator<< (std::ostream& os, NocPacket &packet)
+  {
+    packet.Print (os);
+    return os;
+  }
+
+  std::ostream& operator<< (std::ostream& os, Ptr<NocPacket> packet)
+  {
+    packet->Print (os);
+    return os;
+  }
+
 } // namespace ns3

@@ -54,9 +54,9 @@ namespace ns3
   }
 
   void
-  NocNetDevice::Receive(Ptr<Packet> packet, uint16_t protocol,
-      Mac48Address to, Mac48Address from)
+  NocNetDevice::Receive(Ptr<Packet> packet, Mac48Address to, Mac48Address from)
   {
+    int protocol = 0; // TODO we use no more than one protocol for now
     NS_LOG_DEBUG("NoC net device with address " << m_address << " received a packet from " << from
         << " to send it to " << to);
 
@@ -92,6 +92,7 @@ namespace ns3
       {
         // this packet is intended for another net device
         // ask the node to deal with this (the node talks to the router)
+        NS_LOG_DEBUG ("The packet is intended for another net device.");
         Ptr<NocNode> nocNode = GetNode ()->GetObject<NocNode> ();
         Ptr<NocNetDevice> destinationNetDevice = GetNocHelper ()->FindNetDeviceByAddress (to);
         nocNode->Send (packet, destinationNetDevice->GetNode ()->GetObject<NocNode> ());
@@ -102,7 +103,7 @@ namespace ns3
   NocNetDevice::SetChannel(Ptr<NocChannel> channel)
   {
     m_channel = channel;
-    m_channel->Add(this);
+    m_deviceId = m_channel->Add(this);
   }
 
   void
@@ -197,11 +198,7 @@ namespace ns3
   {
     bool result;
 
-    Mac48Address to = Mac48Address::ConvertFrom(dest);
-    m_sendTrace (packet);
-
-    m_channel->Send(packet, protocolNumber, to, m_address, this);
-    result = true;
+    result = SendFrom (packet, m_address, dest, protocolNumber);
 
     return result;
   }
@@ -216,8 +213,14 @@ namespace ns3
     Mac48Address from = Mac48Address::ConvertFrom(source);
     m_sendTrace (packet);
 
-    m_channel->Send(packet, protocolNumber, to, from, this);
-    result = true;
+    if (m_channel->TransmitStart (packet, m_deviceId))
+      {
+        result = m_channel->Send (to, from);
+      }
+    else
+      {
+        result = false;
+      }
 
     return result;
   }

@@ -29,6 +29,17 @@ NS_LOG_COMPONENT_DEFINE ("NocHelper");
 namespace ns3
 {
 
+  NocHelper::NocHelper ()
+  {
+    m_channelFactory.SetTypeId ("ns3::NocChannel");
+  }
+
+  void
+  NocHelper::SetChannelAttribute (std::string n1, const AttributeValue &v1)
+  {
+    m_channelFactory.Set (n1, v1);
+  }
+
   void
   NocHelper::EnableAscii(std::ostream &os, uint32_t nodeid, uint32_t deviceid)
   {
@@ -102,7 +113,8 @@ namespace ns3
   NetDeviceContainer
   NocHelper::Install(NodeContainer nodes)
   {
-    return Install(nodes, CreateObject<NocChannel> ());
+    Ptr<NocChannel> channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
+    return Install(nodes, channel);
   }
 
   NetDeviceContainer
@@ -140,7 +152,7 @@ namespace ns3
 
         if (i == 0 || (i > 0 && (i + 1) % hSize != 0))
           {
-            channel = CreateObject<NocChannel> ();
+            channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
@@ -177,7 +189,7 @@ namespace ns3
               }
             if (i < nodes.GetN() - hSize)
               {
-                channel = CreateObject<NocChannel> ();
+                channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
