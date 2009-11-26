@@ -57,6 +57,7 @@ namespace ns3
     packet->Print(ss);
     NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
         << ", packet " << ss.str ());
+    ss.str("");
 
     NocHeader nocHeader;
     packet->RemoveHeader (nocHeader);
@@ -114,9 +115,12 @@ namespace ns3
     packet->Print(ss);
     NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
         << ", packet " << ss.str ());
+    ss.str("");
 
     Ptr<NocNetDevice> sourceNetDevice;
     Ptr<NocNetDevice> destinationNetDevice;
+    bool routeX = true;
+    bool routeY = false;
     switch (xDirection) {
       case EAST:
         sourceNetDevice = GetNetDevice(source, EAST);
@@ -134,12 +138,16 @@ namespace ns3
         break;
       case NORTH:
         NS_LOG_ERROR("A NORTH direction is not allowed as a horizontal direction");
+        routeX = false;
         break;
       case SOUTH:
         NS_LOG_ERROR("A SOUTH direction is not allowed as a horizontal direction");
+        routeX = false;
         break;
       case NONE:
+        routeX = false;
       default:
+        routeY = false;
         break;
     }
 
@@ -160,14 +168,23 @@ namespace ns3
         break;
       case EAST:
         NS_LOG_ERROR("A EAST direction is not allowed as a vertical direction");
+        routeY = false;
         break;
       case WEST:
         NS_LOG_ERROR("A WEST direction is not allowed as a vertical direction");
+        routeY = false;
         break;
       case NONE:
+        routeY = false;
       default:
+        routeY = false;
         break;
     }
+
+    if (!routeX && !routeY)
+      {
+        NS_LOG_WARN ("No routing needs to be performed!");
+      }
 
     return true;
   }

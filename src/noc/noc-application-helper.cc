@@ -29,8 +29,9 @@
 namespace ns3
 {
 
-  NocApplicationHelper::NocApplicationHelper(NetDeviceContainer devices, uint32_t hSize)
+  NocApplicationHelper::NocApplicationHelper(NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize)
   {
+    m_nodes = nodes;
     m_devices = devices;
     m_factory.SetTypeId("ns3::NocApplication");
     m_factory.Set("HSize", UintegerValue(hSize));
@@ -72,6 +73,7 @@ namespace ns3
   {
     Ptr<NocApplication> app = m_factory.Create<NocApplication> ();
     app->SetNetDeviceContainer(m_devices);
+    app->SetNodeContainer(m_nodes);
     node->AddApplication(app);
 
     return app;
