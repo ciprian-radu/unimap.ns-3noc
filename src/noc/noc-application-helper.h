@@ -43,10 +43,14 @@ namespace ns3
     /**
      * Create a NocApplicationHelper to make it easier to work with NoC applications
      *
+     * \param nodes the nodes from the NoC network
+     *
      * \param devices the net devices from the NoC network
      *
+     * \param hSize the horizontal size of the 2D mesh
+     *
      */
-    NocApplicationHelper(NetDeviceContainer devices, uint32_t hSize);
+    NocApplicationHelper(NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize);
 
     /**
      * Helper function used to set the underlying application attributes.
@@ -103,6 +107,7 @@ namespace ns3
     Address m_remote;
     ObjectFactory m_factory;
     NetDeviceContainer m_devices;
+    NodeContainer m_nodes;
   };
 
 } // namespace ns3
