@@ -62,7 +62,7 @@ namespace ns3
   bool
   NocChannel::TransmitStart(Ptr<Packet> p, uint32_t srcId)
   {
-    NS_LOG_FUNCTION (this << p << srcId);
+    NS_LOG_FUNCTION (p << srcId);
     NS_LOG_INFO ("Packet UID is " << p->GetUid ());
 
     if (m_state != IDLE)
@@ -107,7 +107,7 @@ namespace ns3
   void
   NocChannel::TransmitEnd(Mac48Address to, Ptr<NocNetDevice> destNocNetDevice, Mac48Address from)
   {
-    NS_LOG_FUNCTION (this << m_currentPkt);
+    NS_LOG_FUNCTION (m_currentPkt);
     NS_LOG_INFO ("Packet UID is " << m_currentPkt->GetUid ());
     NS_ASSERT (m_state == PROPAGATING);
     NS_LOG_LOGIC ("The channel is calling the Receive method of the net device");
