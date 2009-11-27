@@ -42,6 +42,48 @@ namespace ns3
     SetChannelAttribute (std::string n1, const AttributeValue &v1);
 
     /**
+     * Set the type of input queue to create and associate to each
+     * NocNetDevice created through NocHelper::Install.
+     *
+     * \param type the type of input queue
+     * \param n1 the name of the attribute to set on the queue
+     * \param v1 the value of the attribute to set on the queue
+     * \param n2 the name of the attribute to set on the queue
+     * \param v2 the value of the attribute to set on the queue
+     * \param n3 the name of the attribute to set on the queue
+     * \param v3 the value of the attribute to set on the queue
+     * \param n4 the name of the attribute to set on the queue
+     * \param v4 the value of the attribute to set on the queue
+     *
+     */
+    void SetInQueue (std::string type,
+                     std::string n1 = "", const AttributeValue &v1 = EmptyAttributeValue (),
+                     std::string n2 = "", const AttributeValue &v2 = EmptyAttributeValue (),
+                     std::string n3 = "", const AttributeValue &v3 = EmptyAttributeValue (),
+                     std::string n4 = "", const AttributeValue &v4 = EmptyAttributeValue ());
+
+    /**
+     * Set the type of output queue to create and associate to each
+     * NocNetDevice created through NocHelper::Install.
+     *
+     * \param type the type of output queue
+     * \param n1 the name of the attribute to set on the queue
+     * \param v1 the value of the attribute to set on the queue
+     * \param n2 the name of the attribute to set on the queue
+     * \param v2 the value of the attribute to set on the queue
+     * \param n3 the name of the attribute to set on the queue
+     * \param v3 the value of the attribute to set on the queue
+     * \param n4 the name of the attribute to set on the queue
+     * \param v4 the value of the attribute to set on the queue
+     *
+     */
+    void SetOutQueue (std::string type,
+                     std::string n1 = "", const AttributeValue &v1 = EmptyAttributeValue (),
+                     std::string n2 = "", const AttributeValue &v2 = EmptyAttributeValue (),
+                     std::string n3 = "", const AttributeValue &v3 = EmptyAttributeValue (),
+                     std::string n4 = "", const AttributeValue &v4 = EmptyAttributeValue ());
+
+    /**
      * \param os output stream
      * \param nodeid the id of the node to generate ascii output for.
      * \param deviceid the id of the device to generate ascii output for.
@@ -133,6 +175,10 @@ namespace ns3
     NetDeviceContainer m_devices;
 
     ObjectFactory m_channelFactory;
+
+    ObjectFactory m_inQueueFactory;
+
+    ObjectFactory m_outQueueFactory;
   };
 
 } // namespace ns3

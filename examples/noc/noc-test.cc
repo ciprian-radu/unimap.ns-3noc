@@ -73,9 +73,10 @@ main (int argc, char *argv[])
   apps.Start (Seconds (0.0));
   apps.Stop (Seconds (1.0));
 
-//  apps = nocAppHelper.Install (nodes.Get (15));
-//  apps.Start (Seconds (0.0));
-//  apps.Stop (Seconds (2.0));
+  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::BIT_COMPLEMENT));
+  apps = nocAppHelper.Install (nodes.Get (1));
+  apps.Start (Seconds (0.0));
+  apps.Stop (Seconds (2.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-test.tr file

@@ -32,12 +32,42 @@ namespace ns3
   NocHelper::NocHelper ()
   {
     m_channelFactory.SetTypeId ("ns3::NocChannel");
+    m_inQueueFactory.SetTypeId ("ns3::DropTailQueue");
+    m_outQueueFactory.SetTypeId ("ns3::DropTailQueue");
   }
 
   void
   NocHelper::SetChannelAttribute (std::string n1, const AttributeValue &v1)
   {
     m_channelFactory.Set (n1, v1);
+  }
+
+  void
+  NocHelper::SetInQueue (std::string type,
+                         std::string n1, const AttributeValue &v1,
+                         std::string n2, const AttributeValue &v2,
+                         std::string n3, const AttributeValue &v3,
+                         std::string n4, const AttributeValue &v4)
+  {
+    m_inQueueFactory.SetTypeId (type);
+    m_inQueueFactory.Set (n1, v1);
+    m_inQueueFactory.Set (n2, v2);
+    m_inQueueFactory.Set (n3, v3);
+    m_inQueueFactory.Set (n4, v4);
+  }
+
+  void
+  NocHelper::SetOutQueue (std::string type,
+                          std::string n1, const AttributeValue &v1,
+                          std::string n2, const AttributeValue &v2,
+                          std::string n3, const AttributeValue &v3,
+                          std::string n4, const AttributeValue &v4)
+  {
+    m_outQueueFactory.SetTypeId (type);
+    m_outQueueFactory.Set (n1, v1);
+    m_outQueueFactory.Set (n2, v2);
+    m_outQueueFactory.Set (n3, v3);
+    m_outQueueFactory.Set (n4, v4);
   }
 
   void
@@ -94,6 +124,8 @@ namespace ns3
         Ptr<NocNetDevice> dev = CreateObject<NocNetDevice> ();
         dev->SetAddress(Mac48Address::Allocate());
         dev->SetChannel(channel);
+        Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+        dev->SetInQueue (inQueue);
         (*i)->AddDevice(dev);
 
         Ptr<NocNode> nocNode = (*i)->GetObject<NocNode> ();
@@ -147,6 +179,9 @@ namespace ns3
             Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
+            // attach input buffering (we don't use output buffering for the moment)
+            Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+            netDevice->SetInQueue (inQueue);
             nodes.Get(i)->AddDevice(netDevice);
           }
 
@@ -160,6 +195,9 @@ namespace ns3
             Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
+            // attach input buffering (we don't use output buffering for the moment)
+            Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+            netDevice->SetInQueue (inQueue);
             nodes.Get(i)->AddDevice(netDevice);
           }
         else
@@ -185,6 +223,9 @@ namespace ns3
                 Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
+                // attach input buffering (we don't use output buffering for the moment)
+                Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+                netDevice->SetInQueue (inQueue);
                 nodes.Get(i + j)->AddDevice(netDevice);
               }
             if (i < nodes.GetN() - hSize)
@@ -197,6 +238,9 @@ namespace ns3
                 Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
+                // attach input buffering (we don't use output buffering for the moment)
+                Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+                netDevice->SetInQueue (inQueue);
                 nodes.Get(i + j)->AddDevice(netDevice);
                 columnChannels[j] = channel;
               }

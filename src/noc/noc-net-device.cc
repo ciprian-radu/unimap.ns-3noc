@@ -24,6 +24,7 @@
 #include "noc-packet.h"
 #include "ns3/trace-source-accessor.h"
 #include "ns3/log.h"
+#include "ns3/pointer.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocNetDevice");
 
@@ -41,9 +42,19 @@ namespace ns3
         .AddTraceSource ("Send",
                  "Trace source indicating a packet has been sent by this device",
                  MakeTraceSourceAccessor (&NocNetDevice::m_sendTrace))
-         .AddTraceSource ("Receive",
+        .AddTraceSource ("Receive",
                  "Trace source indicating a packet has been received by this device",
                  MakeTraceSourceAccessor (&NocNetDevice::m_receiveTrace))
+        .AddAttribute ("InQueue",
+                 "A queue to use as the input channel buffer of this net device.",
+                 PointerValue (),
+                 MakePointerAccessor (&NocNetDevice::m_inQueue),
+                 MakePointerChecker<Queue> ())
+        .AddAttribute ("OutQueue",
+                 "A queue to use as the input channel buffer of this net device.",
+                 PointerValue (),
+                 MakePointerAccessor (&NocNetDevice::m_outQueue),
+                 MakePointerChecker<Queue> ())
         ;
     return tid;
   }
@@ -51,6 +62,12 @@ namespace ns3
   NocNetDevice::NocNetDevice() :
     m_channel(0), m_node(0), m_mtu(0xffff), m_ifIndex(0), m_nocHelper(0), m_routingDirection(0)
   {
+  }
+
+  NocNetDevice::~NocNetDevice()
+  {
+    m_inQueue = 0;
+    m_outQueue = 0;
   }
 
   void
@@ -104,6 +121,34 @@ namespace ns3
   {
     m_channel = channel;
     m_deviceId = m_channel->Add(this);
+  }
+
+  void
+  NocNetDevice::SetInQueue(Ptr<Queue> inQueue)
+  {
+    NS_LOG_FUNCTION (inQueue);
+    m_inQueue = inQueue;
+  }
+
+  void
+  NocNetDevice::SetOutQueue(Ptr<Queue> outQueue)
+  {
+    NS_LOG_FUNCTION (outQueue);
+    m_outQueue = outQueue;
+  }
+
+  Ptr<Queue>
+  NocNetDevice::GetInQueue() const
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    return m_inQueue;
+  }
+
+  Ptr<Queue>
+  NocNetDevice::GetOutQueue() const
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    return m_outQueue;
   }
 
   void
@@ -213,12 +258,58 @@ namespace ns3
     Mac48Address from = Mac48Address::ConvertFrom(source);
     m_sendTrace (packet);
 
-    if (m_channel->TransmitStart (packet, m_deviceId))
+    Ptr<Packet> packetToSend;
+    if (m_inQueue != 0)
       {
-        result = m_channel->Send (to, from);
+        bool enqueued = m_inQueue->Enqueue (packet);
+        if (!enqueued)
+          {
+            NS_LOG_LOGIC ("Cannot buffer packet " << packet
+                << " in the channel input buffer of the NoC net device with address " << GetAddress ());
+          }
+        else
+          {
+            NS_LOG_DEBUG ("Queued packet " << packet << " in the input queue of NoC net device with address "
+                << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
+            m_pktSrcDestMap.insert(std::pair<Ptr<const Packet>,SrcDest> (m_inQueue->Peek (), SrcDest (from, to)));
+          }
+        // a copy of the packet from the in queue is required
+        // (because we cannot alter the contents of the queue and we need to change the packet's header)
+        packetToSend = m_inQueue->Peek ()->Copy ();
+        NS_LOG_DEBUG("Packet " << packetToSend << " is a copy of packet " << m_inQueue->Peek ());
+
+        SrcDest srcDest = m_pktSrcDestMap[m_inQueue->Peek ()];
+        from = srcDest.GetSrc();
+        to = srcDest.GetDest();
       }
     else
       {
+        packetToSend = packet;
+      }
+
+    bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
+    if (canSend)
+      {
+        result = m_channel->Send (to, from);
+        NS_LOG_LOGIC("Packet " << packet << " was sent to the NoC net device with address " << to);
+        if (m_inQueue != 0)
+          {
+            Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
+            if (dequeuedPacket != 0)
+              {
+                m_pktSrcDestMap.erase(dequeuedPacket);
+              }
+            NS_LOG_DEBUG ("Dequeued packet " << packet << " from the input queue of NoC net device with address "
+                << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
+          }
+      }
+    else
+      {
+        NS_LOG_LOGIC("Cannot send packet " << packet << " because the channel is busy");
+        if (m_inQueue != 0)
+          {
+            NS_LOG_LOGIC("However, the packet was queued (will retry next time)");
+          }
         result = false;
       }
 

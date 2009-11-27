@@ -29,6 +29,8 @@
 #include "ns3/traced-callback.h"
 #include "noc-routing-protocol.h"
 #include "noc-helper.h"
+#include "ns3/queue.h"
+#include <map>
 
 namespace ns3
 {
@@ -50,11 +52,40 @@ namespace ns3
 
     NocNetDevice();
 
+    virtual
+    ~NocNetDevice();
+
     void
     Receive(Ptr<Packet> packet, Mac48Address to, Mac48Address from);
 
     void
     SetChannel(Ptr<NocChannel> channel);
+
+    /**
+     * Attach an input queue to this NoC net device.
+     *
+     * The NoC net device "owns" a queue.  This queue may be set by higher
+     * level topology objects to implement a particular queueing method such as
+     * DropTail or RED.
+     *
+     * \see Queue
+     * \see DropTailQueue
+     * \param queue a Ptr to the queue for being assigned to the device.
+     */
+    void SetInQueue (Ptr<Queue> inQueue);
+
+    /**
+     * Attach an output queue to this NoC net device.
+     *
+     * The NoC net device "owns" a queue.  This queue may be set by higher
+     * level topology objects to implement a particular queueing method such as
+     * DropTail or RED.
+     *
+     * \see Queue
+     * \see DropTailQueue
+     * \param queue a Ptr to the queue for being assigned to the device.
+     */
+    void SetOutQueue (Ptr<Queue> outQueue);
 
     // inherited from NetDevice base class.
     virtual void
@@ -143,8 +174,29 @@ namespace ns3
     SupportsSendFrom(void) const;
 
   protected:
+
     virtual void
     DoDispose(void);
+
+    /**
+     * Get the attached input queue.
+     *
+     * This method is provided for any derived class that may need to get
+     * direct access to the underlying queue.
+     *
+     * \return a pointer to the queue.
+     */
+    Ptr<Queue> GetInQueue () const;
+
+    /**
+     * Get the attached output queue.
+     *
+     * This method is provided for any derived class that may need to get
+     * direct access to the underlying queue.
+     *
+     * \return a pointer to the queue.
+     */
+    Ptr<Queue> GetOutQueue () const;
 
   private:
 
@@ -154,6 +206,59 @@ namespace ns3
     uint32_t m_deviceId;
 
     Ptr<NocChannel> m_channel;
+
+    /**
+     * The Queue which this NoC net device uses as a packet sink (channel input buffering).
+     *
+     * \see class Queue
+     * \see class DropTailQueue
+     */
+    Ptr<Queue> m_inQueue;
+
+    class SrcDest
+    {
+    private:
+      Mac48Address m_src;
+
+      Mac48Address m_dest;
+
+    public:
+
+      SrcDest ()
+      {
+        m_src = 0;
+        m_dest = 0;
+      }
+
+      SrcDest (Mac48Address src, Mac48Address dest)
+      {
+        m_src = src;
+        m_dest = dest;
+      }
+
+      Mac48Address
+      GetSrc() const
+      {
+        return m_src;
+      }
+
+      Mac48Address
+      GetDest() const
+      {
+        return m_dest;
+      }
+
+    };
+
+    std::map<Ptr<const Packet>,SrcDest> m_pktSrcDestMap;
+
+    /**
+     * The Queue which this NoC net device uses as a packet source (channel output buffering).
+     *
+     * \see class Queue
+     * \see class DropTailQueue
+     */
+    Ptr<Queue> m_outQueue; // TODO we don't use output channel buffering for the moment
 
     NetDevice::ReceiveCallback m_rxCallback;
 
