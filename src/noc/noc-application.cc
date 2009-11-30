@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <bitset>
 #include "stdio.h"
+#include "ns3/random-variable.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocApplication");
 
@@ -49,6 +50,9 @@ namespace ns3
   {
     switch (t)
       {
+        case UNIFORM_RANDOM:
+          return "UniformRandom";
+
         case BIT_MATRIX_TRANSPOSE:
           return "BitMatrixTranspose";
 
@@ -91,6 +95,7 @@ namespace ns3
                 "The traffic pattern which will be used by this application",
                 EnumValue (BIT_COMPLEMENT), MakeEnumAccessor (&NocApplication::m_trafficPattern),
                 MakeEnumChecker (BIT_MATRIX_TRANSPOSE, TrafficPatternToString(BIT_MATRIX_TRANSPOSE),
+                                 UNIFORM_RANDOM, TrafficPatternToString(UNIFORM_RANDOM),
                                  BIT_COMPLEMENT, TrafficPatternToString(BIT_COMPLEMENT),
                                  BIT_REVERSE, TrafficPatternToString(BIT_REVERSE)))
             ;
@@ -258,6 +263,18 @@ namespace ns3
 
     switch (m_trafficPattern)
       {
+        case UNIFORM_RANDOM:
+          {
+            UniformVariable uniformVariable;
+            destinationX = uniformVariable.GetInteger(0, m_hSize - 1);
+            NS_LOG_DEBUG("random destination x = " << destinationX);
+            NS_ASSERT(destinationX < m_hSize);
+            destinationY = uniformVariable.GetInteger(0, m_nodes.GetN() / m_hSize - 1);
+            NS_LOG_DEBUG("random destination y = " << destinationY);
+            NS_ASSERT(destinationY < m_nodes.GetN() / m_hSize);
+          }
+          break;
+
         case BIT_MATRIX_TRANSPOSE:
           destinationX = MatrixTransposeBits(sourceX, sizeX);
           NS_ASSERT(destinationX < m_hSize);

@@ -69,8 +69,8 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Create Applications.");
   NocApplicationHelper nocAppHelper (nodes, devs, hSize);
   nocAppHelper.SetAttribute("DataRate", DataRateValue(DataRate("50kb/s")));
-  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::BIT_MATRIX_TRANSPOSE));
-  ApplicationContainer apps = nocAppHelper.Install (nodes.Get (7));
+  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::UNIFORM_RANDOM));
+  ApplicationContainer apps = nocAppHelper.Install (nodes.Get (0));
   apps.Start (Seconds (0.0));
   apps.Stop (Seconds (1.0));
 

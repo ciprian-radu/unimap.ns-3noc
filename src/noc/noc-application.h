@@ -45,7 +45,7 @@ public:
 
   enum TrafficPattern
     {
-      BIT_MATRIX_TRANSPOSE, BIT_COMPLEMENT, BIT_REVERSE
+      UNIFORM_RANDOM, BIT_MATRIX_TRANSPOSE, BIT_COMPLEMENT, BIT_REVERSE
     };
 
   static std::string TrafficPatternToString(TrafficPattern t);
