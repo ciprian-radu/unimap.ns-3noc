@@ -49,6 +49,9 @@ namespace ns3
   {
     switch (t)
       {
+        case BIT_MATRIX_TRANSPOSE:
+          return "BitMatrixTranspose";
+
         case BIT_COMPLEMENT:
           return "BitComplement";
 
@@ -74,7 +77,7 @@ namespace ns3
                 " The vertical size of the 2D mesh is given by number of nodes", UintegerValue(4),
                 MakeUintegerAccessor(&NocApplication::m_hSize),
                 MakeUintegerChecker<uint32_t> (2))
-            .AddAttribute("PacketSize", "The size of packets sent (in Bytes)", UintegerValue(512),
+            .AddAttribute("PacketSize", "The size of packets sent (in Bytes)", UintegerValue(8 + 512), // header + payload
                 MakeUintegerAccessor(&NocApplication::m_pktSize),
                 MakeUintegerChecker<uint32_t> (1))
             .AddAttribute("MaxBytes",
@@ -87,7 +90,8 @@ namespace ns3
             .AddAttribute("TrafficPattern",
                 "The traffic pattern which will be used by this application",
                 EnumValue (BIT_COMPLEMENT), MakeEnumAccessor (&NocApplication::m_trafficPattern),
-                MakeEnumChecker (BIT_COMPLEMENT, TrafficPatternToString(BIT_COMPLEMENT),
+                MakeEnumChecker (BIT_MATRIX_TRANSPOSE, TrafficPatternToString(BIT_MATRIX_TRANSPOSE),
+                                 BIT_COMPLEMENT, TrafficPatternToString(BIT_COMPLEMENT),
                                  BIT_REVERSE, TrafficPatternToString(BIT_REVERSE)))
             ;
     return tid;
@@ -205,7 +209,7 @@ namespace ns3
         uint32_t bits = m_pktSize * 8 - m_residualBits;
         NS_LOG_LOGIC ("bits = " << bits);
         Time nextTime(Seconds(bits / static_cast<double> (m_dataRate.GetBitRate()))); // Time till next packet
-        NS_LOG_LOGIC ("nextTime = " << nextTime);
+        NS_LOG_LOGIC ("nextTime = " << nextTime << " (packet size = " << bits << " data rate = " << m_dataRate.GetBitRate() << ")");
         m_sendEvent = Simulator::Schedule(nextTime, &NocApplication::SendPacket, this);
       }
     else
@@ -254,6 +258,13 @@ namespace ns3
 
     switch (m_trafficPattern)
       {
+        case BIT_MATRIX_TRANSPOSE:
+          destinationX = MatrixTransposeBits(sourceX, sizeX);
+          NS_ASSERT(destinationX < m_hSize);
+          destinationY = MatrixTransposeBits(sourceY, sizeY);
+          NS_ASSERT(destinationY < m_nodes.GetN() / m_hSize);
+          break;
+
         case BIT_COMPLEMENT:
           destinationX = ComplementBits(sourceX, sizeX);
           NS_ASSERT(destinationX < m_hSize);
@@ -313,6 +324,44 @@ namespace ns3
   }
 
   uint32_t
+  NocApplication::MatrixTransposeBits (uint32_t number)
+  {
+    NS_LOG_FUNCTION (number);
+
+    std::bitset<32> b(number);
+    double log = 0;
+    if (number > 0)
+      {
+        log = log2(number);
+      }
+
+    return MatrixTransposeBits(number, floor (log + 1));
+  }
+
+  uint32_t
+  NocApplication::MatrixTransposeBits (uint32_t number, uint8_t size)
+  {
+    NS_LOG_FUNCTION (number << (int) size);
+    NS_ASSERT_MSG(size >= 1 && size <= 32, "The size must be <= 1 and <= 32");
+
+    std::bitset<32> b(number);
+    std::string binary(b.to_string().substr(32 - size));
+    std::bitset<32> bits(binary);
+    for (unsigned int i = 0; i < binary.size() / 2; ++i)
+      {
+      bool leftBit = bits.test (i);
+      bool rightBit = bits.test (binary.size () / 2 + i);
+      bits.set (i, rightBit);
+      bits.set (binary.size () / 2 + i, leftBit);
+      }
+    uint32_t transposedNumber = bits.to_ulong();
+    NS_LOG_DEBUG(number << " " << b.to_string().substr(32 - size) << " "
+        << transposedNumber << " " << bits.to_string());
+
+    return transposedNumber;
+  }
+
+  uint32_t
   NocApplication::ComplementBits (uint32_t number)
   {
     NS_LOG_FUNCTION (number);
@@ -323,23 +372,14 @@ namespace ns3
       {
         log = log2(number);
       }
-    std::string binary(b.to_string().substr(32 - floor(log + 1)));
-    std::bitset<32> bits(binary);
-    for (unsigned int i = 0; i < binary.size(); ++i)
-      {
-        bits.flip(i);
-      }
-    uint32_t reversedNumber = bits.to_ulong();
-    NS_LOG_DEBUG(number << " " << b.to_string().substr(32 - floor(log + 1)) << " "
-        << reversedNumber << " " << bits.to_string());
 
-    return reversedNumber;
+    return ComplementBits(number, floor (log + 1));
   }
 
   uint32_t
   NocApplication::ComplementBits (uint32_t number, uint8_t size)
   {
-    NS_LOG_FUNCTION (number);
+    NS_LOG_FUNCTION (number << (int) size);
     NS_ASSERT_MSG(size >= 1 && size <= 32, "The size must be <= 1 and <= 32");
 
     std::bitset<32> b(number);
@@ -367,26 +407,14 @@ namespace ns3
       {
         log = log2(number);
       }
-    std::string binary(b.to_string().substr(32 - floor(log + 1)));
-    std::bitset<32> bits(binary);
-    for (unsigned int i = 0; i < binary.size() / 2; ++i)
-      {
-        bool leftBit = bits.test (i);
-        bool rightBit = bits.test (binary.size () - i - 1);
-        bits.set (i, rightBit);
-        bits.set (binary.size () - i - 1, leftBit);
-      }
-    uint32_t reversedNumber = bits.to_ulong();
-    NS_LOG_DEBUG(number << " " << b.to_string().substr(32 - floor(log + 1)) << " "
-        << reversedNumber << " " << bits.to_string());
 
-    return reversedNumber;
+    return ReverseBits (number, floor (log + 1));
   }
 
   uint32_t
   NocApplication::ReverseBits (uint32_t number, uint8_t size)
   {
-    NS_LOG_FUNCTION (number);
+    NS_LOG_FUNCTION (number << (int) size);
     NS_ASSERT_MSG(size >= 1 && size <= 32, "The size must be <= 1 and <= 32");
 
     std::bitset<32> b(number);

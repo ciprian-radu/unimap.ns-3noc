@@ -45,7 +45,7 @@ public:
 
   enum TrafficPattern
     {
-      BIT_COMPLEMENT, BIT_REVERSE
+      BIT_MATRIX_TRANSPOSE, BIT_COMPLEMENT, BIT_REVERSE
     };
 
   static std::string TrafficPatternToString(TrafficPattern t);
@@ -104,6 +104,31 @@ private:
   void ScheduleStartEvent();
 
   void Ignore(Ptr<Socket>);
+
+  /**
+   * \brief Represents a given positive integer number in base 2 and transposes its bits
+   * (the second half part of the bits are put in front of the first half).
+   * The number must be represented on maximum 32 bits.
+   *
+   * \param the number
+   *
+   * \return the number which is obtained by transposing the bits of the given number
+   */
+  static uint32_t MatrixTransposeBits (uint32_t number);
+
+  /**
+   * \brief Represents a given positive integer number in base 2 and transposes its bits
+   * (the second half part of the bits are put in front of the first half).
+   * The number must be represented on maximum 32 bits.
+   * Additionally, you can specify how many bits to use for the binary representation.
+   *
+   * \param number the number
+   *
+   * \param size the size (will be checked to be >= 1 and <= 32)
+   *
+   * \return the number which is obtained by transposing the bits of the given number
+   */
+  static uint32_t MatrixTransposeBits (uint32_t number, uint8_t size);
 
   /**
    * \brief Represents a given positive integer number in base 2 and complements its bits

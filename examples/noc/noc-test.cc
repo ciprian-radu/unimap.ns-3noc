@@ -68,8 +68,9 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Create Applications.");
   NocApplicationHelper nocAppHelper (nodes, devs, hSize);
-  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::BIT_REVERSE));
-  ApplicationContainer apps = nocAppHelper.Install (nodes.Get (1));
+  nocAppHelper.SetAttribute("DataRate", DataRateValue(DataRate("50kb/s")));
+  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::BIT_MATRIX_TRANSPOSE));
+  ApplicationContainer apps = nocAppHelper.Install (nodes.Get (7));
   apps.Start (Seconds (0.0));
   apps.Stop (Seconds (1.0));
 
@@ -89,6 +90,10 @@ main (int argc, char *argv[])
   Simulator::Run ();
   Simulator::Destroy ();
   NS_LOG_INFO ("Done.");
+  // TODO The simulation is not quite done. Unsent packets could still in the buffers.
+  // The buffers should be emptied at the end of the simulation.
+  // Note that the simulation is kept in motion by the injection of packets in the Noc
+  // (done by the applications)
 
   os.close();
 
