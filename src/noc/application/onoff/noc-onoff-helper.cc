@@ -17,47 +17,43 @@
  *
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
-#include "noc-application-helper.h"
-#include "noc-application.h"
+#include "noc-onoff-helper.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/packet-socket-address.h"
-#include "ns3/net-device-container.h"
 #include "ns3/string.h"
-#include "ns3/uinteger.h"
 #include "ns3/names.h"
 
 namespace ns3
 {
 
-  NocApplicationHelper::NocApplicationHelper(NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize)
+  NocOnOffHelper::NocOnOffHelper(std::string protocol, Address address)
   {
-    m_nodes = nodes;
-    m_devices = devices;
-    m_factory.SetTypeId("ns3::NocApplication");
-    m_factory.Set("HSize", UintegerValue(hSize));
+    m_factory.SetTypeId("ns3::NocOnOffApplication");
+    m_factory.Set("Protocol", StringValue(protocol));
+    m_factory.Set("Remote", AddressValue(address));
   }
 
   void
-  NocApplicationHelper::SetAttribute(std::string name, const AttributeValue &value)
+  NocOnOffHelper::SetAttribute(std::string name, const AttributeValue &value)
   {
     m_factory.Set(name, value);
   }
 
   ApplicationContainer
-  NocApplicationHelper::Install(Ptr<Node> node) const
+  NocOnOffHelper::Install(Ptr<Node> node) const
   {
     return ApplicationContainer(InstallPriv(node));
   }
 
   ApplicationContainer
-  NocApplicationHelper::Install(std::string nodeName) const
+  NocOnOffHelper::Install(std::string nodeName) const
   {
     Ptr<Node> node = Names::Find<Node>(nodeName);
     return ApplicationContainer(InstallPriv(node));
   }
 
   ApplicationContainer
-  NocApplicationHelper::Install(NodeContainer c) const
+  NocOnOffHelper::Install(NodeContainer c) const
   {
     ApplicationContainer apps;
     for (NodeContainer::Iterator i = c.Begin(); i != c.End(); ++i)
@@ -69,11 +65,9 @@ namespace ns3
   }
 
   Ptr<Application>
-  NocApplicationHelper::InstallPriv(Ptr<Node> node) const
+  NocOnOffHelper::InstallPriv(Ptr<Node> node) const
   {
-    Ptr<NocApplication> app = m_factory.Create<NocApplication> ();
-    app->SetNetDeviceContainer(m_devices);
-    app->SetNodeContainer(m_nodes);
+    Ptr<Application> app = m_factory.Create<Application> ();
     node->AddApplication(app);
 
     return app;

@@ -21,8 +21,8 @@
 #ifndef XYROUTING_H_
 #define XYROUTING_H_
 
-#include "noc-routing-protocol.h"
-#include "noc-net-device.h"
+#include "ns3/noc-routing-protocol.h"
+#include "ns3/noc-net-device.h"
 
 namespace ns3
 {

@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    routing = bld.create_ns3_module('routing', ['core', 'simulator'])
+    routing.source = [
+        'noc-routing-protocol.cc',              
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'routing'
+    headers.source = [
+        'noc-routing-protocol.h',              
+        ]
+

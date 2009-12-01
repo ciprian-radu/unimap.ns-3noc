@@ -25,10 +25,10 @@
 #include "ns3/mac48-address.h"
 #include <stdint.h>
 #include <string>
-#include "noc-channel.h"
+#include "ns3/noc-channel.h"
 #include "ns3/traced-callback.h"
-#include "noc-routing-protocol.h"
-#include "noc-helper.h"
+#include "ns3/noc-routing-protocol.h"
+#include "ns3/noc-helper.h"
 #include "ns3/queue.h"
 #include <map>
 

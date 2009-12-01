@@ -34,7 +34,9 @@
 #include "ns3/simulator-module.h"
 #include "ns3/node-module.h"
 #include "ns3/helper-module.h"
-#include "ns3/noc-module.h"
+#include "ns3/noc-application.h"
+#include "ns3/noc-application-helper.h"
+#include "ns3/noc-node.h"
 #include "ns3/mobility-helper.h"
 
 using namespace ns3;
