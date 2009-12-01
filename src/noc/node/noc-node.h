@@ -22,9 +22,9 @@
 #define NOCNODE_H_
 
 #include "ns3/node.h"
-#include "noc-packet.h"
-#include "noc-net-device.h"
-#include "noc-routing-protocol.h"
+#include "ns3/noc-packet.h"
+#include "ns3/noc-net-device.h"
+#include "ns3/noc-routing-protocol.h"
 
 namespace ns3
 {

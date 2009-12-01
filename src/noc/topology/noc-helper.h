@@ -21,7 +21,7 @@
 #ifndef NOCHELPER_H_
 #define NOCHELPER_H_
 
-#include "noc-channel.h"
+#include "ns3/noc-channel.h"
 #include "ns3/net-device-container.h"
 #include "ns3/node-container.h"
 #include "ns3/ascii-writer.h"

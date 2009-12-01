@@ -26,8 +26,8 @@
 #include "ns3/data-rate.h"
 #include "ns3/mac48-address.h"
 #include <vector>
-#include "noc-packet.h"
-#include "noc-net-device.h"
+#include "ns3/noc-packet.h"
+#include "ns3/noc-net-device.h"
 
 namespace ns3
 {

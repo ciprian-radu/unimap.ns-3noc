@@ -19,8 +19,8 @@
  */
 
 #include "noc-channel.h"
-#include "noc-net-device.h"
-#include "noc-packet.h"
+#include "ns3/noc-net-device.h"
+#include "ns3/noc-packet.h"
 #include "ns3/simulator.h"
 #include "ns3/log.h"
 #include "ns3/node.h"

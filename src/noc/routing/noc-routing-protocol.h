@@ -23,9 +23,9 @@
 
 #include "ns3/object.h"
 #include "ns3/mac48-address.h"
-#include "noc-packet.h"
-#include "noc-node.h"
-#include "noc-net-device.h"
+#include "ns3/noc-packet.h"
+#include "ns3/noc-node.h"
+#include "ns3/noc-net-device.h"
 
 namespace ns3
 {

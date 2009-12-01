@@ -1,8 +1,8 @@
 ## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
 def build(bld):
-    obj = bld.create_ns3_program('noc-packet-socket', ['noc', 'internet-stack'])
+    obj = bld.create_ns3_program('noc-packet-socket', ['noc', 'onoff'])
     obj.source = 'noc-packet-socket.cc'
 
-    obj = bld.create_ns3_program('noc-test', ['noc', 'internet-stack'])
+    obj = bld.create_ns3_program('noc-test', ['noc', 'generic'])
     obj.source = 'noc-test.cc'

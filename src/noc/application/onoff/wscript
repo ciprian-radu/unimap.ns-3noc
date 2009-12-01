@@ -1,0 +1,16 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    noc = bld.create_ns3_module('onoff', ['core', 'simulator', 'noc'])
+    noc.source = [
+        'noc-onoff-application.cc',
+        'noc-onoff-helper.cc',
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'onoff'
+    headers.source = [
+        'noc-onoff-application.h',
+        'noc-onoff-helper.h',
+        ]
+

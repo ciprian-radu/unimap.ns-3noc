@@ -22,6 +22,7 @@
 #include "ns3/log.h"
 #include "ns3/address.h"
 #include "ns3/node.h"
+#include "ns3/noc-node.h"
 #include "ns3/nstime.h"
 #include "ns3/data-rate.h"
 #include "ns3/simulator.h"

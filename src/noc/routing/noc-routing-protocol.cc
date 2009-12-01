@@ -20,7 +20,7 @@
 
 #include "ns3/log.h"
 #include "noc-routing-protocol.h"
-#include "noc-node.h"
+#include "ns3/noc-node.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocRoutingProtocol");
 

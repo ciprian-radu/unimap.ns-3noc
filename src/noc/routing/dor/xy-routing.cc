@@ -20,7 +20,7 @@
 
 #include "xy-routing.h"
 #include "ns3/log.h"
-#include "noc-header.h"
+#include "ns3/noc-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("XyRouting");
 

@@ -1,36 +1,20 @@
 ## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
-def build(bld):
-    noc = bld.create_ns3_module('noc', ['core', 'simulator'])
+def build(bld):    
+    noc = bld.create_ns3_module('noc', ['core', 
+                                        'simulator', 
+                                        'packet', 
+                                        'noc-node', 
+                                        'channel', 
+                                        'netdevice', 
+                                        'topology',
+                                        'routing',
+                                        ])
     noc.source = [
-        'noc-header.cc',
-        'noc-packet.cc',
-        'noc-node.cc',
-        'noc-net-device.cc',
-        'noc-channel.cc',
-        'noc-routing-protocol.cc',
-        'xy-routing.cc',
-        'noc-helper.cc',
-        'noc-on-off-helper.cc',
-        'noc-onoff-application.cc',
-        'noc-application.cc',
-        'noc-application-helper.cc',
         ]
 
     headers = bld.new_task_gen('ns3header')
     headers.module = 'noc'
     headers.source = [
-        'noc-header.h',
-        'noc-packet.h',
-        'noc-node.h',
-        'noc-net-device.h',
-        'noc-channel.h',
-        'noc-routing-protocol.h',
-        'xy-routing.h',
-        'noc-helper.h',
-        'noc-on-off-helper.h',
-        'noc-onoff-application.h',
-        'noc-application.h',
-        'noc-application-helper.h',
         ]
 
