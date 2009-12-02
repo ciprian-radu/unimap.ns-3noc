@@ -45,7 +45,33 @@ public:
 
   enum TrafficPattern
     {
-      UNIFORM_RANDOM, BIT_MATRIX_TRANSPOSE, BIT_COMPLEMENT, BIT_REVERSE
+      /**
+       * Dummy traffic pattern (the destination must be specified by the user)
+       */
+      DESTINATION_SPECIFIED,
+
+      /**
+       * Uses a NS-3 uniform random algorithm to determine the destination
+       */
+      UNIFORM_RANDOM,
+
+      /**
+       * Transposes the bits of the source to determine the destination
+       * (the second half part of the bits are put in front of the first half).
+       */
+      BIT_MATRIX_TRANSPOSE,
+
+      /**
+       * Complements the bits of the source to determine the destination
+       * (0 becomes 1 and 1 becomes 0).
+       */
+      BIT_COMPLEMENT,
+
+      /**
+       * Reverses the bits of the source to determine the destination
+       * (the last bit becomes the first and so on).
+       */
+      BIT_REVERSE
     };
 
   static std::string TrafficPatternToString(TrafficPattern t);
@@ -96,6 +122,12 @@ private:
    * The traffic pattern which will be used by this application
    */
   TrafficPattern m_trafficPattern;
+
+  /**
+   * The ID of the destination node. Note that this must be used only when the traffic
+   * pattern is DESTINATION_SPECIFIED
+   */
+  uint32_t m_destinationNodeId;
 
 private:
 

@@ -18,60 +18,37 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef NOCNODE_H_
-#define NOCNODE_H_
+#ifndef FOURWAYROUTER_H_
+#define FOURWAYROUTER_H_
 
-#include "ns3/node.h"
-#include "ns3/noc-packet.h"
-#include "ns3/noc-net-device.h"
 #include "ns3/noc-router.h"
+#include "ns3/noc-net-device.h"
 
 namespace ns3
 {
 
-  class NocRouter;
-  class NocNetDevice;
-
-  class NocNode : public Node
+  class FourWayRouter : public NocRouter
   {
   public:
 
     static TypeId
     GetTypeId();
 
-    NocNode();
-
-    NocNode(uint32_t systemId);
+    FourWayRouter();
 
     virtual
-    ~NocNode();
+    ~FourWayRouter();
 
-    ///\name Routers
-    //\{
-    /// Register the router.
-    void
-    SetRouter (Ptr<NocRouter> router);
-
-    /// Access current router
-    Ptr<NocRouter>
-    GetRouter ();
-    //\}
-
-    void
-    Send (Ptr<Packet>, Ptr<NocNode>);
-
-    void
-    DoSend (Ptr<Packet>, Ptr<NetDevice>, Ptr<NetDevice>);
+    virtual bool
+    RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
+        Ptr<Packet> packet, RouteReplyCallback routeReply);
 
   private:
 
-    /**
-     * The routing protocol
-     */
-    Ptr<NocRouter> m_router;
-
+    Ptr<NocNetDevice>
+    GetNetDevice(const Ptr<NocNode> node, const int routingDirection);
   };
 
 } // namespace ns3
 
-#endif /* NOCNODE_H_ */
+#endif /* FOURWAYROUTER_H_ */

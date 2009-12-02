@@ -40,7 +40,14 @@ namespace ns3
   // we could easily name the protocol "XY", but using __FILE__ should be more useful for debugging
   XyRouting::XyRouting() : NocRoutingProtocol(__FILE__)
   {
+    m_routeXFirst = true;
+    NS_LOG_DEBUG("XY routing with X dimension routed first");
+  }
 
+  XyRouting::XyRouting(bool routeXFirst) : NocRoutingProtocol(__FILE__)
+  {
+    m_routeXFirst = routeXFirst;
+    NS_LOG_DEBUG("XY routing with " << (routeXFirst ? "X" : "Y") << " dimension routed first");
   }
 
   XyRouting::~XyRouting()
@@ -76,20 +83,42 @@ namespace ns3
     NS_LOG_DEBUG("yDistance " << (int) yDistance);
     NS_LOG_DEBUG("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
     NS_LOG_DEBUG("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
-    if (xOffset != 0) // note that we prefer the X direction
+
+    if (m_routeXFirst)
       {
-        xOffset--;
-        if (isEast)
+        if (xOffset != 0) // note that we prefer the X direction
           {
-            NS_ASSERT_MSG(xOffset >= 0, "A packet going to East will have the offset < 0");
-            xDirection = EAST;
+            xOffset--;
+            if (isEast)
+              {
+                NS_ASSERT_MSG(xOffset >= 0, "A packet going to East will have the offset < 0");
+                xDirection = EAST;
+              }
+            else
+              {
+                NS_ASSERT_MSG(xOffset >= 0, "A packet going to West will have the offset < 0");
+                xDirection = WEST;
+              }
+            nocHeader.SetXDistance(isEast ? xOffset : xOffset | 0x08);
           }
         else
           {
-            NS_ASSERT_MSG(xOffset >= 0, "A packet going to West will have the offset < 0");
-            xDirection = WEST;
+            if (yOffset != 0)
+              {
+                yOffset--;
+                if (isSouth)
+                  {
+                    NS_ASSERT_MSG(yOffset >= 0, "A packet going to South will have the offset < 0");
+                    yDirection = SOUTH;
+                  }
+                else
+                  {
+                    NS_ASSERT_MSG(yOffset >= 0, "A packet going to North will have the offset < 0");
+                    yDirection = NORTH;
+                  }
+                nocHeader.SetYDistance(isSouth ? yOffset : yOffset | 0x08);
+              }
           }
-        nocHeader.SetXDistance(isEast ? xOffset : xOffset | 0x08);
       }
     else
       {
@@ -107,6 +136,24 @@ namespace ns3
                 yDirection = NORTH;
               }
             nocHeader.SetYDistance(isSouth ? yOffset : yOffset | 0x08);
+          }
+        else
+          {
+            if (xOffset != 0) // note that we prefer the Y direction
+              {
+                xOffset--;
+                if (isEast)
+                  {
+                    NS_ASSERT_MSG(xOffset >= 0, "A packet going to East will have the offset < 0");
+                    xDirection = EAST;
+                  }
+                else
+                  {
+                    NS_ASSERT_MSG(xOffset >= 0, "A packet going to West will have the offset < 0");
+                    xDirection = WEST;
+                  }
+                nocHeader.SetXDistance(isEast ? xOffset : xOffset | 0x08);
+              }
           }
       }
     NS_LOG_DEBUG("new xDistance " << (int) nocHeader.GetXDistance());

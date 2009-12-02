@@ -66,20 +66,22 @@ main (int argc, char *argv[])
   Ptr<NocHelper> noc = CreateObject<NocHelper> ();
   noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate (5000000)));
   noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
+  // install the topology
   NetDeviceContainer devs = noc->Install2DMesh (nodes, hSize);
 
   NS_LOG_INFO ("Create Applications.");
   NocApplicationHelper nocAppHelper (nodes, devs, hSize);
   nocAppHelper.SetAttribute("DataRate", DataRateValue(DataRate("50kb/s")));
-  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::UNIFORM_RANDOM));
-  ApplicationContainer apps = nocAppHelper.Install (nodes.Get (0));
+  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
+  nocAppHelper.SetAttribute("Destination", UintegerValue (12));
+  ApplicationContainer apps = nocAppHelper.Install (nodes.Get (5));
   apps.Start (Seconds (0.0));
   apps.Stop (Seconds (1.0));
 
-  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::BIT_COMPLEMENT));
-  apps = nocAppHelper.Install (nodes.Get (1));
-  apps.Start (Seconds (0.0));
-  apps.Stop (Seconds (2.0));
+//  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::BIT_COMPLEMENT));
+//  apps = nocAppHelper.Install (nodes.Get (1));
+//  apps.Start (Seconds (0.0));
+//  apps.Stop (Seconds (2.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-test.tr file

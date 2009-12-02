@@ -38,42 +38,42 @@ namespace ns3
   }
 
   NocNode::NocNode() :
-    m_routingProtocol(0)
+    m_router(0)
   {
   }
 
   NocNode::~NocNode()
   {
-    m_routingProtocol = 0;
+    m_router = 0;
   }
 
   void
-  NocNode::SetRoutingProtocol (Ptr<NocRoutingProtocol> protocol)
+  NocNode::SetRouter (Ptr<NocRouter> router)
   {
     std::ostringstream oss;
-    oss << "Setting a '" << protocol->GetName () << "' routing protocol for the NoC node " << GetId ();
+    oss << "Setting a '" << router->GetName () << "' router for the NoC node " << GetId ();
     NS_LOG_DEBUG (oss.str());
-    NS_ASSERT_MSG (PeekPointer (protocol->GetNocNode ()) == this,
-        "Routing protocol must be installed on this NoC net device to be useful.");
-    m_routingProtocol = protocol;
+    NS_ASSERT_MSG (PeekPointer (router->GetNocNode ()) == this,
+        "This router must be installed on this NoC net device to be useful.");
+    m_router = router;
   }
 
-  Ptr<NocRoutingProtocol>
-  NocNode::GetRoutingProtocol ()
+  Ptr<NocRouter>
+  NocNode::GetRouter ()
   {
-    if (m_routingProtocol == 0)
+    if (m_router == 0)
       {
         std::ostringstream oss;
-        oss << "No routing protocol is defined for the NoC node " << GetId ();
+        oss << "No router is defined for the NoC node " << GetId ();
         NS_LOG_WARN(oss.str());
       }
-    return m_routingProtocol;
+    return m_router;
   }
 
   void
   NocNode::Send (Ptr<Packet> packet, Ptr<NocNode> destination)
   {
-    GetRoutingProtocol ()->RequestRoute (this, destination, packet, MakeCallback(&NocNode::DoSend, this));
+    GetRouter ()->RequestRoute (this, destination, packet, MakeCallback(&NocNode::DoSend, this));
   }
 
   void

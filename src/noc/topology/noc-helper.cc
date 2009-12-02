@@ -20,9 +20,10 @@
 
 #include "noc-helper.h"
 #include "ns3/config.h"
-#include "ns3/noc-routing-protocol.h"
-#include "ns3/xy-routing.h"
 #include "ns3/log.h"
+#include "ns3/xy-routing.h"
+#include "ns3/4-way-router.h"
+#include "ns3/irvine-router.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocHelper");
 
@@ -129,12 +130,14 @@ namespace ns3
         (*i)->AddDevice(dev);
 
         Ptr<NocNode> nocNode = (*i)->GetObject<NocNode> ();
-        if (nocNode->GetRoutingProtocol () == 0)
+        if (nocNode->GetRouter () == 0)
           {
+            Ptr<NocRouter> router = CreateObject<FourWayRouter> ();
+            router->SetNocNode (nocNode);
+            nocNode->SetRouter (router);
             Ptr<NocRoutingProtocol> routingProtocol =
                 CreateObject<XyRouting> ();
-            routingProtocol->SetNocNode(nocNode);
-            nocNode->SetRoutingProtocol(routingProtocol);
+            router->SetRoutingProtocol (routingProtocol);
           }
 
         m_devices.Add(dev);
@@ -152,18 +155,23 @@ namespace ns3
   NetDeviceContainer
   NocHelper::Install2DMesh(NodeContainer nodes, uint32_t hSize)
   {
+    // FIXME topologies are installed with routing protocols...
+    // this implies a lot of similar methods
+    // redesign this
     Ptr<NocChannel> channel = 0;
     Ptr<NocNetDevice> netDevice;
 
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
       {
         Ptr<NocNode> nocNode = nodes.Get (i)->GetObject<NocNode> ();
-        if (nocNode->GetRoutingProtocol() == 0)
+        if (nocNode->GetRouter () == 0)
           {
+            Ptr<NocRouter> router = CreateObject<FourWayRouter> ();
+            router->SetNocNode (nocNode);
+            nocNode->SetRouter (router);
             Ptr<NocRoutingProtocol> routingProtocol =
-                CreateObject<XyRouting> ();
-            routingProtocol->SetNocNode(nocNode);
-            nocNode->SetRoutingProtocol(routingProtocol);
+                CreateObject<XyRouting> (false);
+            router->SetRoutingProtocol (routingProtocol);
           }
       }
 
@@ -176,7 +184,6 @@ namespace ns3
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
             netDevice->SetRoutingDirection(XyRouting::WEST);
-            Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
             // attach input buffering (we don't use output buffering for the moment)
@@ -192,7 +199,6 @@ namespace ns3
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
             netDevice->SetRoutingDirection(XyRouting::EAST);
-            Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
             // attach input buffering (we don't use output buffering for the moment)
@@ -220,7 +226,6 @@ namespace ns3
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
                 netDevice->SetRoutingDirection(XyRouting::NORTH);
-                Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
                 // attach input buffering (we don't use output buffering for the moment)
@@ -235,7 +240,6 @@ namespace ns3
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
                 netDevice->SetRoutingDirection(XyRouting::SOUTH);
-                Ptr<NocRoutingProtocol> routingProtocol = CreateObject<XyRouting> ();
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
                 // attach input buffering (we don't use output buffering for the moment)
@@ -260,6 +264,120 @@ namespace ns3
             " connected to channel " << device->GetChannel()->GetId());
       }
     NS_LOG_DEBUG ("Done with printing the 2D mesh topology.");
+
+    return m_devices;
+  }
+
+  NetDeviceContainer
+  NocHelper::Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize)
+  {
+    Ptr<NocChannel> channel = 0;
+    Ptr<NocNetDevice> netDevice;
+
+    for (unsigned int i = 0; i < nodes.GetN(); ++i)
+      {
+        Ptr<NocNode> nocNode = nodes.Get (i)->GetObject<NocNode> ();
+        if (nocNode->GetRouter () == 0)
+          {
+            Ptr<NocRouter> router = CreateObject<IrvineRouter> ();
+            router->SetNocNode (nocNode);
+            nocNode->SetRouter (router);
+            Ptr<NocRoutingProtocol> routingProtocol =
+                CreateObject<XyRouting> ();
+            router->SetRoutingProtocol (routingProtocol);
+          }
+      }
+
+    // create the horizontal channels (and net devices)
+    for (unsigned int i = 0; i < nodes.GetN(); ++i)
+      {
+        if (channel != 0)
+          {
+            netDevice = CreateObject<NocNetDevice> ();
+            netDevice->SetAddress(Mac48Address::Allocate());
+            netDevice->SetChannel(channel);
+            netDevice->SetRoutingDirection(XyRouting::WEST);
+            m_devices.Add(netDevice);
+            netDevice->SetNocHelper (this);
+            // attach input buffering (we don't use output buffering for the moment)
+            Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+            netDevice->SetInQueue (inQueue);
+            nodes.Get(i)->AddDevice(netDevice);
+          }
+
+        if (i == 0 || (i > 0 && (i + 1) % hSize != 0))
+          {
+            channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
+            netDevice = CreateObject<NocNetDevice> ();
+            netDevice->SetAddress(Mac48Address::Allocate());
+            netDevice->SetChannel(channel);
+            netDevice->SetRoutingDirection(XyRouting::EAST);
+            m_devices.Add(netDevice);
+            netDevice->SetNocHelper (this);
+            // attach input buffering (we don't use output buffering for the moment)
+            Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+            netDevice->SetInQueue (inQueue);
+            nodes.Get(i)->AddDevice(netDevice);
+          }
+        else
+          {
+            channel = 0;
+          }
+      }
+
+    // create the vertical channels (and net devices)
+    channel = 0;
+    // The Irvine architecture has 2 channels for both North and South ports of each node
+    std::vector< Ptr<NocChannel> > columnChannels(2 * hSize);
+    for (unsigned int i = 0; i < nodes.GetN(); i = i + hSize)
+      {
+        for (unsigned int j = 0; j < 2 * hSize; ++j)
+          {
+            if (columnChannels[j] != 0)
+              {
+                channel = columnChannels[j];
+                netDevice = CreateObject<NocNetDevice> ();
+                netDevice->SetAddress(Mac48Address::Allocate());
+                netDevice->SetChannel(channel);
+                netDevice->SetRoutingDirection(XyRouting::NORTH);
+                m_devices.Add(netDevice);
+                netDevice->SetNocHelper (this);
+                // attach input buffering (we don't use output buffering for the moment)
+                Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+                netDevice->SetInQueue (inQueue);
+                nodes.Get(i + j % hSize)->AddDevice(netDevice);
+              }
+            if (i < nodes.GetN() - hSize)
+              {
+                channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
+                netDevice = CreateObject<NocNetDevice> ();
+                netDevice->SetAddress(Mac48Address::Allocate());
+                netDevice->SetChannel(channel);
+                netDevice->SetRoutingDirection(XyRouting::SOUTH);
+                m_devices.Add(netDevice);
+                netDevice->SetNocHelper (this);
+                // attach input buffering (we don't use output buffering for the moment)
+                Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
+                netDevice->SetInQueue (inQueue);
+                nodes.Get(i + j % hSize)->AddDevice(netDevice);
+                columnChannels[j] = channel;
+              }
+            else
+              {
+                columnChannels[j] = 0;
+              }
+          }
+      }
+
+    NS_LOG_DEBUG ("Printing the 2D mesh topology for the Irvine architecture (channels <-> net devices <-> nodes)...");
+    for (uint32_t i = 0; i < m_devices.GetN(); ++i)
+      {
+        Ptr<NetDevice> device = m_devices.Get(i);
+        NS_LOG_DEBUG ("\tNode " << device->GetNode()->GetId() <<
+            " has a net device with (MAC) address " << device->GetAddress() <<
+            " connected to channel " << device->GetChannel()->GetId());
+      }
+    NS_LOG_DEBUG ("Done with printing the 2D mesh topology for the Irvine architecture.");
 
     return m_devices;
   }

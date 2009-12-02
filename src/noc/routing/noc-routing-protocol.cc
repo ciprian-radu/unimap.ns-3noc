@@ -44,19 +44,7 @@ namespace ns3
 
   NocRoutingProtocol::~NocRoutingProtocol()
   {
-    m_nocNode = 0;
-  }
 
-  void
-  NocRoutingProtocol::SetNocNode(Ptr<NocNode> nocNode)
-  {
-    m_nocNode = nocNode;
-  }
-
-  Ptr<NocNode>
-  NocRoutingProtocol::GetNocNode() const
-  {
-    return m_nocNode;
   }
 
   std::string
