@@ -67,13 +67,15 @@ namespace ns3
     int xOffset = xDistance & 0x07;
 
     uint8_t yDistance = nocHeader.GetYDistance ();
-    bool isSouth = (xDistance & 0x08) != 0x08;
+    bool isSouth = (yDistance & 0x08) != 0x08;
     int yOffset = yDistance & 0x07;
 
     Direction xDirection = NONE;
     Direction yDirection = NONE;
-    NS_LOG_DEBUG("xOffset " << xOffset);
-    NS_LOG_DEBUG("yOffset " << yOffset);
+    NS_LOG_DEBUG("xDistance " << (int) xDistance);
+    NS_LOG_DEBUG("yDistance " << (int) yDistance);
+    NS_LOG_DEBUG("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
+    NS_LOG_DEBUG("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
     if (xOffset != 0) // note that we prefer the X direction
       {
         xOffset--;
@@ -192,6 +194,7 @@ namespace ns3
   Ptr<NocNetDevice>
   XyRouting::GetNetDevice(const Ptr<NocNode> node, const int routingDirection)
   {
+    NS_LOG_DEBUG ("Searching for a net device for node " << node->GetId () << " and direction " << routingDirection);
     Ptr<NocNetDevice> netDevice = 0;
     for (unsigned int i = 0; i < node->GetNDevices (); ++i)
       {
@@ -201,6 +204,14 @@ namespace ns3
             netDevice = tmpNetDevice;
             break;
           }
+      }
+    if (netDevice)
+      {
+        NS_LOG_DEBUG ("Found net device " << netDevice->GetAddress ());
+      }
+    else
+      {
+        NS_LOG_DEBUG ("No net device found!");
       }
     return netDevice;
   }
