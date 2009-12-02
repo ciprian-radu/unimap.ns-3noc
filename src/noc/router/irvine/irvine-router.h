@@ -18,60 +18,44 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef NOCNODE_H_
-#define NOCNODE_H_
+#ifndef IRVINEROUTER_H_
+#define IRVINEROUTER_H_
 
-#include "ns3/node.h"
-#include "ns3/noc-packet.h"
-#include "ns3/noc-net-device.h"
 #include "ns3/noc-router.h"
+#include "ns3/noc-net-device.h"
 
 namespace ns3
 {
 
-  class NocRouter;
-  class NocNetDevice;
-
-  class NocNode : public Node
+  /**
+   * \brief Implementation of the routing mechanism from this paper:
+   *
+   * Increasing the throughput of an adaptive router in network-on-chip (NoC)
+   *
+   * http://portal.acm.org/citation.cfm?id=1176276
+   */
+  class IrvineRouter : public NocRouter
   {
   public:
 
     static TypeId
     GetTypeId();
 
-    NocNode();
-
-    NocNode(uint32_t systemId);
+    IrvineRouter();
 
     virtual
-    ~NocNode();
+    ~IrvineRouter();
 
-    ///\name Routers
-    //\{
-    /// Register the router.
-    void
-    SetRouter (Ptr<NocRouter> router);
-
-    /// Access current router
-    Ptr<NocRouter>
-    GetRouter ();
-    //\}
-
-    void
-    Send (Ptr<Packet>, Ptr<NocNode>);
-
-    void
-    DoSend (Ptr<Packet>, Ptr<NetDevice>, Ptr<NetDevice>);
+    virtual bool
+    RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
+        Ptr<Packet> packet, RouteReplyCallback routeReply);
 
   private:
 
-    /**
-     * The routing protocol
-     */
-    Ptr<NocRouter> m_router;
-
+    Ptr<NocNetDevice>
+    GetNetDevice(const Ptr<NocNode> node, const int routingDirection);
   };
 
 } // namespace ns3
 
-#endif /* NOCNODE_H_ */
+#endif /* IRVINEROUTER_H_ */

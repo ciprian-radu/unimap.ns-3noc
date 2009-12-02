@@ -51,6 +51,9 @@ namespace ns3
   {
     switch (t)
       {
+        case DESTINATION_SPECIFIED:
+          return "DestinationSpecified";
+
         case UNIFORM_RANDOM:
           return "UniformRandom";
 
@@ -95,10 +98,15 @@ namespace ns3
             .AddAttribute("TrafficPattern",
                 "The traffic pattern which will be used by this application",
                 EnumValue (BIT_COMPLEMENT), MakeEnumAccessor (&NocApplication::m_trafficPattern),
-                MakeEnumChecker (BIT_MATRIX_TRANSPOSE, TrafficPatternToString(BIT_MATRIX_TRANSPOSE),
+                MakeEnumChecker (DESTINATION_SPECIFIED, TrafficPatternToString(DESTINATION_SPECIFIED),
                                  UNIFORM_RANDOM, TrafficPatternToString(UNIFORM_RANDOM),
+                                 BIT_MATRIX_TRANSPOSE, TrafficPatternToString(BIT_MATRIX_TRANSPOSE),
                                  BIT_COMPLEMENT, TrafficPatternToString(BIT_COMPLEMENT),
                                  BIT_REVERSE, TrafficPatternToString(BIT_REVERSE)))
+            .AddAttribute("Destination", "The ID of the destination node "
+                "(must be specified for a destination specified traffic pattern)", UintegerValue(0),
+                MakeUintegerAccessor(&NocApplication::m_destinationNodeId),
+                MakeUintegerChecker<uint32_t> (0))
             ;
     return tid;
   }
@@ -264,6 +272,15 @@ namespace ns3
 
     switch (m_trafficPattern)
       {
+        case DESTINATION_SPECIFIED:
+          destinationX = m_destinationNodeId / m_hSize;
+          NS_LOG_DEBUG ("specified destination x = " << destinationX);
+          NS_ASSERT (destinationX < m_hSize);
+          destinationY = m_destinationNodeId % m_hSize;
+          NS_LOG_DEBUG ("specified destination y = " << destinationY);
+          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
+          break;
+
         case UNIFORM_RANDOM:
           {
             UniformVariable uniformVariable;

@@ -18,40 +18,53 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef NOCROUTINGPROTOCOL_H_
-#define NOCROUTINGPROTOCOL_H_
+#ifndef NOCROUTER_H_
+#define NOCROUTER_H_
 
 #include "ns3/object.h"
 #include "ns3/mac48-address.h"
 #include "ns3/noc-packet.h"
 #include "ns3/noc-node.h"
 #include "ns3/noc-net-device.h"
+#include "ns3/noc-routing-protocol.h"
 
 namespace ns3
 {
 
   class NocNode;
   class NocNetDevice;
+  class NocRoutingProtocol;
 
   /**
    *
-   * \brief Interface for the routing protocol used by NoC net devices
+   * \brief Interface for the NoC router
    *
-   * Every routing protocol for NoCs must implement this interface. Each NoC node is supposed
+   * Every NoC router must implement this interface. Each NoC router is supposed
    * to know of a single routing protocol to work with, see NocNode::SetRoutingProtocol ().
    *
    */
-  class NocRoutingProtocol : public Object
+  class NocRouter : public Object
   {
   public:
 
     static TypeId
     GetTypeId();
 
-    NocRoutingProtocol(std::string name);
+    NocRouter(std::string name);
 
     virtual
-    ~NocRoutingProtocol();
+    ~NocRouter();
+
+    ///\name Routers
+    //\{
+    /// Register the routing protocol.
+    void
+    SetRoutingProtocol (Ptr<NocRoutingProtocol> router);
+
+    /// Access current routing protocol
+    Ptr<NocRoutingProtocol>
+    GetRoutingProtocol ();
+    //\}
 
     /**
      * Callback to be invoked when the route discovery procedure is completed.
@@ -95,10 +108,33 @@ namespace ns3
         const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
 
     /**
+     * set the NoC node to which this routing protocol is assigned to
+     */
+    void
+    SetNocNode(Ptr<NocNode> nocNode);
+
+    /**
+     * \return the NoC node to which this routing protocol is assigned to
+     */
+    Ptr<NocNode>
+    GetNocNode() const;
+
+    /**
      * \return the name of this routing protocol
      */
     std::string
     GetName() const;
+
+  protected:
+    /**
+     * the NoC node to which this router is assigned to
+     */
+    Ptr<NocNode> m_nocNode;
+
+    /**
+     * the routing protocol assigned to this router
+     */
+    Ptr<NocRoutingProtocol> m_routingProtocol;
 
   private:
     /**
@@ -109,4 +145,4 @@ namespace ns3
 
 } // namespace ns3
 
-#endif /* NOCROUTINGPROTOCOL_H_ */
+#endif /* NOCROUTER_H_ */

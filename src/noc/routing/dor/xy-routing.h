@@ -36,7 +36,19 @@ namespace ns3
     static TypeId
     GetTypeId();
 
+    /**
+     * Constructor
+     *
+     * the X dimension is routed first
+     */
     XyRouting();
+
+    /**
+     * Constructor
+     *
+     * \param routeXFirst specifies if the X dimension is routed first (Y dimension otherwise)
+     */
+    XyRouting(bool routeXFirst);
 
     virtual
     ~XyRouting();
@@ -49,6 +61,8 @@ namespace ns3
 
     Ptr<NocNetDevice>
     GetNetDevice(const Ptr<NocNode> node, const int routingDirection);
+
+    bool m_routeXFirst;
   };
 
 } // namespace ns3

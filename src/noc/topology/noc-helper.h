@@ -135,8 +135,33 @@ namespace ns3
     NetDeviceContainer
     Install(NodeContainer nodes);
 
+    /**
+     * Creates a typical 2-dimensional mesh network topology.
+     *
+     * \see ns3::FourWayRouter
+     *
+     * The router works with a Dimension Ordered Routing protocol
+     *
+     * \param nodes the NoC nodes for which the topology will be installed
+     * \param hSize how many nodes will be put on each row of the mesh
+     *
+     */
     NetDeviceContainer
     Install2DMesh(NodeContainer nodes, uint32_t hSize);
+
+    /**
+     * Creates a 2-dimensional mesh network topology Irvine architecture.
+     *
+     * \see ns3::IrvineRouter
+     *
+     * The Irvine router works with a Dimension Ordered Routing protocol
+     *
+     * \param nodes the NoC nodes for which the topology will be installed
+     * \param hSize how many nodes will be put on each row of the mesh
+     *
+     */
+    NetDeviceContainer
+    Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize);
 
     Ptr<NocNetDevice>
     FindNetDeviceByAddress (Mac48Address address);
