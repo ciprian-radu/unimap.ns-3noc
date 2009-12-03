@@ -47,13 +47,45 @@ namespace ns3
     ~IrvineRouter();
 
     virtual bool
-    RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
+    RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
+
+    virtual uint32_t
+    AddDevice (Ptr<NocNetDevice> device);
 
   private:
 
     Ptr<NocNetDevice>
-    GetNetDevice(const Ptr<NocNode> node, const int routingDirection);
+    GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+
+    bool
+    isRightRouter (Ptr<NocNetDevice> sender);
+
+    bool
+    isLeftRouter (Ptr<NocNetDevice> sender);
+
+    /**
+     * the net devices associated to the left router (subset of m_devices)
+     */
+    std::vector<Ptr<NocNetDevice> > m_leftRouterDevices;
+
+    /**
+     * the net devices associated to the right router (subset of m_devices)
+     */
+    std::vector<Ptr<NocNetDevice> > m_rightRouterDevices;
+
+    bool m_north1DeviceAdded;
+
+    bool m_north2DeviceAdded;
+
+    bool m_eastDeviceAdded;
+
+    bool m_south1DeviceAdded;
+
+    bool m_south2DeviceAdded;
+
+    bool m_westDeviceAdded;
+
   };
 
 } // namespace ns3

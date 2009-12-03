@@ -138,6 +138,7 @@ namespace ns3
             Ptr<NocRoutingProtocol> routingProtocol =
                 CreateObject<XyRouting> ();
             router->SetRoutingProtocol (routingProtocol);
+            router->AddDevice (dev);
           }
 
         m_devices.Add(dev);
@@ -178,6 +179,7 @@ namespace ns3
     // create the horizontal channels (and net devices)
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
       {
+        Ptr<NocNode> nocNode = nodes.Get (i)->GetObject<NocNode> ();
         if (channel != 0)
           {
             netDevice = CreateObject<NocNetDevice> ();
@@ -189,7 +191,8 @@ namespace ns3
             // attach input buffering (we don't use output buffering for the moment)
             Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
             netDevice->SetInQueue (inQueue);
-            nodes.Get(i)->AddDevice(netDevice);
+            nocNode->AddDevice(netDevice);
+            nocNode->GetRouter ()->AddDevice(netDevice);
           }
 
         if (i == 0 || (i > 0 && (i + 1) % hSize != 0))
@@ -204,7 +207,8 @@ namespace ns3
             // attach input buffering (we don't use output buffering for the moment)
             Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
             netDevice->SetInQueue (inQueue);
-            nodes.Get(i)->AddDevice(netDevice);
+            nocNode->AddDevice(netDevice);
+            nocNode->GetRouter ()->AddDevice(netDevice);
           }
         else
           {
@@ -219,6 +223,7 @@ namespace ns3
       {
         for (unsigned int j = 0; j < hSize; ++j)
           {
+            Ptr<NocNode> nocNode = nodes.Get (i + j)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)
               {
                 channel = columnChannels[j];
@@ -231,7 +236,8 @@ namespace ns3
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);
-                nodes.Get(i + j)->AddDevice(netDevice);
+                nocNode->AddDevice(netDevice);
+                nocNode->GetRouter ()->AddDevice(netDevice);
               }
             if (i < nodes.GetN() - hSize)
               {
@@ -245,7 +251,8 @@ namespace ns3
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);
-                nodes.Get(i + j)->AddDevice(netDevice);
+                nocNode->AddDevice(netDevice);
+                nocNode->GetRouter ()->AddDevice(netDevice);
                 columnChannels[j] = channel;
               }
             else
@@ -271,6 +278,9 @@ namespace ns3
   NetDeviceContainer
   NocHelper::Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize)
   {
+    // FIXME topologies are installed with routing protocols...
+    // this implies a lot of similar methods
+    // redesign this
     Ptr<NocChannel> channel = 0;
     Ptr<NocNetDevice> netDevice;
 
@@ -283,7 +293,7 @@ namespace ns3
             router->SetNocNode (nocNode);
             nocNode->SetRouter (router);
             Ptr<NocRoutingProtocol> routingProtocol =
-                CreateObject<XyRouting> ();
+                CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
           }
       }
@@ -291,6 +301,7 @@ namespace ns3
     // create the horizontal channels (and net devices)
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
       {
+        Ptr<NocNode> nocNode = nodes.Get (i)->GetObject<NocNode> ();
         if (channel != 0)
           {
             netDevice = CreateObject<NocNetDevice> ();
@@ -302,7 +313,8 @@ namespace ns3
             // attach input buffering (we don't use output buffering for the moment)
             Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
             netDevice->SetInQueue (inQueue);
-            nodes.Get(i)->AddDevice(netDevice);
+            nocNode->AddDevice(netDevice);
+            nocNode->GetRouter ()->AddDevice(netDevice);
           }
 
         if (i == 0 || (i > 0 && (i + 1) % hSize != 0))
@@ -317,7 +329,8 @@ namespace ns3
             // attach input buffering (we don't use output buffering for the moment)
             Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
             netDevice->SetInQueue (inQueue);
-            nodes.Get(i)->AddDevice(netDevice);
+            nocNode->AddDevice(netDevice);
+            nocNode->GetRouter ()->AddDevice(netDevice);
           }
         else
           {
@@ -333,6 +346,7 @@ namespace ns3
       {
         for (unsigned int j = 0; j < 2 * hSize; ++j)
           {
+            Ptr<NocNode> nocNode = nodes.Get (i + j % hSize)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)
               {
                 channel = columnChannels[j];
@@ -345,7 +359,8 @@ namespace ns3
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);
-                nodes.Get(i + j % hSize)->AddDevice(netDevice);
+                nocNode->AddDevice(netDevice);
+                nocNode->GetRouter ()->AddDevice(netDevice);
               }
             if (i < nodes.GetN() - hSize)
               {
@@ -359,7 +374,8 @@ namespace ns3
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);
-                nodes.Get(i + j % hSize)->AddDevice(netDevice);
+                nocNode->AddDevice(netDevice);
+                nocNode->GetRouter ()->AddDevice(netDevice);
                 columnChannels[j] = channel;
               }
             else

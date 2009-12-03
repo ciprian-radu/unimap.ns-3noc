@@ -58,7 +58,7 @@ namespace ns3
     //\}
 
     void
-    Send (Ptr<Packet>, Ptr<NocNode>);
+    Send (Ptr<NocNetDevice>, Ptr<Packet>, Ptr<NocNode>);
 
     void
     DoSend (Ptr<Packet>, Ptr<NetDevice>, Ptr<NetDevice>);

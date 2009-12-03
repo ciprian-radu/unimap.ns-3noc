@@ -81,17 +81,16 @@ namespace ns3
      * reply callback will be called when routing information will be available.
      *
      * \return true if a valid route is already known
-     * \param source        source address
-     * \param destination   destination address
+     * \param source        source NoC net device
+     * \param destination   destination NoC node
      * \param packet        the packet to be resolved (needed the whole packet, because
      *                      routing information is added as tags or headers). The packet
      *                      will be returned to reply callback.
-     * \param protocolType  protocol ID, needed to form a proper MAC-layer header
      * \param routeReply    callback to be invoked after route discovery procedure, supposed
      *                      to really send packet using routing information.
      */
     virtual bool
-    RequestRoute(const Ptr<NocNode> source,
+    RequestRoute(const Ptr<NocNetDevice> source,
         const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
 
     /**
@@ -101,6 +100,7 @@ namespace ns3
     GetName() const;
 
   private:
+
     /**
      * the name of the routing protocol
      */

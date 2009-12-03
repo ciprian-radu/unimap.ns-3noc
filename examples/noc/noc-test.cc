@@ -67,21 +67,24 @@ main (int argc, char *argv[])
   noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate (5000000)));
   noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
   // install the topology
-  NetDeviceContainer devs = noc->Install2DMesh (nodes, hSize);
+  NetDeviceContainer devs = noc->Install2DMeshIrvine(nodes, hSize);
 
   NS_LOG_INFO ("Create Applications.");
-  NocApplicationHelper nocAppHelper (nodes, devs, hSize);
-  nocAppHelper.SetAttribute("DataRate", DataRateValue(DataRate("50kb/s")));
-  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
-  nocAppHelper.SetAttribute("Destination", UintegerValue (12));
-  ApplicationContainer apps = nocAppHelper.Install (nodes.Get (5));
-  apps.Start (Seconds (0.0));
-  apps.Stop (Seconds (1.0));
+  NocApplicationHelper nocAppHelper1 (nodes, devs, hSize);
+  nocAppHelper1.SetAttribute("DataRate", DataRateValue(DataRate("50kb/s")));
+  nocAppHelper1.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
+  nocAppHelper1.SetAttribute("Destination", UintegerValue (14));
+  ApplicationContainer apps1 = nocAppHelper1.Install (nodes.Get (1));
+  apps1.Start (Seconds (0.0));
+  apps1.Stop (Seconds (1.0));
 
-//  nocAppHelper.SetAttribute("TrafficPattern", EnumValue(NocApplication::BIT_COMPLEMENT));
-//  apps = nocAppHelper.Install (nodes.Get (1));
-//  apps.Start (Seconds (0.0));
-//  apps.Stop (Seconds (2.0));
+//  NocApplicationHelper nocAppHelper2 (nodes, devs, hSize);
+//  nocAppHelper2.SetAttribute("DataRate", DataRateValue(DataRate("50kb/s")));
+//  nocAppHelper2.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
+//  nocAppHelper2.SetAttribute("Destination", UintegerValue (14));
+//  ApplicationContainer apps2 = nocAppHelper2.Install (nodes.Get (1));
+//  apps2.Start (Seconds (0.0));
+//  apps2.Stop (Seconds (2.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-test.tr file

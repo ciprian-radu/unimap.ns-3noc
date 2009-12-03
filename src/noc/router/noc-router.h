@@ -27,6 +27,7 @@
 #include "ns3/noc-node.h"
 #include "ns3/noc-net-device.h"
 #include "ns3/noc-routing-protocol.h"
+#include <vector>
 
 namespace ns3
 {
@@ -94,7 +95,7 @@ namespace ns3
      * reply callback will be called when routing information will be available.
      *
      * \return true if a valid route is already known
-     * \param source        source address
+     * \param source        source NoC net device
      * \param destination   destination address
      * \param packet        the packet to be resolved (needed the whole packet, because
      *                      routing information is added as tags or headers). The packet
@@ -104,8 +105,38 @@ namespace ns3
      *                      to really send packet using routing information.
      */
     virtual bool
-    RequestRoute(const Ptr<NocNode> source,
+    RequestRoute(const Ptr<NocNetDevice> source,
         const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
+
+    virtual Ptr<NocNetDevice>
+    GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection) = 0;
+
+    /**
+     * \param device NetDevice to associate to this router.
+     * \returns the index of the NetDevice into the router's list of
+     *          net devices.
+     *
+     * Associate this device to this router.
+     */
+    virtual uint32_t
+    AddDevice (Ptr<NocNetDevice> device);
+
+    /**
+     * \param index the index of the requested NetDevice
+     * \returns the requested NetDevice associated to this router.
+     *
+     * The indexes used by the GetDevice method start at one and
+     * end at GetNDevices ()
+     */
+    virtual Ptr<NocNetDevice>
+    GetDevice (uint32_t index) const;
+
+    /**
+     * \returns the number of NetDevice instances associated
+     *          to this router.
+     */
+    virtual uint32_t
+    GetNDevices (void) const;
 
     /**
      * set the NoC node to which this routing protocol is assigned to
@@ -126,6 +157,7 @@ namespace ns3
     GetName() const;
 
   protected:
+
     /**
      * the NoC node to which this router is assigned to
      */
@@ -136,11 +168,15 @@ namespace ns3
      */
     Ptr<NocRoutingProtocol> m_routingProtocol;
 
+    std::vector<Ptr<NocNetDevice> > m_devices;
+
   private:
+
     /**
      * the name of the routing protocol
      */
     std::string m_name;
+
   };
 
 } // namespace ns3

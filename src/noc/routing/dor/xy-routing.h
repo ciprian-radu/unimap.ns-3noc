@@ -54,13 +54,10 @@ namespace ns3
     ~XyRouting();
 
     virtual bool
-    RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
+    RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
   private:
-
-    Ptr<NocNetDevice>
-    GetNetDevice(const Ptr<NocNode> node, const int routingDirection);
 
     bool m_routeXFirst;
   };
