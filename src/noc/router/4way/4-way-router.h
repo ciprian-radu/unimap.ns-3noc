@@ -31,6 +31,8 @@ namespace ns3
   {
   public:
 
+    enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
+
     static TypeId
     GetTypeId();
 
@@ -40,13 +42,13 @@ namespace ns3
     ~FourWayRouter();
 
     virtual bool
-    RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
+    RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
   private:
 
     Ptr<NocNetDevice>
-    GetNetDevice(const Ptr<NocNode> node, const int routingDirection);
+    GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
   };
 
 } // namespace ns3

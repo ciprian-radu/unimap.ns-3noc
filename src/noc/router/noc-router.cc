@@ -71,6 +71,28 @@ namespace ns3
     return m_routingProtocol;
   }
 
+  uint32_t
+  NocRouter::AddDevice (Ptr<NocNetDevice> device)
+  {
+    uint32_t index = m_devices.size ();
+    m_devices.push_back (device);
+    return index;
+  }
+
+  Ptr<NocNetDevice>
+  NocRouter::GetDevice (uint32_t index) const
+  {
+    NS_ASSERT_MSG (index < m_devices.size (), "Device index " << index <<
+                   " is out of range (only have " << m_devices.size () << " devices).");
+    return m_devices[index];
+  }
+
+  uint32_t
+  NocRouter::GetNDevices (void) const
+  {
+    return m_devices.size ();
+  }
+
   void
   NocRouter::SetNocNode(Ptr<NocNode> nocNode)
   {

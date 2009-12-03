@@ -56,13 +56,13 @@ namespace ns3
   }
 
   bool
-  XyRouting::RequestRoute(const Ptr<NocNode> source, const Ptr<NocNode> destination,
+  XyRouting::RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
       Ptr<Packet> packet, RouteReplyCallback routeReply)
   {
     NS_LOG_FUNCTION_NOARGS();
     std::stringstream ss;
     packet->Print(ss);
-    NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
+    NS_LOG_DEBUG("source node = " << source->GetNode ()->GetId () << ", destination node = " << destination->GetId ()
         << ", packet " << ss.str ());
     ss.str("");
 
@@ -162,7 +162,7 @@ namespace ns3
     packet->AddHeader (nocHeader);
 
     packet->Print(ss);
-    NS_LOG_DEBUG("source node = " << source->GetId () << ", destination node = " << destination->GetId ()
+    NS_LOG_DEBUG("source node = " << source->GetNode ()->GetId () << ", destination node = " << destination->GetId ()
         << ", packet " << ss.str ());
     ss.str("");
 
@@ -172,16 +172,16 @@ namespace ns3
     bool routeY = false;
     switch (xDirection) {
       case EAST:
-        sourceNetDevice = GetNetDevice(source, EAST);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice (source, EAST);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = GetNetDevice(destination, WEST);
+        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, WEST);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
       case WEST:
-        sourceNetDevice = GetNetDevice(source, WEST);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice(source, WEST);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = GetNetDevice(destination, EAST);
+        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, EAST);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
@@ -202,16 +202,16 @@ namespace ns3
 
     switch (yDirection) {
       case NORTH:
-        sourceNetDevice = GetNetDevice(source, NORTH);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice(source, NORTH);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = GetNetDevice(destination, SOUTH);
+        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, SOUTH);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
       case SOUTH:
-        sourceNetDevice = GetNetDevice(source, SOUTH);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice(source, SOUTH);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = GetNetDevice(destination, NORTH);
+        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, NORTH);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
@@ -236,31 +236,6 @@ namespace ns3
       }
 
     return true;
-  }
-
-  Ptr<NocNetDevice>
-  XyRouting::GetNetDevice(const Ptr<NocNode> node, const int routingDirection)
-  {
-    NS_LOG_DEBUG ("Searching for a net device for node " << node->GetId () << " and direction " << routingDirection);
-    Ptr<NocNetDevice> netDevice = 0;
-    for (unsigned int i = 0; i < node->GetNDevices (); ++i)
-      {
-        Ptr<NocNetDevice> tmpNetDevice = node->GetDevice (i)->GetObject<NocNetDevice> ();
-        if (tmpNetDevice->GetRoutingDirection () == routingDirection)
-          {
-            netDevice = tmpNetDevice;
-            break;
-          }
-      }
-    if (netDevice)
-      {
-        NS_LOG_DEBUG ("Found net device " << netDevice->GetAddress ());
-      }
-    else
-      {
-        NS_LOG_DEBUG ("No net device found!");
-      }
-    return netDevice;
   }
 
 } // namespace ns3

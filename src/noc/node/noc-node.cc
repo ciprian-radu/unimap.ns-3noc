@@ -71,9 +71,9 @@ namespace ns3
   }
 
   void
-  NocNode::Send (Ptr<Packet> packet, Ptr<NocNode> destination)
+  NocNode::Send (Ptr<NocNetDevice> source, Ptr<Packet> packet, Ptr<NocNode> destination)
   {
-    GetRouter ()->RequestRoute (this, destination, packet, MakeCallback(&NocNode::DoSend, this));
+    GetRouter ()->RequestRoute (source, destination, packet, MakeCallback(&NocNode::DoSend, this));
   }
 
   void

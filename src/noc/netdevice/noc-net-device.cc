@@ -112,7 +112,7 @@ namespace ns3
         NS_LOG_DEBUG ("The packet is intended for another net device.");
         Ptr<NocNode> nocNode = GetNode ()->GetObject<NocNode> ();
         Ptr<NocNetDevice> destinationNetDevice = GetNocHelper ()->FindNetDeviceByAddress (to);
-        nocNode->Send (packet, destinationNetDevice->GetNode ()->GetObject<NocNode> ());
+        nocNode->Send (this, packet, destinationNetDevice->GetNode ()->GetObject<NocNode> ());
       }
   }
 
