@@ -45,10 +45,16 @@ namespace ns3
     RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
+    virtual Ptr<NocNetDevice>
+    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
+
   private:
 
     Ptr<NocNetDevice>
-    GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+    GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+
+    Ptr<NocNetDevice>
+    GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
   };
 
 } // namespace ns3

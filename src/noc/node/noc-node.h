@@ -57,11 +57,27 @@ namespace ns3
     GetRouter ();
     //\}
 
+    /**
+     * Injects a specified packet into the NoC. The packet will be sent to the specified destination node.
+     *
+     * \param packet the network packet
+     * \param destination the destination node
+     */
     void
-    Send (Ptr<NocNetDevice>, Ptr<Packet>, Ptr<NocNode>);
+    InjectPacket (Ptr<NocPacket> packet, Ptr<NocNode> destination);
+
+    /**
+     * Sends a packet through the network, from the specified NoC net device
+     *
+     * \param source the source noC net device
+     * \param packet the network packet
+     * \param destination the destination node
+     */
+    void
+    Send (Ptr<NocNetDevice> source, Ptr<Packet> packet, Ptr<NocNode> destination);
 
     void
-    DoSend (Ptr<Packet>, Ptr<NetDevice>, Ptr<NetDevice>);
+    DoSend (Ptr<Packet>packet, Ptr<NetDevice> source, Ptr<NetDevice> destination);
 
   private:
 

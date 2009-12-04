@@ -58,7 +58,14 @@ namespace ns3
   }
 
   Ptr<NocNetDevice>
-  FourWayRouter::GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection)
+  FourWayRouter::GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination)
+  {
+    NS_LOG_FUNCTION_NOARGS();
+    return GetNocNode ()->GetDevice (0)->GetObject<NocNetDevice> ();
+  }
+
+  Ptr<NocNetDevice>
+  FourWayRouter::GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection)
   {
     NS_LOG_DEBUG ("Searching for a net device for node " << GetNocNode ()->GetId () << " and direction " << routingDirection);
     Ptr<NocNetDevice> netDevice = 0;
@@ -80,6 +87,12 @@ namespace ns3
         NS_LOG_DEBUG ("No net device found!");
       }
     return netDevice;
+  }
+
+  Ptr<NocNetDevice>
+  FourWayRouter::GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection)
+  {
+    return GetInputNetDevice (sender, routingDirection);
   }
 
 } // namespace ns3

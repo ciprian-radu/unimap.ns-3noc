@@ -50,13 +50,19 @@ namespace ns3
     RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
+    virtual Ptr<NocNetDevice>
+    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
+
     virtual uint32_t
     AddDevice (Ptr<NocNetDevice> device);
 
   private:
 
     Ptr<NocNetDevice>
-    GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+    GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+
+    Ptr<NocNetDevice>
+    GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
 
     bool
     isRightRouter (Ptr<NocNetDevice> sender);
@@ -65,14 +71,24 @@ namespace ns3
     isLeftRouter (Ptr<NocNetDevice> sender);
 
     /**
-     * the net devices associated to the left router (subset of m_devices)
+     * the input net devices associated to the left router (subset of m_devices)
      */
-    std::vector<Ptr<NocNetDevice> > m_leftRouterDevices;
+    std::vector<Ptr<NocNetDevice> > m_leftRouterInputDevices;
 
     /**
-     * the net devices associated to the right router (subset of m_devices)
+     * the output net devices associated to the left router (subset of m_devices)
      */
-    std::vector<Ptr<NocNetDevice> > m_rightRouterDevices;
+    std::vector<Ptr<NocNetDevice> > m_leftRouterOutputDevices;
+
+    /**
+     * the input net devices associated to the right router (subset of m_devices)
+     */
+    std::vector<Ptr<NocNetDevice> > m_rightRouterInputDevices;
+
+    /**
+     * the output net devices associated to the right router (subset of m_devices)
+     */
+    std::vector<Ptr<NocNetDevice> > m_rightRouterOutputDevices;
 
     bool m_north1DeviceAdded;
 

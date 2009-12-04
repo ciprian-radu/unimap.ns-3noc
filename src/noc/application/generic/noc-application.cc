@@ -350,8 +350,7 @@ namespace ns3
 
     Ptr<NocPacket> packet = Create<NocPacket> (relativeX, relativeY, sourceX, sourceY, m_pktSize);
     m_txTrace(packet);
-    // FIXME inject packets in first net device. Is this OK?
-    sourceNode->Send (sourceNode->GetDevice (0)->GetObject<NocNetDevice> (), packet, destinationNode);
+    sourceNode->InjectPacket (packet, destinationNode);
 
     m_totBytes += m_pktSize;
     m_lastStartTime = Simulator::Now();

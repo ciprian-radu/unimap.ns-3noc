@@ -71,6 +71,13 @@ namespace ns3
   }
 
   void
+  NocNode::InjectPacket (Ptr<NocPacket> packet, Ptr<NocNode> destination)
+  {
+    Ptr<NocNetDevice> netDevice = GetRouter ()->GetInjectionNetDevice (packet, destination);
+    Send (netDevice, packet, destination);
+  }
+
+  void
   NocNode::Send (Ptr<NocNetDevice> source, Ptr<Packet> packet, Ptr<NocNode> destination)
   {
     GetRouter ()->RequestRoute (source, destination, packet, MakeCallback(&NocNode::DoSend, this));

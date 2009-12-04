@@ -172,16 +172,16 @@ namespace ns3
     bool routeY = false;
     switch (xDirection) {
       case EAST:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice (source, EAST);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, EAST);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, WEST);
+        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, WEST);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
       case WEST:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice(source, WEST);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, WEST);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, EAST);
+        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, EAST);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
@@ -202,16 +202,16 @@ namespace ns3
 
     switch (yDirection) {
       case NORTH:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice(source, NORTH);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, NORTH);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, SOUTH);
+        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, SOUTH);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
       case SOUTH:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetNetDevice(source, SOUTH);
+        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, SOUTH);
         NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetNetDevice(source, NORTH);
+        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, NORTH);
         NS_ASSERT(destinationNetDevice != 0);
         routeReply (packet, sourceNetDevice, destinationNetDevice);
         break;
