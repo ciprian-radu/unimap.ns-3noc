@@ -109,7 +109,29 @@ namespace ns3
         const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
 
     virtual Ptr<NocNetDevice>
-    GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection) = 0;
+    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination) = 0;
+
+    /**
+     * Searches for the NoC net device which must be used by the destination node to receive the packet.
+     * The search is based on the NoC net device through which the packet will come, and also the direction
+     * through which the packet is sent (determined by the routing protocol).
+     *
+     * \param sender the sender NoC net device
+     * \param routingDirection in what direction the packet will go (routing protocol dependent)
+     */
+    virtual Ptr<NocNetDevice>
+    GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection) = 0;
+
+    /**
+     * Searches for the NoC net device which must be used to forward the message to the next node.
+     * The search is based on the NoC net device through which the packet came, and also the direction
+     * through which the packet is sent (determined by the routing protocol).
+     *
+     * \param sender the sender NoC net device
+     * \param routingDirection in what direction the packet will go (routing protocol dependent)
+     */
+    virtual Ptr<NocNetDevice>
+    GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection) = 0;
 
     /**
      * \param device NetDevice to associate to this router.

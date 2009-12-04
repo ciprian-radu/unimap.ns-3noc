@@ -63,6 +63,35 @@ namespace ns3
     return true;
   }
 
+  Ptr<NocNetDevice>
+  IrvineRouter::GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination)
+  {
+    NS_LOG_FUNCTION_NOARGS();
+    Ptr<NocNetDevice> netDevice;
+
+    NocHeader nocHeader;
+    packet->PeekHeader (nocHeader);
+
+    // we don't really determine the correct input net device
+    // but rather we determine the correct router (right or left)
+    // based on whether the destination is at West or at East
+    // from the source
+
+    uint8_t xDistance = nocHeader.GetXDistance ();
+    bool isEast = (xDistance & 0x08) != 0x08;
+    if (!isEast)
+      {
+        netDevice = m_leftRouterInputDevices[0];
+      }
+    else
+      {
+        netDevice = m_rightRouterInputDevices[0];
+      }
+    NS_LOG_DEBUG ("Chosen injection net device is " << netDevice->GetAddress ());
+
+    return netDevice;
+  }
+
   /**
    * The device is added to the left or to the right router, based on its routing direction
    *
@@ -85,37 +114,43 @@ namespace ns3
           case XyRouting::NORTH:
             if (!m_north1DeviceAdded)
               {
-                m_rightRouterDevices.push_back (device);
+                m_rightRouterInputDevices.push_back (device);
+                m_rightRouterOutputDevices.push_back (device);
                 m_north1DeviceAdded = true;
               }
             else
               {
                 NS_ASSERT(!m_north2DeviceAdded);
-                m_leftRouterDevices.push_back (device);
+                m_leftRouterInputDevices.push_back (device);
+                m_leftRouterOutputDevices.push_back (device);
                 m_north2DeviceAdded = true;
               }
             break;
           case XyRouting::EAST:
             NS_ASSERT(!m_eastDeviceAdded);
-            m_rightRouterDevices.push_back (device);
+            m_leftRouterInputDevices.push_back (device);
+            m_rightRouterOutputDevices.push_back (device);
             m_eastDeviceAdded = true;
             break;
           case XyRouting::SOUTH:
             if (!m_south1DeviceAdded)
               {
-                m_rightRouterDevices.push_back (device);
+                m_rightRouterInputDevices.push_back (device);
+                m_rightRouterOutputDevices.push_back (device);
                 m_south1DeviceAdded = true;
               }
             else
               {
                 NS_ASSERT(!m_south2DeviceAdded);
-                m_leftRouterDevices.push_back (device);
+                m_leftRouterInputDevices.push_back (device);
+                m_leftRouterOutputDevices.push_back (device);
                 m_south2DeviceAdded = true;
               }
             break;
           case XyRouting::WEST:
             NS_ASSERT(!m_westDeviceAdded);
-            m_leftRouterDevices.push_back (device);
+            m_rightRouterInputDevices.push_back (device);
+            m_leftRouterOutputDevices.push_back (device);
             m_westDeviceAdded = true;
             break;
           default:
@@ -130,37 +165,134 @@ namespace ns3
   }
 
   Ptr<NocNetDevice>
-  IrvineRouter::GetNetDevice(Ptr<NocNetDevice> sender, const int routingDirection)
+  IrvineRouter::GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
   {
-    NS_LOG_DEBUG ("Searching for a net device for node " << GetNocNode ()->GetId ()
-        << " and direction " << routingDirection << " (sender net device is " << sender->GetAddress () << ")");
+    NS_LOG_DEBUG ("Searching for an input net device for node " << GetNocNode ()->GetId ()
+        << " and direction " << routingDirection);
 
-    NS_ASSERT(isRightRouter(sender) || isLeftRouter(sender));
+    bool isRightIrvineRouter = isRightRouter (sender);
+    bool isLeftIrvineRouter = isLeftRouter (sender);
+    NS_ASSERT_MSG (isRightIrvineRouter || isLeftIrvineRouter, "The packet came through net device "
+        << sender->GetAddress () << " This is not from right nor left router.");
+    NS_ASSERT_MSG (!isRightIrvineRouter || !isLeftIrvineRouter, "The packet came through net device "
+        << sender->GetAddress () << " This is from both right and left routers.");
 
     Ptr<NocNetDevice> netDevice = 0;
-    if (isRightRouter(sender))
+    // note that right and left routers correspond for north and south directions
+    // but they don't for west and east (a west output from, a right router connects
+    // to an east input, from a left router)
+    if (isRightIrvineRouter)
       {
-        for (unsigned int i = 0; i < m_rightRouterDevices.size(); ++i)
+        NS_LOG_DEBUG ("The packet came through the right router");
+        bool found = false;
+        for (unsigned int i = 0; i < m_rightRouterInputDevices.size(); ++i)
           {
-            Ptr<NocNetDevice> tmpNetDevice = m_rightRouterDevices[i]->GetObject<NocNetDevice> ();
+            Ptr<NocNetDevice> tmpNetDevice = m_rightRouterInputDevices[i]->GetObject<NocNetDevice> ();
+            NS_LOG_DEBUG ("Right input " << tmpNetDevice->GetAddress ());
             if (tmpNetDevice->GetRoutingDirection () == routingDirection)
               {
                 netDevice = tmpNetDevice;
+                found = true;
                 break;
+              }
+          }
+        if (!found)
+          {
+            for (unsigned int i = 0; i < m_leftRouterInputDevices.size(); ++i)
+              {
+                Ptr<NocNetDevice> tmpNetDevice = m_leftRouterInputDevices[i]->GetObject<NocNetDevice> ();
+                NS_LOG_DEBUG ("Left input " << tmpNetDevice->GetAddress ());
+                if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+                  {
+                    netDevice = tmpNetDevice;
+                    found = true;
+                    break;
+                  }
               }
           }
       }
     else
       {
-      for (unsigned int i = 0; i < m_leftRouterDevices.size(); ++i)
-        {
-          Ptr<NocNetDevice> tmpNetDevice = m_leftRouterDevices[i]->GetObject<NocNetDevice> ();
-          if (tmpNetDevice->GetRoutingDirection () == routingDirection)
-            {
-              netDevice = tmpNetDevice;
-              break;
-            }
-        }
+        NS_LOG_DEBUG ("The packet came through the left router");
+        bool found = false;
+        for (unsigned int i = 0; i < m_leftRouterInputDevices.size(); ++i)
+          {
+            Ptr<NocNetDevice> tmpNetDevice = m_leftRouterInputDevices[i]->GetObject<NocNetDevice> ();
+            NS_LOG_DEBUG ("Left input " << tmpNetDevice->GetAddress ());
+            if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+              {
+                netDevice = tmpNetDevice;
+                found = true;
+                break;
+              }
+          }
+        if (!found)
+          {
+            for (unsigned int i = 0; i < m_rightRouterInputDevices.size(); ++i)
+              {
+                Ptr<NocNetDevice> tmpNetDevice = m_rightRouterInputDevices[i]->GetObject<NocNetDevice> ();
+                NS_LOG_DEBUG ("Right input " << tmpNetDevice->GetAddress ());
+                if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+                  {
+                    netDevice = tmpNetDevice;
+                    found = true;
+                    break;
+                  }
+              }
+          }
+      }
+    if (netDevice)
+      {
+        NS_LOG_DEBUG ("Found net device " << netDevice->GetAddress ());
+      }
+    else
+      {
+        NS_LOG_DEBUG ("No net device found!");
+      }
+    return netDevice;
+  }
+
+  Ptr<NocNetDevice>
+  IrvineRouter::GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
+  {
+    NS_LOG_DEBUG ("Searching for an output net device for node " << GetNocNode ()->GetId ()
+        << " and direction " << routingDirection << " (sender net device is " << sender->GetAddress () << ")");
+
+    bool isRightIrvineRouter = isRightRouter (sender);
+    bool isLeftIrvineRouter = isLeftRouter (sender);
+    NS_ASSERT_MSG (isRightIrvineRouter || isLeftIrvineRouter, "The packet came through net device "
+        << sender->GetAddress () << " This is not from right nor left router.");
+    NS_ASSERT_MSG (!isRightIrvineRouter || !isLeftIrvineRouter, "The packet came through net device "
+        << sender->GetAddress () << " This is from both right and left routers.");
+
+    Ptr<NocNetDevice> netDevice = 0;
+    if (isRightIrvineRouter)
+      {
+        NS_LOG_DEBUG ("The packet came through the right router");
+        for (unsigned int i = 0; i < m_rightRouterOutputDevices.size(); ++i)
+          {
+            Ptr<NocNetDevice> tmpNetDevice = m_rightRouterOutputDevices[i]->GetObject<NocNetDevice> ();
+            NS_LOG_DEBUG ("Right output " << tmpNetDevice->GetAddress ());
+            if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+              {
+                netDevice = tmpNetDevice;
+//                break;
+              }
+          }
+      }
+    else
+      {
+        NS_LOG_DEBUG ("The packet came through the left router");
+        for (unsigned int i = 0; i < m_leftRouterOutputDevices.size(); ++i)
+          {
+            Ptr<NocNetDevice> tmpNetDevice = m_leftRouterOutputDevices[i]->GetObject<NocNetDevice> ();
+            NS_LOG_DEBUG ("Left output " << tmpNetDevice->GetAddress ());
+            if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+              {
+                netDevice = tmpNetDevice;
+//                break;
+              }
+          }
       }
     if (netDevice)
       {
@@ -178,16 +310,17 @@ namespace ns3
   {
     bool isRightRouter = false;
     Ptr<IrvineRouter> router = sender->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetObject<IrvineRouter> ();
-    for (unsigned int i = 0; i < router->m_rightRouterDevices.size(); ++i)
+    for (unsigned int i = 0; i < router->m_rightRouterInputDevices.size(); ++i)
       {
-        NS_LOG_DEBUG ("Comparing " << router->m_rightRouterDevices[i]->GetAddress ()
+        NS_LOG_DEBUG ("Comparing " << router->m_rightRouterInputDevices[i]->GetAddress ()
             << " with " << sender->GetAddress ());
-        if (router->m_rightRouterDevices[i] == sender)
+        if (router->m_rightRouterInputDevices[i] == sender)
           {
             isRightRouter = true;
             break;
           }
       }
+    NS_LOG_DEBUG ("Comparison result: " << isRightRouter);
     return isRightRouter;
   }
 
@@ -196,16 +329,17 @@ namespace ns3
   {
     bool isLeftRouter = false;
     Ptr<IrvineRouter> router = sender->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetObject<IrvineRouter> ();
-    for (unsigned int i = 0; i < router->m_leftRouterDevices.size(); ++i)
+    for (unsigned int i = 0; i < router->m_leftRouterInputDevices.size(); ++i)
       {
-      NS_LOG_DEBUG ("Comparing " << router->m_leftRouterDevices[i]->GetAddress ()
+      NS_LOG_DEBUG ("Comparing " << router->m_leftRouterInputDevices[i]->GetAddress ()
           << " with " << sender->GetAddress ());
-        if (router->m_leftRouterDevices[i] == sender)
+        if (router->m_leftRouterInputDevices[i] == sender)
           {
             isLeftRouter = true;
             break;
           }
       }
+    NS_LOG_DEBUG ("Comparison result: " << isLeftRouter);
     return isLeftRouter;
   }
 
