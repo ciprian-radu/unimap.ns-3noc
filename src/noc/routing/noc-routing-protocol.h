@@ -91,13 +91,55 @@ namespace ns3
      */
     virtual bool
     RequestRoute(const Ptr<NocNetDevice> source,
-        const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
+        const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply);
 
     /**
      * \return the name of this routing protocol
      */
     std::string
     GetName() const;
+
+  protected:
+
+    /**
+     * Whenever we encounter a new head packet we call this method. Otherwise, for data packets,
+     * we use the same route that we used for the previous head packet.
+     *
+     * \return true if a valid route is already known
+     * \param source        source NoC net device
+     * \param destination   destination NoC node
+     * \param packet        the packet to be resolved (needed the whole packet, because
+     *                      routing information is added as tags or headers). The packet
+     *                      will be returned to reply callback.
+     * \param routeReply    callback to be invoked after route discovery procedure, supposed
+     *                      to really send packet using routing information.
+     */
+    virtual bool
+    RequestNewRoute(const Ptr<NocNetDevice> source,
+        const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
+
+    /**
+     * the net device which is the source of the transmission
+     * (as determined by the specific implementation of the routing protocol)
+     */
+    Ptr<NocNetDevice> m_sourceNetDevice;
+
+    /**
+     * the net device which is the destination of the transmission
+     * (as determined by the specific implementation of the routing protocol)
+     */
+    Ptr<NocNetDevice> m_destinationNetDevice;
+
+    /**
+     * the number of data packets routed since the last head packet was routed
+     */
+    uint32_t m_dataPacketsRouted;
+
+    /**
+     * the number of data packets which must be routed
+     * (determined from the header of the last head packet)
+     */
+    uint32_t m_dataPacketsToBeRouted;
 
   private:
 

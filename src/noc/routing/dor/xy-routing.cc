@@ -56,7 +56,7 @@ namespace ns3
   }
 
   bool
-  XyRouting::RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
+  XyRouting::RequestNewRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
       Ptr<Packet> packet, RouteReplyCallback routeReply)
   {
     NS_LOG_FUNCTION_NOARGS();
@@ -166,24 +166,22 @@ namespace ns3
         << ", packet " << ss.str ());
     ss.str("");
 
-    Ptr<NocNetDevice> sourceNetDevice;
-    Ptr<NocNetDevice> destinationNetDevice;
     bool routeX = true;
     bool routeY = false;
     switch (xDirection) {
       case EAST:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, EAST);
-        NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, WEST);
-        NS_ASSERT(destinationNetDevice != 0);
-        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, EAST);
+        NS_ASSERT(m_sourceNetDevice != 0);
+        m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, WEST);
+        NS_ASSERT(m_destinationNetDevice != 0);
+        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case WEST:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, WEST);
-        NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, EAST);
-        NS_ASSERT(destinationNetDevice != 0);
-        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, WEST);
+        NS_ASSERT(m_sourceNetDevice != 0);
+        m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, EAST);
+        NS_ASSERT(m_destinationNetDevice != 0);
+        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case NORTH:
         NS_LOG_ERROR("A NORTH direction is not allowed as a horizontal direction");
@@ -202,18 +200,18 @@ namespace ns3
 
     switch (yDirection) {
       case NORTH:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, NORTH);
-        NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, SOUTH);
-        NS_ASSERT(destinationNetDevice != 0);
-        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, NORTH);
+        NS_ASSERT(m_sourceNetDevice != 0);
+        m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, SOUTH);
+        NS_ASSERT(m_destinationNetDevice != 0);
+        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case SOUTH:
-        sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, SOUTH);
-        NS_ASSERT(sourceNetDevice != 0);
-        destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(sourceNetDevice, NORTH);
-        NS_ASSERT(destinationNetDevice != 0);
-        routeReply (packet, sourceNetDevice, destinationNetDevice);
+        m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, SOUTH);
+        NS_ASSERT(m_sourceNetDevice != 0);
+        m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, NORTH);
+        NS_ASSERT(m_destinationNetDevice != 0);
+        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case EAST:
         NS_LOG_ERROR("A EAST direction is not allowed as a vertical direction");

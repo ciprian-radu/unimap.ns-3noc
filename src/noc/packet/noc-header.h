@@ -28,7 +28,7 @@ namespace ns3
 {
 
   /**
-   * \brief Header for the Network on Chip Protocol
+   * \brief Header for messages routed in 2D mesh NoCs (based on the Irvine router architecture)
    *
    * This class has fields corresponding to those in a Network on Chip (NoC) header
    * (destination address, source address, etc).
@@ -38,6 +38,15 @@ namespace ns3
   public:
     NocHeader();
 
+    /**
+     * Constructor - creates a header
+     *
+     * \param xDistance the X (horizontal) offset to the destination
+     * \param yDistance the Y (vertical) offset to the destination
+     * \param sourceX the X coordinate of the source node
+     * \param sourceY the Y coordinate of the source node
+     * \param dataFlitCount the number of data flits (packets) that the message having this header will have
+     */
     NocHeader(uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
         uint8_t sourceY, uint16_t dataFlitCount);
 
@@ -61,6 +70,18 @@ namespace ns3
 
     virtual void
     Print(std::ostream &os) const;
+
+    /**
+     * \return the size of the header, in bytes
+     */
+    virtual uint8_t
+    GetHeaderSize () const;
+
+    /**
+     * \return whether or not this is actually a header or only a dummy (uninitialized) header
+     */
+    bool
+    IsEmpty () const;
 
     // allow protocol-specific access to the header data.
 
@@ -132,8 +153,10 @@ namespace ns3
     uint16_t m_peGroupAddress;
 
     /**
-     * indicates how many data flits the packet contains;
+     * Indicates how many data flits the packet contains;
      * this helps at determining the end of the packet
+     *
+     * Note that we consider a flit to have the size of a packet (to be a packet).
      */
     uint16_t m_dataFlitCount;
 

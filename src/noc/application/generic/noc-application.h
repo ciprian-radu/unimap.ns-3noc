@@ -108,7 +108,8 @@ private:
   NetDeviceContainer m_devices;         // the net devices from the NoC network
   NodeContainer   m_nodes;              // the nodes from the NoC network
   DataRate        m_dataRate;           // Rate that data is generated
-  uint32_t        m_pktSize;            // Size of packets
+  uint32_t        m_pktSize;            // Size of data packets (head packets have the same size + the size of the header)
+  uint16_t        m_numberOfPackets;    // How many packets a message will have
   uint32_t        m_residualBits;       // Number of generated, but not sent, bits
   Time            m_lastStartTime;      // Time last packet sent
   uint32_t        m_maxBytes;           // Limit total number of bytes sent

@@ -27,12 +27,41 @@ NS_LOG_COMPONENT_DEFINE ("NocPacket");
 namespace ns3
 {
 
-  NocPacket::NocPacket(uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
-      uint8_t sourceY, uint16_t dataFlitCount) :
-    Packet(dataFlitCount)
+  NocPacket::NocPacket (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
+      uint8_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize) :
+    Packet (dataPacketSize)
   {
-    NocHeader nocHeader(xDistance, yDistance, sourceX, sourceY, dataFlitCount);
-    AddHeader(nocHeader);
+    NocHeader nocHeader (xDistance, yDistance, sourceX, sourceY, dataFlitCount);
+    AddHeader (nocHeader);
+    m_isHeadPacket = true;
+  }
+
+  /**
+   * Constructor - creates a data packet
+   *
+   * \param dataPacketSize the size of the data packet
+   */
+  NocPacket::NocPacket (uint32_t dataPacketSize) :
+    Packet(dataPacketSize)
+  {
+    m_isHeadPacket = false;
+  }
+
+  NocPacket::~NocPacket()
+  {
+
+  }
+
+  bool
+  NocPacket::IsHeadPacket ()
+  {
+    return m_isHeadPacket;
+  }
+
+  bool
+  NocPacket::IsDataPacket ()
+  {
+    return !IsHeadPacket();
   }
 
   std::ostream& operator<< (std::ostream& os, NocPacket &packet)
