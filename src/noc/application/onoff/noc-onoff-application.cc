@@ -237,7 +237,7 @@ void NocOnOffApplication::SendPacket()
   NS_LOG_LOGIC ("sending packet at " << Simulator::Now());
   NS_ASSERT (m_sendEvent.IsExpired ());
   // FIXME how deal with source and destination address?
-  Ptr<NocPacket> packet = Create<NocPacket> (2, 3, 3, 4, m_pktSize);
+  Ptr<NocPacket> packet = Create<NocPacket> (2, 3, 3, 4, 1, m_pktSize);
   m_txTrace (packet);
   m_socket->Send (packet);
   m_totBytes += m_pktSize;

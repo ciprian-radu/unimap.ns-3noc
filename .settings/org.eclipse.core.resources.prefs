@@ -1,0 +1,23 @@
+#Wed Dec 02 10:46:41 CET 2009
+eclipse.preferences.version=1
+encoding//examples/noc/wscript=utf-8
+encoding//examples/udp/wscript=utf-8
+encoding//src/applications/onoff/wscript=utf-8
+encoding//src/contrib/wscript=utf-8
+encoding//src/devices/bridge/wscript=utf-8
+encoding//src/devices/csma/wscript=utf-8
+encoding//src/noc/application/generic/wscript=utf-8
+encoding//src/noc/application/onoff/wscript=utf-8
+encoding//src/noc/channel/wscript=utf-8
+encoding//src/noc/netdevice/wscript=utf-8
+encoding//src/noc/node/wscript=utf-8
+encoding//src/noc/packet/wscript=utf-8
+encoding//src/noc/router/4way/wscript=utf-8
+encoding//src/noc/router/irvine/wscript=utf-8
+encoding//src/noc/router/wscript=utf-8
+encoding//src/noc/routing/dor/wscript=utf-8
+encoding//src/noc/routing/wscript=utf-8
+encoding//src/noc/topology/wscript=utf-8
+encoding//src/noc/wscript=utf-8
+encoding//src/wscript=utf-8
+encoding/wscript=utf-8

@@ -27,6 +27,10 @@
 namespace ns3
 {
 
+  /**
+   * \brief Dimension Order Routing for 2D mesh topologies. By default, the X (horizontal) dimension
+   * is preferred but, this can be changed to the Y dimension.
+   */
   class XyRouting : public NocRoutingProtocol
   {
   public:
@@ -54,7 +58,7 @@ namespace ns3
     ~XyRouting();
 
     virtual bool
-    RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
+    RequestNewRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
   private:

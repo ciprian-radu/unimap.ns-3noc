@@ -85,8 +85,12 @@ namespace ns3
                 " The vertical size of the 2D mesh is given by number of nodes", UintegerValue(4),
                 MakeUintegerAccessor(&NocApplication::m_hSize),
                 MakeUintegerChecker<uint32_t> (2))
-            .AddAttribute("PacketSize", "The size of packets sent (in Bytes)", UintegerValue(8 + 512), // header + payload
+            .AddAttribute("PacketSize", "The size of data packets sent (in Bytes). "
+                "For head packets, the size of the header is not included.", UintegerValue(512),
                 MakeUintegerAccessor(&NocApplication::m_pktSize),
+                MakeUintegerChecker<uint32_t> (1))
+            .AddAttribute("NumberOfPackets", "How many packets a message will have.", UintegerValue(3),
+                MakeUintegerAccessor(&NocApplication::m_numberOfPackets),
                 MakeUintegerChecker<uint32_t> (1))
             .AddAttribute("MaxBytes",
                 "The total number of bytes to send. Once these bytes are sent, "
@@ -348,9 +352,18 @@ namespace ns3
     relativeY = relativeY | std::abs((int) (destinationX - sourceX));
     // end traffic pattern
 
-    Ptr<NocPacket> packet = Create<NocPacket> (relativeX, relativeY, sourceX, sourceY, m_pktSize);
-    m_txTrace(packet);
-    sourceNode->InjectPacket (packet, destinationNode);
+    NS_ASSERT_MSG (m_numberOfPackets >= 1,
+        "The number of packets must be at least 1 (the head packet) but it is " << m_numberOfPackets);
+    Ptr<NocPacket> headPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
+        sourceY, m_numberOfPackets, m_pktSize);
+    m_txTrace (headPacket);
+    sourceNode->InjectPacket (headPacket, destinationNode);
+    for (int i = 0; i < m_numberOfPackets - 1; ++i)
+      {
+        Ptr<NocPacket> dataPacket = Create<NocPacket> (m_pktSize);
+        m_txTrace (dataPacket);
+        sourceNode->InjectPacket (dataPacket, destinationNode);
+      }
 
     m_totBytes += m_pktSize;
     m_lastStartTime = Simulator::Now();

@@ -103,25 +103,32 @@ namespace ns3
   uint32_t
   NocHeader::Deserialize (Buffer::Iterator start)
   {
+    uint32_t size = 0;
     uint8_t tmp;
     tmp = start.ReadU8 ();
-    NS_ASSERT (tmp == 0xC0);
+    // if tmp == 0 then we have a data packet
+    if (tmp != 0)
+      {
+        NS_ASSERT (tmp == 0xC0);
 
-    uint8_t destinationAddress = start.ReadU8 ();
-    m_xDistance = destinationAddress >> 4;
-    m_yDistance = destinationAddress & 0x0F;
+        uint8_t destinationAddress = start.ReadU8 ();
+        m_xDistance = destinationAddress >> 4;
+        m_yDistance = destinationAddress & 0x0F;
 
-    uint8_t sourceAddress = start.ReadU8 ();
-    m_sourceX = sourceAddress >> 4;
-    m_sourceY = sourceAddress & 0x0F;
+        uint8_t sourceAddress = start.ReadU8 ();
+        m_sourceX = sourceAddress >> 4;
+        m_sourceY = sourceAddress & 0x0F;
 
-    m_subdataId = start.ReadU8 ();
+        m_subdataId = start.ReadU8 ();
 
-    m_peGroupAddress = start.ReadNtohU16 ();
+        m_peGroupAddress = start.ReadNtohU16 ();
 
-    m_dataFlitCount = start.ReadNtohU16 ();
+        m_dataFlitCount = start.ReadNtohU16 ();
 
-    return 8; // the number of bytes consumed.
+        size = 8;
+      }
+
+    return size; // the number of bytes consumed.
   }
 
   void
@@ -131,6 +138,23 @@ namespace ns3
         << " sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
         << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
         << (long) m_dataFlitCount;
+  }
+
+  /**
+   * \return the size of the header, in bytes
+   */
+  uint8_t
+  NocHeader::GetHeaderSize () const
+  {
+    return 8;
+  }
+
+  bool
+  NocHeader::IsEmpty () const
+  {
+    return (m_xDistance == 0) && (m_yDistance == 0) && (m_sourceX == 0)
+        && (m_sourceY == 0) && (m_subdataId == 0) && (m_peGroupAddress == 0)
+        && (m_dataFlitCount == 0);
   }
 
   void
