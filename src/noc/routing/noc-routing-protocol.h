@@ -38,8 +38,7 @@ namespace ns3
    *
    * \brief Interface for the routing protocol used by NoC net devices
    *
-   * Every routing protocol for NoCs must implement this interface. Each NoC node is supposed
-   * to know of a single routing protocol to work with, see NocNode::SetRoutingProtocol ().
+   * Every routing protocol for NoCs must implement this interface.
    *
    */
   class NocRoutingProtocol : public Object

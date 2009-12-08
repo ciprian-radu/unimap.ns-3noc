@@ -18,41 +18,47 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef FOURWAYROUTER_H_
-#define FOURWAYROUTER_H_
+#ifndef SAFSWITCHING_H_
+#define SAFSWITCHING_H_
 
-#include "ns3/noc-router.h"
+#include "ns3/noc-switching-protocol.h"
 #include "ns3/noc-net-device.h"
 
 namespace ns3
 {
 
-  class FourWayRouter : public NocRouter
+  /**
+   * \brief Store and forward flow control mechanism.
+   */
+  class SafSwitching : public NocSwitchingProtocol
   {
   public:
-
-    enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
 
     static TypeId
     GetTypeId();
 
-    FourWayRouter();
+    /**
+     * Constructor
+     */
+    SafSwitching();
 
     virtual
-    ~FourWayRouter();
+    ~SafSwitching();
 
-    virtual Ptr<NocNetDevice>
-    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
+    virtual bool
+    ApplyFlowControl(Ptr<Packet> packet, Ptr<Queue> bufferedPackets);
 
   private:
 
-    Ptr<NocNetDevice>
-    GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+    /**
+     * for each packet UID count the number of received data (body) packets
+     *
+     * the counter will start from the required value and will decrease until reaching zero
+     */
+    std::map<uint32_t , uint32_t> m_packetCount;
 
-    Ptr<NocNetDevice>
-    GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
   };
 
 } // namespace ns3
 
-#endif /* FOURWAYROUTER_H_ */
+#endif /* SAFSWITCHING_H_ */

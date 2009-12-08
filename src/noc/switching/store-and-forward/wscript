@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    storeandforward = bld.create_ns3_module('store-and-forward', ['core', 'simulator', 'routing'])
+    storeandforward.source = [
+        'saf-switching.cc',              
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'store-and-forward'
+    headers.source = [
+        'saf-switching.h',              
+        ]
+

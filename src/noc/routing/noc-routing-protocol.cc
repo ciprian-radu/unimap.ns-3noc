@@ -95,7 +95,7 @@ namespace ns3
       }
     else
       {
-        // data packet
+        // data (body) packet
         NocPacketTag tag;
         packet->PeekPacketTag(tag);
         NS_LOG_DEBUG ("A route was requested for a data packet (head packet UID is "

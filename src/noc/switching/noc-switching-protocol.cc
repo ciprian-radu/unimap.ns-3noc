@@ -18,41 +18,41 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef FOURWAYROUTER_H_
-#define FOURWAYROUTER_H_
+#include "ns3/log.h"
+#include "noc-switching-protocol.h"
+#include "ns3/noc-node.h"
+#include "ns3/noc-header.h"
+#include "ns3/noc-packet-tag.h"
 
-#include "ns3/noc-router.h"
-#include "ns3/noc-net-device.h"
+NS_LOG_COMPONENT_DEFINE ("NocSwitchingProtocol");
 
 namespace ns3
 {
 
-  class FourWayRouter : public NocRouter
+  NS_OBJECT_ENSURE_REGISTERED (NocSwitchingProtocol);
+
+  NocSwitchingProtocol::NocSwitchingProtocol (std::string name)
   {
-  public:
+    m_name = name;
+  }
 
-    enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
+  TypeId
+  NocSwitchingProtocol::GetTypeId ()
+  {
+    static TypeId tid = TypeId("ns3::NocSwitchingProtocol")
+        .SetParent<Object> ();
+    return tid;
+  }
 
-    static TypeId
-    GetTypeId();
+  NocSwitchingProtocol::~NocSwitchingProtocol ()
+  {
 
-    FourWayRouter();
+  }
 
-    virtual
-    ~FourWayRouter();
-
-    virtual Ptr<NocNetDevice>
-    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
-
-  private:
-
-    Ptr<NocNetDevice>
-    GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
-
-    Ptr<NocNetDevice>
-    GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
-  };
+  std::string
+  NocSwitchingProtocol::GetName () const
+  {
+   return m_name;
+  }
 
 } // namespace ns3
-
-#endif /* FOURWAYROUTER_H_ */

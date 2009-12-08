@@ -48,15 +48,6 @@ namespace ns3
 
   }
 
-  bool
-  FourWayRouter::RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-      Ptr<Packet> packet, RouteReplyCallback routeReply)
-  {
-    NS_LOG_FUNCTION_NOARGS();
-    GetRoutingProtocol()-> RequestRoute(source, destination, packet, routeReply);
-    return true;
-  }
-
   Ptr<NocNetDevice>
   FourWayRouter::GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination)
   {
