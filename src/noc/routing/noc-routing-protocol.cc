@@ -22,6 +22,7 @@
 #include "noc-routing-protocol.h"
 #include "ns3/noc-node.h"
 #include "ns3/noc-header.h"
+#include "ns3/noc-packet-tag.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocRoutingProtocol");
 
@@ -85,13 +86,22 @@ namespace ns3
 //        m_dataPacketsRouted = 0;
 //        NS_LOG_DEBUG ("After this head packet is routed, " << m_dataPacketsToBeRouted
 //            << " data packets are still expected to be routed");
-        return RequestNewRoute(source, destination, packet, routeReply);
+        bool routed = RequestNewRoute(source, destination, packet, routeReply);
+        m_packetSourceNetDevices
+          .insert(std::pair<uint32_t, Ptr<NocNetDevice> > (packet->GetUid (), m_sourceNetDevice));
+        m_packetDestinationNetDevices
+          .insert(std::pair<uint32_t, Ptr<NocNetDevice> > (packet->GetUid (), m_destinationNetDevice));
+        return routed;
       }
     else
       {
         // data packet
-        NS_LOG_DEBUG ("A route was requested for a data packet (using the last known route)");
-        routeReply(packet, m_sourceNetDevice, m_destinationNetDevice);
+        NocPacketTag tag;
+        packet->PeekPacketTag(tag);
+        NS_LOG_DEBUG ("A route was requested for a data packet (head packet UID is "
+            << (int) tag.GetSimpleValue() << ")");
+        routeReply(packet, m_packetSourceNetDevices[tag.GetSimpleValue()],
+            m_packetDestinationNetDevices[tag.GetSimpleValue()]);
 //        m_dataPacketsRouted++;
 //        NS_LOG_DEBUG (m_dataPacketsRouted << " were routed. Still expecting "
 //            << (m_dataPacketsToBeRouted - m_dataPacketsRouted) << " data packets");

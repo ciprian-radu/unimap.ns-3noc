@@ -123,6 +123,7 @@ namespace ns3
     m_lastStartTime = Seconds(0);
     m_totBytes = 0;
     m_trafficPattern = BIT_COMPLEMENT;
+    m_currentPacketIndex = 0;
   }
 
   NocApplication::~NocApplication()
@@ -354,15 +355,23 @@ namespace ns3
 
     NS_ASSERT_MSG (m_numberOfPackets >= 1,
         "The number of packets must be at least 1 (the head packet) but it is " << m_numberOfPackets);
-    Ptr<NocPacket> headPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
-        sourceY, m_numberOfPackets, m_pktSize);
-    m_txTrace (headPacket);
-    sourceNode->InjectPacket (headPacket, destinationNode);
-    for (int i = 0; i < m_numberOfPackets - 1; ++i)
+    if (m_currentPacketIndex == 0)
       {
-        Ptr<NocPacket> dataPacket = Create<NocPacket> (m_pktSize);
+        m_currentHeadPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
+            sourceY, m_numberOfPackets, m_pktSize);
+        m_txTrace (m_currentHeadPacket);
+        sourceNode->InjectPacket (m_currentHeadPacket, destinationNode);
+      }
+    else
+      {
+        Ptr<NocPacket> dataPacket = Create<NocPacket> (m_currentHeadPacket->GetUid (), m_pktSize);
         m_txTrace (dataPacket);
         sourceNode->InjectPacket (dataPacket, destinationNode);
+      }
+    m_currentPacketIndex++;
+    if (m_currentPacketIndex == m_numberOfPackets)
+      {
+        m_currentPacketIndex = 0;
       }
 
     m_totBytes += m_pktSize;

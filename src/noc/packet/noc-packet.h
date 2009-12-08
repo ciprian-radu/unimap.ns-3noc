@@ -49,7 +49,7 @@ namespace ns3
      *
      * \param dataPacketSize the size of the head packet (without including the size of the header)
      */
-    NocPacket (uint32_t dataPacketSize);
+    NocPacket (uint32_t headPacketUid, uint32_t dataPacketSize);
 
     ~NocPacket ();
 

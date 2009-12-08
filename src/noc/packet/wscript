@@ -5,6 +5,7 @@ def build(bld):
     nocPacket.source = [
         'noc-header.cc',              
         'noc-packet.cc',
+        'noc-packet-tag.cc',
         ]
 
     headers = bld.new_task_gen('ns3header')
@@ -12,5 +13,6 @@ def build(bld):
     headers.source = [
         'noc-header.h',              
         'noc-packet.h',
+        'noc-packet-tag.h',
         ]
 

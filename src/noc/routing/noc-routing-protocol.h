@@ -26,6 +26,7 @@
 #include "ns3/noc-packet.h"
 #include "ns3/noc-node.h"
 #include "ns3/noc-net-device.h"
+#include <map>
 
 namespace ns3
 {
@@ -147,6 +148,10 @@ namespace ns3
      * the name of the routing protocol
      */
     std::string m_name;
+
+    std::map<uint32_t, Ptr<NocNetDevice> > m_packetSourceNetDevices;
+
+    std::map<uint32_t, Ptr<NocNetDevice> > m_packetDestinationNetDevices;
   };
 
 } // namespace ns3
