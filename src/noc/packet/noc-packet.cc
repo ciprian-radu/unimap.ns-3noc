@@ -21,6 +21,8 @@
 #include "noc-packet.h"
 #include "ns3/log.h"
 #include "noc-header.h"
+#include "ns3/uinteger.h"
+#include "ns3/noc-packet-tag.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocPacket");
 
@@ -41,10 +43,13 @@ namespace ns3
    *
    * \param dataPacketSize the size of the data packet
    */
-  NocPacket::NocPacket (uint32_t dataPacketSize) :
+  NocPacket::NocPacket (uint32_t headPacketUid, uint32_t dataPacketSize) :
     Packet(dataPacketSize)
   {
     m_isHeadPacket = false;
+    NocPacketTag tag;
+    tag.SetSimpleValue (headPacketUid);
+    AddPacketTag(tag);
   }
 
   NocPacket::~NocPacket()
