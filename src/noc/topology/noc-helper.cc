@@ -24,6 +24,7 @@
 #include "ns3/xy-routing.h"
 #include "ns3/4-way-router.h"
 #include "ns3/irvine-router.h"
+#include "ns3/saf-switching.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocHelper");
 
@@ -138,6 +139,9 @@ namespace ns3
             Ptr<NocRoutingProtocol> routingProtocol =
                 CreateObject<XyRouting> ();
             router->SetRoutingProtocol (routingProtocol);
+            Ptr<NocSwitchingProtocol> switchingProtocol =
+                CreateObject<SafSwitching> ();
+            router->SetSwitchingProtocol (switchingProtocol);
             router->AddDevice (dev);
           }
 
@@ -173,6 +177,9 @@ namespace ns3
             Ptr<NocRoutingProtocol> routingProtocol =
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
+            Ptr<NocSwitchingProtocol> switchingProtocol =
+                CreateObject<SafSwitching> ();
+            router->SetSwitchingProtocol (switchingProtocol);
           }
       }
 
@@ -278,7 +285,7 @@ namespace ns3
   NetDeviceContainer
   NocHelper::Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize)
   {
-    // FIXME topologies are installed with routing protocols...
+    // FIXME topologies are installed with routing, switching protocols...
     // this implies a lot of similar methods
     // redesign this
     Ptr<NocChannel> channel = 0;
@@ -295,6 +302,9 @@ namespace ns3
             Ptr<NocRoutingProtocol> routingProtocol =
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
+            Ptr<NocSwitchingProtocol> switchingProtocol =
+                CreateObject<SafSwitching> ();
+            router->SetSwitchingProtocol (switchingProtocol);
           }
       }
 

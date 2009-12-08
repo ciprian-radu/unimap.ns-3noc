@@ -27,6 +27,7 @@
 #include "ns3/noc-node.h"
 #include "ns3/noc-net-device.h"
 #include "ns3/noc-routing-protocol.h"
+#include "ns3/noc-switching-protocol.h"
 #include <vector>
 
 namespace ns3
@@ -35,6 +36,7 @@ namespace ns3
   class NocNode;
   class NocNetDevice;
   class NocRoutingProtocol;
+  class NocSwitchingProtocol;
 
   /**
    *
@@ -56,16 +58,29 @@ namespace ns3
     virtual
     ~NocRouter();
 
-    ///\name Routers
-    //\{
-    /// Register the routing protocol.
+    /**
+     * Register the routing protocol.
+     */
     void
-    SetRoutingProtocol (Ptr<NocRoutingProtocol> router);
+    SetRoutingProtocol (Ptr<NocRoutingProtocol> routingProtocol);
 
-    /// Access current routing protocol
+    /**
+     * Access current routing protocol
+     */
     Ptr<NocRoutingProtocol>
     GetRoutingProtocol ();
-    //\}
+
+    /**
+     * Register the switching protocol.
+     */
+    void
+    SetSwitchingProtocol (Ptr<NocSwitchingProtocol> switchingProtocol);
+
+    /**
+     * Access current switching protocol
+     */
+    Ptr<NocSwitchingProtocol>
+    GetSwitchingProtocol ();
 
     /**
      * Callback to be invoked when the route discovery procedure is completed.
@@ -89,7 +104,9 @@ namespace ns3
     > RouteReplyCallback;
 
     /**
-     * Request routing information, all packets must go through this request.
+     * Allows the router to manage the packet. Package management means switching and routing.
+     *
+     * For requesting routing information, all packets must go through this request.
      *
      * Note that route discovery works async. -- RequestRoute returns immediately, while
      * reply callback will be called when routing information will be available.
@@ -105,8 +122,8 @@ namespace ns3
      *                      to really send packet using routing information.
      */
     virtual bool
-    RequestRoute(const Ptr<NocNetDevice> source,
-        const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply) = 0;
+    ManagePacket(const Ptr<NocNetDevice> source,
+        const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply);
 
     virtual Ptr<NocNetDevice>
     GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination) = 0;
@@ -189,6 +206,11 @@ namespace ns3
      * the routing protocol assigned to this router
      */
     Ptr<NocRoutingProtocol> m_routingProtocol;
+
+    /**
+     * the switching protocol assigned to this router
+     */
+    Ptr<NocSwitchingProtocol> m_switchingProtocol;
 
     std::vector<Ptr<NocNetDevice> > m_devices;
 

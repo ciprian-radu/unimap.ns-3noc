@@ -287,28 +287,47 @@ namespace ns3
         packetToSend = packet;
       }
 
-    bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
-    if (canSend)
+    bool canDoRouting = GetNode ()->GetObject<NocNode> ()->GetRouter ()->
+        GetSwitchingProtocol ()->ApplyFlowControl (packet, m_inQueue);
+    if (canDoRouting)
       {
-        result = m_channel->Send (to, from);
-        NS_LOG_LOGIC("Packet " << packet << " was sent to the NoC net device with address " << to);
-        if (m_inQueue != 0)
+        bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
+        if (canSend)
           {
-            Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
-            if (dequeuedPacket != 0)
+            result = m_channel->Send (to, from);
+            NS_LOG_LOGIC("Packet " << packet << " was sent to the NoC net device with address " << to);
+            if (m_inQueue != 0)
               {
-                m_pktSrcDestMap.erase(dequeuedPacket);
+                Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
+                if (dequeuedPacket != 0)
+                  {
+                    m_pktSrcDestMap.erase(dequeuedPacket);
+                  }
+                NS_LOG_DEBUG ("Dequeued packet " << packet << " from the input queue of NoC net device with address "
+                    << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
               }
-            NS_LOG_DEBUG ("Dequeued packet " << packet << " from the input queue of NoC net device with address "
-                << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
+          }
+        else
+          {
+            NS_LOG_LOGIC("Cannot send packet " << packet << " because the channel is busy");
+            if (m_inQueue != 0)
+              {
+                NS_LOG_LOGIC("However, the packet was queued (will retry next time)");
+              }
+            result = false;
           }
       }
     else
       {
-        NS_LOG_LOGIC("Cannot send packet " << packet << " because the channel is busy");
         if (m_inQueue != 0)
           {
-            NS_LOG_LOGIC("However, the packet was queued (will retry next time)");
+            NS_LOG_LOGIC ("The switching protocol does not allow the packet "
+                << m_inQueue->Peek ()->GetUid () << " to be sent");
+          }
+        else
+          {
+            NS_LOG_LOGIC ("The switching protocol does not allow the packet "
+                << packet->GetUid () << " to be sent");
           }
         result = false;
       }

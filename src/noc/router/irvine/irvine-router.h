@@ -46,10 +46,6 @@ namespace ns3
     virtual
     ~IrvineRouter();
 
-    virtual bool
-    RequestRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-        Ptr<Packet> packet, RouteReplyCallback routeReply);
-
     virtual Ptr<NocNetDevice>
     GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
 

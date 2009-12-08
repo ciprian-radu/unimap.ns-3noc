@@ -80,7 +80,7 @@ namespace ns3
   void
   NocNode::Send (Ptr<NocNetDevice> source, Ptr<Packet> packet, Ptr<NocNode> destination)
   {
-    GetRouter ()->RequestRoute (source, destination, packet, MakeCallback(&NocNode::DoSend, this));
+    GetRouter ()->ManagePacket (source, destination, packet, MakeCallback(&NocNode::DoSend, this));
   }
 
   void

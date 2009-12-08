@@ -48,6 +48,15 @@ namespace ns3
     m_routingProtocol = 0;
   }
 
+  bool
+  NocRouter::ManagePacket(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
+      Ptr<Packet> packet, RouteReplyCallback routeReply)
+  {
+    NS_LOG_FUNCTION_NOARGS();
+    GetRoutingProtocol()->RequestRoute (source, destination, packet, routeReply);
+    return true;
+  }
+
   void
   NocRouter::SetRoutingProtocol (Ptr<NocRoutingProtocol> routingProtocol)
   {
@@ -69,6 +78,29 @@ namespace ns3
         NS_LOG_WARN(oss.str());
       }
     return m_routingProtocol;
+  }
+
+  void
+  NocRouter::SetSwitchingProtocol (Ptr<NocSwitchingProtocol> switchingProtocol)
+  {
+    std::ostringstream oss;
+    oss << "Setting a '" << switchingProtocol->GetName ()
+        << "' switching protocol for the router of the NoC node " << m_nocNode->GetId ();
+    NS_LOG_DEBUG (oss.str());
+
+    m_switchingProtocol = switchingProtocol;
+  }
+
+  Ptr<NocSwitchingProtocol>
+  NocRouter::GetSwitchingProtocol ()
+  {
+    if (m_switchingProtocol == 0)
+      {
+        std::ostringstream oss;
+        oss << "No switching protocol is defined for the NoC node " << m_nocNode-> GetId ();
+        NS_LOG_WARN(oss.str());
+      }
+    return m_switchingProtocol;
   }
 
   uint32_t
