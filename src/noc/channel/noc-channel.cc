@@ -94,9 +94,12 @@ namespace ns3
             {
               Time tEvent = Seconds (m_bps.CalculateTxTime (m_currentPkt->GetSize ()));
               NS_LOG_LOGIC ("The channel will send the packet in " << (m_delay.GetSeconds () + tEvent.GetSeconds())
-                  << " seconds (" << m_delay.GetSeconds () << " + " << tEvent.GetSeconds() << ")");
+                  << " seconds (" << m_delay.GetSeconds () << " + " << tEvent.GetSeconds()
+                  << ") from " << from << " to " << tmp->GetAddress () << " (final destination is " << to << ")");
               m_state = PROPAGATING;
               NS_LOG_LOGIC ("switched to PROPAGATING");
+              NS_LOG_DEBUG ("Schedule event (net device receive) to occur at time "
+                  << (Simulator::Now() + m_delay + tEvent).GetSeconds () << " seconds");
               Simulator::Schedule(m_delay + tEvent, &NocChannel::TransmitEnd, this, to, tmp, from);
               result = true;
             }
