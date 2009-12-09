@@ -66,6 +66,9 @@ main (int argc, char *argv[])
   Ptr<NocHelper> noc = CreateObject<NocHelper> ();
   noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate (5000000)));
   noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
+  noc->SetInQueue ("ns3::DropTailQueue",
+      "Mode", EnumValue (DropTailQueue::PACKETS),
+      "MaxPackets", UintegerValue (1000)); // using very big input channel buffers
   // install the topology
   NetDeviceContainer devs = noc->Install2DMeshIrvine(nodes, hSize);
 
