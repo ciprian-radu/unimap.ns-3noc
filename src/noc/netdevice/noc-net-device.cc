@@ -25,6 +25,7 @@
 #include "ns3/trace-source-accessor.h"
 #include "ns3/log.h"
 #include "ns3/pointer.h"
+#include "ns3/simulator.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocNetDevice");
 
@@ -256,7 +257,6 @@ namespace ns3
 
     Mac48Address to = Mac48Address::ConvertFrom(dest);
     Mac48Address from = Mac48Address::ConvertFrom(source);
-    m_sendTrace (packet);
 
     Ptr<Packet> packetToSend;
     if (m_inQueue != 0)
@@ -269,70 +269,133 @@ namespace ns3
           }
         else
           {
-            NS_LOG_DEBUG ("Queued packet " << packet << " in the input queue of NoC net device with address "
+            NS_LOG_DEBUG ("Enqueued packet " << packet << " (as packet " << m_inQueue->Peek () << ")"
+                << " in the input queue of NoC net device with address "
                 << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
-            m_pktSrcDestMap.insert(std::pair<Ptr<const Packet>,SrcDest> (m_inQueue->Peek (), SrcDest (from, to)));
+            m_pktSrcDestMap.insert(std::pair<Ptr<const Packet>,SrcDest> (packet, SrcDest (from, to)));
           }
-        // a copy of the packet from the in queue is required
-        // (because we cannot alter the contents of the queue and we need to change the packet's header)
-        packetToSend = m_inQueue->Peek ()->Copy ();
-        NS_LOG_DEBUG("Packet " << packetToSend << " is a copy of packet " << m_inQueue->Peek ());
-
-        SrcDest srcDest = m_pktSrcDestMap[m_inQueue->Peek ()];
-        from = srcDest.GetSrc();
-        to = srcDest.GetDest();
+        ProcessBufferedPackets (packet);
       }
     else
       {
         packetToSend = packet;
-      }
+        m_sendTrace (packetToSend);
 
-    bool canDoRouting = GetNode ()->GetObject<NocNode> ()->GetRouter ()->
-        GetSwitchingProtocol ()->ApplyFlowControl (packet, m_inQueue);
-    if (canDoRouting)
-      {
-        bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
-        if (canSend)
+        bool canDoRouting = GetNode ()->GetObject<NocNode> ()->GetRouter ()->
+            GetSwitchingProtocol ()->ApplyFlowControl (packetToSend, m_inQueue);
+        if (canDoRouting)
           {
-            result = m_channel->Send (to, from);
-            NS_LOG_LOGIC("Packet " << packet << " was sent to the NoC net device with address " << to);
-            if (m_inQueue != 0)
+            bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
+            if (canSend)
               {
-                Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
-                if (dequeuedPacket != 0)
-                  {
-                    m_pktSrcDestMap.erase(dequeuedPacket);
-                  }
-                NS_LOG_DEBUG ("Dequeued packet " << packet << " from the input queue of NoC net device with address "
-                    << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
+                result = m_channel->Send (to, from);
+                NS_LOG_LOGIC("Packet " << packetToSend << " was sent to the NoC net device with address " << to);
               }
-          }
-        else
-          {
-            NS_LOG_LOGIC("Cannot send packet " << packet << " because the channel is busy");
-            if (m_inQueue != 0)
+            else
               {
-                NS_LOG_LOGIC("However, the packet was queued (will retry next time)");
+                NS_LOG_LOGIC("Cannot send packet " << packetToSend << " because the channel is busy");
+                result = false;
               }
-            result = false;
-          }
-      }
-    else
-      {
-        if (m_inQueue != 0)
-          {
-            NS_LOG_LOGIC ("The switching protocol does not allow the packet "
-                << m_inQueue->Peek ()->GetUid () << " to be sent");
           }
         else
           {
             NS_LOG_LOGIC ("The switching protocol does not allow the packet "
                 << packet->GetUid () << " to be sent");
+            result = false;
           }
-        result = false;
       }
 
     return result;
+  }
+
+  void
+  NocNetDevice::ProcessBufferedPackets (Ptr<Packet> packet)
+  {
+    if (m_inQueue != 0)
+      {
+        if (!m_inQueue->IsEmpty ())
+          {
+            bool result = true;
+            Ptr<Packet> packetToSend;
+
+            // a copy of the packet from the in queue is required
+            // (because we cannot alter the contents of the queue and we need to change the packet's header)
+            packetToSend = m_inQueue->Peek ()->Copy ();
+            if (packet != 0)
+              {
+                m_sendTrace (packet);
+              }
+            else
+              {
+              // This doesn't have to be sent!
+
+//                NS_LOG_DEBUG ("Packet is NULL");
+//                m_sendTrace (packetToSend);
+              }
+            NS_LOG_DEBUG("Packet " << packetToSend << " is a copy of packet " << m_inQueue->Peek ());
+
+            SrcDest srcDest = m_pktSrcDestMap[m_inQueue->Peek ()];
+            Mac48Address from = srcDest.GetSrc();
+            Mac48Address to = srcDest.GetDest();
+
+            bool canDoRouting = true;
+            if (packet != 0)
+              {
+                canDoRouting = GetNode ()->GetObject<NocNode> ()->GetRouter ()->
+                    GetSwitchingProtocol ()->ApplyFlowControl (packet, m_inQueue);
+              }
+            if (canDoRouting)
+              {
+                bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
+                if (canSend)
+                  {
+                    result = m_channel->Send (to, from);
+                    if (result)
+                      {
+                        NS_LOG_LOGIC("Packet " << packetToSend << " was sent to the NoC net device with address " << to);
+                        if (m_inQueue != 0)
+                          {
+                            Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
+                            if (dequeuedPacket != 0)
+                              {
+                                m_pktSrcDestMap.erase(dequeuedPacket);
+                              }
+                            NS_LOG_DEBUG ("Dequeued packet " << packetToSend << " from the input queue of NoC net device with address "
+                                << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
+                          }
+                      }
+                    else
+                      {
+                        NS_LOG_LOGIC("Packet " << packetToSend << " was NOT sent to the NoC net device with address " << to);
+                        result = false;
+                      }
+                  }
+                else
+                  {
+                    NS_LOG_LOGIC("Cannot send packet " << packetToSend << " because the channel is busy");
+                    result = false;
+                  }
+              }
+            else
+              {
+                NS_LOG_LOGIC ("The switching protocol does not allow the packet "
+                    << m_inQueue->Peek ()->GetUid () << " to be sent");
+                result = false;
+              }
+            if (!m_inQueue->IsEmpty () && result)
+              {
+                Time tEvent = Seconds (m_channel->GetDataRate ().CalculateTxTime (m_inQueue->Peek ()->GetSize ()));
+                // FIXME the next packet cannot be sent at exactly the "channel time"
+                // At exactly that time, the channel is busy and the packet will get delayed
+                // Is it correct to add a small delay here to avoid the delay created by the busy channel?
+                // Could we call this small time "switching time"?
+                Time time = tEvent + m_channel->GetDelay () + Seconds (0.00001);
+                NS_LOG_DEBUG ("Schedule event (net device process buffered packets) to occur at time "
+                    << (Simulator::Now() + time).GetSeconds () << " seconds");
+                Simulator::Schedule(time, &NocNetDevice::ProcessBufferedPackets, this, (Ptr<Packet>) 0);
+              }
+          }
+      }
   }
 
   Ptr<Node>

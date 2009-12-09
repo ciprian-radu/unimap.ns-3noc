@@ -226,9 +226,12 @@ namespace ns3
     if (m_maxBytes == 0 || m_totBytes < m_maxBytes)
       {
         uint32_t bits = m_pktSize * 8 - m_residualBits;
+        // FIXME note that the size of the head packets is bigger (add the header size)
         NS_LOG_LOGIC ("bits = " << bits);
         Time nextTime(Seconds(bits / static_cast<double> (m_dataRate.GetBitRate()))); // Time till next packet
         NS_LOG_LOGIC ("nextTime = " << nextTime << " (packet size = " << bits << " data rate = " << m_dataRate.GetBitRate() << ")");
+        NS_LOG_DEBUG ("Schedule event (packet injection) to occur at time "
+            << (Simulator::Now () + nextTime).GetSeconds () << " seconds");
         m_sendEvent = Simulator::Schedule(nextTime, &NocApplication::SendPacket, this);
       }
     else

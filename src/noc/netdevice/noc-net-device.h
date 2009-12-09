@@ -198,6 +198,15 @@ namespace ns3
      */
     Ptr<Queue> GetOutQueue () const;
 
+    /**
+     * Event for processing the packet from the head of the input queue.
+     * This event will reschedule itself if the queue still contains packets.
+     *
+     * \param packet the last packet received (will be put in the queue's tail)
+     */
+    virtual void
+    ProcessBufferedPackets (Ptr<Packet> packet);
+
   private:
 
     /**
