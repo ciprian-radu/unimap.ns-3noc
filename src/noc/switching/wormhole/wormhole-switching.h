@@ -28,7 +28,21 @@ namespace ns3
 {
 
   /**
-   * \brief Store and forward flow control mechanism.
+   * \brief Wormhole flow control mechanism.
+   *
+   * \details
+   * Wormhole switching is better than SAF switching in terms of both buffer
+   * size and (unloaded) latency. The main drawback of WH switching is the
+   * performance degradation due to a chain of packet blocks. Fractions of a packet
+   * can be stored across different routers along the routing path in WH switching;
+   * so a single packet often keeps occupying buffers in multiple routers along the
+   * path, when the header of the packet cannot progress due to conflicts. Such
+   * a situation is referred to as head-of-line (HOL) blocking. Buffers occupied
+   * by the HOL blocking block other packets that want to go through the same
+   * lines, resulting in performance degradation.
+   *
+   * (source: <a href = "http://www.amazon.com/Networks-Chips-Practice-Embedded-Multi-core/dp/1420079786">
+   * Networks-on-Chips: Theory and Practice</a>)
    */
   class WormholeSwitching : public NocSwitchingProtocol
   {
@@ -49,13 +63,6 @@ namespace ns3
     ApplyFlowControl(Ptr<Packet> packet, Ptr<Queue> bufferedPackets);
 
   private:
-
-    /**
-     * for each packet UID count the number of received data (body) packets
-     *
-     * the counter will start from the required value and will decrease until reaching zero
-     */
-    std::map<uint32_t , uint32_t> m_packetCount;
 
   };
 

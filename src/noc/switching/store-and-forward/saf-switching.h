@@ -29,6 +29,27 @@ namespace ns3
 
   /**
    * \brief Store and forward flow control mechanism.
+   *
+   * \details
+   * Every packet is split into transfer units called flits (note that we consider
+   * a packet to be a flit here; multiple packets for a message). A single flit is sent
+   * from an output port of a router at each time unit. Once a router receives a header
+   * flit, the body flits of the packet arrive every time unit. To simply avoid input-
+   * channel buffer overflow, the input buffer must be larger than the maximum
+   * packet size. The header flit is forwarded to the neighboring router after it
+   * receives the tail flit. This switching technique is called store-and-forward (SAF).
+   * The advantage of SAF switching is the simple needed control mechanism
+   * between routers due to packet-based operation.
+   * The main drawback of SAF switching is the large needed channel buffer size that
+   * increases the hardware amount of the router. Moreover,
+   * SAF suffers from a larger latency compared with other switching techniques,
+   * because a router in every hop must wait to receive the entire packet before
+   * forwarding the header flit. Thus, SAF switching does not fit well with the
+   * requirements of NoCs.
+   *
+   * (source: <a href = "http://www.amazon.com/Networks-Chips-Practice-Embedded-Multi-core/dp/1420079786">
+   * Networks-on-Chips: Theory and Practice</a>)
+   *
    */
   class SafSwitching : public NocSwitchingProtocol
   {
