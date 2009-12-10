@@ -26,6 +26,7 @@
 #include "ns3/irvine-router.h"
 #include "ns3/saf-switching.h"
 #include "ns3/wormhole-switching.h"
+#include "ns3/vct-switching.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocHelper");
 

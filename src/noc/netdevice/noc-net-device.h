@@ -269,6 +269,24 @@ namespace ns3
      */
     Ptr<Queue> m_outQueue; // TODO we don't use output channel buffering for the moment
 
+    /**
+     * Marks the head packet as blocked (at this net device).
+     * The marking is made using the NoCHeader of the packet.
+     *
+     * \param packet the head packet
+     */
+    void
+    markHeadPacketAsBlocked (Ptr<Packet> packet);
+
+    /**
+     * Marks the head packet as unblocked (at this net device).
+     * The marking is made using the NoCHeader of the packet.
+     *
+     * \param packet the head packet
+     */
+    void
+    markHeadPacketAsUnblocked (Ptr<Packet> packet);
+
     NetDevice::ReceiveCallback m_rxCallback;
 
     NetDevice::PromiscReceiveCallback m_promiscCallback;

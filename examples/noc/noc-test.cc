@@ -68,6 +68,8 @@ main (int argc, char *argv[])
   noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
   noc->SetInQueue ("ns3::DropTailQueue",
       "Mode", EnumValue (DropTailQueue::PACKETS),
+      // FIXME found problems with store-and-forward when buffer size is 1
+      // could this be due to the fact that a message is made of 3 packets?
       "MaxPackets", UintegerValue (1000)); // using very big input channel buffers
   // install the topology
   NetDeviceContainer devs = noc->Install2DMeshIrvine(nodes, hSize);
@@ -84,7 +86,7 @@ main (int argc, char *argv[])
   NocApplicationHelper nocAppHelper2 (nodes, devs, hSize);
   nocAppHelper2.SetAttribute("DataRate", DataRateValue(DataRate("4096b/s")));
   nocAppHelper2.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
-  nocAppHelper2.SetAttribute("Destination", UintegerValue (12));
+  nocAppHelper2.SetAttribute("Destination", UintegerValue (14));
   ApplicationContainer apps2 = nocAppHelper2.Install (nodes.Get (1));
   apps2.Start (Seconds (0.0));
   apps2.Stop (Seconds (10.0));

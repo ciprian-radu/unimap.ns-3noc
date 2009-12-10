@@ -24,6 +24,7 @@
 #include "ns3/packet.h"
 #include "ns3/tag.h"
 #include "ns3/uinteger.h"
+#include "ns3/boolean.h"
 #include <iostream>
 
 namespace ns3
@@ -33,34 +34,55 @@ namespace ns3
   {
   public:
 
+    NocPacketTag ();
+
     static TypeId
-    GetTypeId(void);
+    GetTypeId ();
 
     virtual TypeId
-    GetInstanceTypeId(void) const;
+    GetInstanceTypeId () const;
 
     virtual uint32_t
-    GetSerializedSize(void) const;
+    GetSerializedSize () const;
 
     virtual void
-    Serialize(TagBuffer i) const;
+    Serialize (TagBuffer i) const;
 
     virtual void
-    Deserialize(TagBuffer i);
+    Deserialize (TagBuffer i);
 
     virtual void
-    Print(std::ostream &os) const;
+    Print (std::ostream &os) const;
 
-    // these are our accessors to our tag structure
+    /**
+     * \param uid the UID of the head packet
+     */
     void
-    SetSimpleValue(uint8_t value);
+    SetPacketHeadUid (uint8_t uid);
 
+    /**
+     * \return the UID of the packet head
+     */
     uint8_t
-    GetSimpleValue(void) const;
+    GetPacketHeadUid () const;
+
+    /**
+     * \param whether or not this packet is blocked
+     */
+    void
+    SetPacketBlocked (bool isBlocked);
+
+    /**
+     * \return whether or not this packet is blocked
+     */
+    bool
+    GetPacketBlocked () const;
 
   private:
 
-    uint8_t m_simpleValue;
+    uint8_t m_headPacketUid;
+
+    bool m_packetBlocked;
   };
 
 } // namespace ns3
