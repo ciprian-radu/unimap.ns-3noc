@@ -25,6 +25,7 @@
 #include "ns3/4-way-router.h"
 #include "ns3/irvine-router.h"
 #include "ns3/saf-switching.h"
+#include "ns3/wormhole-switching.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocHelper");
 
@@ -140,7 +141,7 @@ namespace ns3
                 CreateObject<XyRouting> ();
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<SafSwitching> ();
+                CreateObject<WormholeSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
             router->AddDevice (dev);
           }
@@ -178,7 +179,7 @@ namespace ns3
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<SafSwitching> ();
+                CreateObject<WormholeSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
@@ -303,7 +304,7 @@ namespace ns3
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<SafSwitching> ();
+                CreateObject<WormholeSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
