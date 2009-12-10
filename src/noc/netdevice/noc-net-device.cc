@@ -26,6 +26,8 @@
 #include "ns3/log.h"
 #include "ns3/pointer.h"
 #include "ns3/simulator.h"
+#include "ns3/noc-header.h"
+#include "ns3/noc-packet-tag.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocNetDevice");
 
@@ -261,6 +263,24 @@ namespace ns3
     Ptr<Packet> packetToSend;
     if (m_inQueue != 0)
       {
+        if (!m_inQueue->IsEmpty ())
+          {
+            // marking the head packet as blocked should suffice
+            NocHeader header;
+            packet->PeekHeader (header);
+            if (!header.IsEmpty ())
+              {
+                NocPacketTag tag;
+                packet->RemovePacketTag (tag);
+                tag.SetPacketBlocked (true);
+                packet->AddPacketTag (tag);
+                packet->PeekPacketTag (tag);
+                NS_ASSERT (tag.GetPacketBlocked() == true);
+                NS_LOG_DEBUG ("The packet " << packet << " (UID "
+                    << packet->GetUid () << ") is marked as blocked");
+              }
+          }
+
         bool enqueued = m_inQueue->Enqueue (packet);
         if (!enqueued)
           {
@@ -353,16 +373,13 @@ namespace ns3
                     if (result)
                       {
                         NS_LOG_LOGIC("Packet " << packetToSend << " was sent to the NoC net device with address " << to);
-                        if (m_inQueue != 0)
+                        Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
+                        if (dequeuedPacket != 0)
                           {
-                            Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
-                            if (dequeuedPacket != 0)
-                              {
-                                m_pktSrcDestMap.erase(dequeuedPacket);
-                              }
-                            NS_LOG_DEBUG ("Dequeued packet " << packetToSend << " from the input queue of NoC net device with address "
-                                << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
+                            m_pktSrcDestMap.erase(dequeuedPacket);
                           }
+                        NS_LOG_DEBUG ("Dequeued packet " << packetToSend << " from the input queue of NoC net device with address "
+                            << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
                       }
                     else
                       {

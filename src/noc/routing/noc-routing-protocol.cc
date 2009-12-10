@@ -75,7 +75,7 @@ namespace ns3
     if (!header.IsEmpty())
       {
         // head packet
-        NS_LOG_DEBUG ("A route was requested for a head packet");
+        NS_LOG_DEBUG ("A route was requested for a head packet (UID is " << packet->GetUid () << ")");
 
         // TODO the intention with the asserts is good but we need counters per <source, destination> pairs
 
@@ -99,9 +99,12 @@ namespace ns3
         NocPacketTag tag;
         packet->PeekPacketTag(tag);
         NS_LOG_DEBUG ("A route was requested for a data packet (head packet UID is "
-            << (int) tag.GetSimpleValue() << ")");
-        routeReply(packet, m_packetSourceNetDevices[tag.GetSimpleValue()],
-            m_packetDestinationNetDevices[tag.GetSimpleValue()]);
+            << (int) tag.GetPacketHeadUid () << ")");
+        Ptr<NocNetDevice> source = m_packetSourceNetDevices[tag.GetPacketHeadUid ()];
+        Ptr<NocNetDevice> destination = m_packetDestinationNetDevices[tag.GetPacketHeadUid ()];
+        NS_ASSERT (source != 0);
+        NS_ASSERT (destination != 0);
+        routeReply(packet, source, destination);
 //        m_dataPacketsRouted++;
 //        NS_LOG_DEBUG (m_dataPacketsRouted << " were routed. Still expecting "
 //            << (m_dataPacketsToBeRouted - m_dataPacketsRouted) << " data packets");

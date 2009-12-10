@@ -69,11 +69,11 @@ namespace ns3
         // data (body) packet
         NocPacketTag tag;
         packet->PeekPacketTag (tag);
-        uint32_t v = tag.GetSimpleValue ();
+        uint32_t v = tag.GetPacketHeadUid ();
         uint32_t dataFlitCount = m_packetCount[v];
         NS_ASSERT (dataFlitCount >= 0);
         m_packetCount.erase (v);
-        if (dataFlitCount - 1 > 0)
+        if ((int) dataFlitCount - 1 > 0)
           {
             m_packetCount.insert (std::pair<uint32_t , uint32_t> (v , (int) dataFlitCount - 1));
             NS_LOG_LOGIC ("Still need to receive " << ((int) dataFlitCount - 1)

@@ -25,61 +25,85 @@ NS_LOG_COMPONENT_DEFINE ("NocPacketTag");
 
 namespace ns3 {
 
+  NocPacketTag::NocPacketTag ()
+    {
+      m_packetBlocked = false;
+    }
+
   TypeId
   NocPacketTag::GetTypeId (void)
   {
     static TypeId tid = TypeId ("ns3::NocPacketTag")
       .SetParent<Tag> ()
       .AddConstructor<NocPacketTag> ()
-      .AddAttribute ("SimpleValue",
-                     "A simple value",
+      .AddAttribute ("HeadPacketUid",
+                     "Head packet UID",
                      EmptyAttributeValue (),
-                     MakeUintegerAccessor (&NocPacketTag::GetSimpleValue),
+                     MakeUintegerAccessor (&NocPacketTag::GetPacketHeadUid),
                      MakeUintegerChecker<uint8_t> ())
+      .AddAttribute ("PacketBlocked",
+                     "Packet blocked",
+                     BooleanValue (false),
+                     MakeBooleanAccessor (&NocPacketTag::GetPacketBlocked),
+                     MakeBooleanChecker ())
       ;
     return tid;
   }
 
   TypeId
-  NocPacketTag::GetInstanceTypeId (void) const
+  NocPacketTag::GetInstanceTypeId () const
   {
     return GetTypeId ();
   }
 
   uint32_t
-  NocPacketTag::GetSerializedSize (void) const
+  NocPacketTag::GetSerializedSize () const
   {
-    return 1;
+    return 2;
   }
 
   void
   NocPacketTag::Serialize (TagBuffer i) const
   {
-    i.WriteU8 (m_simpleValue);
+    i.WriteU8 (m_headPacketUid);
+    i.WriteU8 (m_packetBlocked);
   }
 
   void
   NocPacketTag::Deserialize (TagBuffer i)
   {
-    m_simpleValue = i.ReadU8 ();
+    m_headPacketUid = i.ReadU8 ();
+    m_packetBlocked = i.ReadU8 ();
   }
 
   void
   NocPacketTag::Print (std::ostream &os) const
   {
-    os << "v=" << (uint32_t)m_simpleValue;
+    os << "v=" << (uint8_t) m_headPacketUid;
   }
 
   void
-  NocPacketTag::SetSimpleValue (uint8_t value)
+  NocPacketTag::SetPacketHeadUid (uint8_t uid)
   {
-    m_simpleValue = value;
+    m_headPacketUid = uid;
   }
 
   uint8_t
-  NocPacketTag::GetSimpleValue (void) const
+  NocPacketTag::GetPacketHeadUid () const
   {
-    return m_simpleValue;
+    return m_headPacketUid;
+  }
+
+  void
+  NocPacketTag::SetPacketBlocked (bool blocked)
+  {
+    m_packetBlocked = blocked;
+  }
+
+  bool
+  NocPacketTag::GetPacketBlocked () const
+  {
+    return m_packetBlocked;
   }
 
 }  // namespace ns3

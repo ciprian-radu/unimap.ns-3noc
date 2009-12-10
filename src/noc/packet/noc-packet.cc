@@ -48,7 +48,7 @@ namespace ns3
   {
     m_isHeadPacket = false;
     NocPacketTag tag;
-    tag.SetSimpleValue (headPacketUid);
+    tag.SetPacketHeadUid (headPacketUid);
     AddPacketTag(tag);
   }
 
