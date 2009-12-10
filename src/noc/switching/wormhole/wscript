@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    wormhole = bld.create_ns3_module('wormhole', ['core', 'simulator', 'routing'])
+    wormhole.source = [
+        'wormhole-switching.cc',              
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'wormhole'
+    headers.source = [
+        'wormhole-switching.h',              
+        ]
+
