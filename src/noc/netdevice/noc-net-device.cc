@@ -263,29 +263,18 @@ namespace ns3
     Ptr<Packet> packetToSend;
     if (m_inQueue != 0)
       {
-        if (!m_inQueue->IsEmpty ())
-          {
-            // marking the head packet as blocked should suffice
-            NocHeader header;
-            packet->PeekHeader (header);
-            if (!header.IsEmpty ())
-              {
-                NocPacketTag tag;
-                packet->RemovePacketTag (tag);
-                tag.SetPacketBlocked (true);
-                packet->AddPacketTag (tag);
-                packet->PeekPacketTag (tag);
-                NS_ASSERT (tag.GetPacketBlocked() == true);
-                NS_LOG_DEBUG ("The packet " << packet << " (UID "
-                    << packet->GetUid () << ") is marked as blocked");
-              }
-          }
+//        if (!m_inQueue->IsEmpty ())
+//          {
+//            // marking the head packet as blocked should suffice
+//            markHeadPacketAsBlocked (packet);
+//          }
 
         bool enqueued = m_inQueue->Enqueue (packet);
         if (!enqueued)
           {
             NS_LOG_LOGIC ("Cannot buffer packet " << packet
                 << " in the channel input buffer of the NoC net device with address " << GetAddress ());
+            Drop (packet);
           }
         else
           {
@@ -313,12 +302,14 @@ namespace ns3
               }
             else
               {
+                Drop (packet);
                 NS_LOG_LOGIC("Cannot send packet " << packetToSend << " because the channel is busy");
                 result = false;
               }
           }
         else
           {
+            Drop (packet);
             NS_LOG_LOGIC ("The switching protocol does not allow the packet "
                 << packet->GetUid () << " to be sent");
             result = false;
@@ -361,6 +352,10 @@ namespace ns3
             bool canDoRouting = true;
             if (packet != 0)
               {
+                if (m_channel->IsBusy ())
+                  {
+                    markHeadPacketAsBlocked (packet);
+                  }
                 canDoRouting = GetNode ()->GetObject<NocNode> ()->GetRouter ()->
                     GetSwitchingProtocol ()->ApplyFlowControl (packet, m_inQueue);
               }
@@ -399,7 +394,7 @@ namespace ns3
                     << m_inQueue->Peek ()->GetUid () << " to be sent");
                 result = false;
               }
-            if (!m_inQueue->IsEmpty () && result)
+            if (!m_inQueue->IsEmpty () && result) // FIXME is the result condition required here?
               {
                 Time tEvent = Seconds (m_channel->GetDataRate ().CalculateTxTime (m_inQueue->Peek ()->GetSize ()));
                 // FIXME the next packet cannot be sent at exactly the "channel time"
@@ -412,6 +407,51 @@ namespace ns3
                 Simulator::Schedule(time, &NocNetDevice::ProcessBufferedPackets, this, (Ptr<Packet>) 0);
               }
           }
+      }
+  }
+
+  void
+  NocNetDevice::Drop (Ptr<Packet> packet)
+  {
+    NS_LOG_FUNCTION (packet);
+    // For now we just use this method to trace dropped packets
+  }
+
+  void
+  NocNetDevice::markHeadPacketAsBlocked (Ptr<Packet> packet)
+  {
+    NocHeader header;
+    packet->PeekHeader (header);
+    if (!header.IsEmpty ())
+      {
+        NocPacketTag tag;
+        packet->RemovePacketTag (tag);
+        tag.SetPacketBlocked (true);
+        packet->AddPacketTag (tag);
+
+        packet->PeekPacketTag (tag);
+        NS_ASSERT (tag.GetPacketBlocked() == true);
+        NS_LOG_DEBUG ("The packet " << packet << " (UID "
+            << packet->GetUid () << ") is marked as blocked");
+      }
+  }
+
+  void
+  NocNetDevice::markHeadPacketAsUnblocked (Ptr<Packet> packet)
+  {
+    NocHeader header;
+    packet->PeekHeader (header);
+    if (!header.IsEmpty ())
+      {
+        NocPacketTag tag;
+        packet->RemovePacketTag (tag);
+        tag.SetPacketBlocked (false);
+        packet->AddPacketTag (tag);
+        packet->PeekPacketTag (tag);
+
+        NS_ASSERT (tag.GetPacketBlocked() == false);
+        NS_LOG_DEBUG ("The packet " << packet << " (UID "
+            << packet->GetUid () << ") is marked as unblocked");
       }
   }
 

@@ -23,6 +23,7 @@
 
 #include "ns3/noc-switching-protocol.h"
 #include "ns3/noc-net-device.h"
+#include <set>
 
 namespace ns3
 {
@@ -62,6 +63,11 @@ namespace ns3
      * the counter will start from the required value and will decrease until reaching zero
      */
     std::map<uint32_t , uint32_t> m_packetCount;
+
+    /**
+     * keeps all the head packets which are blocked
+     */
+    std::set<uint32_t> m_blockedHeadPackets;
 
   };
 
