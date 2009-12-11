@@ -38,6 +38,7 @@
 #include "ns3/noc-application-helper.h"
 #include "ns3/noc-node.h"
 #include "ns3/mobility-helper.h"
+//#include "ns3/gtk-config-store.h"
 
 using namespace ns3;
 
@@ -97,6 +98,9 @@ main (int argc, char *argv[])
   std::ofstream os;
   os.open ("noc-test.tr", std::ios_base::binary | std::ios_base::out);
   noc->EnableAsciiAll (os);
+
+//  GtkConfigStore configstore;
+//  configstore.ConfigureAttributes();
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();

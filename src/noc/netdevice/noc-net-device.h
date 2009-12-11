@@ -87,6 +87,14 @@ namespace ns3
      */
     void SetOutQueue (Ptr<Queue> outQueue);
 
+    /**
+     * This method should be invoked whenever a packet is dropped by the net device
+     *
+     * \param packet the dropped packet
+     */
+    void
+    Drop (Ptr<Packet> packet);
+
     // inherited from NetDevice base class.
     virtual void
     SetIfIndex(const uint32_t index);
@@ -271,7 +279,7 @@ namespace ns3
 
     /**
      * Marks the head packet as blocked (at this net device).
-     * The marking is made using the NoCHeader of the packet.
+     * The marking is made using a NocPacketTag.
      *
      * \param packet the head packet
      */
@@ -280,7 +288,7 @@ namespace ns3
 
     /**
      * Marks the head packet as unblocked (at this net device).
-     * The marking is made using the NoCHeader of the packet.
+     * The marking is made using a NocPacketTag.
      *
      * \param packet the head packet
      */

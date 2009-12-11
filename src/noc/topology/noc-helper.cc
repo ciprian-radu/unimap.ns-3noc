@@ -87,6 +87,11 @@ namespace ns3
 
     oss << "/NodeList/" << nodeid << "/DeviceList/" << deviceid << "/$ns3::NocNetDevice/Receive";
     Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiRxEvent, writer));
+    oss.str ("");
+
+    oss << "/NodeList/" << nodeid << "/DeviceList/" << deviceid << "/$ns3::NocNetDevice/Drop";
+    Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiDropEvent, writer));
+    oss.str ("");
   }
 
   void
@@ -142,7 +147,7 @@ namespace ns3
                 CreateObject<XyRouting> ();
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<WormholeSwitching> ();
+                CreateObject<VctSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
             router->AddDevice (dev);
           }
@@ -180,7 +185,7 @@ namespace ns3
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<WormholeSwitching> ();
+                CreateObject<VctSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
@@ -305,7 +310,7 @@ namespace ns3
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<WormholeSwitching> ();
+                CreateObject<VctSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
