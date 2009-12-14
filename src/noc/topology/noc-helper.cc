@@ -147,7 +147,7 @@ namespace ns3
                 CreateObject<XyRouting> ();
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<VctSwitching> ();
+                CreateObject<SafSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
             router->AddDevice (dev);
           }
@@ -185,7 +185,7 @@ namespace ns3
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<VctSwitching> ();
+                CreateObject<SafSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
@@ -310,7 +310,7 @@ namespace ns3
                 CreateObject<XyRouting> (false);
             router->SetRoutingProtocol (routingProtocol);
             Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<VctSwitching> ();
+                CreateObject<SafSwitching> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
