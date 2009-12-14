@@ -100,11 +100,11 @@ public:
   void StartBeaconing (void);
 
 private:
-  void Receive (Ptr<Packet> packet, WifiMacHeader const *hdr);
+  void Receive (Ptr<Packet> packet, const WifiMacHeader *hdr);
   void ForwardUp (Ptr<Packet> packet, Mac48Address from, Mac48Address to);
   void ForwardDown (Ptr<const Packet> packet, Mac48Address from, Mac48Address to);
-  void TxOk (WifiMacHeader const &hdr);
-  void TxFailed (WifiMacHeader const &hdr);
+  void TxOk (const WifiMacHeader &hdr);
+  void TxFailed (const WifiMacHeader &hdr);
   void SendProbeResp (Mac48Address to);
   void SendAssocResp (Mac48Address to, bool success);
   void SendOneBeacon (void);
@@ -112,6 +112,7 @@ private:
   void SetBeaconGeneration (bool enable);
   bool GetBeaconGeneration (void) const;
   virtual void DoDispose (void);
+  virtual void DoStart (void);
   NqapWifiMac (const NqapWifiMac & ctor_arg);
   NqapWifiMac &operator = (const NqapWifiMac &o);
   Ptr<DcaTxop> GetDcaTxop (void) const;
@@ -123,6 +124,7 @@ private:
   Ptr<WifiPhy> m_phy;
   Callback<void, Ptr<Packet>,Mac48Address, Mac48Address> m_upCallback;
   Time m_beaconInterval;
+  bool m_enableBeaconGeneration;
 
   DcfManager *m_dcfManager;
   MacRxMiddle *m_rxMiddle;

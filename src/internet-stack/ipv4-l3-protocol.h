@@ -170,11 +170,15 @@ public:
   int32_t GetInterfaceForAddress (Ipv4Address addr) const;
   int32_t GetInterfaceForPrefix (Ipv4Address addr, Ipv4Mask mask) const;
   int32_t GetInterfaceForDevice (Ptr<const NetDevice> device) const;
+  bool IsDestinationAddress (Ipv4Address address, uint32_t iif) const;
 
   bool AddAddress (uint32_t i, Ipv4InterfaceAddress address);
   Ipv4InterfaceAddress GetAddress (uint32_t interfaceIndex, uint32_t addressIndex) const;
   uint32_t GetNAddresses (uint32_t interface) const;
   bool RemoveAddress (uint32_t interfaceIndex, uint32_t addressIndex);
+  Ipv4Address SelectSourceAddress (Ptr<const NetDevice> device,
+    Ipv4Address dst, Ipv4InterfaceAddress::InterfaceAddressScope_e scope);
+
 
   void SetMetric (uint32_t i, uint16_t metric);
   uint16_t GetMetric (uint32_t i) const;
@@ -200,8 +204,11 @@ private:
   Ipv4L3Protocol(const Ipv4L3Protocol &);
   Ipv4L3Protocol &operator = (const Ipv4L3Protocol &);
 
+  // class Ipv4 attributes
   virtual void SetIpForward (bool forward);
   virtual bool GetIpForward (void) const;
+  virtual void SetWeakEsModel (bool model);
+  virtual bool GetWeakEsModel (void) const;
 
   Ipv4Header BuildHeader (
             Ipv4Address source,
@@ -239,9 +246,9 @@ private:
   typedef std::list<Ptr<Ipv4L4Protocol> > L4List_t;
 
   bool m_ipForward;
+  bool m_weakEsModel;
   L4List_t m_protocols;
   Ipv4InterfaceList m_interfaces;
-  uint32_t m_nInterfaces;
   uint8_t m_defaultTtl;
   uint16_t m_identification;
   Ptr<Node> m_node;

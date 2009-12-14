@@ -92,14 +92,15 @@ private:
   typedef std::list<std::pair<Ptr<Packet>, AmsduSubframeHeader> >::const_iterator DeaggregatedMsdusCI;
   
   virtual void DoDispose (void);
-  void Receive (Ptr<Packet> packet, WifiMacHeader const*hdr);
+  virtual void DoStart (void);
+  void Receive (Ptr<Packet> packet, const WifiMacHeader* hdr);
   void ForwardUp (Ptr<Packet> packet, Mac48Address from, Mac48Address to);
   void ForwardDown (Ptr<const Packet> packet, Mac48Address from, Mac48Address to);
   /* Next function is invoked only when ap relies a frame. */
   void ForwardDown (Ptr<const Packet> packet, Mac48Address from, Mac48Address to,
-                    WifiMacHeader const *oldHdr);
-  void TxOk (WifiMacHeader const &hdr);
-  void TxFailed (WifiMacHeader const &hdr);
+                    const WifiMacHeader* oldHdr);
+  void TxOk (const WifiMacHeader& hdr);
+  void TxFailed (const WifiMacHeader& hdr);
   void SendProbeResp (Mac48Address to);
   void SendAssocResp (Mac48Address to, bool success);
   void SendOneBeacon (void);
@@ -107,7 +108,7 @@ private:
   void SetBeaconGeneration (bool enable);
   bool GetBeaconGeneration (void) const;
   
-  void DeaggregateAmsduAndForward (Ptr<Packet> aggregatedPacket, WifiMacHeader const *hdr);
+  void DeaggregateAmsduAndForward (Ptr<Packet> aggregatedPacket, const WifiMacHeader* hdr);
   QapWifiMac &operator = (const QapWifiMac &);
   QapWifiMac (const QapWifiMac &);
 
@@ -130,6 +131,7 @@ private:
   Ssid m_ssid;
   EventId m_beaconEvent;
   Time m_beaconInterval;
+  bool m_enableBeaconGeneration;
   Callback<void,Ptr<Packet>, Mac48Address, Mac48Address> m_forwardUp;
 };
 

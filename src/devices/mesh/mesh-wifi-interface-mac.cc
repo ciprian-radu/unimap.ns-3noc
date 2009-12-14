@@ -81,7 +81,8 @@ MeshWifiInterfaceMac::GetTypeId ()
                   ;
   return tid;
 }
-MeshWifiInterfaceMac::MeshWifiInterfaceMac ()
+MeshWifiInterfaceMac::MeshWifiInterfaceMac () :
+  m_standard (WIFI_PHY_STANDARD_80211a)
 {
   NS_LOG_FUNCTION (this);
 
@@ -401,11 +402,11 @@ MeshWifiInterfaceMac::ForwardDown (Ptr<const Packet> const_packet, Mac48Address 
   if (packet->RemovePacketTag (tag))
     {
       hdr.SetType (WIFI_MAC_QOSDATA);
-      hdr.SetQosTid (tag.Get ());
+      hdr.SetQosTid (tag.GetTid ());
       //Aftre setting type DsFrom and DsTo fields are reset.
       hdr.SetDsFrom ();
       hdr.SetDsTo ();
-      ac = QosUtilsMapTidToAc (tag.Get ());
+      ac = QosUtilsMapTidToAc (tag.GetTid ());
     }
   m_stats.sentFrames++;
   m_stats.sentBytes += packet->GetSize ();
@@ -747,7 +748,12 @@ MeshWifiInterfaceMac::FinishConfigureStandard (enum WifiPhyStandard standard)
       NS_ASSERT (false);
       break;
     }
+  m_standard = standard;
 }
-
+WifiPhyStandard
+MeshWifiInterfaceMac::GetPhyStandard () const
+{
+  return m_standard;
+}
 } // namespace ns3
 

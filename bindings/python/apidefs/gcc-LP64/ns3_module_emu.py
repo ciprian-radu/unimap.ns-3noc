@@ -5,6 +5,8 @@ def register_types(module):
     
     ## emu-net-device.h: ns3::EmuNetDevice [class]
     module.add_class('EmuNetDevice', parent=root_module['ns3::NetDevice'])
+    ## emu-net-device.h: ns3::EmuNetDevice::EncapsulationMode [enumeration]
+    module.add_enum('EncapsulationMode', ['ILLEGAL', 'DIX', 'LLC'], outer_class=root_module['ns3::EmuNetDevice'])
     
     ## Register a nested module for the namespace Config
     
@@ -22,6 +24,12 @@ def register_types(module):
     
     nested_module = module.add_cpp_namespace('addressUtils')
     register_types_ns3_addressUtils(nested_module)
+    
+    
+    ## Register a nested module for the namespace aodv
+    
+    nested_module = module.add_cpp_namespace('aodv')
+    register_types_ns3_aodv(nested_module)
     
     
     ## Register a nested module for the namespace dot11s
@@ -57,6 +65,10 @@ def register_types_ns3_TimeStepPrecision(module):
     
 
 def register_types_ns3_addressUtils(module):
+    root_module = module.get_root()
+    
+
+def register_types_ns3_aodv(module):
     root_module = module.get_root()
     
 
@@ -105,6 +117,11 @@ def register_Ns3EmuNetDevice_methods(root_module, cls):
                    'ns3::Ptr< ns3::Channel >', 
                    [], 
                    is_const=True, is_virtual=True)
+    ## emu-net-device.h: ns3::EmuNetDevice::EncapsulationMode ns3::EmuNetDevice::GetEncapsulationMode() const [member function]
+    cls.add_method('GetEncapsulationMode', 
+                   'ns3::EmuNetDevice::EncapsulationMode', 
+                   [], 
+                   is_const=True)
     ## emu-net-device.h: uint32_t ns3::EmuNetDevice::GetIfIndex() const [member function]
     cls.add_method('GetIfIndex', 
                    'uint32_t', 
@@ -184,6 +201,10 @@ def register_Ns3EmuNetDevice_methods(root_module, cls):
     cls.add_method('SetDataRate', 
                    'void', 
                    [param('ns3::DataRate', 'bps')])
+    ## emu-net-device.h: void ns3::EmuNetDevice::SetEncapsulationMode(ns3::EmuNetDevice::EncapsulationMode mode) [member function]
+    cls.add_method('SetEncapsulationMode', 
+                   'void', 
+                   [param('ns3::EmuNetDevice::EncapsulationMode', 'mode')])
     ## emu-net-device.h: void ns3::EmuNetDevice::SetIfIndex(uint32_t const index) [member function]
     cls.add_method('SetIfIndex', 
                    'void', 
@@ -238,6 +259,7 @@ def register_functions(root_module):
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
     register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
+    register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
     register_functions_ns3_dot11s(module.get_submodule('dot11s'), root_module)
     register_functions_ns3_flame(module.get_submodule('flame'), root_module)
     register_functions_ns3_internal(module.get_submodule('internal'), root_module)
@@ -251,6 +273,9 @@ def register_functions_ns3_TimeStepPrecision(module, root_module):
     return
 
 def register_functions_ns3_addressUtils(module, root_module):
+    return
+
+def register_functions_ns3_aodv(module, root_module):
     return
 
 def register_functions_ns3_dot11s(module, root_module):

@@ -87,8 +87,9 @@ private:
   AdhocWifiMac (const AdhocWifiMac & ctor_arg);
   AdhocWifiMac &operator = (const AdhocWifiMac &o);
   Ptr<DcaTxop> GetDcaTxop(void) const;
+  void TxOk (const WifiMacHeader &hdr);
+  void TxFailed (const WifiMacHeader &hdr);
   virtual void FinishConfigureStandard (enum WifiPhyStandard standard);
-
   Ptr<DcaTxop> m_dca;
   Callback<void,Ptr<Packet>, Mac48Address, Mac48Address> m_upCallback;
   Ptr<WifiRemoteStationManager> m_stationManager;
@@ -97,6 +98,8 @@ private:
   MacRxMiddle *m_rxMiddle;
   Ptr<MacLow> m_low;
   Ssid m_ssid;
+  TracedCallback<const WifiMacHeader &> m_txOkCallback;
+  TracedCallback<const WifiMacHeader &> m_txErrCallback;
 };
 
 } // namespace ns3

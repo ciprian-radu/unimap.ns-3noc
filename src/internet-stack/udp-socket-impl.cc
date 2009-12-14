@@ -373,6 +373,8 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
           // Get the primary address
           Ipv4InterfaceAddress iaddr = ipv4->GetAddress (i, 0);
           Ipv4Address addri = iaddr.GetLocal ();
+          if (addri == Ipv4Address ("127.0.0.1"))
+            continue;
           Ipv4Mask maski = iaddr.GetMask ();
           if (maski == Ipv4Mask::GetOnes ())
             {
@@ -399,10 +401,16 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
       NS_LOG_LOGIC ("Limited broadcast end.");
       return p->GetSize();
     }
+  else if (m_endPoint->GetLocalAddress() != Ipv4Address::GetAny())
+    {
+      m_udp->Send(p->Copy (), m_endPoint->GetLocalAddress(), dest,
+                  m_endPoint->GetLocalPort(), port, 0);
+    }
   else if (ipv4->GetRoutingProtocol () != 0)
     {
       Ipv4Header header;
       header.SetDestination (dest);
+      header.SetProtocol (UdpL4Protocol::PROT_NUMBER);
       Socket::SocketErrno errno_;
       Ptr<Ipv4Route> route;
       uint32_t oif = 0; //specify non-zero if bound to a source address

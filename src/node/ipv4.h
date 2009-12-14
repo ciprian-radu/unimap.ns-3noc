@@ -123,9 +123,31 @@ public:
    * This method searches the list of interfaces for one that holds a
    * particular address.  This call takes an IP address as a parameter and
    * returns the interface number of the first interface that has been assigned
-   * that address, or -1 if not found.  There must be an exact match.
+   * that address, or -1 if not found.  There must be an exact match; this
+   * method will not match broadcast or multicast addresses.
    */
   virtual int32_t GetInterfaceForAddress (Ipv4Address address) const = 0;
+
+  /**
+   * \brief Determine whether address and interface corresponding to
+   *        received packet can be accepted for local delivery
+   *
+   * \param address The IP address being considered
+   * \param iif The incoming Ipv4 interface index
+   *
+   * This method can be used to determine whether a received packet has
+   * an acceptable address for local delivery on the host.  The address
+   * may be a unicast, multicast, or broadcast address.  This method will
+   * return true if address is an exact match of a unicast address on
+   * one of the host's interfaces (see below), if address corresponds to 
+   * a multicast group that the host has joined (and the incoming device
+   * is acceptable), or if address corresponds to a broadcast address.
+   *
+   * If the Ipv4 attribute WeakEsModel is true, the unicast address may
+   * match any of the Ipv4 addresses on any interface.  If the attribute is
+   * false, the address must match one assigned to the incoming device.
+   */
+  virtual bool IsDestinationAddress (Ipv4Address address, uint32_t iif) const = 0;
 
   /**
    * \brief Return the interface number of first interface found that 
@@ -194,6 +216,44 @@ public:
   virtual bool RemoveAddress (uint32_t interface, uint32_t addressIndex) = 0;
 
   /**
+   * \brief Return the first primary source address with scope less than 
+   * or equal to the requested scope, to use in sending a packet to 
+   * destination dst out of the specified device.
+   *
+   * This method mirrors the behavior of Linux inet_select_addr() and is
+   * provided because interfaces may have multiple IP addresses configured
+   * on them with different scopes, and with a primary and secondary status.
+   * Secondary addresses are never returned.
+   * \see Ipv4InterfaceAddress
+   *
+   * If a non-zero device pointer is provided, the method first tries to
+   * return a primary address that is configured on that device, and whose
+   * subnet matches that of dst and whose scope is less than or equal to
+   * the requested scope.  If a primary address does not match the
+   * subnet of dst but otherwise matches the scope, it is returned.  
+   * If no such address on the device is found, the other devices are 
+   * searched in order of their interface index, but not considering dst
+   * as a factor in the search.  Because a loopback interface is typically 
+   * the first one configured on a node, it will be the first alternate 
+   * device to be tried.  Addresses scoped at LINK scope are not returned
+   * in this phase.
+   * 
+   * If no device pointer is provided, the same logic as above applies, only
+   * that there is no preferred device that is consulted first.  This means
+   * that if the device pointer is null, input parameter dst will be ignored.
+   * 
+   * If there are no possible addresses to return, a warning log message 
+   * is issued and the all-zeroes address is returned.
+   *
+   * \param device output NetDevice (optionally provided, only to constrain the search)
+   * \param dst Destination address to match, if device is provided 
+   * \param scope Scope of returned address must be less than or equal to this
+   * \returns the first primary Ipv4Address that meets the search criteria
+   */
+  virtual Ipv4Address SelectSourceAddress (Ptr<const NetDevice> device, 
+    Ipv4Address dst, Ipv4InterfaceAddress::InterfaceAddressScope_e scope) = 0;
+
+  /**
    * \param interface The interface number of an Ipv4 interface
    * \param metric routing metric (cost) associated to the underlying 
    *          Ipv4 interface
@@ -257,6 +317,8 @@ private:
   // Indirect the Ipv4 attributes through private pure virtual methods
   virtual void SetIpForward (bool forward) = 0;
   virtual bool GetIpForward (void) const = 0;
+  virtual void SetWeakEsModel (bool model) = 0;
+  virtual bool GetWeakEsModel (void) const = 0;
 };
 
 } // namespace ns3 

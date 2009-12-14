@@ -114,12 +114,20 @@ YansWifiPhy::GetTypeId (void)
                    TimeValue (MicroSeconds (250)),
                    MakeTimeAccessor (&YansWifiPhy::m_channelSwitchDelay), 
                    MakeTimeChecker ())
+    .AddAttribute ("ChannelNumber",
+                   "Channel center frequency = Channel starting frequency + 5 MHz * (nch - 1)",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&YansWifiPhy::SetChannelNumber, 
+                                         &YansWifiPhy::GetChannelNumber),
+                   MakeUintegerChecker<uint16_t> ())
+
     ;
   return tid;
 }
 
 YansWifiPhy::YansWifiPhy ()
-  :  m_endSyncEvent (),
+  :  m_channelNumber (1),
+     m_endRxEvent (),
      m_random (0.0, 1.0),
      m_channelStartingFrequency (0)
 {
@@ -162,6 +170,12 @@ YansWifiPhy::ConfigureStandard (enum WifiPhyStandard standard)
     break; 
   case WIFI_PHY_STANDARD_holland:
     ConfigureHolland ();
+    break;
+  case WIFI_PHY_STANDARD_80211p_CCH:
+    Configure80211p_CCH ();
+    break;
+  case WIFI_PHY_STANDARD_80211p_SCH:
+    Configure80211p_SCH ();
     break;
   default:
     NS_ASSERT (false);
@@ -304,17 +318,24 @@ YansWifiPhy::SetChannel (Ptr<YansWifiChannel> channel)
 {
   m_channel = channel;
   m_channel->Add (this);
-  m_channelNumber = 1;      // always start on channel starting frequency (channel 1)
 }
 
 void 
 YansWifiPhy::SetChannelNumber (uint16_t nch)
 {
-  NS_ASSERT(!IsStateSwitching()); 
+  if (Simulator::Now () == Seconds (0))
+    {
+      // this is not channel switch, this is initialization 
+      NS_LOG_DEBUG("start at channel " << nch);
+      m_channelNumber = nch;
+      return;
+    }
+
+  NS_ASSERT (!IsStateSwitching()); 
   switch (m_state->GetState ()) {
-  case YansWifiPhy::SYNC:
+  case YansWifiPhy::RX:
     NS_LOG_DEBUG ("drop packet because of channel switching while reception");
-    m_endSyncEvent.Cancel();
+    m_endRxEvent.Cancel();
     goto switchChannel;
     break;
   case YansWifiPhy::TX:
@@ -360,12 +381,12 @@ YansWifiPhy::GetChannelFrequencyMhz() const
 }
 
 void 
-YansWifiPhy::SetReceiveOkCallback (SyncOkCallback callback)
+YansWifiPhy::SetReceiveOkCallback (RxOkCallback callback)
 {
   m_state->SetReceiveOkCallback (callback);
 }
 void 
-YansWifiPhy::SetReceiveErrorCallback (SyncErrorCallback callback)
+YansWifiPhy::SetReceiveErrorCallback (RxErrorCallback callback)
 {
   m_state->SetReceiveErrorCallback (callback);
 }
@@ -407,8 +428,8 @@ YansWifiPhy::StartReceivePacket (Ptr<Packet> packet,
         goto maybeCcaBusy;
       }
     break;
-  case YansWifiPhy::SYNC:
-    NS_LOG_DEBUG ("drop packet because already in Sync (power="<<
+  case YansWifiPhy::RX:
+    NS_LOG_DEBUG ("drop packet because already in Rx (power="<<
                   rxPowerW<<"W)");
     NotifyRxDrop (packet);
     if (endRx > Simulator::Now () + m_state->GetDelayUntilIdle ()) 
@@ -433,14 +454,14 @@ YansWifiPhy::StartReceivePacket (Ptr<Packet> packet,
   case YansWifiPhy::IDLE:
     if (rxPowerW > m_edThresholdW) 
       {
-        NS_LOG_DEBUG ("sync (power="<<rxPowerW<<"W)");
+        NS_LOG_DEBUG ("sync to signal (power="<<rxPowerW<<"W)");
         // sync to signal
-        m_state->SwitchToSync (rxDuration);
-        NS_ASSERT (m_endSyncEvent.IsExpired ());
+        m_state->SwitchToRx (rxDuration);
+        NS_ASSERT (m_endRxEvent.IsExpired ());
         NotifyRxBegin (packet);
-        m_endSyncEvent = Simulator::Schedule (rxDuration, &YansWifiPhy::EndSync, this, 
-                                              packet,
-                                              event);
+        m_endRxEvent = Simulator::Schedule (rxDuration, &YansWifiPhy::EndReceive, this, 
+                                            packet,
+                                            event);
       }
     else 
       {
@@ -480,9 +501,9 @@ YansWifiPhy::SendPacket (Ptr<const Packet> packet, WifiMode txMode, WifiPreamble
   NS_ASSERT (!m_state->IsStateTx () && !m_state->IsStateSwitching ());
 
   Time txDuration = CalculateTxDuration (packet->GetSize (), txMode, preamble);
-  if (m_state->IsStateSync ())
+  if (m_state->IsStateRx ())
     {
-      m_endSyncEvent.Cancel ();
+      m_endRxEvent.Cancel ();
     }
   NotifyTxBegin (packet);
   uint32_t dataRate500KbpsUnits = txMode.GetDataRate () / 500000;   
@@ -577,6 +598,36 @@ YansWifiPhy::ConfigureHolland (void)
   m_modes.push_back (WifiPhy::Get54mba ());
 }
 
+void
+YansWifiPhy::Configure80211p_CCH (void)
+{
+  NS_LOG_FUNCTION (this);
+  m_channelStartingFrequency = 5e3; // 802.11p works over the 5Ghz freq range
+  m_modes.push_back (WifiPhy::Get3mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get4_5mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get6mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get9mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get12mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get18mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get24mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get27mb10Mhz  ());
+}
+
+void
+YansWifiPhy::Configure80211p_SCH (void)
+{
+  NS_LOG_FUNCTION (this);
+  m_channelStartingFrequency = 5e3; // 802.11p works over the 5Ghz freq range
+  m_modes.push_back (WifiPhy::Get3mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get4_5mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get6mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get9mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get12mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get18mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get24mb10Mhz ());
+  m_modes.push_back (WifiPhy::Get27mb10Mhz  ());
+}
+
 void 
 YansWifiPhy::RegisterListener (WifiPhyListener *listener)
 {
@@ -600,9 +651,9 @@ YansWifiPhy::IsStateBusy (void)
   return m_state->IsStateBusy ();
 }
 bool 
-YansWifiPhy::IsStateSync (void)
+YansWifiPhy::IsStateRx (void)
 {
-  return m_state->IsStateSync ();
+  return m_state->IsStateRx ();
 }
 bool 
 YansWifiPhy::IsStateTx (void)
@@ -680,10 +731,10 @@ YansWifiPhy::GetPowerDbm (uint8_t power) const
 }
 
 void
-YansWifiPhy::EndSync (Ptr<Packet> packet, Ptr<InterferenceHelper::Event> event)
+YansWifiPhy::EndReceive (Ptr<Packet> packet, Ptr<InterferenceHelper::Event> event)
 {
   NS_LOG_FUNCTION (this << packet << event);
-  NS_ASSERT (IsStateSync ());
+  NS_ASSERT (IsStateRx ());
   NS_ASSERT (event->GetEndTime () == Simulator::Now ());
 
   struct InterferenceHelper::SnrPer snrPer;
@@ -699,13 +750,13 @@ YansWifiPhy::EndSync (Ptr<Packet> packet, Ptr<InterferenceHelper::Event> event)
       double signalDbm = RatioToDb (event->GetRxPowerW ()) + 30;
       double noiseDbm = RatioToDb(event->GetRxPowerW() / snrPer.snr) - GetRxNoiseFigure() + 30 ;
       NotifyPromiscSniffRx (packet, (uint16_t)GetChannelFrequencyMhz (), GetChannelNumber (), dataRate500KbpsUnits, isShortPreamble, signalDbm, noiseDbm);
-      m_state->SwitchFromSyncEndOk (packet, snrPer.snr, event->GetPayloadMode (), event->GetPreambleType ());
+      m_state->SwitchFromRxEndOk (packet, snrPer.snr, event->GetPayloadMode (), event->GetPreambleType ());
     } 
   else 
     {
       /* failure. */
       NotifyRxDrop (packet);
-      m_state->SwitchFromSyncEndError (packet, snrPer.snr);
+      m_state->SwitchFromRxEndError (packet, snrPer.snr);
     }
 }
 } // namespace ns3
