@@ -1,4 +1,4 @@
-#Fri Dec 11 09:38:41 CET 2009
+#Mon Dec 14 13:57:07 CET 2009
 eclipse.preferences.version=1
 encoding//examples/noc/wscript=utf-8
 encoding//examples/udp/wscript=utf-8
@@ -7,6 +7,7 @@ encoding//src/applications/onoff/wscript=utf-8
 encoding//src/contrib/wscript=utf-8
 encoding//src/devices/bridge/wscript=utf-8
 encoding//src/devices/csma/wscript=utf-8
+encoding//src/helper/wscript=utf-8
 encoding//src/noc/application/generic/wscript=utf-8
 encoding//src/noc/application/onoff/wscript=utf-8
 encoding//src/noc/channel/wscript=utf-8
