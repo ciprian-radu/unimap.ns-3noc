@@ -355,6 +355,70 @@ Ipv4L3Protocol::GetInterfaceForDevice (
   return -1;
 }
 
+bool
+Ipv4L3Protocol::IsDestinationAddress (Ipv4Address address, uint32_t iif) const
+{
+  NS_LOG_FUNCTION (this << address << " " << iif);
+
+  // First check the incoming interface for a unicast address match
+  for (uint32_t i = 0; i < GetNAddresses (iif); i++)
+    {
+      Ipv4InterfaceAddress iaddr = GetAddress (iif, i);
+      if (address == iaddr.GetLocal ())
+        {
+          NS_LOG_LOGIC ("For me (destination " << address << " match)");
+          return true;
+        }
+      if (address == iaddr.GetBroadcast ())
+        {
+          NS_LOG_LOGIC ("For me (interface broadcast address)");
+          return true;
+        }
+    }
+
+  if (address.IsMulticast ())
+    {
+#ifdef NOTYET
+      if (MulticastCheckGroup (iif, address ))
+#endif
+      if (true)
+        {
+          NS_LOG_LOGIC ("For me (Ipv4Addr multicast address");
+          return true;
+        }
+    }
+
+  if (address.IsBroadcast ())
+    {
+      NS_LOG_LOGIC ("For me (Ipv4Addr broadcast address)");
+      return true;
+    }
+
+  if (GetWeakEsModel ())  // Check other interfaces
+    { 
+      for (uint32_t j = 0; j < GetNInterfaces (); j++)
+        {
+          if (j == uint32_t (iif)) continue;
+          for (uint32_t i = 0; i < GetNAddresses (j); i++)
+            {
+              Ipv4InterfaceAddress iaddr = GetAddress (j, i);
+              if (address == iaddr.GetLocal ())
+                {
+                  NS_LOG_LOGIC ("For me (destination " << address << " match) on another interface");
+                  return true;
+                }
+              //  This is a small corner case:  match another interface's broadcast address
+              if (address == iaddr.GetBroadcast ())
+                {
+                  NS_LOG_LOGIC ("For me (interface broadcast address on another interface)");
+                  return true;
+                }
+            }
+        }
+    }
+  return false;
+}
+
 void 
 Ipv4L3Protocol::Receive( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t protocol, const Address &from,
                          const Address &to, NetDevice::PacketType packetType)
@@ -406,6 +470,7 @@ Ipv4L3Protocol::Receive( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t pr
 
   for (SocketList::iterator i = m_sockets.begin (); i != m_sockets.end (); ++i)
     {
+      NS_LOG_LOGIC ("Forwarding to raw socket"); 
       Ptr<Ipv4RawSocketImpl> socket = *i;
       socket->ForwardUp (packet, ipHeader, device);
     }
@@ -469,7 +534,6 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
   if (destination.IsBroadcast ()) 
     {
       NS_LOG_LOGIC ("Ipv4L3Protocol::Send case 1:  limited broadcast");
-      ttl = 1;
       ipHeader = BuildHeader (source, destination, protocol, packet->GetSize (), ttl, mayFragment);
       uint32_t ifaceIndex = 0;
       for (Ipv4InterfaceList::iterator ifaceIter = m_interfaces.begin ();
@@ -502,7 +566,6 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
               destination.CombineMask (ifAddr.GetMask ()) == ifAddr.GetLocal ().CombineMask (ifAddr.GetMask ())   )  
             {
               NS_LOG_LOGIC ("Ipv4L3Protocol::Send case 2:  subnet directed bcast to " << ifAddr.GetLocal ());
-              ttl = 1;
               ipHeader = BuildHeader (source, destination, protocol, packet->GetSize (), ttl, mayFragment);
               Ptr<Packet> packetCopy = packet->Copy ();
               m_sendOutgoingTrace (ipHeader, packetCopy, ifaceIndex);
@@ -803,6 +866,59 @@ Ipv4L3Protocol::RemoveAddress (uint32_t i, uint32_t addressIndex)
   return false;
 }
 
+Ipv4Address 
+Ipv4L3Protocol::SelectSourceAddress (Ptr<const NetDevice> device,
+    Ipv4Address dst, Ipv4InterfaceAddress::InterfaceAddressScope_e scope)
+{
+  NS_LOG_FUNCTION (device << dst << scope);
+  Ipv4Address addr ("0.0.0.0");
+  Ipv4InterfaceAddress iaddr; 
+  bool found = false;
+
+  if (device != 0)
+    {
+      int32_t i = GetInterfaceForDevice (device);
+      NS_ASSERT_MSG (i >= 0, "No device found on node");
+      for (uint32_t j = 0; j < GetNAddresses (i); j++)
+        {
+          iaddr = GetAddress (i, j);
+          if (iaddr.IsSecondary ()) continue;
+          if (iaddr.GetScope () > scope) continue; 
+          if (dst.CombineMask (iaddr.GetMask ())  == iaddr.GetLocal ().CombineMask (iaddr.GetMask ()) )  
+            {
+              return iaddr.GetLocal ();
+            }
+          if (!found)
+            {
+              addr = iaddr.GetLocal ();
+              found = true;
+            }
+        }
+    }
+  if (found)
+    {
+      return addr;
+    }
+
+  // Iterate among all interfaces
+  for (uint32_t i = 0; i < GetNInterfaces (); i++)
+    {
+      for (uint32_t j = 0; j < GetNAddresses (i); j++)
+        {
+          iaddr = GetAddress (i, j);
+          if (iaddr.IsSecondary ()) continue;
+          if (iaddr.GetScope () != Ipv4InterfaceAddress::LINK 
+              && iaddr.GetScope () <= scope) 
+            {
+              return iaddr.GetLocal ();
+            }
+        }
+    }
+  NS_LOG_WARN ("Could not find source address for " << dst << " and scope " 
+    << scope << ", returning 0");
+  return addr;  
+}
+
 void 
 Ipv4L3Protocol::SetMetric (uint32_t i, uint16_t metric)
 {
@@ -900,6 +1016,18 @@ bool
 Ipv4L3Protocol::GetIpForward (void) const
 {
   return m_ipForward;
+}
+
+void 
+Ipv4L3Protocol::SetWeakEsModel (bool model)
+{
+  m_weakEsModel = model;
+}
+
+bool 
+Ipv4L3Protocol::GetWeakEsModel (void) const
+{
+  return m_weakEsModel;
 }
 
 void

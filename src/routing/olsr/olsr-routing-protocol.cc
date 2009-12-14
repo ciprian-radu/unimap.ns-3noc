@@ -72,7 +72,7 @@
 /********** Holding times **********/
 
 /// Neighbor holding time.
-#define OLSR_NEIGHB_HOLD_TIME	(Scalar (3) * OLSR_REFRESH_INTERVAL)
+#define OLSR_NEIGHB_HOLD_TIME	(Scalar (3) * m_helloInterval)
 /// Top holding time.
 #define OLSR_TOP_HOLD_TIME	(Scalar (3) * m_tcInterval)
 /// Dup holding time.
@@ -213,15 +213,13 @@ RoutingProtocol::SetIpv4 (Ptr<Ipv4> ipv4)
   m_linkTupleTimerFirstTime = true;
 
   m_ipv4 = ipv4;
-
-  Simulator::ScheduleNow (&RoutingProtocol::Start, this);
 }
 
 void RoutingProtocol::DoDispose ()
 {
   m_ipv4 = 0;
 
-  for (std::map< Ptr<Socket>, Ipv4Address >::iterator iter = m_socketAddresses.begin ();
+  for (std::map< Ptr<Socket>, Ipv4InterfaceAddress >::iterator iter = m_socketAddresses.begin ();
        iter != m_socketAddresses.end (); iter++)
     {
       iter->first->Close ();
@@ -231,7 +229,7 @@ void RoutingProtocol::DoDispose ()
   Ipv4RoutingProtocol::DoDispose ();
 }
 
-void RoutingProtocol::Start ()
+void RoutingProtocol::DoStart ()
 {
   if (m_mainAddress == Ipv4Address ())
     {
@@ -280,7 +278,7 @@ void RoutingProtocol::Start ()
           NS_FATAL_ERROR ("Failed to bind() OLSR receive socket");
         }
       socket->Connect (InetSocketAddress (Ipv4Address (0xffffffff), OLSR_PORT_NUMBER));
-      m_socketAddresses[socket] = addr;
+      m_socketAddresses[socket] = m_ipv4->GetAddress (i, 0);
     }
 
   HelloTimerExpire ();
@@ -307,7 +305,7 @@ RoutingProtocol::RecvOlsr (Ptr<Socket> socket)
 
   InetSocketAddress inetSourceAddr = InetSocketAddress::ConvertFrom (sourceAddress);
   Ipv4Address senderIfaceAddr = inetSourceAddr.GetIpv4 ();
-  Ipv4Address receiverIfaceAddr = m_socketAddresses[socket];
+  Ipv4Address receiverIfaceAddr = m_socketAddresses[socket].GetLocal ();
   NS_ASSERT (receiverIfaceAddr != Ipv4Address ());
   NS_LOG_DEBUG ("OLSR node " << m_mainAddress << " received a OLSR packet from "
                 << senderIfaceAddr << " to " << receiverIfaceAddr);
@@ -466,6 +464,37 @@ RoutingProtocol::Degree (NeighborTuple const &tuple)
   return degree;
 }
 
+namespace {
+///
+/// \brief Remove all covered 2-hop neighbors from N2 set. This is a helper function used by MprComputation algorithm.
+///
+void 
+CoverTwoHopNeighbors (Ipv4Address neighborMainAddr, TwoHopNeighborSet & N2)
+{
+  // first gather all 2-hop neighbors to be removed
+  std::set<Ipv4Address> toRemove;
+  for (TwoHopNeighborSet::iterator twoHopNeigh = N2.begin (); twoHopNeigh != N2.end (); twoHopNeigh ++)
+    {
+      if (twoHopNeigh->neighborMainAddr == neighborMainAddr)
+        {
+          toRemove.insert (twoHopNeigh->twoHopNeighborAddr);
+        }
+    }
+  // Now remove all matching records from N2
+  for (TwoHopNeighborSet::iterator twoHopNeigh = N2.begin (); twoHopNeigh != N2.end (); )
+    {
+      if (toRemove.find (twoHopNeigh->twoHopNeighborAddr) != toRemove.end ())
+        {
+          twoHopNeigh = N2.erase (twoHopNeigh);
+        }
+      else
+        {
+          twoHopNeigh ++;
+        }
+    }
+}
+} // anonymous namespace
+
 ///
 /// \brief Computates MPR set of a node following RFC 3626 hints.
 ///
@@ -579,18 +608,7 @@ RoutingProtocol::MprComputation()
           mprSet.insert (neighbor->neighborMainAddr);
           // (not in RFC but I think is needed: remove the 2-hop
           // neighbors reachable by the MPR from N2)
-          for (TwoHopNeighborSet::iterator twoHopNeigh = N2.begin ();
-               twoHopNeigh != N2.end (); )
-            {
-              if (twoHopNeigh->neighborMainAddr == neighbor->neighborMainAddr)
-                {
-                  twoHopNeigh = N2.erase (twoHopNeigh);
-                }
-              else
-                {
-                  twoHopNeigh++;
-                }
-            }
+          CoverTwoHopNeighbors (neighbor->neighborMainAddr, N2);
         }
     }
   
@@ -639,6 +657,8 @@ RoutingProtocol::MprComputation()
     {
       if (coveredTwoHopNeighbors.find (twoHopNeigh->twoHopNeighborAddr) != coveredTwoHopNeighbors.end ())
         {
+          // This works correctly only because it is known that twoHopNeigh is reachable by exactly one neighbor, 
+          // so only one record in N2 exists for each of them. This record is erased here.
           NS_LOG_LOGIC ("2-hop neigh. " << twoHopNeigh->twoHopNeighborAddr << " is already covered by an MPR.");
           twoHopNeigh = N2.erase (twoHopNeigh);
         }
@@ -740,18 +760,8 @@ RoutingProtocol::MprComputation()
       if (max != NULL)
         {
           mprSet.insert (max->neighborMainAddr);
-          for (TwoHopNeighborSet::iterator twoHopNeigh = N2.begin ();
-               twoHopNeigh != N2.end (); )
-            {
-              if (twoHopNeigh->neighborMainAddr == max->neighborMainAddr)
-                {
-                  twoHopNeigh = N2.erase (twoHopNeigh);
-                }
-              else
-                {
-                  twoHopNeigh++;
-                }
-            }
+          CoverTwoHopNeighbors (max->neighborMainAddr, N2);
+          NS_LOG_LOGIC (N2.size () << " 2-hop neighbors left to cover!");           
         }
     }
 
@@ -1448,7 +1458,7 @@ RoutingProtocol::SendHello ()
   msg.SetMessageSequenceNumber (GetMessageSequenceNumber ());
   olsr::MessageHeader::Hello &hello = msg.GetHello ();
 
-  hello.SetHTime (Scalar (3) * m_helloInterval);
+  hello.SetHTime (m_helloInterval);
   hello.willingness = m_willingness;
 
   std::vector<olsr::MessageHeader::Hello::LinkMessage>
@@ -2643,11 +2653,32 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, uint32_t 
 }
 
 bool RoutingProtocol::RouteInput  (Ptr<const Packet> p, 
-  const Ipv4Header &header, Ptr<const NetDevice> idev,                            UnicastForwardCallback ucb, MulticastForwardCallback mcb,             
+  const Ipv4Header &header, Ptr<const NetDevice> idev,                            
+  UnicastForwardCallback ucb, MulticastForwardCallback mcb,             
   LocalDeliverCallback lcb, ErrorCallback ecb)
 {   
   NS_LOG_FUNCTION (this << " " << m_ipv4->GetObject<Node> ()->GetId() << " " << header.GetDestination ());
   
+  Ipv4Address dst = header.GetDestination ();
+  Ipv4Address origin = header.GetSource ();
+
+  // Consume self-originated packets
+  if (IsMyOwnAddress (origin) == true)
+    {
+      return true; 
+    }
+  
+  // Local delivery
+  NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
+  uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
+  if (m_ipv4->IsDestinationAddress (dst, iif))
+    {
+        NS_LOG_LOGIC ("Local delivery to " << dst);
+        lcb (p, header, iif);
+        return true;
+    }
+  
+  // Forwarding
   Ptr<Ipv4Route> rtentry;
   RoutingTableEntry entry1, entry2; 
   if (Lookup (header.GetDestination (), entry1))
@@ -2779,6 +2810,150 @@ RoutingProtocol::GetEntries () const
       retval.push_back (iter->second);
     }
   return retval;
+}
+OlsrMprTestCase::OlsrMprTestCase ()
+  : TestCase ("Check OLSR MPR computing mechanism")
+{
+}
+OlsrMprTestCase::~OlsrMprTestCase ()
+{
+}
+bool
+OlsrMprTestCase::DoRun ()
+{
+  Ptr<RoutingProtocol> protocol = CreateObject<RoutingProtocol> ();
+  protocol->m_mainAddress = Ipv4Address ("10.0.0.1");
+  OlsrState & state = protocol->m_state; 
+ 
+  /*
+   *  1 -- 2 
+   *  |    |
+   *  3 -- 4
+   *
+   * Node 1 must select only one MPR (2 or 3, doesn't matter)
+   */
+  NeighborTuple neigbor;
+  neigbor.status = NeighborTuple::STATUS_SYM;
+  neigbor.willingness = OLSR_WILL_DEFAULT;
+  neigbor.neighborMainAddr = Ipv4Address ("10.0.0.2");
+  protocol->m_state.InsertNeighborTuple (neigbor);
+  neigbor.neighborMainAddr = Ipv4Address ("10.0.0.3");
+  protocol->m_state.InsertNeighborTuple (neigbor); 
+  TwoHopNeighborTuple tuple;
+  tuple.expirationTime = Seconds (3600);
+  tuple.neighborMainAddr = Ipv4Address ("10.0.0.2");
+  tuple.twoHopNeighborAddr = Ipv4Address ("10.0.0.4");
+  protocol->m_state.InsertTwoHopNeighborTuple (tuple);
+  tuple.neighborMainAddr = Ipv4Address ("10.0.0.3");
+  tuple.twoHopNeighborAddr = Ipv4Address ("10.0.0.4");
+  protocol->m_state.InsertTwoHopNeighborTuple (tuple);
+  
+  protocol->MprComputation ();
+  NS_TEST_EXPECT_MSG_EQ (state.GetMprSet ().size (), 1 , "An only address must be chosen.");
+  /*
+   *  1 -- 2 -- 5 
+   *  |    |
+   *  3 -- 4
+   *
+   * Node 1 must select node 2 as MPR.
+   */
+  tuple.neighborMainAddr = Ipv4Address ("10.0.0.2");
+  tuple.twoHopNeighborAddr = Ipv4Address ("10.0.0.5");
+  protocol->m_state.InsertTwoHopNeighborTuple (tuple);
+
+  protocol->MprComputation ();
+  MprSet mpr = state.GetMprSet ();
+  NS_TEST_EXPECT_MSG_EQ (mpr.size (), 1 , "An only address must be chosen.");
+  NS_TEST_EXPECT_MSG_EQ ((mpr.find ("10.0.0.2") != mpr.end ()), true, "Node 1 must select node 2 as MPR");
+  /*
+   *  1 -- 2 -- 5 
+   *  |    |
+   *  3 -- 4
+   *  |
+   *  6
+   *
+   * Node 1 must select nodes 2 and 3 as MPRs.
+   */
+  tuple.neighborMainAddr = Ipv4Address ("10.0.0.3");
+  tuple.twoHopNeighborAddr = Ipv4Address ("10.0.0.6");
+  protocol->m_state.InsertTwoHopNeighborTuple (tuple);
+
+  protocol->MprComputation ();
+  mpr = state.GetMprSet ();
+  NS_TEST_EXPECT_MSG_EQ (mpr.size (), 2 , "An only address must be chosen.");
+  NS_TEST_EXPECT_MSG_EQ ((mpr.find ("10.0.0.2") != mpr.end ()), true, "Node 1 must select node 2 as MPR");
+  NS_TEST_EXPECT_MSG_EQ ((mpr.find ("10.0.0.3") != mpr.end ()), true, "Node 1 must select node 3 as MPR");
+  /*
+   *  7 (OLSR_WILL_ALWAYS)
+   *  |
+   *  1 -- 2 -- 5 
+   *  |    |
+   *  3 -- 4
+   *  |
+   *  6
+   *
+   * Node 1 must select nodes 2, 3 and 7 (since it is WILL_ALWAYS) as MPRs.
+   */
+  neigbor.willingness = OLSR_WILL_ALWAYS;
+  neigbor.neighborMainAddr = Ipv4Address ("10.0.0.7");
+  protocol->m_state.InsertNeighborTuple (neigbor);
+
+  protocol->MprComputation ();
+  mpr = state.GetMprSet ();
+  NS_TEST_EXPECT_MSG_EQ (mpr.size (), 3 , "An only address must be chosen.");
+  NS_TEST_EXPECT_MSG_EQ ((mpr.find ("10.0.0.7") != mpr.end ()), true, "Node 1 must select node 7 as MPR");
+  /*
+   *                7 <- WILL_ALWAYS
+   *                |
+   *      9 -- 8 -- 1 -- 2 -- 5 
+   *                |    |
+   *           ^    3 -- 4
+   *           |    |
+   *   WILL_NEVER   6
+   *
+   * Node 1 must select nodes 2, 3 and 7 (since it is WILL_ALWAYS) as MPRs.
+   * Node 1 must NOT select node 8 as MPR since it is WILL_NEVER
+   */
+  neigbor.willingness = OLSR_WILL_NEVER;
+  neigbor.neighborMainAddr = Ipv4Address ("10.0.0.8");
+  protocol->m_state.InsertNeighborTuple (neigbor);
+  tuple.neighborMainAddr = Ipv4Address ("10.0.0.8");
+  tuple.twoHopNeighborAddr = Ipv4Address ("10.0.0.9");
+  protocol->m_state.InsertTwoHopNeighborTuple (tuple);
+
+  protocol->MprComputation ();
+  mpr = state.GetMprSet ();
+  NS_TEST_EXPECT_MSG_EQ (mpr.size (), 3 , "An only address must be chosen.");
+  NS_TEST_EXPECT_MSG_EQ ((mpr.find ("10.0.0.9") == mpr.end ()), true, "Node 1 must NOT select node 8 as MPR");
+
+  return false;
+}
+
+static class OlsrProtocolTestSuite : public TestSuite
+{
+public:
+  OlsrProtocolTestSuite ();
+} g_olsrProtocolTestSuite;
+
+OlsrProtocolTestSuite::OlsrProtocolTestSuite()
+  : TestSuite("routing-olsr", UNIT)
+{
+  AddTestCase (new OlsrMprTestCase ());
+}
+
+bool
+RoutingProtocol::IsMyOwnAddress (const Ipv4Address & a) const
+{
+  for (std::map<Ptr<Socket> , Ipv4InterfaceAddress>::const_iterator j =
+      m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
+    {
+      Ipv4InterfaceAddress iface = j->second;
+      if (a == iface.GetLocal ())
+        {
+          return true;
+        }
+    }
+  return false;
 }
 
 

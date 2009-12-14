@@ -25,6 +25,7 @@
 #define __OLSR_AGENT_IMPL_H__
 
 #include "olsr-header.h"
+#include "ns3/test.h"
 #include "olsr-state.h"
 #include "olsr-repositories.h"
 
@@ -58,11 +59,21 @@ struct RoutingTableEntry
     destAddr (), nextAddr (),
     interface (0), distance (0) {};
 };
+class RoutingProtocol;
+/// Testcase for MPR computation mechanism
+class OlsrMprTestCase : public TestCase {
+public:
+  OlsrMprTestCase ();
+  ~OlsrMprTestCase ();
+  virtual bool DoRun (void);
+  ;
+};
 
 
 class RoutingProtocol : public Ipv4RoutingProtocol
 {
 public:
+  friend class OlsrMprTestCase;
   static TypeId GetTypeId (void);
 
   RoutingProtocol ();
@@ -70,6 +81,8 @@ public:
 
   void SetMainInterface (uint32_t interface);
 
+protected:
+  virtual void DoStart (void);
 private:
   std::map<Ipv4Address, RoutingTableEntry> m_table; ///< Data structure for the routing table.
 
@@ -100,7 +113,7 @@ private:
   Ptr<Ipv4> m_ipv4;
 	
 private:
-  void Start ();
+
   void Clear ();
   uint32_t GetSize () const { return m_table.size (); }
   std::vector<RoutingTableEntry> GetEntries () const;
@@ -216,13 +229,15 @@ private:
                                const olsr::MessageHeader::Hello &hello);
 
   int Degree (NeighborTuple const &tuple);
+  /// Check that address is one of my interfaces
+  bool IsMyOwnAddress (const Ipv4Address & a) const;
 
   Ipv4Address m_mainAddress;
 
   // One socket per interface, each bound to that interface's address
   // (reason: for OLSR Link Sensing we need to know on which interface
   // HELLO messages arrive)
-  std::map< Ptr<Socket>, Ipv4Address > m_socketAddresses;
+  std::map< Ptr<Socket>, Ipv4InterfaceAddress > m_socketAddresses;
 
   TracedCallback <const PacketHeader &,
                   const MessageList &> m_rxPacketTrace;
