@@ -58,12 +58,12 @@ namespace ns3
      * \param uid the UID of the head packet
      */
     void
-    SetPacketHeadUid (uint8_t uid);
+    SetPacketHeadUid (uint32_t uid);
 
     /**
      * \return the UID of the packet head
      */
-    uint8_t
+    uint32_t
     GetPacketHeadUid () const;
 
     /**
@@ -80,7 +80,7 @@ namespace ns3
 
   private:
 
-    uint8_t m_headPacketUid;
+    uint32_t m_headPacketUid;
 
     bool m_packetBlocked;
   };

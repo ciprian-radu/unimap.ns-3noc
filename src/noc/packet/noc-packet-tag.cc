@@ -59,36 +59,36 @@ namespace ns3 {
   uint32_t
   NocPacketTag::GetSerializedSize () const
   {
-    return 2;
+    return 5;
   }
 
   void
   NocPacketTag::Serialize (TagBuffer i) const
   {
-    i.WriteU8 (m_headPacketUid);
+    i.WriteU32 (m_headPacketUid);
     i.WriteU8 (m_packetBlocked);
   }
 
   void
   NocPacketTag::Deserialize (TagBuffer i)
   {
-    m_headPacketUid = i.ReadU8 ();
+    m_headPacketUid = i.ReadU32 ();
     m_packetBlocked = i.ReadU8 ();
   }
 
   void
   NocPacketTag::Print (std::ostream &os) const
   {
-    os << "v=" << (uint8_t) m_headPacketUid;
+    os << "v=" << (uint32_t) m_headPacketUid;
   }
 
   void
-  NocPacketTag::SetPacketHeadUid (uint8_t uid)
+  NocPacketTag::SetPacketHeadUid (uint32_t uid)
   {
     m_headPacketUid = uid;
   }
 
-  uint8_t
+  uint32_t
   NocPacketTag::GetPacketHeadUid () const
   {
     return m_headPacketUid;
