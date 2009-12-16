@@ -1,7 +1,9 @@
-#Mon Dec 14 13:57:07 CET 2009
+#Wed Dec 16 14:57:54 CET 2009
 eclipse.preferences.version=1
 encoding//examples/noc/wscript=utf-8
+encoding//examples/tcp/wscript=utf-8
 encoding//examples/udp/wscript=utf-8
+encoding//examples/wscript=utf-8
 encoding//samples/wscript=utf-8
 encoding//src/applications/onoff/wscript=utf-8
 encoding//src/contrib/wscript=utf-8
@@ -18,6 +20,8 @@ encoding//src/noc/router/4way/wscript=utf-8
 encoding//src/noc/router/irvine/wscript=utf-8
 encoding//src/noc/router/wscript=utf-8
 encoding//src/noc/routing/dor/wscript=utf-8
+encoding//src/noc/routing/slb/wscript=utf-8
+encoding//src/noc/routing/so/wscript=utf-8
 encoding//src/noc/routing/wscript=utf-8
 encoding//src/noc/switching/store-and-forward/wscript=utf-8
 encoding//src/noc/switching/virtual-cut-through/wscript=utf-8

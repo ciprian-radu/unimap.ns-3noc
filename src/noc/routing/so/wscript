@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    so = bld.create_ns3_module('so', ['core', 'simulator', 'routing'])
+    so.source = [
+        'so-routing.cc',              
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'so'
+    headers.source = [
+        'so-routing.h',              
+        ]
+

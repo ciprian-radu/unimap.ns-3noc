@@ -41,6 +41,8 @@ all_modules = (
     'noc/topology',
     'noc/routing',
     'noc/routing/dor',
+    'noc/routing/slb',
+    'noc/routing/so',      
     'noc/router',
     'noc/router/4way',
     'noc/router/irvine',

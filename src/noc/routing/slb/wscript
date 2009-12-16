@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    slb = bld.create_ns3_module('slb', ['core', 'simulator', 'routing'])
+    slb.source = [
+        'slb-routing.cc',              
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'slb'
+    headers.source = [
+        'slb-routing.h',              
+        ]
+
