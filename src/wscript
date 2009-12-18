@@ -46,6 +46,7 @@ all_modules = (
     'noc/router',
     'noc/router/4way',
     'noc/router/irvine',
+    'noc/router/slb',    
     'noc/switching',
     'noc/switching/store-and-forward',
     'noc/switching/wormhole',
