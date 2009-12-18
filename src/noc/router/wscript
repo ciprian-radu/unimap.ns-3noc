@@ -3,12 +3,14 @@
 def build(bld):
     router = bld.create_ns3_module('router', ['core', 'simulator'])
     router.source = [
-        'noc-router.cc',              
+        'noc-router.cc',
+        'noc-load-router.cc',              
         ]
 
     headers = bld.new_task_gen('ns3header')
     headers.module = 'router'
     headers.source = [
-        'noc-router.h',              
+        'noc-router.h',
+        'noc-load-router.h',              
         ]
 
