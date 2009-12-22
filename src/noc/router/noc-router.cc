@@ -29,27 +29,38 @@ namespace ns3
 
   NS_OBJECT_ENSURE_REGISTERED (NocRouter);
 
-  NocRouter::NocRouter(std::string name)
+  NocRouter::NocRouter (std::string name)
   {
     m_name = name;
+    m_loadComponent = 0;
+    NS_LOG_DEBUG ("No load router component is used");
+  }
+
+  NocRouter::NocRouter (std::string name, Ptr<LoadRouterComponent> loadComponent)
+  {
+    NS_ASSERT_MSG (loadComponent != 0, "The load router component must be specified!"
+        " If you do not want to use a load router component, use another constructor.");
+    m_name = name;
+    m_loadComponent = loadComponent;
+    NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
   }
 
   TypeId
-  NocRouter::GetTypeId(void)
+  NocRouter::GetTypeId ()
   {
     static TypeId tid = TypeId("ns3::NocRouter")
         .SetParent<Object> ();
     return tid;
   }
 
-  NocRouter::~NocRouter()
+  NocRouter::~NocRouter ()
   {
     m_nocNode = 0;
     m_routingProtocol = 0;
   }
 
   bool
-  NocRouter::ManagePacket(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
+  NocRouter::ManagePacket (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
       Ptr<Packet> packet, RouteReplyCallback routeReply)
   {
     NS_LOG_FUNCTION_NOARGS();
@@ -120,7 +131,7 @@ namespace ns3
   }
 
   uint32_t
-  NocRouter::GetNDevices (void) const
+  NocRouter::GetNDevices () const
   {
     return m_devices.size ();
   }

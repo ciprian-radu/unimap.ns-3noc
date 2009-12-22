@@ -18,47 +18,37 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
+#include "4-way-load-router.h"
 #include "ns3/log.h"
-#include "slb-load-router.h"
+#include "ns3/noc-header.h"
 
-NS_LOG_COMPONENT_DEFINE ("SlbLoadRouter");
+NS_LOG_COMPONENT_DEFINE ("FourWayLoadRouter");
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (SlbLoadRouter);
-
-  SlbLoadRouter::SlbLoadRouter() : NocLoadRouter (__FILE__)
-  {
-    ;
-  }
+  NS_OBJECT_ENSURE_REGISTERED (FourWayLoadRouter);
 
   TypeId
-  SlbLoadRouter::GetTypeId ()
+  FourWayLoadRouter::GetTypeId ()
   {
-    static TypeId tid = TypeId("ns3::NocLoadRouter")
-        .SetParent<NocRouter> ();
+    static TypeId tid = TypeId("ns3::FourWayLoadRouter")
+        .SetParent<FourWayRouter> ();
     return tid;
   }
 
-  SlbLoadRouter::~SlbLoadRouter ()
+  // we could easily name the router "four way load router", but using __FILE__ should be more useful for debugging
+  FourWayLoadRouter::FourWayLoadRouter (Ptr<LoadRouterComponent> loadComponent) : FourWayRouter (__FILE__)
+  {
+    NS_ASSERT_MSG (loadComponent != 0, "The load router component must be specified!"
+        " If you do not want to use a load router component, use another constructor.");
+    m_loadComponent = loadComponent;
+    NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
+  }
+
+  FourWayLoadRouter::~FourWayLoadRouter ()
   {
     ;
   }
-
-  int
-  SlbLoadRouter::GetLocalLoad ()
-  {
-    // FIXME
-    return 0;
-  }
-
-  int
-  SlbLoadRouter::GetLoadForDirection (int direction)
-  {
-    // FIXME
-    return 0;
-  }
-
 
 } // namespace ns3

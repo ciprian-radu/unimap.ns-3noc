@@ -18,43 +18,38 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#include "so-routing.h"
 #include "ns3/log.h"
-#include "ns3/noc-header.h"
+#include "load-router-component.h"
 
-NS_LOG_COMPONENT_DEFINE ("SoRouting");
+NS_LOG_COMPONENT_DEFINE ("LoadRouterComponent");
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (SoRouting);
+  NS_OBJECT_ENSURE_REGISTERED (LoadRouterComponent);
+
+  LoadRouterComponent::LoadRouterComponent (std::string name)
+  {
+    m_name = name;
+  }
 
   TypeId
-  SoRouting::GetTypeId ()
+  LoadRouterComponent::GetTypeId ()
   {
-    static TypeId tid = TypeId ("ns3::SoRouting")
-        .SetParent<NocRoutingProtocol> ();
+    static TypeId tid = TypeId("ns3::LoadRouterComponent")
+        .SetParent<Object> ();
     return tid;
   }
 
-  // we could easily name the protocol "Self Optimized", but using __FILE__ should be more useful for debugging
-  SoRouting::SoRouting () : NocRoutingProtocol (__FILE__)
+  LoadRouterComponent::~LoadRouterComponent ()
   {
     ;
   }
 
-  SoRouting::~SoRouting ()
+  std::string
+  LoadRouterComponent::GetName ()
   {
-    ;
-  }
-
-  bool
-  SoRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-      Ptr<Packet> packet, RouteReplyCallback routeReply)
-  {
-    NS_LOG_FUNCTION_NOARGS ();
-
-    return true;
+    return m_name;
   }
 
 } // namespace ns3

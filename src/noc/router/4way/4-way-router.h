@@ -44,6 +44,10 @@ namespace ns3
     virtual Ptr<NocNetDevice>
     GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
 
+  protected:
+
+    FourWayRouter (std::string name);
+
   private:
 
     Ptr<NocNetDevice>

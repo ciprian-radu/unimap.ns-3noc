@@ -18,54 +18,34 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef SLBLOADROUTER_H_
-#define SLBLOADROUTER_H_
+#ifndef IRVINELOADROUTER_H_
+#define IRVINELOADROUTER_H_
 
-#include "ns3/noc-load-router.h"
+#include "ns3/irvine-router.h"
+#include "ns3/load-router-component.h"
 
 namespace ns3
 {
 
   /**
-   *
-   * \brief Abstract load router for the Static Load-and-Bound routing algorithm.
-   *
+   * \brief Irvine router with load information
    */
-  class SlbLoadRouter : public NocLoadRouter
+  class IrvineLoadRouter : public IrvineRouter
   {
   public:
 
     static TypeId
     GetTypeId ();
 
-    SlbLoadRouter ();
+    IrvineLoadRouter (Ptr<LoadRouterComponent> loadComponent);
 
     virtual
-    ~SlbLoadRouter ();
-
-    /**
-     * \return the load of the router
-     */
-    int
-    GetLocalLoad ();
-
-    /**
-     * Computes the load that is propagated from this router, in the specified direction.
-     *
-     * \param direction the direction
-     *
-     * \return the load for the specified direction
-     */
-    int
-    GetLoadForDirection (int direction);
-
-  protected:
+    ~IrvineLoadRouter ();
 
   private:
-
 
   };
 
 } // namespace ns3
 
-#endif /* SLBLOADROUTER_H_ */
+#endif /* IRVINELOADROUTER_H_ */

@@ -30,31 +30,31 @@ namespace ns3
   NS_OBJECT_ENSURE_REGISTERED (SlbRouting);
 
   TypeId
-  SlbRouting::GetTypeId(void)
+  SlbRouting::GetTypeId ()
   {
-    static TypeId tid = TypeId("ns3::SlbRouting")
+    static TypeId tid = TypeId ("ns3::SlbRouting")
         .SetParent<NocRoutingProtocol> ();
     return tid;
   }
 
   // we could easily name the protocol "Static Load Bound", but using __FILE__ should be more useful for debugging
-  SlbRouting::SlbRouting() : NocRoutingProtocol(__FILE__)
+  SlbRouting::SlbRouting () : NocRoutingProtocol (__FILE__)
   {
     progressiveWeight = 2;
     remainingWeight = -1;
     loadWeight = -4;
   }
 
-  SlbRouting::~SlbRouting()
+  SlbRouting::~SlbRouting ()
   {
-
+    ;
   }
 
   bool
-  SlbRouting::RequestNewRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
+  SlbRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
       Ptr<Packet> packet, RouteReplyCallback routeReply)
   {
-    NS_LOG_FUNCTION_NOARGS();
+    NS_LOG_FUNCTION_NOARGS ();
 
     return true;
   }

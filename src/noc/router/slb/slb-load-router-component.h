@@ -18,32 +18,54 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#ifndef FOURWAYSLBLOADROUTER_H_
-#define FOURWAYSLBLOADROUTER_H_
+#ifndef SLBLOADROUTERCOMPONENT_H_
+#define SLBLOADROUTERCOMPONENT_H_
 
-#include "ns3/4-way-router.h"
-#include "ns3/slb-load-router.h"
-#include "ns3/noc-net-device.h"
+#include "ns3/load-router-component.h"
 
 namespace ns3
 {
 
-  class FourWaySlbLoadRouter : public FourWayRouter, public SlbLoadRouter
+  /**
+   *
+   * \brief Static Load-and-Bound algorithm used to provide information about the load of a router
+   *
+   */
+  class SlbLoadRouterComponent : public LoadRouterComponent
   {
   public:
 
     static TypeId
-    GetTypeId();
+    GetTypeId ();
 
-    FourWaySlbLoadRouter();
+    SlbLoadRouterComponent ();
 
     virtual
-    ~FourWaySlbLoadRouter();
+    ~SlbLoadRouterComponent ();
+
+    /**
+     * \return the load of the router
+     */
+    int
+    GetLocalLoad ();
+
+    /**
+     * Computes the load that is propagated from this router, in the specified direction.
+     *
+     * \param direction the direction
+     *
+     * \return the load for the specified direction
+     */
+    int
+    GetLoadForDirection (int direction);
+
+  protected:
 
   private:
+
 
   };
 
 } // namespace ns3
 
-#endif /* FOURWAYSLBLOADROUTER_H_ */
+#endif /* SLBLOADROUTERCOMPONENT_H_ */

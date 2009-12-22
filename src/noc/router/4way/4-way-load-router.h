@@ -18,43 +18,34 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#include "so-routing.h"
-#include "ns3/log.h"
-#include "ns3/noc-header.h"
+#ifndef FOURWAYLOADROUTER_H_
+#define FOURWAYLOADROUTER_H_
 
-NS_LOG_COMPONENT_DEFINE ("SoRouting");
+#include "ns3/4-way-router.h"
+#include "ns3/load-router-component.h"
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (SoRouting);
-
-  TypeId
-  SoRouting::GetTypeId ()
+  /**
+   * \brief FourWayRouter with load information
+   */
+  class FourWayLoadRouter : public FourWayRouter
   {
-    static TypeId tid = TypeId ("ns3::SoRouting")
-        .SetParent<NocRoutingProtocol> ();
-    return tid;
-  }
+  public:
 
-  // we could easily name the protocol "Self Optimized", but using __FILE__ should be more useful for debugging
-  SoRouting::SoRouting () : NocRoutingProtocol (__FILE__)
-  {
-    ;
-  }
+    static TypeId
+    GetTypeId ();
 
-  SoRouting::~SoRouting ()
-  {
-    ;
-  }
+    FourWayLoadRouter (Ptr<LoadRouterComponent> loadComponent);
 
-  bool
-  SoRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-      Ptr<Packet> packet, RouteReplyCallback routeReply)
-  {
-    NS_LOG_FUNCTION_NOARGS ();
+    virtual
+    ~FourWayLoadRouter ();
 
-    return true;
-  }
+  private:
+
+  };
 
 } // namespace ns3
+
+#endif /* FOURWAYLOADROUTER_H_ */
