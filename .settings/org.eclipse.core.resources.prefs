@@ -1,4 +1,4 @@
-#Thu Dec 17 15:58:49 CET 2009
+#Tue Dec 22 14:55:42 CET 2009
 eclipse.preferences.version=1
 encoding//examples/noc/wscript=utf-8
 encoding//examples/tcp/wscript=utf-8
@@ -19,6 +19,7 @@ encoding//src/noc/packet/wscript=utf-8
 encoding//src/noc/router/4way/wscript=utf-8
 encoding//src/noc/router/irvine/wscript=utf-8
 encoding//src/noc/router/slb/wscript=utf-8
+encoding//src/noc/router/so/wscript=utf-8
 encoding//src/noc/router/wscript=utf-8
 encoding//src/noc/routing/dor/wscript=utf-8
 encoding//src/noc/routing/slb/wscript=utf-8

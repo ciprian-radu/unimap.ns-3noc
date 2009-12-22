@@ -21,27 +21,28 @@
 #ifndef NOCLOADROUTER_H_
 #define NOCLOADROUTER_H_
 
-#include "ns3/noc-router.h"
+#include "ns3/object.h"
 
 namespace ns3
 {
 
   /**
    *
-   * \brief Interface for the NoC router which uses network load information do perform routing
+   * \brief Interface for the load component of the NoC router.
+   * \detail A load router component provides information about the load of the router.
    *
    */
-  class NocLoadRouter : public NocRouter
+  class LoadRouterComponent : public Object
   {
   public:
 
     static TypeId
     GetTypeId ();
 
-    NocLoadRouter (std::string name);
+    LoadRouterComponent (std::string name);
 
     virtual
-    ~NocLoadRouter ();
+    ~LoadRouterComponent ();
 
     /**
      * \return the load of the router
@@ -59,10 +60,19 @@ namespace ns3
     virtual int
     GetLoadForDirection (int direction) = 0;
 
+    /**
+     * \return the name
+     */
+    std::string GetName ();
+
   protected:
 
   private:
 
+    /**
+     * the name of the algorithm used to provide the load information
+     */
+    std::string m_name;
 
   };
 

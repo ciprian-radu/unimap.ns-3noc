@@ -28,6 +28,7 @@
 #include "ns3/noc-net-device.h"
 #include "ns3/noc-routing-protocol.h"
 #include "ns3/noc-switching-protocol.h"
+#include "ns3/load-router-component.h"
 #include <vector>
 
 namespace ns3
@@ -54,6 +55,8 @@ namespace ns3
     GetTypeId();
 
     NocRouter(std::string name);
+
+    NocRouter(std::string name, Ptr<LoadRouterComponent> loadComponent);
 
     virtual
     ~NocRouter();
@@ -213,6 +216,11 @@ namespace ns3
     Ptr<NocSwitchingProtocol> m_switchingProtocol;
 
     std::vector<Ptr<NocNetDevice> > m_devices;
+
+    /**
+     * the load router component
+     */
+    Ptr<LoadRouterComponent> m_loadComponent;
 
   private:
 

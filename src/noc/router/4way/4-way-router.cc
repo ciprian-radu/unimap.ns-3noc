@@ -30,33 +30,39 @@ namespace ns3
   NS_OBJECT_ENSURE_REGISTERED (FourWayRouter);
 
   TypeId
-  FourWayRouter::GetTypeId(void)
+  FourWayRouter::GetTypeId ()
   {
-    static TypeId tid = TypeId("ns3::FourWayRouter")
+    static TypeId tid = TypeId ("ns3::FourWayRouter")
         .SetParent<NocRouter> ();
     return tid;
   }
 
   // we could easily name the router "four way router", but using __FILE__ should be more useful for debugging
-  FourWayRouter::FourWayRouter() : NocRouter (__FILE__)
+  FourWayRouter::FourWayRouter () : NocRouter (__FILE__)
   {
-
+    ;
   }
 
-  FourWayRouter::~FourWayRouter()
+  FourWayRouter::FourWayRouter (std::string name) : NocRouter (name)
   {
+    ;
+  }
 
+
+  FourWayRouter::~FourWayRouter ()
+  {
+    ;
   }
 
   Ptr<NocNetDevice>
   FourWayRouter::GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination)
   {
-    NS_LOG_FUNCTION_NOARGS();
+    NS_LOG_FUNCTION_NOARGS ();
     return GetNocNode ()->GetDevice (0)->GetObject<NocNetDevice> ();
   }
 
   Ptr<NocNetDevice>
-  FourWayRouter::GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection)
+  FourWayRouter::GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
   {
     NS_LOG_DEBUG ("Searching for a net device for node " << GetNocNode ()->GetId () << " and direction " << routingDirection);
     Ptr<NocNetDevice> netDevice = 0;
@@ -81,7 +87,7 @@ namespace ns3
   }
 
   Ptr<NocNetDevice>
-  FourWayRouter::GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection)
+  FourWayRouter::GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
   {
     return GetInputNetDevice (sender, routingDirection);
   }

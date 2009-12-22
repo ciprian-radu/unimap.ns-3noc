@@ -31,7 +31,7 @@ namespace ns3
   NS_OBJECT_ENSURE_REGISTERED (IrvineRouter);
 
   TypeId
-  IrvineRouter::GetTypeId(void)
+  IrvineRouter::GetTypeId ()
   {
     static TypeId tid = TypeId("ns3::IrvineRouter")
         .SetParent<NocRouter> ();
@@ -39,7 +39,7 @@ namespace ns3
   }
 
   // we could easily name the router "Irvine router", but using __FILE__ should be more useful for debugging
-  IrvineRouter::IrvineRouter() : NocRouter (__FILE__)
+  IrvineRouter::IrvineRouter () : NocRouter (__FILE__)
   {
     m_north1DeviceAdded = false;
     m_north2DeviceAdded = false;
@@ -49,7 +49,17 @@ namespace ns3
     m_westDeviceAdded = false;
   }
 
-  IrvineRouter::~IrvineRouter()
+  IrvineRouter::IrvineRouter (std::string name) : NocRouter (name)
+  {
+    m_north1DeviceAdded = false;
+    m_north2DeviceAdded = false;
+    m_eastDeviceAdded = false;
+    m_south1DeviceAdded = false;
+    m_south2DeviceAdded = false;
+    m_westDeviceAdded = false;
+  }
+
+  IrvineRouter::~IrvineRouter ()
   {
 
   }

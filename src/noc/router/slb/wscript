@@ -3,12 +3,12 @@
 def build(bld):
     slbrouter = bld.create_ns3_module('slb', ['core', 'simulator', 'router'])
     slbrouter.source = [
-        'slb-load-router.cc',              
+        'slb-load-router-component.cc',              
         ]
 
     headers = bld.new_task_gen('ns3header')
     headers.module = 'slb'
     headers.source = [
-        'slb-load-router.h',              
+        'slb-load-router-component.h',              
         ]
 

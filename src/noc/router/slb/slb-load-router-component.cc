@@ -18,43 +18,47 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#include "so-routing.h"
 #include "ns3/log.h"
-#include "ns3/noc-header.h"
+#include "slb-load-router-component.h"
 
-NS_LOG_COMPONENT_DEFINE ("SoRouting");
+NS_LOG_COMPONENT_DEFINE ("SlbLoadRouterComponent");
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (SoRouting);
+  NS_OBJECT_ENSURE_REGISTERED (SlbLoadRouterComponent);
+
+  SlbLoadRouterComponent::SlbLoadRouterComponent() : LoadRouterComponent (__FILE__)
+  {
+    ;
+  }
 
   TypeId
-  SoRouting::GetTypeId ()
+  SlbLoadRouterComponent::GetTypeId ()
   {
-    static TypeId tid = TypeId ("ns3::SoRouting")
-        .SetParent<NocRoutingProtocol> ();
+    static TypeId tid = TypeId("ns3::SlbLoadRouterComponent")
+        .SetParent<LoadRouterComponent> ();
     return tid;
   }
 
-  // we could easily name the protocol "Self Optimized", but using __FILE__ should be more useful for debugging
-  SoRouting::SoRouting () : NocRoutingProtocol (__FILE__)
+  SlbLoadRouterComponent::~SlbLoadRouterComponent ()
   {
     ;
   }
 
-  SoRouting::~SoRouting ()
+  int
+  SlbLoadRouterComponent::GetLocalLoad ()
   {
-    ;
+    // FIXME
+    return 0;
   }
 
-  bool
-  SoRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-      Ptr<Packet> packet, RouteReplyCallback routeReply)
+  int
+  SlbLoadRouterComponent::GetLoadForDirection (int direction)
   {
-    NS_LOG_FUNCTION_NOARGS ();
-
-    return true;
+    // FIXME
+    return 0;
   }
+
 
 } // namespace ns3

@@ -39,12 +39,12 @@ namespace ns3
   public:
 
     static TypeId
-    GetTypeId();
+    GetTypeId ();
 
-    IrvineRouter();
+    IrvineRouter ();
 
     virtual
-    ~IrvineRouter();
+    ~IrvineRouter ();
 
     virtual Ptr<NocNetDevice>
     GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
@@ -52,13 +52,17 @@ namespace ns3
     virtual uint32_t
     AddDevice (Ptr<NocNetDevice> device);
 
+  protected:
+
+    IrvineRouter (std::string name);
+
   private:
 
     Ptr<NocNetDevice>
-    GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+    GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection);
 
     Ptr<NocNetDevice>
-    GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+    GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection);
 
     bool
     isRightRouter (Ptr<NocNetDevice> sender);

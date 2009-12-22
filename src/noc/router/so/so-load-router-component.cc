@@ -19,31 +19,46 @@
  */
 
 #include "ns3/log.h"
-#include "noc-load-router.h"
+#include "so-load-router-component.h"
 
-NS_LOG_COMPONENT_DEFINE ("NocLoadRouter");
+NS_LOG_COMPONENT_DEFINE ("SoLoadRouterComponent");
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (NocLoadRouter);
+  NS_OBJECT_ENSURE_REGISTERED (SoLoadRouterComponent);
 
-  NocLoadRouter::NocLoadRouter(std::string name) : NocRouter (name)
+  SoLoadRouterComponent::SoLoadRouterComponent () : LoadRouterComponent (__FILE__)
   {
     ;
   }
 
   TypeId
-  NocLoadRouter::GetTypeId ()
+  SoLoadRouterComponent::GetTypeId ()
   {
-    static TypeId tid = TypeId("ns3::NocLoadRouter")
-        .SetParent<NocRouter> ();
+    static TypeId tid = TypeId ("ns3::SoLoadRouterComponent")
+        .SetParent<LoadRouterComponent> ();
     return tid;
   }
 
-  NocLoadRouter::~NocLoadRouter ()
+  SoLoadRouterComponent::~SoLoadRouterComponent ()
   {
     ;
   }
+
+  int
+  SoLoadRouterComponent::GetLocalLoad ()
+  {
+    // FIXME
+    return 0;
+  }
+
+  int
+  SoLoadRouterComponent::GetLoadForDirection (int direction)
+  {
+    // FIXME
+    return 0;
+  }
+
 
 } // namespace ns3

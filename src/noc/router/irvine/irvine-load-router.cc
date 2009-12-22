@@ -18,32 +18,34 @@
  * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
  */
 
-#include "4-way-slb-load-router.h"
+#include "irvine-load-router.h"
 #include "ns3/log.h"
-#include "ns3/noc-header.h"
 
-NS_LOG_COMPONENT_DEFINE ("FourWaySlbLoadRouter");
+NS_LOG_COMPONENT_DEFINE ("IrvineLoadRouter");
 
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (FourWaySlbLoadRouter);
+  NS_OBJECT_ENSURE_REGISTERED (IrvineLoadRouter);
 
   TypeId
-  FourWaySlbLoadRouter::GetTypeId(void)
+  IrvineLoadRouter::GetTypeId ()
   {
-    static TypeId tid = TypeId("ns3::FourWaySlbLoadRouter")
-        .SetParent<NocRouter> ();
+    static TypeId tid = TypeId("ns3::IrvineLoadRouter")
+        .SetParent<IrvineRouter> ();
     return tid;
   }
 
-  // we could easily name the router "four way router", but using __FILE__ should be more useful for debugging
-  FourWaySlbLoadRouter::FourWaySlbLoadRouter() : FourWayRouter () , SlbLoadRouter ()
+  // we could easily name the router "Irvine load router", but using __FILE__ should be more useful for debugging
+  IrvineLoadRouter::IrvineLoadRouter (Ptr<LoadRouterComponent> loadComponent) : IrvineRouter (__FILE__)
   {
-
+    NS_ASSERT_MSG (loadComponent != 0, "The load router component must be specified!"
+        " If you do not want to use a load router component, use another constructor.");
+    m_loadComponent = loadComponent;
+    NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
   }
 
-  FourWaySlbLoadRouter::~FourWaySlbLoadRouter()
+  IrvineLoadRouter::~IrvineLoadRouter ()
   {
 
   }
