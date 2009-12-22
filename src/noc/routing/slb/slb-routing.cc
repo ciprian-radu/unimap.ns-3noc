@@ -59,4 +59,29 @@ namespace ns3
     return true;
   }
 
+  std::vector<Ptr<NocNetDevice> >
+  SlbRouting::doRoutingFunction (const Ptr<NocNetDevice> source,
+      const Ptr<NocNode> destination, Ptr<Packet> packet)
+  {
+    std::vector<Ptr<NocNetDevice> > devices;
+    // FIXME
+    return devices;
+  }
+
+  Ptr<NocNetDevice>
+  SlbRouting::doSelectionFunction (std::vector<Ptr<NocNetDevice> > devices,
+      const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
+  {
+    Ptr<NocNetDevice> device;
+    // FIXME
+    return device;
+  }
+
+  int
+  SlbRouting::evaluate (Ptr<NocNetDevice> device)
+  {
+    // FIXME
+    return 0;
+  }
+
 } // namespace ns3

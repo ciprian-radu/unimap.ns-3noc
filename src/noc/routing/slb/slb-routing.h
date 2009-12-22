@@ -23,6 +23,7 @@
 
 #include "ns3/noc-routing-protocol.h"
 #include "ns3/noc-net-device.h"
+#include <vector>
 
 namespace ns3
 {
@@ -72,6 +73,42 @@ namespace ns3
      * the router in the chosen direction is loaded
      */
     int loadWeight;
+
+    /**
+     * Determines all the possible net devices that could route the packet
+     *
+     * \param source the net device through which the packet arrived
+     * \param destination the destination node of the packet
+     * \param packet the packet to be routed
+     *
+     * \return an array with all the possible net devices that could route the packet
+     */
+    std::vector<Ptr<NocNetDevice> >
+    doRoutingFunction (const Ptr<NocNetDevice> source,
+        const Ptr<NocNode> destination, Ptr<Packet> packet);
+
+    /**
+     * Selects the net device which will be used for routing. This is done by evaluating all the possible devices.
+     *
+     * \param devices the devices from which the selection is made
+     * \param source the net device through which the packet arrived
+     * \param destination the destination node of the packet
+     * \param packet the packet to be routed
+     *
+     * \return the selected net device
+     */
+    Ptr<NocNetDevice>
+    doSelectionFunction (std::vector<Ptr<NocNetDevice> > devices,
+        const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
+
+    /**
+     * Evaluates the given net device to determine how profitable it is to route the packet through it.
+     *
+     * \param device the net device
+     * \return the result of the evaluation
+     */
+    int
+    evaluate (Ptr<NocNetDevice> device);
 
   };
 
