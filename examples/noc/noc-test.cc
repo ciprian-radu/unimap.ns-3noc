@@ -72,25 +72,37 @@ main (int argc, char *argv[])
       // FIXME found problems with store-and-forward when buffer size is 1
       // could this be due to the fact that a message is made of 3 packets?
       "MaxPackets", UintegerValue (1000)); // using very big input channel buffers
+
   // install the topology
-  NetDeviceContainer devs = noc->Install2DMeshIrvine(nodes, hSize);
+  ObjectFactory routingProtocolFactory;
+//  routingProtocolFactory.SetTypeId ("ns3::XyRouting");
+//  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
+  routingProtocolFactory.SetTypeId ("ns3::SlbRouting");
+
+  ObjectFactory switchingProtocolFactory;
+  switchingProtocolFactory.SetTypeId ("ns3::SafSwitching");
+
+  NetDeviceContainer devs = noc->Install2DMeshIrvine (nodes, hSize,
+      routingProtocolFactory,
+      switchingProtocolFactory);
+  // done with installing the topology
 
   NS_LOG_INFO ("Create Applications.");
   NocApplicationHelper nocAppHelper1 (nodes, devs, hSize);
   nocAppHelper1.SetAttribute("DataRate", DataRateValue(DataRate("4096b/s")));
   nocAppHelper1.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
   nocAppHelper1.SetAttribute("Destination", UintegerValue (14));
-  ApplicationContainer apps1 = nocAppHelper1.Install (nodes.Get (1));
+  ApplicationContainer apps1 = nocAppHelper1.Install (nodes.Get (5));
   apps1.Start (Seconds (0.0));
   apps1.Stop (Seconds (10.0));
 
-  NocApplicationHelper nocAppHelper2 (nodes, devs, hSize);
-  nocAppHelper2.SetAttribute("DataRate", DataRateValue(DataRate("4096b/s")));
-  nocAppHelper2.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
-  nocAppHelper2.SetAttribute("Destination", UintegerValue (14));
-  ApplicationContainer apps2 = nocAppHelper2.Install (nodes.Get (1));
-  apps2.Start (Seconds (0.0));
-  apps2.Stop (Seconds (10.0));
+//  NocApplicationHelper nocAppHelper2 (nodes, devs, hSize);
+//  nocAppHelper2.SetAttribute("DataRate", DataRateValue(DataRate("4096b/s")));
+//  nocAppHelper2.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
+//  nocAppHelper2.SetAttribute("Destination", UintegerValue (14));
+//  ApplicationContainer apps2 = nocAppHelper2.Install (nodes.Get (1));
+//  apps2.Start (Seconds (0.0));
+//  apps2.Stop (Seconds (10.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-test.tr file

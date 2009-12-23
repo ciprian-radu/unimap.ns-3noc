@@ -34,7 +34,8 @@ namespace ns3
   SafSwitching::GetTypeId(void)
   {
     static TypeId tid = TypeId("ns3::SafSwitching")
-        .SetParent<NocSwitchingProtocol> ();
+        .SetParent<NocSwitchingProtocol> ()
+        .AddConstructor<SafSwitching> ();
     return tid;
   }
 

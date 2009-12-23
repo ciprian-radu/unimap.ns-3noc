@@ -20,7 +20,6 @@
 
 #include "so-routing.h"
 #include "ns3/log.h"
-#include "ns3/noc-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("SoRouting");
 
@@ -33,7 +32,9 @@ namespace ns3
   SoRouting::GetTypeId ()
   {
     static TypeId tid = TypeId ("ns3::SoRouting")
-        .SetParent<NocRoutingProtocol> ();
+        .SetParent<NocRoutingProtocol> ()
+        .AddConstructor<SoRouting> ()
+        ;
     return tid;
   }
 

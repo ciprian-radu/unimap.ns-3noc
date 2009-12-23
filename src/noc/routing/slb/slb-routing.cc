@@ -33,7 +33,9 @@ namespace ns3
   SlbRouting::GetTypeId ()
   {
     static TypeId tid = TypeId ("ns3::SlbRouting")
-        .SetParent<NocRoutingProtocol> ();
+        .SetParent<NocRoutingProtocol> ()
+        .AddConstructor<SlbRouting> ()
+        ;
     return tid;
   }
 
@@ -56,32 +58,146 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
+    std::vector<Ptr<NocNetDevice> > devices = DoRoutingFunction (source, destination, packet);
+    Ptr<NocNetDevice> selectedDevice = DoSelectionFunction(devices, source, destination, packet);
+
+    m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->
+        GetOutputNetDevice(source, selectedDevice->GetRoutingDirection ());
+    NS_ASSERT(m_sourceNetDevice != 0);
+    m_destinationNetDevice = destination->GetRouter ()->
+        GetInputNetDevice(m_sourceNetDevice,
+            NocRoutingProtocol::GetOpositeDirection2DMesh (selectedDevice->GetRoutingDirection ()));
+
+    // TODO
+    if (m_destinationNetDevice == 0)
+      {
+        m_destinationNetDevice = destination->GetRouter ()->
+            GetInputNetDevice(m_sourceNetDevice,
+                NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::NORTH));
+        if (m_destinationNetDevice == 0)
+          {
+            m_destinationNetDevice = destination->GetRouter ()->
+                GetInputNetDevice(m_sourceNetDevice,
+                    NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::EAST));
+            if (m_destinationNetDevice == 0)
+              {
+                m_destinationNetDevice = destination->GetRouter ()->
+                    GetInputNetDevice(m_sourceNetDevice,
+                        NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::SOUTH));
+                if (m_destinationNetDevice == 0)
+                  {
+                      m_destinationNetDevice = destination->GetRouter ()->
+                          GetInputNetDevice(m_sourceNetDevice,
+                              NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::WEST));
+                  }
+              }
+          }
+      }
+
+    NS_ASSERT(m_destinationNetDevice != 0);
+    routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
+
     return true;
   }
 
   std::vector<Ptr<NocNetDevice> >
-  SlbRouting::doRoutingFunction (const Ptr<NocNetDevice> source,
+  SlbRouting::DoRoutingFunction (const Ptr<NocNetDevice> source,
       const Ptr<NocNode> destination, Ptr<Packet> packet)
   {
-    std::vector<Ptr<NocNetDevice> > devices;
-    // FIXME
-    return devices;
+    std::vector<Ptr<NocNetDevice> > validDevices;
+
+    std::vector<Ptr<NocNetDevice> > devices = source->GetNode ()->GetObject<NocNode> ()->
+        GetRouter ()->GetOutputNetDevices (source);
+
+    for (unsigned int i = 0; i < devices.size (); ++i) {
+      if (devices[i]->GetRoutingDirection() != source->GetRoutingDirection ())
+        {
+          validDevices.insert (validDevices.begin(), devices[i]);
+        }
+    }
+
+    NS_LOG_DEBUG ("The following output net devices can be used for routing the packet "
+        << packet << " (which came from " << source->GetAddress () << ")");
+    for (unsigned int i = 0; i < validDevices.size (); ++i) {
+      NS_LOG_DEBUG (validDevices[i]->GetAddress ());
+    }
+    NS_LOG_DEBUG ("");
+
+    return validDevices;
   }
 
   Ptr<NocNetDevice>
-  SlbRouting::doSelectionFunction (std::vector<Ptr<NocNetDevice> > devices,
+  SlbRouting::DoSelectionFunction (std::vector<Ptr<NocNetDevice> > devices,
       const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
   {
     Ptr<NocNetDevice> device;
-    // FIXME
+
+    // TODO a random selection is performed (in NoCSim) among devices with with the same value
+    int bestDeviceValue = -1;
+    for (unsigned int i = 0; i < devices.size (); ++i)
+      {
+        int deviceValue = Evaluate (devices[i], packet);
+        if (deviceValue > bestDeviceValue)
+          {
+            device = devices[i];
+            bestDeviceValue = deviceValue;
+          }
+      }
+
+    NS_LOG_DEBUG ("The net device " << device->GetAddress () << " was selected for routing");
+
     return device;
   }
 
   int
-  SlbRouting::evaluate (Ptr<NocNetDevice> device)
+  SlbRouting::Evaluate (Ptr<NocNetDevice> device, Ptr<Packet> packet)
   {
-    // FIXME
-    return 0;
+    int value = 0;
+
+    if (IsProgressiveDirection (packet, device))
+      {
+        value += progressiveWeight;
+      }
+
+    return value;
+  }
+
+  bool
+  SlbRouting::IsProgressiveDirection (Ptr<Packet> packet, Ptr<NocNetDevice> device)
+  {
+    bool isProgressive = false;
+
+    NocHeader header;
+    packet->PeekHeader (header);
+    NS_ASSERT (!header.IsEmpty());
+
+    if (header.GetXDistance() > 0 && device->GetRoutingDirection () == NocRoutingProtocol::EAST)
+      {
+        isProgressive = true;
+      }
+    else
+      {
+        if (header.GetXDistance() < 0 && device->GetRoutingDirection () == NocRoutingProtocol::WEST)
+          {
+            isProgressive = true;
+          }
+        else
+          {
+            if (header.GetYDistance() < 0 && device->GetRoutingDirection () == NocRoutingProtocol::NORTH)
+              {
+                isProgressive = true;
+              }
+            else
+              {
+                if (header.GetYDistance() > 0 && device->GetRoutingDirection () == NocRoutingProtocol::SOUTH)
+                  {
+                    isProgressive = true;
+                  }
+              }
+          }
+      }
+
+    return isProgressive;
   }
 
 } // namespace ns3

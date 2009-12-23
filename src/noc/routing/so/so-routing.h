@@ -22,7 +22,6 @@
 #define SOROUTING_H_
 
 #include "ns3/noc-routing-protocol.h"
-#include "ns3/noc-net-device.h"
 
 namespace ns3
 {

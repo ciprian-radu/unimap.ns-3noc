@@ -52,6 +52,9 @@ namespace ns3
     virtual uint32_t
     AddDevice (Ptr<NocNetDevice> device);
 
+    std::vector<Ptr<NocNetDevice> >
+    GetOutputNetDevices (Ptr<NocNetDevice> sender);
+
   protected:
 
     IrvineRouter (std::string name);

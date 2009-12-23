@@ -34,7 +34,8 @@ namespace ns3
   VctSwitching::GetTypeId(void)
   {
     static TypeId tid = TypeId("ns3::VctSwitching")
-        .SetParent<NocSwitchingProtocol> ();
+        .SetParent<NocSwitchingProtocol> ()
+        .AddConstructor<VctSwitching> ();
     return tid;
   }
 

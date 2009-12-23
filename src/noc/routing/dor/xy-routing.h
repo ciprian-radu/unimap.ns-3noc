@@ -35,8 +35,6 @@ namespace ns3
   {
   public:
 
-    enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
-
     static TypeId
     GetTypeId();
 
@@ -60,6 +58,12 @@ namespace ns3
     virtual bool
     RequestNewRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
+
+    void
+    SetRouteXFirst (bool routeXFirst);
+
+    bool
+    GetRouteXFirst () const;
 
   private:
 

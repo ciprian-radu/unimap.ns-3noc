@@ -93,7 +93,7 @@ namespace ns3
      * that to the specified stdc++ output stream.
      */
     static void
-    EnableAscii(std::ostream &os, uint32_t nodeid, uint32_t deviceid);
+    EnableAscii (std::ostream &os, uint32_t nodeid, uint32_t deviceid);
 
     /**
      * \param os output stream
@@ -105,7 +105,7 @@ namespace ns3
      * stdc++ output stream.
      */
     static void
-    EnableAscii(std::ostream &os, NetDeviceContainer d);
+    EnableAscii (std::ostream &os, NetDeviceContainer d);
 
     /**
      * \param os output stream
@@ -117,7 +117,7 @@ namespace ns3
      * stdc++ output stream.
      */
     static void
-    EnableAscii(std::ostream &os, NodeContainer n);
+    EnableAscii (std::ostream &os, NodeContainer n);
 
     /**
      * \param os output stream
@@ -127,13 +127,13 @@ namespace ns3
      * stdc++ output stream.
      */
     static void
-    EnableAsciiAll(std::ostream &os);
+    EnableAsciiAll (std::ostream &os);
 
     NetDeviceContainer
-    Install(NodeContainer nodes, Ptr<NocChannel> channel);
+    Install (NodeContainer nodes, Ptr<NocChannel> channel);
 
     NetDeviceContainer
-    Install(NodeContainer nodes);
+    Install (NodeContainer nodes);
 
     /**
      * Creates a typical 2-dimensional mesh network topology.
@@ -144,10 +144,13 @@ namespace ns3
      *
      * \param nodes the NoC nodes for which the topology will be installed
      * \param hSize how many nodes will be put on each row of the mesh
+     * \param routingProtocolFactory the routing protocol factory
+     * \param switchingProtocolFactory the switching protocol factory
      *
      */
     NetDeviceContainer
-    Install2DMesh(NodeContainer nodes, uint32_t hSize);
+    Install2DMesh (NodeContainer nodes, uint32_t hSize, ObjectFactory routingProtocolFactory,
+        ObjectFactory switchingProtocolFactory);
 
     /**
      * Creates a 2-dimensional mesh network topology Irvine architecture.
@@ -158,10 +161,13 @@ namespace ns3
      *
      * \param nodes the NoC nodes for which the topology will be installed
      * \param hSize how many nodes will be put on each row of the mesh
+     * \param routingProtocolFactory the routing protocol factory
+     * \param switchingProtocolFactory the switching protocol factory
      *
      */
     NetDeviceContainer
-    Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize);
+    Install2DMeshIrvine (NodeContainer nodes, uint32_t hSize, ObjectFactory routingProtocolFactory,
+        ObjectFactory switchingProtocolFactory);
 
     Ptr<NocNetDevice>
     FindNetDeviceByAddress (Mac48Address address);
@@ -169,32 +175,32 @@ namespace ns3
   private:
 
     static void
-    AsciiTxEvent(Ptr<AsciiWriter> writer, std::string path,
+    AsciiTxEvent (Ptr<AsciiWriter> writer, std::string path,
         Ptr<const Packet> packet);
 
     static void
-    AsciiRxEvent(Ptr<AsciiWriter> writer, std::string path,
+    AsciiRxEvent (Ptr<AsciiWriter> writer, std::string path,
         Ptr<const Packet> packet);
 
     /*
      * \internal
      */
     static void
-    AsciiEnqueueEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
+    AsciiEnqueueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<
         const Packet> packet);
 
     /*
      * \internal
      */
     static void
-    AsciiDequeueEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
+    AsciiDequeueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<
         const Packet> packet);
 
     /*
      * \internal
      */
     static void
-    AsciiDropEvent(Ptr<AsciiWriter> writer, std::string path,
+    AsciiDropEvent (Ptr<AsciiWriter> writer, std::string path,
         Ptr<const Packet> packet);
 
     NetDeviceContainer m_devices;

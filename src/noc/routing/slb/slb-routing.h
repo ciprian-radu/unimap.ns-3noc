@@ -22,7 +22,6 @@
 #define SLBROUTING_H_
 
 #include "ns3/noc-routing-protocol.h"
-#include "ns3/noc-net-device.h"
 #include <vector>
 
 namespace ns3
@@ -42,7 +41,7 @@ namespace ns3
     enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
 
     static TypeId
-    GetTypeId();
+    GetTypeId ();
 
     /**
      * Constructor
@@ -51,10 +50,10 @@ namespace ns3
     SlbRouting ();
 
     virtual
-    ~SlbRouting();
+    ~SlbRouting ();
 
     virtual bool
-    RequestNewRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
+    RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
   private:
@@ -84,7 +83,7 @@ namespace ns3
      * \return an array with all the possible net devices that could route the packet
      */
     std::vector<Ptr<NocNetDevice> >
-    doRoutingFunction (const Ptr<NocNetDevice> source,
+    DoRoutingFunction (const Ptr<NocNetDevice> source,
         const Ptr<NocNode> destination, Ptr<Packet> packet);
 
     /**
@@ -98,17 +97,28 @@ namespace ns3
      * \return the selected net device
      */
     Ptr<NocNetDevice>
-    doSelectionFunction (std::vector<Ptr<NocNetDevice> > devices,
+    DoSelectionFunction (std::vector<Ptr<NocNetDevice> > devices,
         const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
 
     /**
      * Evaluates the given net device to determine how profitable it is to route the packet through it.
      *
      * \param device the net device
+     * \param packet the packet to be routed
+     *
      * \return the result of the evaluation
      */
     int
-    evaluate (Ptr<NocNetDevice> device);
+    Evaluate (Ptr<NocNetDevice> device, Ptr<Packet> packet);
+
+    /**
+     * \param packet the packet to be routed
+     * \param device the net device
+     *
+     * \return whether or not the direction is progressive
+     */
+    static bool
+    IsProgressiveDirection (Ptr<Packet> packet, Ptr<NocNetDevice> device);
 
   };
 

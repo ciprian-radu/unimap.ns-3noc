@@ -31,6 +31,25 @@ namespace ns3
 
   NS_OBJECT_ENSURE_REGISTERED (NocRoutingProtocol);
 
+  NocRoutingProtocol::Direction2DMesh
+  NocRoutingProtocol::GetOpositeDirection2DMesh (int direction)
+  {
+    switch (direction)
+      {
+        case NORTH:
+          return SOUTH;
+        case EAST:
+          return WEST;
+        case SOUTH:
+          return NORTH;
+        case WEST:
+          return EAST;
+        case NONE:
+        default:
+          return NONE;
+      }
+  }
+
   NocRoutingProtocol::NocRoutingProtocol (std::string name)
   {
     m_name = name;
@@ -41,14 +60,14 @@ namespace ns3
   TypeId
   NocRoutingProtocol::GetTypeId ()
   {
-    static TypeId tid = TypeId("ns3::NocRoutingProtocol")
+    static TypeId tid = TypeId ("ns3::NocRoutingProtocol")
         .SetParent<Object> ();
     return tid;
   }
 
   NocRoutingProtocol::~NocRoutingProtocol ()
   {
-
+    ;
   }
 
   std::string
