@@ -21,6 +21,7 @@
 #include "slb-routing.h"
 #include "ns3/log.h"
 #include "ns3/noc-header.h"
+#include "ns3/noc-channel.h"
 
 NS_LOG_COMPONENT_DEFINE ("SlbRouting");
 
@@ -154,9 +155,20 @@ namespace ns3
   {
     int value = 0;
 
+    // progressive directions are good
     if (IsProgressiveDirection (packet, device))
       {
         value += progressiveWeight;
+      }
+
+    // loaded directions are bad
+    // FIXME
+
+    // currently busy directions are also bad
+    Ptr<NocChannel> channel = device->GetChannel()->GetObject<NocChannel> ();
+    if (channel->IsBusy ())
+      {
+        value += remainingWeight;
       }
 
     return value;
