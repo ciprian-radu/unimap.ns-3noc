@@ -105,14 +105,12 @@ namespace ns3
     uint32_t index = m_devices.size ();
     m_devices.push_back (device);
     NS_LOG_DEBUG ("Routing protocol is " << GetRoutingProtocol()->GetTypeId().GetName());
-    // FIXME returns ns3::NocRoutingProtocol (not ns3::XyRouting)
-//    if (GetRoutingProtocol()->GetTypeId().GetName().compare("ns3::XyRouting") == 0)
-//      {
+    // TODO this router knows to work only with 2D meshes (it is only aware of NORTH, SOUTH, EAST, WEST directions)
         switch (device->GetRoutingDirection ()) {
-          case XyRouting::NONE:
+          case NocRoutingProtocol::NONE:
             NS_LOG_WARN("The net device " << device->GetAddress () << " has no routing direction!");
             break;
-          case XyRouting::NORTH:
+          case NocRoutingProtocol::NORTH:
             if (!m_north1DeviceAdded)
               {
                 m_rightRouterInputDevices.push_back (device);
@@ -127,13 +125,13 @@ namespace ns3
                 m_north2DeviceAdded = true;
               }
             break;
-          case XyRouting::EAST:
+          case NocRoutingProtocol::EAST:
             NS_ASSERT(!m_eastDeviceAdded);
             m_leftRouterInputDevices.push_back (device);
             m_rightRouterOutputDevices.push_back (device);
             m_eastDeviceAdded = true;
             break;
-          case XyRouting::SOUTH:
+          case NocRoutingProtocol::SOUTH:
             if (!m_south1DeviceAdded)
               {
                 m_rightRouterInputDevices.push_back (device);
@@ -148,7 +146,7 @@ namespace ns3
                 m_south2DeviceAdded = true;
               }
             break;
-          case XyRouting::WEST:
+          case NocRoutingProtocol::WEST:
             NS_ASSERT(!m_westDeviceAdded);
             m_rightRouterInputDevices.push_back (device);
             m_leftRouterOutputDevices.push_back (device);
@@ -157,11 +155,6 @@ namespace ns3
           default:
             break;
         }
-//      }
-//    else
-//      {
-//      NS_LOG_ERROR ("The Irvine router currently works only with XY routing!");
-//      }
     return index;
   }
 
@@ -304,6 +297,42 @@ namespace ns3
         NS_LOG_DEBUG ("No net device found!");
       }
     return netDevice;
+  }
+
+  std::vector<Ptr<NocNetDevice> >
+  IrvineRouter::GetOutputNetDevices (Ptr<NocNetDevice> sender)
+  {
+    NS_LOG_FUNCTION (sender->GetAddress ());
+
+    std::vector<Ptr<NocNetDevice> > outputDevices;
+
+    bool isRightIrvineRouter = isRightRouter (sender);
+    bool isLeftIrvineRouter = isLeftRouter (sender);
+    NS_ASSERT_MSG (isRightIrvineRouter || isLeftIrvineRouter, "The packet came through net device "
+        << sender->GetAddress () << " This is not from right nor left router.");
+    NS_ASSERT_MSG (!isRightIrvineRouter || !isLeftIrvineRouter, "The packet came through net device "
+        << sender->GetAddress () << " This is from both right and left routers.");
+
+    if (isRightIrvineRouter)
+      {
+        NS_LOG_DEBUG ("The packet came through the right router");
+        for (unsigned int i = 0; i < m_rightRouterOutputDevices.size(); ++i)
+          {
+            Ptr<NocNetDevice> tmpNetDevice = m_rightRouterOutputDevices[i]->GetObject<NocNetDevice> ();
+            outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+          }
+      }
+    else
+      {
+        NS_LOG_DEBUG ("The packet came through the left router");
+        for (unsigned int i = 0; i < m_leftRouterOutputDevices.size(); ++i)
+          {
+            Ptr<NocNetDevice> tmpNetDevice = m_leftRouterOutputDevices[i]->GetObject<NocNetDevice> ();
+            outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+          }
+      }
+
+    return outputDevices;
   }
 
   bool

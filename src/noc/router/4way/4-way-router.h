@@ -44,6 +44,9 @@ namespace ns3
     virtual Ptr<NocNetDevice>
     GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
 
+    std::vector<Ptr<NocNetDevice> >
+    GetOutputNetDevices (Ptr<NocNetDevice> sender);
+
   protected:
 
     FourWayRouter (std::string name);
@@ -55,6 +58,7 @@ namespace ns3
 
     Ptr<NocNetDevice>
     GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+
   };
 
 } // namespace ns3

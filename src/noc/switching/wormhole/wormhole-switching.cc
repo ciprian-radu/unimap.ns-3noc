@@ -34,7 +34,8 @@ namespace ns3
   WormholeSwitching::GetTypeId(void)
   {
     static TypeId tid = TypeId("ns3::WormholeSwitching")
-        .SetParent<NocSwitchingProtocol> ();
+        .SetParent<NocSwitchingProtocol> ()
+        .AddConstructor<WormholeSwitching> ();
     return tid;
   }
 

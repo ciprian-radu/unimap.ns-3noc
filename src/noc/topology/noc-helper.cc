@@ -165,11 +165,9 @@ namespace ns3
   }
 
   NetDeviceContainer
-  NocHelper::Install2DMesh(NodeContainer nodes, uint32_t hSize)
+  NocHelper::Install2DMesh(NodeContainer nodes, uint32_t hSize,
+      ObjectFactory routingProtocolFactory, ObjectFactory switchingProtocolFactory)
   {
-    // FIXME topologies are installed with routing protocols...
-    // this implies a lot of similar methods
-    // redesign this
     Ptr<NocChannel> channel = 0;
     Ptr<NocNetDevice> netDevice;
 
@@ -181,11 +179,9 @@ namespace ns3
             Ptr<NocRouter> router = CreateObject<FourWayRouter> ();
             router->SetNocNode (nocNode);
             nocNode->SetRouter (router);
-            Ptr<NocRoutingProtocol> routingProtocol =
-                CreateObject<XyRouting> (false);
+            Ptr<NocRoutingProtocol> routingProtocol = routingProtocolFactory.Create ()->GetObject<NocRoutingProtocol> ();
             router->SetRoutingProtocol (routingProtocol);
-            Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<SafSwitching> ();
+            Ptr<NocSwitchingProtocol> switchingProtocol = switchingProtocolFactory.Create ()->GetObject<NocSwitchingProtocol> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
@@ -199,7 +195,7 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
-            netDevice->SetRoutingDirection(XyRouting::WEST);
+            netDevice->SetRoutingDirection(NocRoutingProtocol::WEST);
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
             // attach input buffering (we don't use output buffering for the moment)
@@ -215,7 +211,7 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
-            netDevice->SetRoutingDirection(XyRouting::EAST);
+            netDevice->SetRoutingDirection(NocRoutingProtocol::EAST);
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
             // attach input buffering (we don't use output buffering for the moment)
@@ -244,7 +240,7 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
-                netDevice->SetRoutingDirection(XyRouting::NORTH);
+                netDevice->SetRoutingDirection(NocRoutingProtocol::NORTH);
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
                 // attach input buffering (we don't use output buffering for the moment)
@@ -259,7 +255,7 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
-                netDevice->SetRoutingDirection(XyRouting::SOUTH);
+                netDevice->SetRoutingDirection(NocRoutingProtocol::SOUTH);
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
                 // attach input buffering (we don't use output buffering for the moment)
@@ -290,11 +286,9 @@ namespace ns3
   }
 
   NetDeviceContainer
-  NocHelper::Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize)
+  NocHelper::Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize,
+      ObjectFactory routingProtocolFactory, ObjectFactory switchingProtocolFactory)
   {
-    // FIXME topologies are installed with routing, switching protocols...
-    // this implies a lot of similar methods
-    // redesign this
     Ptr<NocChannel> channel = 0;
     Ptr<NocNetDevice> netDevice;
 
@@ -306,11 +300,16 @@ namespace ns3
             Ptr<NocRouter> router = CreateObject<IrvineRouter> ();
             router->SetNocNode (nocNode);
             nocNode->SetRouter (router);
-            Ptr<NocRoutingProtocol> routingProtocol =
-                CreateObject<XyRouting> (false);
+//            Callback<ObjectBase *> constructorRouting = routingProtocolTid.GetConstructor ();
+//            NocRoutingProtocol *ptrRouting = dynamic_cast<NocRoutingProtocol *> (constructorRouting ());
+//            Ptr<NocRoutingProtocol> routingProtocol = Ptr<NocRoutingProtocol> (ptrRouting);
+            Ptr<NocRoutingProtocol> routingProtocol = routingProtocolFactory.Create ()->GetObject<NocRoutingProtocol> ();
             router->SetRoutingProtocol (routingProtocol);
-            Ptr<NocSwitchingProtocol> switchingProtocol =
-                CreateObject<SafSwitching> ();
+
+//            Callback<ObjectBase *> constructorSwitching = switchingProtocolTid.GetConstructor ();
+//            NocSwitchingProtocol *ptrSwitching = dynamic_cast<NocSwitchingProtocol *> (constructorSwitching ());
+//            Ptr<NocSwitchingProtocol> switchingProtocol = Ptr<NocSwitchingProtocol> (ptrSwitching);
+            Ptr<NocSwitchingProtocol> switchingProtocol = switchingProtocolFactory.Create ()->GetObject<NocSwitchingProtocol> ();
             router->SetSwitchingProtocol (switchingProtocol);
           }
       }
@@ -324,7 +323,7 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
-            netDevice->SetRoutingDirection(XyRouting::WEST);
+            netDevice->SetRoutingDirection(NocRoutingProtocol::WEST);
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
             // attach input buffering (we don't use output buffering for the moment)
@@ -340,7 +339,7 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress(Mac48Address::Allocate());
             netDevice->SetChannel(channel);
-            netDevice->SetRoutingDirection(XyRouting::EAST);
+            netDevice->SetRoutingDirection(NocRoutingProtocol::EAST);
             m_devices.Add(netDevice);
             netDevice->SetNocHelper (this);
             // attach input buffering (we don't use output buffering for the moment)
@@ -370,7 +369,7 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
-                netDevice->SetRoutingDirection(XyRouting::NORTH);
+                netDevice->SetRoutingDirection(NocRoutingProtocol::NORTH);
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
                 // attach input buffering (we don't use output buffering for the moment)
@@ -385,7 +384,7 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress(Mac48Address::Allocate());
                 netDevice->SetChannel(channel);
-                netDevice->SetRoutingDirection(XyRouting::SOUTH);
+                netDevice->SetRoutingDirection(NocRoutingProtocol::SOUTH);
                 m_devices.Add(netDevice);
                 netDevice->SetNocHelper (this);
                 // attach input buffering (we don't use output buffering for the moment)
@@ -419,9 +418,9 @@ namespace ns3
   NocHelper::FindNetDeviceByAddress (Mac48Address address)
   {
     Ptr<NocNetDevice> nocNetDevice = 0;
-    for (unsigned int i = 0; i < m_devices.GetN(); ++i) {
+    for (unsigned int i = 0; i < m_devices.GetN (); ++i) {
       Ptr<NetDevice> netDevice = m_devices.Get (i);
-      Mac48Address macAddress = Mac48Address::ConvertFrom(netDevice->GetAddress ());
+      Mac48Address macAddress = Mac48Address::ConvertFrom (netDevice->GetAddress ());
       if (macAddress == address)
         {
           nocNetDevice = netDevice->GetObject<NocNetDevice> ();
@@ -431,38 +430,33 @@ namespace ns3
   }
 
   void
-  NocHelper::AsciiTxEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
-      const Packet> packet)
+  NocHelper::AsciiTxEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket(AsciiWriter::TX, path, packet);
+    writer->WritePacket (AsciiWriter::TX, path, packet);
   }
 
   void
-  NocHelper::AsciiRxEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
-      const Packet> packet)
+  NocHelper::AsciiRxEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket(AsciiWriter::RX, path, packet);
+    writer->WritePacket (AsciiWriter::RX, path, packet);
   }
 
   void
-  NocHelper::AsciiEnqueueEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
-      const Packet> packet)
+  NocHelper::AsciiEnqueueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket(AsciiWriter::ENQUEUE, path, packet);
+    writer->WritePacket (AsciiWriter::ENQUEUE, path, packet);
   }
 
   void
-  NocHelper::AsciiDequeueEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
-      const Packet> packet)
+  NocHelper::AsciiDequeueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket(AsciiWriter::DEQUEUE, path, packet);
+    writer->WritePacket (AsciiWriter::DEQUEUE, path, packet);
   }
 
   void
-  NocHelper::AsciiDropEvent(Ptr<AsciiWriter> writer, std::string path, Ptr<
-      const Packet> packet)
+  NocHelper::AsciiDropEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket(AsciiWriter::DROP, path, packet);
+    writer->WritePacket (AsciiWriter::DROP, path, packet);
   }
 
 } // namespace ns3

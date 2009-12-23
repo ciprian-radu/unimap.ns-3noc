@@ -54,12 +54,12 @@ namespace ns3
     static TypeId
     GetTypeId();
 
-    NocRouter(std::string name);
+    NocRouter (std::string name);
 
-    NocRouter(std::string name, Ptr<LoadRouterComponent> loadComponent);
+    NocRouter (std::string name, Ptr<LoadRouterComponent> loadComponent);
 
     virtual
-    ~NocRouter();
+    ~NocRouter ();
 
     /**
      * Register the routing protocol.
@@ -114,7 +114,6 @@ namespace ns3
      * Note that route discovery works async. -- RequestRoute returns immediately, while
      * reply callback will be called when routing information will be available.
      *
-     * \return true if a valid route is already known
      * \param source        source NoC net device
      * \param destination   destination address
      * \param packet        the packet to be resolved (needed the whole packet, because
@@ -123,6 +122,8 @@ namespace ns3
      * \param protocolType  protocol ID, needed to form a proper MAC-layer header
      * \param routeReply    callback to be invoked after route discovery procedure, supposed
      *                      to really send packet using routing information.
+     *
+     * \return true if a valid route is already known
      */
     virtual bool
     ManagePacket(const Ptr<NocNetDevice> source,
@@ -138,9 +139,11 @@ namespace ns3
      *
      * \param sender the sender NoC net device
      * \param routingDirection in what direction the packet will go (routing protocol dependent)
+     *
+     * \return the input net device
      */
     virtual Ptr<NocNetDevice>
-    GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection) = 0;
+    GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection) = 0;
 
     /**
      * Searches for the NoC net device which must be used to forward the message to the next node.
@@ -149,33 +152,48 @@ namespace ns3
      *
      * \param sender the sender NoC net device
      * \param routingDirection in what direction the packet will go (routing protocol dependent)
+     *
+     * \return the output net device
      */
     virtual Ptr<NocNetDevice>
-    GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection) = 0;
+    GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection) = 0;
 
     /**
-     * \param device NetDevice to associate to this router.
-     * \returns the index of the NetDevice into the router's list of
-     *          net devices.
+     * Retrieves all the possible output net devices for a packet sent by the specified net device
      *
+     * \param sender the net device which sent the packet
+     *
+     * \return an array with the output net devices
+     */
+    virtual std::vector<Ptr<NocNetDevice> >
+    GetOutputNetDevices (Ptr<NocNetDevice> sender) = 0;
+
+    /**
      * Associate this device to this router.
+     *
+     * \param device NetDevice to associate to this router.
+     *
+     * \return the index of the NetDevice into the router's list of
+     *         net devices.
      */
     virtual uint32_t
     AddDevice (Ptr<NocNetDevice> device);
 
     /**
-     * \param index the index of the requested NetDevice
-     * \returns the requested NetDevice associated to this router.
-     *
      * The indexes used by the GetDevice method start at one and
      * end at GetNDevices ()
+     *
+     * \param index the index of the requested NetDevice
+     *
+     * \return the requested NetDevice associated to this router.
+     *
      */
     virtual Ptr<NocNetDevice>
     GetDevice (uint32_t index) const;
 
     /**
-     * \returns the number of NetDevice instances associated
-     *          to this router.
+     * \return the number of NetDevice instances associated
+     *         to this router.
      */
     virtual uint32_t
     GetNDevices (void) const;
@@ -184,19 +202,19 @@ namespace ns3
      * set the NoC node to which this routing protocol is assigned to
      */
     void
-    SetNocNode(Ptr<NocNode> nocNode);
+    SetNocNode (Ptr<NocNode> nocNode);
 
     /**
      * \return the NoC node to which this routing protocol is assigned to
      */
     Ptr<NocNode>
-    GetNocNode() const;
+    GetNocNode () const;
 
     /**
      * \return the name of this routing protocol
      */
     std::string
-    GetName() const;
+    GetName () const;
 
   protected:
 

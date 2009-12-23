@@ -92,4 +92,20 @@ namespace ns3
     return GetInputNetDevice (sender, routingDirection);
   }
 
+  std::vector<Ptr<NocNetDevice> >
+  FourWayRouter::GetOutputNetDevices (Ptr<NocNetDevice> sender)
+  {
+    NS_LOG_FUNCTION (sender->GetAddress ());
+
+    std::vector<Ptr<NocNetDevice> > outputDevices;
+
+    for (unsigned int i = 0; i < GetNDevices (); ++i)
+      {
+        Ptr<NocNetDevice> tmpNetDevice = GetDevice (i)->GetObject<NocNetDevice> ();
+        outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+      }
+
+    return outputDevices;
+  }
+
 } // namespace ns3
