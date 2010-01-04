@@ -38,8 +38,6 @@ namespace ns3
   {
   public:
 
-    enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
-
     static TypeId
     GetTypeId ();
 
@@ -119,6 +117,16 @@ namespace ns3
      */
     static bool
     IsProgressiveDirection (Ptr<Packet> packet, Ptr<NocNetDevice> device);
+
+    /**
+     * Updates the header information of the specified head packet.
+     * The update is based on what net device was selected to route the packet.
+     *
+     * \param packet the head packet
+     * \param device the net device selected for routing
+     */
+    static void
+    UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device);
 
   };
 

@@ -22,6 +22,8 @@
 #include "ns3/log.h"
 #include "ns3/noc-header.h"
 #include "ns3/noc-channel.h"
+#include "ns3/random-variable.h"
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE ("SlbRouting");
 
@@ -61,6 +63,7 @@ namespace ns3
 
     std::vector<Ptr<NocNetDevice> > devices = DoRoutingFunction (source, destination, packet);
     Ptr<NocNetDevice> selectedDevice = DoSelectionFunction(devices, source, destination, packet);
+    UpdateHeader (packet, selectedDevice);
 
     m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->
         GetOutputNetDevice(source, selectedDevice->GetRoutingDirection ());
@@ -117,12 +120,19 @@ namespace ns3
         }
     }
 
-    NS_LOG_DEBUG ("The following output net devices can be used for routing the packet "
-        << packet << " (which came from " << source->GetAddress () << ")");
-    for (unsigned int i = 0; i < validDevices.size (); ++i) {
-      NS_LOG_DEBUG (validDevices[i]->GetAddress ());
-    }
-    NS_LOG_DEBUG ("");
+    if (validDevices.size() == 0)
+      {
+        NS_LOG_DEBUG ("No output net devices can be used for routing the packet "
+            << packet << " (which came from " << source->GetAddress () << ")");
+      }
+    else
+      {
+        NS_LOG_DEBUG ("The following output net devices can be used for routing the packet "
+            << packet << " (which came from " << source->GetAddress () << ")");
+        for (unsigned int i = 0; i < validDevices.size (); ++i) {
+          NS_LOG_DEBUG (validDevices[i]->GetAddress ());
+        }
+      }
 
     return validDevices;
   }
@@ -132,18 +142,33 @@ namespace ns3
       const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
   {
     Ptr<NocNetDevice> device;
+    std::vector<Ptr<NocNetDevice> > selectedDevices;
 
-    // TODO a random selection is performed (in NoCSim) among devices with with the same value
     int bestDeviceValue = -1;
     for (unsigned int i = 0; i < devices.size (); ++i)
       {
         int deviceValue = Evaluate (devices[i], packet);
+        if (deviceValue == bestDeviceValue)
+          {
+            selectedDevices.insert (selectedDevices.begin (), devices[i]);
+          }
         if (deviceValue > bestDeviceValue)
           {
-            device = devices[i];
+            selectedDevices.erase (selectedDevices.begin (), selectedDevices.end ());
+            selectedDevices.insert (selectedDevices.begin (), devices[i]);
             bestDeviceValue = deviceValue;
           }
       }
+
+    // when we have more than one net devices which have the best value,
+    // the selected net device is randomly picked
+    for (unsigned int i = 0; i < selectedDevices.size(); ++i)
+      {
+        NS_LOG_DEBUG ("Net device " << selectedDevices[i]->GetAddress () << " is among the selected devices");
+      }
+
+    UniformVariable randomVariable;
+    device = selectedDevices[randomVariable.GetValue (0, selectedDevices.size ())];
 
     NS_LOG_DEBUG ("The net device " << device->GetAddress () << " was selected for routing");
 
@@ -183,25 +208,32 @@ namespace ns3
     packet->PeekHeader (header);
     NS_ASSERT (!header.IsEmpty());
 
-    if (header.GetXDistance() > 0 && device->GetRoutingDirection () == NocRoutingProtocol::EAST)
+    NS_LOG_DEBUG ("Head packet X distance is " << (int) header.GetXDistance());
+    NS_LOG_DEBUG ("Head packet Y distance is " << (int) header.GetYDistance());
+
+    if (((header.GetXDistance() & 8) == 0) && header.GetXDistance() > 0
+        && device->GetRoutingDirection () == NocRoutingProtocol::EAST)
       {
         isProgressive = true;
       }
     else
       {
-        if (header.GetXDistance() < 0 && device->GetRoutingDirection () == NocRoutingProtocol::WEST)
+        if (((header.GetXDistance() & 8) == 8) && header.GetXDistance() > 0
+            && device->GetRoutingDirection () == NocRoutingProtocol::WEST)
           {
             isProgressive = true;
           }
         else
           {
-            if (header.GetYDistance() < 0 && device->GetRoutingDirection () == NocRoutingProtocol::NORTH)
+            if (((header.GetYDistance() & 8) == 8)  && header.GetYDistance() > 0
+                && device->GetRoutingDirection () == NocRoutingProtocol::NORTH)
               {
                 isProgressive = true;
               }
             else
               {
-                if (header.GetYDistance() > 0 && device->GetRoutingDirection () == NocRoutingProtocol::SOUTH)
+                if (((header.GetYDistance() & 8) == 0)  && header.GetYDistance() > 0
+                    && device->GetRoutingDirection () == NocRoutingProtocol::SOUTH)
                   {
                     isProgressive = true;
                   }
@@ -209,7 +241,59 @@ namespace ns3
           }
       }
 
+    if (isProgressive)
+      {
+        NS_LOG_DEBUG ("Net device " << device->GetAddress ()
+            << " provides a progressive direction for packet " << packet);
+      }
+    else
+      {
+        NS_LOG_DEBUG ("Net device " << device->GetAddress ()
+            << " does not provide a progressive direction for packet " << packet);
+      }
+
     return isProgressive;
+  }
+
+  void
+  SlbRouting::UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device)
+  {
+    NocHeader nocHeader;
+    packet->RemoveHeader (nocHeader);
+    NS_ASSERT (!nocHeader.IsEmpty ());
+
+    uint8_t xDistance = nocHeader.GetXDistance ();
+//    bool isEast = (xDistance & 0x08) != 0x08;
+    int xOffset = xDistance & 0x07;
+
+    uint8_t yDistance = nocHeader.GetYDistance ();
+//    bool isSouth = (yDistance & 0x08) != 0x08;
+    int yOffset = yDistance & 0x07;
+
+    switch (device->GetRoutingDirection ()) {
+      case NORTH:
+        yOffset--;
+        nocHeader.SetYDistance (0x08 | yOffset);
+        break;
+      case EAST:
+        xOffset--;
+        nocHeader.SetXDistance (0x07 & xOffset);
+        break;
+      case SOUTH:
+        yOffset--;
+        nocHeader.SetYDistance (0x07 & yOffset);
+        break;
+      case WEST:
+        xOffset--;
+        nocHeader.SetXDistance (0x08 | xOffset);
+        break;
+      case NONE:
+      default:
+        NS_LOG_ERROR ("Unknown routing direction");
+        break;
+    }
+
+    packet->AddHeader (nocHeader);
   }
 
 } // namespace ns3
