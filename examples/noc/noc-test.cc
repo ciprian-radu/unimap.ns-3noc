@@ -39,6 +39,7 @@
 #include "ns3/noc-node.h"
 #include "ns3/mobility-helper.h"
 //#include "ns3/gtk-config-store.h"
+#include "ns3/slb-load-router-component.h"
 
 using namespace ns3;
 
@@ -74,6 +75,11 @@ main (int argc, char *argv[])
       "MaxPackets", UintegerValue (1000)); // using very big input channel buffers
 
   // install the topology
+  ObjectFactory routerFactory;
+  routerFactory.SetTypeId ("ns3::IrvineLoadRouter");
+  Ptr<LoadRouterComponent> loadComponnet = CreateObject<SlbLoadRouterComponent> ();
+  routerFactory.Set("LoadComponent", PointerValue (loadComponnet));
+
   ObjectFactory routingProtocolFactory;
 //  routingProtocolFactory.SetTypeId ("ns3::XyRouting");
 //  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
@@ -83,6 +89,7 @@ main (int argc, char *argv[])
   switchingProtocolFactory.SetTypeId ("ns3::SafSwitching");
 
   NetDeviceContainer devs = noc->Install2DMeshIrvine (nodes, hSize,
+      routerFactory,
       routingProtocolFactory,
       switchingProtocolFactory);
   // done with installing the topology

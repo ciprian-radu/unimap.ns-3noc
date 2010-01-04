@@ -124,9 +124,10 @@ namespace ns3
      *
      * \param packet the head packet
      * \param device the net device selected for routing
+     * \param source the net device through which the packet arrived
      */
     static void
-    UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device);
+    UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device, const Ptr<NocNetDevice> source);
 
   };
 

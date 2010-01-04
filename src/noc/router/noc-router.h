@@ -38,6 +38,7 @@ namespace ns3
   class NocNetDevice;
   class NocRoutingProtocol;
   class NocSwitchingProtocol;
+  class LoadRouterComponent;
 
   /**
    *
@@ -60,6 +61,21 @@ namespace ns3
 
     virtual
     ~NocRouter ();
+
+    /**
+     * \return the load router component, or NULL if no load component is used
+     */
+    Ptr<LoadRouterComponent>
+    GetLoadRouterComponent () const;
+
+    /**
+     * Adds the load received from a neighbor router (marked by its topological direction)
+     *
+     * \param load the load information received from a neighbor
+     * \param sourceDevice the net device from which the load information came
+     */
+    virtual void
+    AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice);
 
     /**
      * Register the routing protocol.

@@ -24,6 +24,7 @@
 #include "ns3/simulator.h"
 #include "ns3/log.h"
 #include "ns3/node.h"
+#include "ns3/noc-header.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocChannel");
 
@@ -33,7 +34,7 @@ namespace ns3
   NS_OBJECT_ENSURE_REGISTERED (NocChannel);
 
   TypeId
-  NocChannel::GetTypeId(void)
+  NocChannel::GetTypeId ()
   {
     static TypeId tid = TypeId("ns3::NocChannel")
         .SetParent<Channel> ()
@@ -51,7 +52,7 @@ namespace ns3
     return tid;
   }
 
-  NocChannel::NocChannel() : Channel ()
+  NocChannel::NocChannel () : Channel ()
   {
     NS_LOG_FUNCTION_NOARGS ();
     m_state = IDLE;
@@ -60,7 +61,7 @@ namespace ns3
   }
 
   bool
-  NocChannel::TransmitStart(Ptr<Packet> p, uint32_t srcId)
+  NocChannel::TransmitStart (Ptr<Packet> p, uint32_t srcId)
   {
     NS_LOG_FUNCTION (p << srcId);
     NS_LOG_INFO ("Packet UID is " << p->GetUid ());
@@ -79,7 +80,7 @@ namespace ns3
   }
 
   bool
-  NocChannel::Send(Mac48Address to, Mac48Address from)
+  NocChannel::Send (Mac48Address to, Mac48Address from)
   {
     bool result = false;
     NS_LOG_FUNCTION (this << m_currentPkt << m_currentSrc);
@@ -108,39 +109,61 @@ namespace ns3
   }
 
   void
-  NocChannel::TransmitEnd(Mac48Address to, Ptr<NocNetDevice> destNocNetDevice, Mac48Address from)
+  NocChannel::TransmitEnd (Mac48Address to, Ptr<NocNetDevice> destNocNetDevice, Mac48Address from)
   {
     NS_LOG_FUNCTION (m_currentPkt);
     NS_LOG_INFO ("Packet UID is " << m_currentPkt->GetUid ());
     NS_ASSERT (m_state == PROPAGATING);
-    NS_LOG_LOGIC ("The channel is calling the Receive method of the net device");
 
+    Ptr<NocRouter> router = destNocNetDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ();
+    Ptr<LoadRouterComponent> loadComponent = router->GetLoadRouterComponent ();
+    if (loadComponent != 0)
+      {
+        NS_LOG_DEBUG ("Load component found");
+
+        loadComponent->IncreaseLoad ();
+        NocHeader nocHeader;
+        m_currentPkt->PeekHeader (nocHeader);
+        if (!nocHeader.IsEmpty ())
+          {
+            uint8_t load = nocHeader.GetLoad ();
+            // FIXME use the load
+            std::cout << (int) load;
+          }
+      }
+    else
+      {
+        NS_LOG_DEBUG ("No load component found");
+      }
+
+    NS_LOG_LOGIC ("The channel is calling the Receive method of the net device");
     destNocNetDevice->Receive (m_currentPkt->Copy (), to, from);
+
     m_state = IDLE;
     NS_LOG_LOGIC ("switched to IDLE");
   }
 
   uint32_t
-  NocChannel::Add(Ptr<NocNetDevice> device)
+  NocChannel::Add (Ptr<NocNetDevice> device)
   {
-    m_devices.push_back(device);
+    m_devices.push_back (device);
     return (m_devices.size () - 1);
   }
 
   uint32_t
-  NocChannel::GetNDevices(void) const
+  NocChannel::GetNDevices () const
   {
-    return m_devices.size();
+    return m_devices.size ();
   }
 
   Ptr<NetDevice>
-  NocChannel::GetDevice(uint32_t i) const
+  NocChannel::GetDevice (uint32_t i) const
   {
     return m_devices[i];
   }
 
   bool
-  NocChannel::IsBusy(void)
+  NocChannel::IsBusy ()
   {
     if (m_state == IDLE)
       {
@@ -153,19 +176,19 @@ namespace ns3
   }
 
   DataRate
-  NocChannel::GetDataRate(void)
+  NocChannel::GetDataRate ()
   {
     return m_bps;
   }
 
   Time
-  NocChannel::GetDelay(void)
+  NocChannel::GetDelay ()
   {
     return m_delay;
   }
 
   NocChannel::WireState
-  NocChannel::GetState(void)
+  NocChannel::GetState ()
   {
     return m_state;
   }

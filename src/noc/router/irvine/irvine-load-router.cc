@@ -20,6 +20,7 @@
 
 #include "irvine-load-router.h"
 #include "ns3/log.h"
+#include "ns3/pointer.h"
 
 NS_LOG_COMPONENT_DEFINE ("IrvineLoadRouter");
 
@@ -31,9 +32,21 @@ namespace ns3
   TypeId
   IrvineLoadRouter::GetTypeId ()
   {
-    static TypeId tid = TypeId("ns3::IrvineLoadRouter")
-        .SetParent<IrvineRouter> ();
+    static TypeId tid = TypeId ("ns3::IrvineLoadRouter")
+        .SetParent<IrvineRouter> ()
+        .AddConstructor<IrvineLoadRouter> ()
+        .AddAttribute ("LoadComponent",
+            "the load router component",
+            PointerValue (0),
+            MakePointerAccessor (&IrvineLoadRouter::SetLoadComponent),
+            MakePointerChecker<LoadRouterComponent> ());
     return tid;
+  }
+
+  IrvineLoadRouter::IrvineLoadRouter () : IrvineRouter (__FILE__)
+  {
+    NS_LOG_LOGIC ("No load router component specified by constructor. "
+        "Expecting that method SetLoadComponent(...) will be invoked later.");
   }
 
   // we could easily name the router "Irvine load router", but using __FILE__ should be more useful for debugging
@@ -47,7 +60,20 @@ namespace ns3
 
   IrvineLoadRouter::~IrvineLoadRouter ()
   {
+    ;
+  }
 
+  void
+  IrvineLoadRouter::SetLoadComponent (Ptr<LoadRouterComponent> loadComponent)
+  {
+    m_loadComponent = loadComponent;
+    NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
+  }
+
+  void
+  IrvineLoadRouter::AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice)
+  {
+    // FIXME
   }
 
 } // namespace ns3

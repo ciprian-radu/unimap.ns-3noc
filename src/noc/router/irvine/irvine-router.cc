@@ -34,7 +34,8 @@ namespace ns3
   IrvineRouter::GetTypeId ()
   {
     static TypeId tid = TypeId("ns3::IrvineRouter")
-        .SetParent<NocRouter> ();
+        .SetParent<NocRouter> ()
+        .AddConstructor<IrvineRouter> ();
     return tid;
   }
 

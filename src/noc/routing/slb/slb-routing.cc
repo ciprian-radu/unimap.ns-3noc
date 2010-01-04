@@ -63,7 +63,7 @@ namespace ns3
 
     std::vector<Ptr<NocNetDevice> > devices = DoRoutingFunction (source, destination, packet);
     Ptr<NocNetDevice> selectedDevice = DoSelectionFunction(devices, source, destination, packet);
-    UpdateHeader (packet, selectedDevice);
+    UpdateHeader (packet, selectedDevice, source);
 
     m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->
         GetOutputNetDevice(source, selectedDevice->GetRoutingDirection ());
@@ -256,7 +256,7 @@ namespace ns3
   }
 
   void
-  SlbRouting::UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device)
+  SlbRouting::UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device, const Ptr<NocNetDevice> source)
   {
     NocHeader nocHeader;
     packet->RemoveHeader (nocHeader);
@@ -292,6 +292,17 @@ namespace ns3
         NS_LOG_ERROR ("Unknown routing direction");
         break;
     }
+
+    Ptr<NocRouter> router = source->GetNode ()->GetObject<NocNode> ()->GetRouter ();
+    Ptr<LoadRouterComponent> loadComponent = router->GetLoadRouterComponent ();
+    if (loadComponent != 0)
+      {
+        int load = loadComponent->GetLoadForDirection (device->GetRoutingDirection ());
+        NS_ASSERT_MSG (load >= 0 && load <= 100, "The load of a router must be a percentage number ("
+            << load << " is not)");
+        NS_LOG_DEBUG ("Packet " << packet << " will propagate load " << load);
+        nocHeader.SetLoad (load);
+      }
 
     packet->AddHeader (nocHeader);
   }

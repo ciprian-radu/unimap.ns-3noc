@@ -166,8 +166,8 @@ namespace ns3
      *
      */
     NetDeviceContainer
-    Install2DMeshIrvine (NodeContainer nodes, uint32_t hSize, ObjectFactory routingProtocolFactory,
-        ObjectFactory switchingProtocolFactory);
+    Install2DMeshIrvine (NodeContainer nodes, uint32_t hSize, ObjectFactory routerFactory,
+        ObjectFactory routingProtocolFactory, ObjectFactory switchingProtocolFactory);
 
     Ptr<NocNetDevice>
     FindNetDeviceByAddress (Mac48Address address);

@@ -31,6 +31,7 @@ namespace ns3
   LoadRouterComponent::LoadRouterComponent (std::string name)
   {
     m_name = name;
+    m_load = 0;
   }
 
   TypeId
@@ -44,6 +45,12 @@ namespace ns3
   LoadRouterComponent::~LoadRouterComponent ()
   {
     ;
+  }
+
+  void
+  LoadRouterComponent::IncreaseLoad ()
+  {
+    m_load++;
   }
 
   std::string

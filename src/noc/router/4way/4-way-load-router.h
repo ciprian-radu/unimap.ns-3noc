@@ -37,10 +37,32 @@ namespace ns3
     static TypeId
     GetTypeId ();
 
+    /**
+     * Default constructor
+     *
+     * Note that you must specify a LoadRouterComponent manually when using this constructor
+     *
+     *
+     * \see #SetLoadComponent(Ptr<LoadRouterComponent> loadComponent)
+     */
+    FourWayLoadRouter ();
+
     FourWayLoadRouter (Ptr<LoadRouterComponent> loadComponent);
 
     virtual
     ~FourWayLoadRouter ();
+
+    virtual void
+    SetLoadComponent (Ptr<LoadRouterComponent> loadComponent);
+
+    /**
+     * Adds the load received from a neighbor router (marked by its topological direction)
+     *
+     * \param load the load information received from a neighbor
+     * \param sourceDevice the net device from which the load information came
+     */
+    void
+    AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice);
 
   private:
 

@@ -36,7 +36,7 @@ namespace ns3
   class NocHeader : public Header
   {
   public:
-    NocHeader();
+    NocHeader ();
 
     /**
      * Constructor - creates a header
@@ -47,29 +47,29 @@ namespace ns3
      * \param sourceY the Y coordinate of the source node
      * \param dataFlitCount the number of data flits (packets) that the message having this header will have
      */
-    NocHeader(uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
+    NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
         uint8_t sourceY, uint16_t dataFlitCount);
 
     virtual
-    ~NocHeader();
+    ~NocHeader ();
 
     static TypeId
-    GetTypeId(void);
+    GetTypeId ();
 
     virtual TypeId
-    GetInstanceTypeId(void) const;
+    GetInstanceTypeId () const;
 
     virtual uint32_t
-    GetSerializedSize(void) const;
+    GetSerializedSize () const;
 
     virtual void
-    Serialize(Buffer::Iterator start) const;
+    Serialize (Buffer::Iterator start) const;
 
     virtual uint32_t
-    Deserialize(Buffer::Iterator start);
+    Deserialize (Buffer::Iterator start);
 
     virtual void
-    Print(std::ostream &os) const;
+    Print (std::ostream &os) const;
 
     /**
      * \return the size of the header, in bytes
@@ -86,48 +86,61 @@ namespace ns3
     // allow protocol-specific access to the header data.
 
     void
-    SetXDistance(uint8_t xDistance);
+    SetXDistance (uint8_t xDistance);
 
     uint8_t
-    const GetXDistance();
+    const GetXDistance ();
 
     void
-    SetYDistance(uint8_t yDistance);
+    SetYDistance (uint8_t yDistance);
 
     uint8_t
-    const GetYDistance();
+    const GetYDistance ();
 
     void
-    SetSourceX(uint8_t sourceX);
+    SetSourceX (uint8_t sourceX);
 
     uint8_t
-    const GetSourceX();
+    const GetSourceX ();
 
     void
-    SetSourceY(uint8_t sourceY);
+    SetSourceY (uint8_t sourceY);
 
     uint8_t
-    const GetSourceY();
+    const GetSourceY ();
 
     void
-    SetSubdataId(uint8_t subdataId);
+    SetSubdataId (uint8_t subdataId);
 
     uint8_t
-    const GetSubdataId();
+    const GetSubdataId ();
 
     void
-    SetPeGroupAddress(uint16_t peGroupAddress);
+    SetPeGroupAddress (uint16_t peGroupAddress);
 
     uint16_t
-    const GetPeGroupAddress();
+    const GetPeGroupAddress ();
 
     void
-    SetDataFlitCount(uint16_t dataFlitCount);
+    SetDataFlitCount (uint16_t dataFlitCount);
 
     uint16_t
-    const GetDataFlitCount();
+    const GetDataFlitCount ();
+
+    void
+    SetLoad (uint8_t load);
+
+    uint8_t
+    const GetLoad ();
 
   private:
+
+    /**
+     * the size of this type of header, in bytes
+     */
+    // Make sure to update this field whenever you modify the structure of the header
+    static const int HEADER_SIZE = 9;
+
     // m_xDistance and m_yDistance determine the destination address
 
     uint8_t m_xDistance; // this field is only 4 bits in size
@@ -159,6 +172,11 @@ namespace ns3
      * Note that we consider a flit to have the size of a packet (to be a packet).
      */
     uint16_t m_dataFlitCount;
+
+    /**
+     * The load of a router (as a percentage number), propagated with the packet that has this header
+     */
+    uint8_t m_load;
 
   };
 

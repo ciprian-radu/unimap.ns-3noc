@@ -286,7 +286,7 @@ namespace ns3
   }
 
   NetDeviceContainer
-  NocHelper::Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize,
+  NocHelper::Install2DMeshIrvine(NodeContainer nodes, uint32_t hSize, ObjectFactory routerFactory,
       ObjectFactory routingProtocolFactory, ObjectFactory switchingProtocolFactory)
   {
     Ptr<NocChannel> channel = 0;
@@ -297,7 +297,7 @@ namespace ns3
         Ptr<NocNode> nocNode = nodes.Get (i)->GetObject<NocNode> ();
         if (nocNode->GetRouter () == 0)
           {
-            Ptr<NocRouter> router = CreateObject<IrvineRouter> ();
+            Ptr<NocRouter> router = routerFactory.Create ()->GetObject<NocRouter> ();
             router->SetNocNode (nocNode);
             nocNode->SetRouter (router);
 //            Callback<ObjectBase *> constructorRouting = routingProtocolTid.GetConstructor ();

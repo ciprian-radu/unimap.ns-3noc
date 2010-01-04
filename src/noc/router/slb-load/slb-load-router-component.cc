@@ -37,7 +37,8 @@ namespace ns3
   SlbLoadRouterComponent::GetTypeId ()
   {
     static TypeId tid = TypeId("ns3::SlbLoadRouterComponent")
-        .SetParent<LoadRouterComponent> ();
+        .SetParent<LoadRouterComponent> ()
+        .AddConstructor<SlbLoadRouterComponent> ();
     return tid;
   }
 
@@ -59,6 +60,5 @@ namespace ns3
     // FIXME
     return 0;
   }
-
 
 } // namespace ns3

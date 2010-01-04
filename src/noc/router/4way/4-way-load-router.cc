@@ -33,8 +33,15 @@ namespace ns3
   FourWayLoadRouter::GetTypeId ()
   {
     static TypeId tid = TypeId("ns3::FourWayLoadRouter")
-        .SetParent<FourWayRouter> ();
+        .SetParent<FourWayRouter> ()
+        .AddConstructor<FourWayLoadRouter> ();
     return tid;
+  }
+
+  FourWayLoadRouter::FourWayLoadRouter () : FourWayRouter (__FILE__)
+  {
+    NS_LOG_LOGIC ("No load router component specified by constructor. "
+        "Expecting that method SetLoadComponent(...) will be invoked later.");
   }
 
   // we could easily name the router "four way load router", but using __FILE__ should be more useful for debugging
@@ -49,6 +56,19 @@ namespace ns3
   FourWayLoadRouter::~FourWayLoadRouter ()
   {
     ;
+  }
+
+  void
+  FourWayLoadRouter::SetLoadComponent (Ptr<LoadRouterComponent> loadComponent)
+  {
+    m_loadComponent = loadComponent;
+    NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
+  }
+
+  void
+  FourWayLoadRouter::AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice)
+  {
+    // FIXME
   }
 
 } // namespace ns3

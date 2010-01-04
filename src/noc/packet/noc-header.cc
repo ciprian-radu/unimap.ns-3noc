@@ -37,6 +37,7 @@ namespace ns3
     NocHeader::m_subdataId = 0;
     NocHeader::m_peGroupAddress = 0;
     NocHeader::m_dataFlitCount = 0;
+    m_load = 0;
   }
 
   NocHeader::NocHeader(uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
@@ -53,6 +54,7 @@ namespace ns3
     NocHeader::m_subdataId = 0;
     NocHeader::m_peGroupAddress = 0;
     NocHeader::m_dataFlitCount = dataFlitCount;
+    m_load = 0;
   }
 
   NocHeader::~NocHeader()
@@ -79,7 +81,7 @@ namespace ns3
   uint32_t
   NocHeader::GetSerializedSize (void) const
   {
-    return 8; // bytes
+    return HEADER_SIZE; // bytes
   }
 
   void
@@ -98,6 +100,8 @@ namespace ns3
     start.WriteHtonU16 (m_peGroupAddress);
 
     start.WriteHtonU16 (m_dataFlitCount);
+
+    start.WriteU8 (m_load);
   }
 
   uint32_t
@@ -125,7 +129,9 @@ namespace ns3
 
         m_dataFlitCount = start.ReadNtohU16 ();
 
-        size = 8;
+        m_load = start.ReadU8 ();
+
+        size = HEADER_SIZE;
       }
 
     return size; // the number of bytes consumed.
@@ -137,7 +143,7 @@ namespace ns3
     os << "xDistance=" << (int) m_xDistance << " yDistance=" << (int) m_yDistance
         << " sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
         << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
-        << (long) m_dataFlitCount;
+        << (long) m_dataFlitCount << " load=" << (int) m_load;
   }
 
   /**
@@ -146,7 +152,7 @@ namespace ns3
   uint8_t
   NocHeader::GetHeaderSize () const
   {
-    return 8;
+    return HEADER_SIZE;
   }
 
   bool
@@ -154,7 +160,7 @@ namespace ns3
   {
     return (m_xDistance == 0) && (m_yDistance == 0) && (m_sourceX == 0)
         && (m_sourceY == 0) && (m_subdataId == 0) && (m_peGroupAddress == 0)
-        && (m_dataFlitCount == 0);
+        && (m_dataFlitCount == 0) && (m_load == 0);
   }
 
   void
@@ -243,6 +249,18 @@ namespace ns3
   const NocHeader::GetDataFlitCount()
   {
     return m_dataFlitCount;
+  }
+
+  void
+  NocHeader::SetLoad (uint8_t load)
+  {
+    m_load = load;
+  }
+
+  uint8_t
+  const NocHeader::GetLoad ()
+  {
+    return m_load;
   }
 
 } // namespace ns3
