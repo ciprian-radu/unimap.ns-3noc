@@ -37,8 +37,6 @@ namespace ns3
   {
   public:
 
-    enum Direction {NONE, NORTH, EAST, SOUTH, WEST};
-
     static TypeId
     GetTypeId();
 
