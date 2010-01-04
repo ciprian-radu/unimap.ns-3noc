@@ -60,5 +60,4 @@ namespace ns3
     return 0;
   }
 
-
 } // namespace ns3

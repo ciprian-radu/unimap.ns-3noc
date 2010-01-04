@@ -33,7 +33,8 @@ namespace ns3
   FourWayRouter::GetTypeId ()
   {
     static TypeId tid = TypeId ("ns3::FourWayRouter")
-        .SetParent<NocRouter> ();
+        .SetParent<NocRouter> ()
+        .AddConstructor<FourWayRouter> ();
     return tid;
   }
 

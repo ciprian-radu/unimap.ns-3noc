@@ -68,6 +68,18 @@ namespace ns3
     return true;
   }
 
+  Ptr<LoadRouterComponent>
+  NocRouter::GetLoadRouterComponent () const
+  {
+    return m_loadComponent;
+  }
+
+  void
+  NocRouter::AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice)
+  {
+    ; // This method is meant to be overridden if you want it to do something
+  }
+
   void
   NocRouter::SetRoutingProtocol (Ptr<NocRoutingProtocol> routingProtocol)
   {

@@ -63,7 +63,6 @@ namespace ns3
 
   private:
 
-
   };
 
 } // namespace ns3

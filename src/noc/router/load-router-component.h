@@ -22,6 +22,7 @@
 #define NOCLOADROUTER_H_
 
 #include "ns3/object.h"
+#include "ns3/noc-net-device.h"
 
 namespace ns3
 {
@@ -43,6 +44,12 @@ namespace ns3
 
     virtual
     ~LoadRouterComponent ();
+
+    /**
+     * Increases (by one increment) the load of the router having this load component
+     */
+    virtual void
+    IncreaseLoad ();
 
     /**
      * \return the load of the router
@@ -73,6 +80,11 @@ namespace ns3
      * the name of the algorithm used to provide the load information
      */
     std::string m_name;
+
+    /**
+     * the current load of the router having this load component
+     */
+    int m_load;
 
   };
 
