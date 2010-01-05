@@ -50,15 +50,53 @@ namespace ns3
   int
   SlbLoadRouterComponent::GetLocalLoad ()
   {
-    // FIXME
-    return 0;
+    int load = 0;
+    // load = (int)((router.getNewLoad() / (8.0f * (6.0f * router.getDataFlitSpeedup() + router.getNode().getProcessingElement().getMessageLength()))) * 100.0f);
+    int dataFlitSpeedup = 2; // FIXME
+    int messageLength = 9; // FIXME
+    load = (int) ((m_load / (8.0 * (6.0 * dataFlitSpeedup + messageLength))) * 100);
+
+    NS_ASSERT (load >= 0 && load <= 100);
+
+    return load;
   }
 
   int
-  SlbLoadRouterComponent::GetLoadForDirection (int direction)
+  SlbLoadRouterComponent::GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice)
   {
-    // FIXME
-    return 0;
+    int load = GetLocalLoad ();
+    double neighbourLoad = 0;
+    int counter = 0;
+
+    Ptr<NocRouter> router = sourceDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ();
+    NS_ASSERT (router);
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::NORTH)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::NORTH);
+        counter++;
+      }
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::EAST)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::EAST);
+        counter++;
+      }
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::SOUTH)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::SOUTH);
+        counter++;
+      }
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::WEST)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::WEST);
+        counter++;
+      }
+    if (counter != 0)
+      {
+        neighbourLoad /= counter;
+        load = (2 * load + neighbourLoad) / 3;
+      }
+
+    return load;
   }
 
 } // namespace ns3

@@ -77,13 +77,20 @@ main (int argc, char *argv[])
   // install the topology
   ObjectFactory routerFactory;
   routerFactory.SetTypeId ("ns3::IrvineLoadRouter");
-  Ptr<LoadRouterComponent> loadComponnet = CreateObject<SlbLoadRouterComponent> ();
-  routerFactory.Set("LoadComponent", PointerValue (loadComponnet));
+  // WARNING setting properties for objects in this manner means that all the created objects
+  // will refer to the *same* object
+  //
+  // example: all routers will use the *same* load component; this is obviously incorrect
+  // we therefore can't do something like this:
+  //
+  // Ptr<LoadRouterComponent> loadComponent = CreateObject<SlbLoadRouterComponent> ();
+  routerFactory.Set("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
 
   ObjectFactory routingProtocolFactory;
 //  routingProtocolFactory.SetTypeId ("ns3::XyRouting");
 //  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
   routingProtocolFactory.SetTypeId ("ns3::SlbRouting");
+  routingProtocolFactory.Set ("LoadThreshold", IntegerValue (30));
 
   ObjectFactory switchingProtocolFactory;
   switchingProtocolFactory.SetTypeId ("ns3::SafSwitching");
@@ -98,8 +105,8 @@ main (int argc, char *argv[])
   NocApplicationHelper nocAppHelper1 (nodes, devs, hSize);
   nocAppHelper1.SetAttribute("DataRate", DataRateValue(DataRate("4096b/s")));
   nocAppHelper1.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
-  nocAppHelper1.SetAttribute("Destination", UintegerValue (14));
-  ApplicationContainer apps1 = nocAppHelper1.Install (nodes.Get (5));
+  nocAppHelper1.SetAttribute("Destination", UintegerValue (15)); // destination
+  ApplicationContainer apps1 = nocAppHelper1.Install (nodes.Get (0)); // source
   apps1.Start (Seconds (0.0));
   apps1.Stop (Seconds (10.0));
 

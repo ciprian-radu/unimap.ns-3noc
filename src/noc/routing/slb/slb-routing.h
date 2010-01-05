@@ -54,22 +54,33 @@ namespace ns3
     RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
+    int
+    GetLoadThreshold () const;
+
+    void
+    SetLoadThreshold (int loadThreshold);
+
   private:
 
     /**
      * the chosen direction is progressive (leads to the target)
      */
-    int progressiveWeight;
+    int m_progressiveWeight;
 
     /**
      * the output channel in the chosen direction is currently occupied
      */
-    int remainingWeight;
+    int m_remainingWeight;
 
     /**
      * the router in the chosen direction is loaded
      */
-    int loadWeight;
+    int m_loadWeight;
+
+    /**
+     * the threshold for the load of a router
+     */
+    int m_loadThreshold;
 
     /**
      * Determines all the possible net devices that could route the packet

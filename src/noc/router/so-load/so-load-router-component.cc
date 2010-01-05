@@ -54,7 +54,7 @@ namespace ns3
   }
 
   int
-  SoLoadRouterComponent::GetLoadForDirection (int direction)
+  SoLoadRouterComponent::GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice)
   {
     // FIXME
     return 0;

@@ -23,9 +23,12 @@
 
 #include "ns3/object.h"
 #include "ns3/noc-net-device.h"
+#include "ns3/noc-router.h"
 
 namespace ns3
 {
+
+  class NocRouter;
 
   /**
    *
@@ -60,12 +63,13 @@ namespace ns3
     /**
      * Computes the load that is propagated from this router, in the specified direction.
      *
-     * \param direction the direction
+     * \param sourceDevice the net device where the packet currently is in the router
+     * \param selectedDevice the net device chosen for routing the packet forward
      *
      * \return the load for the specified direction
      */
     virtual int
-    GetLoadForDirection (int direction) = 0;
+    GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice) = 0;
 
     /**
      * \return the name
@@ -74,17 +78,17 @@ namespace ns3
 
   protected:
 
+    /**
+     * the current load of the router having this load component
+     */
+    int m_load;
+
   private:
 
     /**
      * the name of the algorithm used to provide the load information
      */
     std::string m_name;
-
-    /**
-     * the current load of the router having this load component
-     */
-    int m_load;
 
   };
 

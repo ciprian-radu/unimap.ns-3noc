@@ -23,7 +23,9 @@
 #include "ns3/noc-header.h"
 #include "ns3/noc-channel.h"
 #include "ns3/random-variable.h"
+#include "ns3/integer.h"
 #include <vector>
+#include <limits.h>
 
 NS_LOG_COMPONENT_DEFINE ("SlbRouting");
 
@@ -38,6 +40,12 @@ namespace ns3
     static TypeId tid = TypeId ("ns3::SlbRouting")
         .SetParent<NocRoutingProtocol> ()
         .AddConstructor<SlbRouting> ()
+        .AddAttribute (
+            "LoadThreshold",
+            "The threshold for the load of a router (per routing direction)",
+            IntegerValue (INT_MAX),
+            MakeIntegerAccessor (&SlbRouting::SetLoadThreshold, &SlbRouting::GetLoadThreshold),
+            MakeIntegerChecker<int> (0, INT_MAX))
         ;
     return tid;
   }
@@ -45,14 +53,28 @@ namespace ns3
   // we could easily name the protocol "Static Load Bound", but using __FILE__ should be more useful for debugging
   SlbRouting::SlbRouting () : NocRoutingProtocol (__FILE__)
   {
-    progressiveWeight = 2;
-    remainingWeight = -1;
-    loadWeight = -4;
+    m_progressiveWeight = 2;
+    m_remainingWeight = -1;
+    m_loadWeight = -4;
+
+    m_loadThreshold = INT_MAX;
   }
 
   SlbRouting::~SlbRouting ()
   {
     ;
+  }
+
+  int
+  SlbRouting::GetLoadThreshold () const
+  {
+    return m_loadThreshold;
+  }
+
+  void
+  SlbRouting::SetLoadThreshold (int loadThreshold)
+  {
+    m_loadThreshold = loadThreshold;
   }
 
   bool
@@ -183,18 +205,30 @@ namespace ns3
     // progressive directions are good
     if (IsProgressiveDirection (packet, device))
       {
-        value += progressiveWeight;
+        value += m_progressiveWeight;
+        NS_LOG_DEBUG ("Net device " << device->GetAddress ()
+            << " is progressive (adding " << m_progressiveWeight << ")");
       }
 
     // loaded directions are bad
-    // FIXME
+    Ptr<NocRouter> router = device->GetNode ()->GetObject<NocNode> ()->GetRouter ();
+    if (router->GetNeighborLoad (device) > m_loadThreshold)
+      {
+        value += m_loadWeight;
+        NS_LOG_DEBUG ("Net device " << device->GetAddress ()
+            << " is leads to a loaded router (adding " << m_loadWeight << ")");
+      }
 
     // currently busy directions are also bad
     Ptr<NocChannel> channel = device->GetChannel()->GetObject<NocChannel> ();
     if (channel->IsBusy ())
       {
-        value += remainingWeight;
+        value += m_remainingWeight;
+        NS_LOG_DEBUG ("Net device " << device->GetAddress ()
+            << " can be reached through a busy channel (adding " << m_remainingWeight << ")");
       }
+
+    NS_LOG_LOGIC ("Net device " << device->GetAddress () << " was evaluated to " << value);
 
     return value;
   }
@@ -297,7 +331,7 @@ namespace ns3
     Ptr<LoadRouterComponent> loadComponent = router->GetLoadRouterComponent ();
     if (loadComponent != 0)
       {
-        int load = loadComponent->GetLoadForDirection (device->GetRoutingDirection ());
+        int load = loadComponent->GetLoadForDirection (source, device);
         NS_ASSERT_MSG (load >= 0 && load <= 100, "The load of a router must be a percentage number ("
             << load << " is not)");
         NS_LOG_DEBUG ("Packet " << packet << " will propagate load " << load);

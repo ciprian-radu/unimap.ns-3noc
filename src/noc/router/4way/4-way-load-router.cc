@@ -71,4 +71,19 @@ namespace ns3
     // FIXME
   }
 
+  int
+  FourWayLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice)
+  {
+    // FIXME
+    return 0;
+  }
+
+  int
+  FourWayLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction)
+  {
+    // FIXME
+    return 0;
+  }
+
+
 } // namespace ns3

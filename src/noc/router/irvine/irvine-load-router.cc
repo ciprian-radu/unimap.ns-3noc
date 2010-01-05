@@ -20,7 +20,7 @@
 
 #include "irvine-load-router.h"
 #include "ns3/log.h"
-#include "ns3/pointer.h"
+#include "ns3/type-id.h"
 
 NS_LOG_COMPONENT_DEFINE ("IrvineLoadRouter");
 
@@ -37,9 +37,9 @@ namespace ns3
         .AddConstructor<IrvineLoadRouter> ()
         .AddAttribute ("LoadComponent",
             "the load router component",
-            PointerValue (0),
-            MakePointerAccessor (&IrvineLoadRouter::SetLoadComponent),
-            MakePointerChecker<LoadRouterComponent> ());
+            TypeIdValue (),
+            MakeTypeIdAccessor (&IrvineLoadRouter::CreateLoadComponent),
+            MakeTypeIdChecker ());
     return tid;
   }
 
@@ -47,6 +47,13 @@ namespace ns3
   {
     NS_LOG_LOGIC ("No load router component specified by constructor. "
         "Expecting that method SetLoadComponent(...) will be invoked later.");
+
+    m_northLeftLoad = 0;
+    m_northRightLoad = 0;
+    m_eastLoad = 0;
+    m_southLeftLoad = 0;
+    m_southRightLoad = 0;
+    m_westLoad = 0;
   }
 
   // we could easily name the router "Irvine load router", but using __FILE__ should be more useful for debugging
@@ -56,6 +63,13 @@ namespace ns3
         " If you do not want to use a load router component, use another constructor.");
     m_loadComponent = loadComponent;
     NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
+
+    m_northLeftLoad = 0;
+    m_northRightLoad = 0;
+    m_eastLoad = 0;
+    m_southLeftLoad = 0;
+    m_southRightLoad = 0;
+    m_westLoad = 0;
   }
 
   IrvineLoadRouter::~IrvineLoadRouter ()
@@ -64,16 +78,166 @@ namespace ns3
   }
 
   void
-  IrvineLoadRouter::SetLoadComponent (Ptr<LoadRouterComponent> loadComponent)
+  IrvineLoadRouter::CreateLoadComponent (TypeId loadComponentTypeId)
   {
-    m_loadComponent = loadComponent;
-    NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
+    ObjectFactory factory;
+    factory.SetTypeId(loadComponentTypeId);
+    m_loadComponent = factory.Create ()->GetObject<LoadRouterComponent> ();
+    NS_LOG_DEBUG ("Using the load router component " << m_loadComponent->GetName ());
   }
 
   void
   IrvineLoadRouter::AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice)
   {
-    // FIXME
+    NS_ASSERT (sourceDevice != 0);
+
+    Ptr<IrvineRouter> sourceRouter =
+        sourceDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetObject<IrvineRouter> ();
+    NS_ASSERT (sourceRouter != 0);
+
+    switch (sourceDevice->GetRoutingDirection ())
+      {
+        // TODO this router knows to work only with 2D meshes (it is only aware of NORTH, SOUTH, EAST, WEST directions)
+        case NocRoutingProtocol::NORTH:
+          if (sourceRouter->isLeftRouter (sourceDevice))
+            {
+              m_southLeftLoad = load;
+            }
+          else
+            {
+              if (sourceRouter->isRightRouter (sourceDevice))
+                {
+                  m_southRightLoad = load;
+                }
+              else
+                {
+                  NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                      << " does not belong to the left router, neither the right router!");
+                }
+            }
+          break;
+
+        case NocRoutingProtocol::EAST:
+          m_westLoad = load;
+          break;
+
+        case NocRoutingProtocol::SOUTH:
+          if (sourceRouter->isLeftRouter (sourceDevice))
+            {
+              m_northLeftLoad = load;
+            }
+          else
+            {
+              if (sourceRouter->isRightRouter (sourceDevice))
+                {
+                  m_northRightLoad = load;
+                }
+              else
+                {
+                  NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                      << " does not belong to the left router, neither the right router!");
+                }
+            }
+          break;
+
+        case NocRoutingProtocol::WEST:
+          m_eastLoad = load;
+          break;
+
+        case NocRoutingProtocol::NONE:
+        default:
+          NS_LOG_ERROR ("Unknown routing direction!");
+          break;
+      }
   }
+
+  int
+  IrvineLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice)
+  {
+    NS_ASSERT (sourceDevice != 0);
+
+    int load = 0;
+
+    switch (sourceDevice->GetRoutingDirection ()) {
+      case NocRoutingProtocol::NORTH:
+        if (isLeftRouter (sourceDevice))
+          {
+            load = m_southLeftLoad;
+          }
+        else
+          {
+            if (isRightRouter (sourceDevice))
+              {
+                load = m_southRightLoad;
+              }
+            else
+              {
+                NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                    << " does not belong to the left router, neither the right router!");
+              }
+          }
+        break;
+
+      case NocRoutingProtocol::EAST:
+        load = m_westLoad;
+        break;
+
+      case NocRoutingProtocol::SOUTH:
+        if (isLeftRouter (sourceDevice))
+          {
+            load = m_northLeftLoad;
+          }
+        else
+          {
+            if (isRightRouter (sourceDevice))
+              {
+                load = m_northRightLoad;
+              }
+            else
+              {
+                NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                    << " does not belong to the left router, neither the right router!");
+              }
+          }
+        break;
+
+      case NocRoutingProtocol::WEST:
+        load = m_eastLoad;
+        break;
+
+      case NocRoutingProtocol::NONE:
+      default:
+        NS_LOG_ERROR ("Unknown routing direction!");
+        break;
+    }
+
+    return load;
+  }
+
+  int
+  IrvineLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction)
+  {
+    NS_ASSERT (sourceDevice != 0);
+    int load = 0;
+
+    NS_LOG_DEBUG ("Requesting neighbor load (source net device is "
+        << sourceDevice->GetAddress () << ", direction is " << direction);
+
+    Ptr<NocNetDevice> device = GetInputNetDevice (sourceDevice, direction);
+    if (device == 0)
+      {
+        NS_LOG_WARN ("No input net device was found based on source device "
+            << sourceDevice->GetAddress () << " and direction " << direction);
+        load = 0;
+      }
+    else
+      {
+        load = GetNeighborLoad (device);
+      }
+    NS_LOG_DEBUG ("Retrieving neighbor load " << load);
+
+    return load;
+  }
+
 
 } // namespace ns3

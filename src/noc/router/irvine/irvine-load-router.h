@@ -58,7 +58,7 @@ namespace ns3
     ~IrvineLoadRouter ();
 
     virtual void
-    SetLoadComponent (Ptr<LoadRouterComponent> loadComponent);
+    CreateLoadComponent (TypeId loadComponentTypeId);
 
     /**
      * Adds the load received from a neighbor router (marked by its topological direction)
@@ -69,7 +69,60 @@ namespace ns3
     void
     AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice);
 
+    /**
+     * Retrieves the load of the router which is a neighbor to this router
+     * (by being connected to this router through sourceDevice)
+     *
+     * \param sourceDevice the net device of this router
+     *
+     * \return the load
+     */
+    int
+    GetNeighborLoad (Ptr<NocNetDevice> sourceDevice);
+
+    /**
+     * Retrieves the load of the router which is a neighbor to this router,
+     * in the specified direction.
+     *
+     * \param sourceDevice the net device of this router (it marks where the packet is in this router)
+     * \param direction the direction of the neighbor
+     *
+     * \return the load
+     */
+    int
+    GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction);
+
   private:
+
+    /**
+     * the load of the neighbor router connected to the left North channel
+     */
+    int m_northLeftLoad;
+
+    /**
+     * the load of the neighbor router connected to the right North channel
+     */
+    int m_northRightLoad;
+
+    /**
+     * the load of the neighbor router connected to the East channel
+     */
+    int m_eastLoad;
+
+    /**
+     * the load of the neighbor router connected to the left South channel
+     */
+    int m_southLeftLoad;
+
+    /**
+     * the load of the neighbor router connected to the right South channel
+     */
+    int m_southRightLoad;
+
+    /**
+     * the load of the neighbor router connected to the West channel
+     */
+    int m_westLoad;
 
   };
 
