@@ -101,7 +101,7 @@ namespace ns3
               NS_LOG_LOGIC ("switched to PROPAGATING");
               NS_LOG_DEBUG ("Schedule event (net device receive) to occur at time "
                   << (Simulator::Now() + m_delay + tEvent).GetSeconds () << " seconds");
-              Simulator::Schedule(m_delay + tEvent, &NocChannel::TransmitEnd, this, to, tmp, from);
+              Simulator::Schedule(m_delay + tEvent, &NocChannel::TransmitEnd, this, sender, to, tmp, from);
               result = true;
             }
         }
@@ -109,7 +109,7 @@ namespace ns3
   }
 
   void
-  NocChannel::TransmitEnd (Mac48Address to, Ptr<NocNetDevice> destNocNetDevice, Mac48Address from)
+  NocChannel::TransmitEnd (Ptr<NocNetDevice> srcNocNetDevice, Mac48Address to, Ptr<NocNetDevice> destNocNetDevice, Mac48Address from)
   {
     NS_LOG_FUNCTION (m_currentPkt);
     NS_LOG_INFO ("Packet UID is " << m_currentPkt->GetUid ());
@@ -127,8 +127,7 @@ namespace ns3
         if (!nocHeader.IsEmpty ())
           {
             uint8_t load = nocHeader.GetLoad ();
-            // FIXME use the load
-            std::cout << (int) load;
+            router->AddNeighborLoad ((int) load, srcNocNetDevice);
           }
       }
     else

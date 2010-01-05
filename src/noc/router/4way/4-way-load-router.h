@@ -64,6 +64,29 @@ namespace ns3
     void
     AddNeighborLoad (int load, Ptr<NocNetDevice> sourceDevice);
 
+    /**
+     * Retrieves the load of the router which is a neighbor to this router
+     * (by being connected to this router through sourceDevice)
+     *
+     * \param sourceDevice the net device of this router
+     *
+     * \return the load
+     */
+    int
+    GetNeighborLoad (Ptr<NocNetDevice> sourceDevice);
+
+    /**
+     * Retrieves the load of the router which is a neighbor to this router,
+     * in the specified direction.
+     *
+     * \param sourceDevice the net device of this router (it marks where the packet is in this router)
+     * \param direction the direction of the neighbor
+     *
+     * \return the load
+     */
+    int
+    GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction);
+
   private:
 
   };

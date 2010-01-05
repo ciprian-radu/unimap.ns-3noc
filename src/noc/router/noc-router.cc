@@ -80,6 +80,20 @@ namespace ns3
     ; // This method is meant to be overridden if you want it to do something
   }
 
+  int
+  NocRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice)
+  {
+    // This method is meant to be overridden by the subclassing routers which work with load information
+    return 0;
+  }
+
+  int
+  NocRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction)
+  {
+    // This method is meant to be overridden by the subclassing routers which work with load information
+    return 0;
+  }
+
   void
   NocRouter::SetRoutingProtocol (Ptr<NocRoutingProtocol> routingProtocol)
   {

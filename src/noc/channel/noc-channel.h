@@ -131,6 +131,8 @@ namespace ns3
      *
      * \see Send
      *
+     * \param srcNocNetDevice the NoC net device that sent the packet
+     *
      * \param to the address where the packet is to be sent
      *
      * \param destNocNetDevice the NoC net device that must receive the packet
@@ -138,7 +140,8 @@ namespace ns3
      * \param from the address from where the packet is sent
      *
      */
-    void TransmitEnd (Mac48Address to, Ptr<NocNetDevice> destNocNetDevice, Mac48Address from);
+    void TransmitEnd (Ptr<NocNetDevice> srcNocNetDevice, Mac48Address to,
+        Ptr<NocNetDevice> destNocNetDevice, Mac48Address from);
 
   private:
 

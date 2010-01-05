@@ -55,11 +55,30 @@ namespace ns3
     std::vector<Ptr<NocNetDevice> >
     GetOutputNetDevices (Ptr<NocNetDevice> sender);
 
+    /**
+     * Determines if the given net device belongs to the left router
+     *
+     * \param sender the net device
+     *
+     * \return whether or not the net device belongs to the left router
+     */
+    bool
+    isLeftRouter (Ptr<NocNetDevice> sender);
+
+    /**
+     * Determines if the given net device belongs to the right router
+     *
+     * \param sender the net device
+     *
+     * \return whether or not the net device belongs to the right router
+     */
+    bool
+    isRightRouter (Ptr<NocNetDevice> sender);
+
+
   protected:
 
     IrvineRouter (std::string name);
-
-  private:
 
     Ptr<NocNetDevice>
     GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection);
@@ -67,11 +86,7 @@ namespace ns3
     Ptr<NocNetDevice>
     GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection);
 
-    bool
-    isRightRouter (Ptr<NocNetDevice> sender);
-
-    bool
-    isLeftRouter (Ptr<NocNetDevice> sender);
+  private:
 
     /**
      * the input net devices associated to the left router (subset of m_devices)

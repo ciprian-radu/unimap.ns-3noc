@@ -52,12 +52,13 @@ namespace ns3
     /**
      * Computes the load that is propagated from this router, in the specified direction.
      *
-     * \param direction the direction
+     * \param sourceDevice the net device where the packet currently is in the router
+     * \param selectedDevice the net device chosen for routing the packet forward
      *
      * \return the load for the specified direction
      */
     int
-    GetLoadForDirection (int direction);
+    GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice);
 
   protected:
 

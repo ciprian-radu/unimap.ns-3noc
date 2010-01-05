@@ -51,6 +51,7 @@ namespace ns3
   LoadRouterComponent::IncreaseLoad ()
   {
     m_load++;
+    NS_LOG_DEBUG ("Load increased to " << m_load);
   }
 
   std::string
