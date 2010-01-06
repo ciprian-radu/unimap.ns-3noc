@@ -111,7 +111,7 @@ private:
   DataRate        m_dataRate;           // Rate that data is generated
   uint32_t        m_pktSize;            // Size of data packets (head packets have the same size + the size of the header)
   uint16_t        m_numberOfPackets;    // How many packets a message will have
-  uint16_t        m_currentPacketIndex;      // the index of the packet to be injected ( [0, m_numberOfPackets - 1] )
+  uint16_t        m_currentPacketIndex; // the index of the packet to be injected ( [0, m_numberOfPackets - 1] )
   Ptr<NocPacket>  m_currentHeadPacket;  // the current head packet
   uint32_t        m_residualBits;       // Number of generated, but not sent, bits
   Time            m_lastStartTime;      // Time last packet sent

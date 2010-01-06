@@ -68,12 +68,14 @@ namespace ns3
   int
   SlbRouting::GetLoadThreshold () const
   {
+    NS_LOG_FUNCTION_NOARGS ();
     return m_loadThreshold;
   }
 
   void
   SlbRouting::SetLoadThreshold (int loadThreshold)
   {
+    NS_LOG_FUNCTION (loadThreshold);
     m_loadThreshold = loadThreshold;
   }
 
@@ -292,6 +294,7 @@ namespace ns3
   void
   SlbRouting::UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device, const Ptr<NocNetDevice> source)
   {
+    NS_LOG_FUNCTION (packet << device->GetAddress () << source->GetAddress ());
     NocHeader nocHeader;
     packet->RemoveHeader (nocHeader);
     NS_ASSERT (!nocHeader.IsEmpty ());

@@ -22,6 +22,7 @@
 #define SOROUTING_H_
 
 #include "ns3/noc-routing-protocol.h"
+#include <vector>
 
 namespace ns3
 {
@@ -38,7 +39,7 @@ namespace ns3
   public:
 
     static TypeId
-    GetTypeId();
+    GetTypeId ();
 
     /**
      * Constructor
@@ -47,13 +48,86 @@ namespace ns3
     SoRouting ();
 
     virtual
-    ~SoRouting();
+    ~SoRouting ();
 
     virtual bool
-    RequestNewRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
+    RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
         Ptr<Packet> packet, RouteReplyCallback routeReply);
 
   private:
+
+    /**
+     * the chosen direction is progressive (leads to the target)
+     */
+    int m_progressiveWeight;
+
+    /**
+     * the output channel in the chosen direction is currently occupied
+     */
+    int m_remainingWeight;
+
+    /**
+     * the router in the chosen direction is loaded
+     */
+    int m_loadWeight;
+
+    /**
+     * Determines all the possible net devices that could route the packet
+     *
+     * \param source the net device through which the packet arrived
+     * \param destination the destination node of the packet
+     * \param packet the packet to be routed
+     *
+     * \return an array with all the possible net devices that could route the packet
+     */
+    std::vector<Ptr<NocNetDevice> >
+    DoRoutingFunction (const Ptr<NocNetDevice> source,
+        const Ptr<NocNode> destination, Ptr<Packet> packet);
+
+    /**
+     * Selects the net device which will be used for routing. This is done by evaluating all the possible devices.
+     *
+     * \param devices the devices from which the selection is made
+     * \param source the net device through which the packet arrived
+     * \param destination the destination node of the packet
+     * \param packet the packet to be routed
+     *
+     * \return the selected net device
+     */
+    Ptr<NocNetDevice>
+    DoSelectionFunction (std::vector<Ptr<NocNetDevice> > devices,
+        const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
+
+    /**
+     * Evaluates the given net device to determine how profitable it is to route the packet through it.
+     *
+     * \param device the net device
+     * \param packet the packet to be routed
+     *
+     * \return the result of the evaluation
+     */
+    int
+    Evaluate (Ptr<NocNetDevice> device, Ptr<Packet> packet);
+
+    /**
+     * \param packet the packet to be routed
+     * \param device the net device
+     *
+     * \return whether or not the direction is progressive
+     */
+    static bool
+    IsProgressiveDirection (Ptr<Packet> packet, Ptr<NocNetDevice> device);
+
+    /**
+     * Updates the header information of the specified head packet.
+     * The update is based on what net device was selected to route the packet.
+     *
+     * \param packet the head packet
+     * \param device the net device selected for routing
+     * \param source the net device through which the packet arrived
+     */
+    static void
+    UpdateHeader (Ptr<Packet> packet, Ptr<NocNetDevice> device, const Ptr<NocNetDevice> source);
 
   };
 

@@ -37,7 +37,8 @@ namespace ns3
   SoLoadRouterComponent::GetTypeId ()
   {
     static TypeId tid = TypeId ("ns3::SoLoadRouterComponent")
-        .SetParent<LoadRouterComponent> ();
+        .SetParent<LoadRouterComponent> ()
+        .AddConstructor<SoLoadRouterComponent> ();
     return tid;
   }
 
@@ -49,15 +50,79 @@ namespace ns3
   int
   SoLoadRouterComponent::GetLocalLoad ()
   {
+    int load = 0;
+    
+//    int count = 1;
+//        int load = router.getInjectionChannel().getFlitsInBufferCount();
+//        if(load > StatisticsController.getInstance().getBufferSize()) {
+//                load = StatisticsController.getInstance().getBufferSize();
+//        }
+//        if(router.getNorthInChannel() != null) {
+//                count++;
+//                load += router.getNorthInChannel().getFlitsInBufferCount();
+//        }
+//        if(router.getSouthInChannel() != null) {
+//                count++;
+//                load += router.getSouthInChannel().getFlitsInBufferCount();
+//        }
+//        if(router.getEastInChannel() != null) {
+//                count++;
+//                load += router.getEastInChannel().getFlitsInBufferCount();
+//        }
+//        if(router.getWestInChannel() != null) {
+//                count++;
+//                load += router.getWestInChannel().getFlitsInBufferCount();
+//        }
+//        load = (int)(load / (float)(count * StatisticsController.getInstance().getBufferSize()) * 100);
+
     // FIXME
-    return 0;
+
+    NS_ASSERT (load >= 0 && load <= 100);
+
+    NS_LOG_DEBUG ("Retrieving local load: " << load);
+
+    return load;
   }
 
   int
   SoLoadRouterComponent::GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice)
   {
-    // FIXME
-    return 0;
+    int load = GetLocalLoad ();
+    double neighbourLoad = 0;
+    int counter = 0;
+
+    Ptr<NocRouter> router = sourceDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ();
+    NS_ASSERT (router);
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::NORTH)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::NORTH);
+        counter++;
+      }
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::EAST)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::EAST);
+        counter++;
+      }
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::SOUTH)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::SOUTH);
+        counter++;
+      }
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::WEST)
+      {
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::WEST);
+        counter++;
+      }
+    if (counter != 0)
+      {
+        neighbourLoad /= counter;
+        load = (2 * load + neighbourLoad) / 3;
+      }
+
+    NS_LOG_DEBUG ("The router given by net device " << sourceDevice->GetAddress ()
+        << " provides the load " << load << " for direction " << selectedDevice->GetRoutingDirection ());
+
+    return load;
   }
 
 } // namespace ns3

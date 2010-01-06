@@ -93,6 +93,7 @@ namespace ns3
           Ptr<NocNetDevice> tmp = *i;
           if (tmp != sender)
             {
+              NS_LOG_DEBUG ("The packet " << (*m_currentPkt) << " has size " << (int) m_currentPkt->GetSize ());
               Time tEvent = Seconds (m_bps.CalculateTxTime (m_currentPkt->GetSize ()));
               NS_LOG_LOGIC ("The channel will send the packet in " << (m_delay.GetSeconds () + tEvent.GetSeconds())
                   << " seconds (" << m_delay.GetSeconds () << " + " << tEvent.GetSeconds()

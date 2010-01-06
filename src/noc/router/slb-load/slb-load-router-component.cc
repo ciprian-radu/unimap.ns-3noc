@@ -52,11 +52,13 @@ namespace ns3
   {
     int load = 0;
     // load = (int)((router.getNewLoad() / (8.0f * (6.0f * router.getDataFlitSpeedup() + router.getNode().getProcessingElement().getMessageLength()))) * 100.0f);
-    int dataFlitSpeedup = 2; // FIXME
-    int messageLength = 9; // FIXME
+    int dataFlitSpeedup = 1; // FIXME data packets are implicitly propagated faster in NS-3 because the size of the packet is considered (NocChannel.Send (...))
+    int messageLength = 8; // FIXME this can the obtained from NocApplication (field m_numberOfPackets)
     load = (int) ((m_load / (8.0 * (6.0 * dataFlitSpeedup + messageLength))) * 100);
 
     NS_ASSERT (load >= 0 && load <= 100);
+
+    NS_LOG_DEBUG ("Retrieving local load: " << load);
 
     return load;
   }
@@ -95,6 +97,9 @@ namespace ns3
         neighbourLoad /= counter;
         load = (2 * load + neighbourLoad) / 3;
       }
+
+    NS_LOG_DEBUG ("The router given by net device " << sourceDevice->GetAddress ()
+        << " provides the load " << load << " for direction " << selectedDevice->GetRoutingDirection ());
 
     return load;
   }
