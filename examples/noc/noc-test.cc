@@ -110,13 +110,13 @@ main (int argc, char *argv[])
   apps1.Start (Seconds (0.0));
   apps1.Stop (Seconds (10.0));
 
-//  NocApplicationHelper nocAppHelper2 (nodes, devs, hSize);
-//  nocAppHelper2.SetAttribute("DataRate", DataRateValue(DataRate("4096b/s")));
-//  nocAppHelper2.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
-//  nocAppHelper2.SetAttribute("Destination", UintegerValue (14));
-//  ApplicationContainer apps2 = nocAppHelper2.Install (nodes.Get (1));
-//  apps2.Start (Seconds (0.0));
-//  apps2.Stop (Seconds (10.0));
+  NocApplicationHelper nocAppHelper2 (nodes, devs, hSize);
+  nocAppHelper2.SetAttribute("DataRate", DataRateValue(DataRate("4096b/s")));
+  nocAppHelper2.SetAttribute("TrafficPattern", EnumValue(NocApplication::DESTINATION_SPECIFIED));
+  nocAppHelper2.SetAttribute("Destination", UintegerValue (0)); // destination
+  ApplicationContainer apps2 = nocAppHelper2.Install (nodes.Get (15)); // source
+  apps2.Start (Seconds (0.0));
+  apps2.Stop (Seconds (10.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-test.tr file
