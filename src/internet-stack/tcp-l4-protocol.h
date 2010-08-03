@@ -28,6 +28,7 @@
 #include "ns3/ptr.h"
 #include "ns3/object-factory.h"
 #include "ipv4-l4-protocol.h"
+#include "ns3/net-device.h"
 
 namespace ns3 {
 
@@ -45,7 +46,7 @@ class Ipv4EndPoint;
  * 
  * This class allocates "endpoint" objects (ns3::Ipv4EndPoint) for TCP,
  * and SHOULD checksum packets its receives from the socket layer going down
- * the stack , but currently checksumming is disabled.  It also recieves 
+ * the stack , but currently checksumming is disabled.  It also receives 
  * packets from IP, and forwards them up to the endpoints.
 */
 
@@ -89,20 +90,19 @@ public:
    * \param daddr The destination Ipv4Address
    * \param sport The source port number
    * \param dport The destination port number
+   * \param oif The output interface bound. Defaults to null (unspecified).
    */
   void Send (Ptr<Packet> packet,
              Ipv4Address saddr, Ipv4Address daddr, 
-             uint16_t sport, uint16_t dport);
+             uint16_t sport, uint16_t dport, Ptr<NetDevice> oif = 0);
   /**
-   * \brief Recieve a packet up the protocol stack
+   * \brief Receive a packet up the protocol stack
    * \param p The Packet to dump the contents into
-   * \param source The source's Ipv4Address
-   * \param destination The destinations Ipv4Address
+   * \param header IPv4 Header information
    * \param incomingInterface The Ipv4Interface it was received on
    */
   virtual enum Ipv4L4Protocol::RxStatus Receive (Ptr<Packet> p,
-                                                 Ipv4Address const &source,
-                                                 Ipv4Address const &destination,
+                                                 Ipv4Header const &header,
                                                  Ptr<Ipv4Interface> incomingInterface);
 
 protected:
@@ -119,7 +119,7 @@ private:
 private:
   friend class TcpSocketImpl;
   void SendPacket (Ptr<Packet>, const TcpHeader &,
-                  Ipv4Address, Ipv4Address);
+                  Ipv4Address, Ipv4Address, Ptr<NetDevice> oif = 0);
   static ObjectFactory GetDefaultRttEstimatorFactory (void);
   TcpL4Protocol (const TcpL4Protocol &o);
   TcpL4Protocol &operator = (const TcpL4Protocol &o);

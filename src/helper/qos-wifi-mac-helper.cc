@@ -64,13 +64,13 @@ QosWifiMacHelper::SetType (std::string type,
 }
 
 void
-QosWifiMacHelper::SetMsduAggregatorForAc (AccessClass accessClass, std::string type,
+QosWifiMacHelper::SetMsduAggregatorForAc (AcIndex ac, std::string type,
                                           std::string n0, const AttributeValue &v0,
                                           std::string n1, const AttributeValue &v1,
                                           std::string n2, const AttributeValue &v2,
                                           std::string n3, const AttributeValue &v3)
 {
-  std::map<AccessClass, ObjectFactory>::iterator it = m_aggregators.find (accessClass);
+  std::map<AcIndex, ObjectFactory>::iterator it = m_aggregators.find (ac);
   if (it != m_aggregators.end ())
     {
       it->second.SetTypeId (type);
@@ -87,23 +87,43 @@ QosWifiMacHelper::SetMsduAggregatorForAc (AccessClass accessClass, std::string t
       factory.Set (n1, v1);
       factory.Set (n2, v2);
       factory.Set (n3, v3);
-      m_aggregators.insert (std::make_pair (accessClass, factory));
+      m_aggregators.insert (std::make_pair (ac, factory));
     }
 }
 
 void
-QosWifiMacHelper::Setup (Ptr<WifiMac> mac, enum AccessClass ac, std::string dcaAttrName) const
+QosWifiMacHelper::SetBlockAckThresholdForAc (enum AcIndex ac, uint8_t threshold)
 {
-  std::map<AccessClass, ObjectFactory>::const_iterator it = m_aggregators.find (ac);
+  m_bAckThresholds[ac] = threshold;
+}
+
+void
+QosWifiMacHelper::SetBlockAckInactivityTimeoutForAc (enum AcIndex ac, uint16_t timeout)
+{
+  m_bAckInactivityTimeouts[ac] = timeout;
+}
+
+void
+QosWifiMacHelper::Setup (Ptr<WifiMac> mac, enum AcIndex ac, std::string dcaAttrName) const
+{
+  std::map<AcIndex, ObjectFactory>::const_iterator it = m_aggregators.find (ac);
+  PointerValue ptr;
+  mac->GetAttribute (dcaAttrName, ptr);
+  Ptr<EdcaTxopN> edca = ptr.Get<EdcaTxopN> ();
+  
   if (it != m_aggregators.end ())
     {
       ObjectFactory factory = it->second;
-
-      PointerValue ptr;
-      mac->GetAttribute (dcaAttrName, ptr);
-      Ptr<EdcaTxopN> edca = ptr.Get<EdcaTxopN> ();
       Ptr<MsduAggregator> aggregator = factory.Create<MsduAggregator> ();
       edca->SetMsduAggregator (aggregator);
+    }
+  if (m_bAckThresholds.find (ac) != m_bAckThresholds.end ())
+    {
+      edca->SetBlockAckThreshold (m_bAckThresholds.find(ac)->second);
+    }
+  if (m_bAckInactivityTimeouts.find (ac) != m_bAckInactivityTimeouts.end ())
+    {
+      edca->SetBlockAckInactivityTimeout (m_bAckInactivityTimeouts.find(ac)->second);
     }
 }
 

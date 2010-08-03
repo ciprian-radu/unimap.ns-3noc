@@ -60,7 +60,7 @@ def register_types(module):
     ## random-variable.h: ns3::SequentialVariable [class]
     module.add_class('SequentialVariable', parent=root_module['ns3::RandomVariable'])
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::Object, ns3::ObjectBase, ns3::ObjectDeleter> [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::Object', 'ns3::ObjectBase', 'ns3::ObjectDeleter'], parent=root_module['ns3::ObjectBase'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::Object', 'ns3::ObjectBase', 'ns3::ObjectDeleter'], parent=root_module['ns3::ObjectBase'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## system-condition.h: ns3::SystemCondition [class]
     module.add_class('SystemCondition')
     ## system-mutex.h: ns3::SystemMutex [class]
@@ -93,6 +93,8 @@ def register_types(module):
     module.add_class('Vector3D')
     ## random-variable.h: ns3::WeibullVariable [class]
     module.add_class('WeibullVariable', parent=root_module['ns3::RandomVariable'])
+    ## random-variable.h: ns3::ZetaVariable [class]
+    module.add_class('ZetaVariable', parent=root_module['ns3::RandomVariable'])
     ## random-variable.h: ns3::ZipfVariable [class]
     module.add_class('ZipfVariable', parent=root_module['ns3::RandomVariable'])
     ## empty.h: ns3::empty [class]
@@ -116,25 +118,25 @@ def register_types(module):
     ## random-variable.h: ns3::NormalVariable [class]
     module.add_class('NormalVariable', parent=root_module['ns3::RandomVariable'])
     ## object.h: ns3::Object [class]
-    module.add_class('Object', automatic_type_narrowing=True, parent=root_module['ns3::SimpleRefCount< ns3::Object, ns3::ObjectBase, ns3::ObjectDeleter >'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    module.add_class('Object', parent=root_module['ns3::SimpleRefCount< ns3::Object, ns3::ObjectBase, ns3::ObjectDeleter >'])
     ## object.h: ns3::Object::AggregateIterator [class]
     module.add_class('AggregateIterator', outer_class=root_module['ns3::Object'])
     ## random-variable.h: ns3::ParetoVariable [class]
     module.add_class('ParetoVariable', parent=root_module['ns3::RandomVariable'])
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::AttributeAccessor, ns3::empty, ns3::DefaultDeleter<ns3::AttributeAccessor> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::AttributeAccessor', 'ns3::empty', 'ns3::DefaultDeleter<ns3::AttributeAccessor>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::AttributeAccessor', 'ns3::empty', 'ns3::DefaultDeleter<ns3::AttributeAccessor>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::AttributeChecker, ns3::empty, ns3::DefaultDeleter<ns3::AttributeChecker> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::AttributeChecker', 'ns3::empty', 'ns3::DefaultDeleter<ns3::AttributeChecker>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::AttributeChecker', 'ns3::empty', 'ns3::DefaultDeleter<ns3::AttributeChecker>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::AttributeValue, ns3::empty, ns3::DefaultDeleter<ns3::AttributeValue> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::AttributeValue', 'ns3::empty', 'ns3::DefaultDeleter<ns3::AttributeValue>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::AttributeValue', 'ns3::empty', 'ns3::DefaultDeleter<ns3::AttributeValue>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::CallbackImplBase, ns3::empty, ns3::DefaultDeleter<ns3::CallbackImplBase> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::CallbackImplBase', 'ns3::empty', 'ns3::DefaultDeleter<ns3::CallbackImplBase>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::CallbackImplBase', 'ns3::empty', 'ns3::DefaultDeleter<ns3::CallbackImplBase>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::RefCountBase, ns3::empty, ns3::DefaultDeleter<ns3::RefCountBase> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::RefCountBase', 'ns3::empty', 'ns3::DefaultDeleter<ns3::RefCountBase>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::RefCountBase', 'ns3::empty', 'ns3::DefaultDeleter<ns3::RefCountBase>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SystemThread, ns3::empty, ns3::DefaultDeleter<ns3::SystemThread> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::SystemThread', 'ns3::empty', 'ns3::DefaultDeleter<ns3::SystemThread>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::SystemThread', 'ns3::empty', 'ns3::DefaultDeleter<ns3::SystemThread>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::TraceSourceAccessor, ns3::empty, ns3::DefaultDeleter<ns3::TraceSourceAccessor> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::TraceSourceAccessor', 'ns3::empty', 'ns3::DefaultDeleter<ns3::TraceSourceAccessor>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::TraceSourceAccessor', 'ns3::empty', 'ns3::DefaultDeleter<ns3::TraceSourceAccessor>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## system-thread.h: ns3::SystemThread [class]
     module.add_class('SystemThread', parent=root_module['ns3::SimpleRefCount< ns3::SystemThread, ns3::empty, ns3::DefaultDeleter<ns3::SystemThread> >'])
     ## trace-source-accessor.h: ns3::TraceSourceAccessor [class]
@@ -152,7 +154,7 @@ def register_types(module):
     ## callback.h: ns3::CallbackChecker [class]
     module.add_class('CallbackChecker', parent=root_module['ns3::AttributeChecker'])
     ## callback.h: ns3::CallbackImplBase [class]
-    module.add_class('CallbackImplBase', parent=root_module['ns3::SimpleRefCount< ns3::CallbackImplBase, ns3::empty, ns3::DefaultDeleter<ns3::CallbackImplBase> >'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    module.add_class('CallbackImplBase', parent=root_module['ns3::SimpleRefCount< ns3::CallbackImplBase, ns3::empty, ns3::DefaultDeleter<ns3::CallbackImplBase> >'])
     ## callback.h: ns3::CallbackValue [class]
     module.add_class('CallbackValue', parent=root_module['ns3::AttributeValue'])
     ## double.h: ns3::DoubleValue [class]
@@ -184,7 +186,7 @@ def register_types(module):
     ## random-variable.h: ns3::RandomVariableValue [class]
     module.add_class('RandomVariableValue', parent=root_module['ns3::AttributeValue'])
     ## ref-count-base.h: ns3::RefCountBase [class]
-    module.add_class('RefCountBase', automatic_type_narrowing=True, parent=root_module['ns3::SimpleRefCount< ns3::RefCountBase, ns3::empty, ns3::DefaultDeleter<ns3::RefCountBase> >'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    module.add_class('RefCountBase', parent=root_module['ns3::SimpleRefCount< ns3::RefCountBase, ns3::empty, ns3::DefaultDeleter<ns3::RefCountBase> >'])
     ## string.h: ns3::StringChecker [class]
     module.add_class('StringChecker', parent=root_module['ns3::AttributeChecker'])
     ## string.h: ns3::StringValue [class]
@@ -203,20 +205,28 @@ def register_types(module):
     module.add_class('Vector3DChecker', parent=root_module['ns3::AttributeChecker'])
     ## vector.h: ns3::Vector3DValue [class]
     module.add_class('Vector3DValue', parent=root_module['ns3::AttributeValue'])
-    ## traced-value.h: ns3::TracedValue<unsigned int> [class]
-    module.add_class('TracedValue', template_parameters=['unsigned int'])
-    ## traced-value.h: ns3::TracedValue<unsigned int> [class]
-    root_module['ns3::TracedValue< unsigned int >'].implicitly_converts_to(root_module['ns3::IntegerValue'])
-    ## traced-value.h: ns3::TracedValue<unsigned int> [class]
-    root_module['ns3::TracedValue< unsigned int >'].implicitly_converts_to(root_module['ns3::UintegerValue'])
-    ## traced-value.h: ns3::TracedValue<unsigned int> [class]
-    root_module['ns3::TracedValue< unsigned int >'].implicitly_converts_to(root_module['ns3::BooleanValue'])
-    ## traced-value.h: ns3::TracedValue<unsigned int> [class]
-    root_module['ns3::TracedValue< unsigned int >'].implicitly_converts_to(root_module['ns3::EnumValue'])
+    ## traced-value.h: ns3::TracedValue<double> [class]
+    module.add_class('TracedValue', template_parameters=['double'])
+    ## traced-value.h: ns3::TracedValue<double> [class]
+    root_module['ns3::TracedValue< double >'].implicitly_converts_to(root_module['ns3::IntegerValue'])
+    ## traced-value.h: ns3::TracedValue<double> [class]
+    root_module['ns3::TracedValue< double >'].implicitly_converts_to(root_module['ns3::UintegerValue'])
+    ## traced-value.h: ns3::TracedValue<double> [class]
+    root_module['ns3::TracedValue< double >'].implicitly_converts_to(root_module['ns3::BooleanValue'])
+    ## traced-value.h: ns3::TracedValue<double> [class]
+    root_module['ns3::TracedValue< double >'].implicitly_converts_to(root_module['ns3::EnumValue'])
+    module.add_container('std::list< ns3::Ptr< ns3::SpectrumPhy > >', 'ns3::Ptr< ns3::SpectrumPhy >', container_type='list')
     module.add_container('std::list< ns3::Ptr< ns3::Packet > >', 'ns3::Ptr< ns3::Packet >', container_type='list')
+    module.add_container('std::list< ns3::Ptr< ns3::UanPhy > >', 'ns3::Ptr< ns3::UanPhy >', container_type='list')
+    module.add_container('std::list< ns3::Ptr< ns3::UlJob > >', 'ns3::Ptr< ns3::UlJob >', container_type='list')
+    module.add_container('std::list< ns3::Ptr< ns3::Packet const > >', 'ns3::Ptr< ns3::Packet const >', container_type='list')
+    module.add_container('std::vector< ns3::Ptr< ns3::WimaxConnection > >', 'ns3::Ptr< ns3::WimaxConnection >', container_type='vector')
+    module.add_container('std::vector< ns3::Ptr< ns3::DeviceEnergyModel > >', 'ns3::Ptr< ns3::DeviceEnergyModel >', container_type='vector')
     module.add_container('std::vector< ns3::Ptr< ns3::FlowProbe > >', 'ns3::Ptr< ns3::FlowProbe >', container_type='vector')
     module.add_container('std::list< ns3::Ptr< ns3::RadvdPrefix > >', 'ns3::Ptr< ns3::RadvdPrefix >', container_type='list')
+    module.add_container('std::list< ns3::Ptr< ns3::UanTransducer > >', 'ns3::Ptr< ns3::UanTransducer >', container_type='list')
     module.add_container('std::vector< ns3::Ptr< ns3::NetDevice > >', 'ns3::Ptr< ns3::NetDevice >', container_type='vector')
+    module.add_container('std::vector< ns3::Ptr< ns3::SpectrumPhy > >', 'ns3::Ptr< ns3::SpectrumPhy >', container_type='vector')
     typehandlers.add_type_alias('ns3::Vector3D', 'ns3::Vector')
     typehandlers.add_type_alias('ns3::Vector3D*', 'ns3::Vector*')
     typehandlers.add_type_alias('ns3::Vector3D&', 'ns3::Vector&')
@@ -234,6 +244,12 @@ def register_types(module):
     
     nested_module = module.add_cpp_namespace('Config')
     register_types_ns3_Config(nested_module)
+    
+    
+    ## Register a nested module for the namespace FatalImpl
+    
+    nested_module = module.add_cpp_namespace('FatalImpl')
+    register_types_ns3_FatalImpl(nested_module)
     
     
     ## Register a nested module for the namespace TimeStepPrecision
@@ -284,6 +300,10 @@ def register_types_ns3_Config(module):
     ## config.h: ns3::Config::MatchContainer [class]
     module.add_class('MatchContainer')
     module.add_container('std::vector< ns3::Ptr< ns3::Object > >', 'ns3::Ptr< ns3::Object >', container_type='vector')
+
+def register_types_ns3_FatalImpl(module):
+    root_module = module.get_root()
+    
 
 def register_types_ns3_TimeStepPrecision(module):
     root_module = module.get_root()
@@ -351,6 +371,7 @@ def register_methods(root_module):
     register_Ns3Vector2D_methods(root_module, root_module['ns3::Vector2D'])
     register_Ns3Vector3D_methods(root_module, root_module['ns3::Vector3D'])
     register_Ns3WeibullVariable_methods(root_module, root_module['ns3::WeibullVariable'])
+    register_Ns3ZetaVariable_methods(root_module, root_module['ns3::ZetaVariable'])
     register_Ns3ZipfVariable_methods(root_module, root_module['ns3::ZipfVariable'])
     register_Ns3Empty_methods(root_module, root_module['ns3::empty'])
     register_Ns3ConstantVariable_methods(root_module, root_module['ns3::ConstantVariable'])
@@ -365,7 +386,6 @@ def register_methods(root_module):
     register_Ns3Object_methods(root_module, root_module['ns3::Object'])
     register_Ns3ObjectAggregateIterator_methods(root_module, root_module['ns3::Object::AggregateIterator'])
     register_Ns3ParetoVariable_methods(root_module, root_module['ns3::ParetoVariable'])
-    register_Ns3SimpleRefCount__Ns3AsciiWriter_Ns3Empty_Ns3DefaultDeleter__lt__ns3AsciiWriter__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >'])
     register_Ns3SimpleRefCount__Ns3AttributeAccessor_Ns3Empty_Ns3DefaultDeleter__lt__ns3AttributeAccessor__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::AttributeAccessor, ns3::empty, ns3::DefaultDeleter<ns3::AttributeAccessor> >'])
     register_Ns3SimpleRefCount__Ns3AttributeChecker_Ns3Empty_Ns3DefaultDeleter__lt__ns3AttributeChecker__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::AttributeChecker, ns3::empty, ns3::DefaultDeleter<ns3::AttributeChecker> >'])
     register_Ns3SimpleRefCount__Ns3AttributeValue_Ns3Empty_Ns3DefaultDeleter__lt__ns3AttributeValue__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::AttributeValue, ns3::empty, ns3::DefaultDeleter<ns3::AttributeValue> >'])
@@ -379,6 +399,8 @@ def register_methods(root_module):
     register_Ns3SimpleRefCount__Ns3Ipv6MulticastRoute_Ns3Empty_Ns3DefaultDeleter__lt__ns3Ipv6MulticastRoute__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::Ipv6MulticastRoute, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6MulticastRoute> >'])
     register_Ns3SimpleRefCount__Ns3Ipv6Route_Ns3Empty_Ns3DefaultDeleter__lt__ns3Ipv6Route__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::Ipv6Route, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6Route> >'])
     register_Ns3SimpleRefCount__Ns3MeshWifiInterfaceMacPlugin_Ns3Empty_Ns3DefaultDeleter__lt__ns3MeshWifiInterfaceMacPlugin__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::MeshWifiInterfaceMacPlugin, ns3::empty, ns3::DefaultDeleter<ns3::MeshWifiInterfaceMacPlugin> >'])
+    register_Ns3SimpleRefCount__Ns3NixVector_Ns3Empty_Ns3DefaultDeleter__lt__ns3NixVector__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::NixVector, ns3::empty, ns3::DefaultDeleter<ns3::NixVector> >'])
+    register_Ns3SimpleRefCount__Ns3OutputStreamWrapper_Ns3Empty_Ns3DefaultDeleter__lt__ns3OutputStreamWrapper__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter<ns3::OutputStreamWrapper> >'])
     register_Ns3SimpleRefCount__Ns3Packet_Ns3Empty_Ns3DefaultDeleter__lt__ns3Packet__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::Packet, ns3::empty, ns3::DefaultDeleter<ns3::Packet> >'])
     register_Ns3SimpleRefCount__Ns3PbbAddressBlock_Ns3Empty_Ns3DefaultDeleter__lt__ns3PbbAddressBlock__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::PbbAddressBlock, ns3::empty, ns3::DefaultDeleter<ns3::PbbAddressBlock> >'])
     register_Ns3SimpleRefCount__Ns3PbbMessage_Ns3Empty_Ns3DefaultDeleter__lt__ns3PbbMessage__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::PbbMessage, ns3::empty, ns3::DefaultDeleter<ns3::PbbMessage> >'])
@@ -387,6 +409,9 @@ def register_methods(root_module):
     register_Ns3SimpleRefCount__Ns3RadvdInterface_Ns3Empty_Ns3DefaultDeleter__lt__ns3RadvdInterface__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::RadvdInterface, ns3::empty, ns3::DefaultDeleter<ns3::RadvdInterface> >'])
     register_Ns3SimpleRefCount__Ns3RadvdPrefix_Ns3Empty_Ns3DefaultDeleter__lt__ns3RadvdPrefix__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::RadvdPrefix, ns3::empty, ns3::DefaultDeleter<ns3::RadvdPrefix> >'])
     register_Ns3SimpleRefCount__Ns3RefCountBase_Ns3Empty_Ns3DefaultDeleter__lt__ns3RefCountBase__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::RefCountBase, ns3::empty, ns3::DefaultDeleter<ns3::RefCountBase> >'])
+    register_Ns3SimpleRefCount__Ns3SpectrumConverter_Ns3Empty_Ns3DefaultDeleter__lt__ns3SpectrumConverter__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumConverter> >'])
+    register_Ns3SimpleRefCount__Ns3SpectrumModel_Ns3Empty_Ns3DefaultDeleter__lt__ns3SpectrumModel__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumModel> >'])
+    register_Ns3SimpleRefCount__Ns3SpectrumValue_Ns3Empty_Ns3DefaultDeleter__lt__ns3SpectrumValue__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumValue> >'])
     register_Ns3SimpleRefCount__Ns3SystemThread_Ns3Empty_Ns3DefaultDeleter__lt__ns3SystemThread__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::SystemThread, ns3::empty, ns3::DefaultDeleter<ns3::SystemThread> >'])
     register_Ns3SimpleRefCount__Ns3TraceSourceAccessor_Ns3Empty_Ns3DefaultDeleter__lt__ns3TraceSourceAccessor__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::TraceSourceAccessor, ns3::empty, ns3::DefaultDeleter<ns3::TraceSourceAccessor> >'])
     register_Ns3SimpleRefCount__Ns3WifiInformationElement_Ns3Empty_Ns3DefaultDeleter__lt__ns3WifiInformationElement__gt___methods(root_module, root_module['ns3::SimpleRefCount< ns3::WifiInformationElement, ns3::empty, ns3::DefaultDeleter<ns3::WifiInformationElement> >'])
@@ -425,7 +450,7 @@ def register_methods(root_module):
     register_Ns3Vector2DValue_methods(root_module, root_module['ns3::Vector2DValue'])
     register_Ns3Vector3DChecker_methods(root_module, root_module['ns3::Vector3DChecker'])
     register_Ns3Vector3DValue_methods(root_module, root_module['ns3::Vector3DValue'])
-    register_Ns3TracedValue__Unsigned_int_methods(root_module, root_module['ns3::TracedValue< unsigned int >'])
+    register_Ns3TracedValue__Double_methods(root_module, root_module['ns3::TracedValue< double >'])
     register_Ns3ConfigMatchContainer_methods(root_module, root_module['ns3::Config::MatchContainer'])
     return
 
@@ -937,21 +962,6 @@ def register_Ns3SimpleRefCount__Ns3Object_Ns3ObjectBase_Ns3ObjectDeleter_methods
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::Object, ns3::ObjectBase, ns3::ObjectDeleter>::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Object, ns3::ObjectBase, ns3::ObjectDeleter>::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Object, ns3::ObjectBase, ns3::ObjectDeleter>::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SystemCondition_methods(root_module, cls):
@@ -1590,11 +1600,20 @@ def register_Ns3WeibullVariable_methods(root_module, cls):
     cls.add_constructor([param('double', 'm'), param('double', 's'), param('double', 'b')])
     return
 
+def register_Ns3ZetaVariable_methods(root_module, cls):
+    ## random-variable.h: ns3::ZetaVariable::ZetaVariable(ns3::ZetaVariable const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::ZetaVariable const &', 'arg0')])
+    ## random-variable.h: ns3::ZetaVariable::ZetaVariable(double alpha) [constructor]
+    cls.add_constructor([param('double', 'alpha')])
+    ## random-variable.h: ns3::ZetaVariable::ZetaVariable() [constructor]
+    cls.add_constructor([])
+    return
+
 def register_Ns3ZipfVariable_methods(root_module, cls):
     ## random-variable.h: ns3::ZipfVariable::ZipfVariable(ns3::ZipfVariable const & arg0) [copy constructor]
     cls.add_constructor([param('ns3::ZipfVariable const &', 'arg0')])
-    ## random-variable.h: ns3::ZipfVariable::ZipfVariable(long int n, double alpha) [constructor]
-    cls.add_constructor([param('long int', 'n'), param('double', 'alpha')])
+    ## random-variable.h: ns3::ZipfVariable::ZipfVariable(long int N, double alpha) [constructor]
+    cls.add_constructor([param('long int', 'N'), param('double', 'alpha')])
     ## random-variable.h: ns3::ZipfVariable::ZipfVariable() [constructor]
     cls.add_constructor([])
     return
@@ -1793,33 +1812,10 @@ def register_Ns3ParetoVariable_methods(root_module, cls):
     cls.add_constructor([param('double', 'm'), param('double', 's')])
     ## random-variable.h: ns3::ParetoVariable::ParetoVariable(double m, double s, double b) [constructor]
     cls.add_constructor([param('double', 'm'), param('double', 's'), param('double', 'b')])
-    return
-
-def register_Ns3SimpleRefCount__Ns3AsciiWriter_Ns3Empty_Ns3DefaultDeleter__lt__ns3AsciiWriter__gt___methods(root_module, cls):
-    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >::SimpleRefCount() [constructor]
-    cls.add_constructor([])
-    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >::SimpleRefCount(ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> > const & o) [copy constructor]
-    cls.add_constructor([param('ns3::SimpleRefCount< ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter< ns3::AsciiWriter > > const &', 'o')])
-    ## simple-ref-count.h: static void ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >::Cleanup() [member function]
-    cls.add_method('Cleanup', 
-                   'void', 
-                   [], 
-                   is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
+    ## random-variable.h: ns3::ParetoVariable::ParetoVariable(std::pair<double,double> params) [constructor]
+    cls.add_constructor([param('std::pair< double, double >', 'params')])
+    ## random-variable.h: ns3::ParetoVariable::ParetoVariable(std::pair<double,double> params, double b) [constructor]
+    cls.add_constructor([param('std::pair< double, double >', 'params'), param('double', 'b')])
     return
 
 def register_Ns3SimpleRefCount__Ns3AttributeAccessor_Ns3Empty_Ns3DefaultDeleter__lt__ns3AttributeAccessor__gt___methods(root_module, cls):
@@ -1832,21 +1828,6 @@ def register_Ns3SimpleRefCount__Ns3AttributeAccessor_Ns3Empty_Ns3DefaultDeleter_
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::AttributeAccessor, ns3::empty, ns3::DefaultDeleter<ns3::AttributeAccessor> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AttributeAccessor, ns3::empty, ns3::DefaultDeleter<ns3::AttributeAccessor> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AttributeAccessor, ns3::empty, ns3::DefaultDeleter<ns3::AttributeAccessor> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3AttributeChecker_Ns3Empty_Ns3DefaultDeleter__lt__ns3AttributeChecker__gt___methods(root_module, cls):
@@ -1859,21 +1840,6 @@ def register_Ns3SimpleRefCount__Ns3AttributeChecker_Ns3Empty_Ns3DefaultDeleter__
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::AttributeChecker, ns3::empty, ns3::DefaultDeleter<ns3::AttributeChecker> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AttributeChecker, ns3::empty, ns3::DefaultDeleter<ns3::AttributeChecker> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AttributeChecker, ns3::empty, ns3::DefaultDeleter<ns3::AttributeChecker> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3AttributeValue_Ns3Empty_Ns3DefaultDeleter__lt__ns3AttributeValue__gt___methods(root_module, cls):
@@ -1886,21 +1852,6 @@ def register_Ns3SimpleRefCount__Ns3AttributeValue_Ns3Empty_Ns3DefaultDeleter__lt
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::AttributeValue, ns3::empty, ns3::DefaultDeleter<ns3::AttributeValue> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AttributeValue, ns3::empty, ns3::DefaultDeleter<ns3::AttributeValue> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::AttributeValue, ns3::empty, ns3::DefaultDeleter<ns3::AttributeValue> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3CallbackImplBase_Ns3Empty_Ns3DefaultDeleter__lt__ns3CallbackImplBase__gt___methods(root_module, cls):
@@ -1913,21 +1864,6 @@ def register_Ns3SimpleRefCount__Ns3CallbackImplBase_Ns3Empty_Ns3DefaultDeleter__
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::CallbackImplBase, ns3::empty, ns3::DefaultDeleter<ns3::CallbackImplBase> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::CallbackImplBase, ns3::empty, ns3::DefaultDeleter<ns3::CallbackImplBase> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::CallbackImplBase, ns3::empty, ns3::DefaultDeleter<ns3::CallbackImplBase> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3EventImpl_Ns3Empty_Ns3DefaultDeleter__lt__ns3EventImpl__gt___methods(root_module, cls):
@@ -1940,21 +1876,6 @@ def register_Ns3SimpleRefCount__Ns3EventImpl_Ns3Empty_Ns3DefaultDeleter__lt__ns3
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::EventImpl, ns3::empty, ns3::DefaultDeleter<ns3::EventImpl> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::EventImpl, ns3::empty, ns3::DefaultDeleter<ns3::EventImpl> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::EventImpl, ns3::empty, ns3::DefaultDeleter<ns3::EventImpl> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3FlowClassifier_Ns3Empty_Ns3DefaultDeleter__lt__ns3FlowClassifier__gt___methods(root_module, cls):
@@ -1967,21 +1888,6 @@ def register_Ns3SimpleRefCount__Ns3FlowClassifier_Ns3Empty_Ns3DefaultDeleter__lt
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::FlowClassifier, ns3::empty, ns3::DefaultDeleter<ns3::FlowClassifier> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::FlowClassifier, ns3::empty, ns3::DefaultDeleter<ns3::FlowClassifier> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::FlowClassifier, ns3::empty, ns3::DefaultDeleter<ns3::FlowClassifier> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3FlowProbe_Ns3Empty_Ns3DefaultDeleter__lt__ns3FlowProbe__gt___methods(root_module, cls):
@@ -1994,21 +1900,6 @@ def register_Ns3SimpleRefCount__Ns3FlowProbe_Ns3Empty_Ns3DefaultDeleter__lt__ns3
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::FlowProbe, ns3::empty, ns3::DefaultDeleter<ns3::FlowProbe> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::FlowProbe, ns3::empty, ns3::DefaultDeleter<ns3::FlowProbe> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::FlowProbe, ns3::empty, ns3::DefaultDeleter<ns3::FlowProbe> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3InterferenceHelperEvent_Ns3Empty_Ns3DefaultDeleter__lt__ns3InterferenceHelperEvent__gt___methods(root_module, cls):
@@ -2021,21 +1912,6 @@ def register_Ns3SimpleRefCount__Ns3InterferenceHelperEvent_Ns3Empty_Ns3DefaultDe
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::InterferenceHelper::Event, ns3::empty, ns3::DefaultDeleter<ns3::InterferenceHelper::Event> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::InterferenceHelper::Event, ns3::empty, ns3::DefaultDeleter<ns3::InterferenceHelper::Event> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::InterferenceHelper::Event, ns3::empty, ns3::DefaultDeleter<ns3::InterferenceHelper::Event> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3Ipv4MulticastRoute_Ns3Empty_Ns3DefaultDeleter__lt__ns3Ipv4MulticastRoute__gt___methods(root_module, cls):
@@ -2048,21 +1924,6 @@ def register_Ns3SimpleRefCount__Ns3Ipv4MulticastRoute_Ns3Empty_Ns3DefaultDeleter
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::Ipv4MulticastRoute, ns3::empty, ns3::DefaultDeleter<ns3::Ipv4MulticastRoute> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv4MulticastRoute, ns3::empty, ns3::DefaultDeleter<ns3::Ipv4MulticastRoute> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv4MulticastRoute, ns3::empty, ns3::DefaultDeleter<ns3::Ipv4MulticastRoute> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3Ipv4Route_Ns3Empty_Ns3DefaultDeleter__lt__ns3Ipv4Route__gt___methods(root_module, cls):
@@ -2075,21 +1936,6 @@ def register_Ns3SimpleRefCount__Ns3Ipv4Route_Ns3Empty_Ns3DefaultDeleter__lt__ns3
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::Ipv4Route, ns3::empty, ns3::DefaultDeleter<ns3::Ipv4Route> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv4Route, ns3::empty, ns3::DefaultDeleter<ns3::Ipv4Route> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv4Route, ns3::empty, ns3::DefaultDeleter<ns3::Ipv4Route> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3Ipv6MulticastRoute_Ns3Empty_Ns3DefaultDeleter__lt__ns3Ipv6MulticastRoute__gt___methods(root_module, cls):
@@ -2102,21 +1948,6 @@ def register_Ns3SimpleRefCount__Ns3Ipv6MulticastRoute_Ns3Empty_Ns3DefaultDeleter
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::Ipv6MulticastRoute, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6MulticastRoute> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv6MulticastRoute, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6MulticastRoute> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv6MulticastRoute, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6MulticastRoute> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3Ipv6Route_Ns3Empty_Ns3DefaultDeleter__lt__ns3Ipv6Route__gt___methods(root_module, cls):
@@ -2129,21 +1960,6 @@ def register_Ns3SimpleRefCount__Ns3Ipv6Route_Ns3Empty_Ns3DefaultDeleter__lt__ns3
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::Ipv6Route, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6Route> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv6Route, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6Route> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Ipv6Route, ns3::empty, ns3::DefaultDeleter<ns3::Ipv6Route> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3MeshWifiInterfaceMacPlugin_Ns3Empty_Ns3DefaultDeleter__lt__ns3MeshWifiInterfaceMacPlugin__gt___methods(root_module, cls):
@@ -2156,21 +1972,30 @@ def register_Ns3SimpleRefCount__Ns3MeshWifiInterfaceMacPlugin_Ns3Empty_Ns3Defaul
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::MeshWifiInterfaceMacPlugin, ns3::empty, ns3::DefaultDeleter<ns3::MeshWifiInterfaceMacPlugin> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::MeshWifiInterfaceMacPlugin, ns3::empty, ns3::DefaultDeleter<ns3::MeshWifiInterfaceMacPlugin> >::Ref() const [member function]
-    cls.add_method('Ref', 
+    return
+
+def register_Ns3SimpleRefCount__Ns3NixVector_Ns3Empty_Ns3DefaultDeleter__lt__ns3NixVector__gt___methods(root_module, cls):
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::NixVector, ns3::empty, ns3::DefaultDeleter<ns3::NixVector> >::SimpleRefCount() [constructor]
+    cls.add_constructor([])
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::NixVector, ns3::empty, ns3::DefaultDeleter<ns3::NixVector> >::SimpleRefCount(ns3::SimpleRefCount<ns3::NixVector, ns3::empty, ns3::DefaultDeleter<ns3::NixVector> > const & o) [copy constructor]
+    cls.add_constructor([param('ns3::SimpleRefCount< ns3::NixVector, ns3::empty, ns3::DefaultDeleter< ns3::NixVector > > const &', 'o')])
+    ## simple-ref-count.h: static void ns3::SimpleRefCount<ns3::NixVector, ns3::empty, ns3::DefaultDeleter<ns3::NixVector> >::Cleanup() [member function]
+    cls.add_method('Cleanup', 
                    'void', 
                    [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::MeshWifiInterfaceMacPlugin, ns3::empty, ns3::DefaultDeleter<ns3::MeshWifiInterfaceMacPlugin> >::Unref() const [member function]
-    cls.add_method('Unref', 
+                   is_static=True)
+    return
+
+def register_Ns3SimpleRefCount__Ns3OutputStreamWrapper_Ns3Empty_Ns3DefaultDeleter__lt__ns3OutputStreamWrapper__gt___methods(root_module, cls):
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter<ns3::OutputStreamWrapper> >::SimpleRefCount() [constructor]
+    cls.add_constructor([])
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter<ns3::OutputStreamWrapper> >::SimpleRefCount(ns3::SimpleRefCount<ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter<ns3::OutputStreamWrapper> > const & o) [copy constructor]
+    cls.add_constructor([param('ns3::SimpleRefCount< ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter< ns3::OutputStreamWrapper > > const &', 'o')])
+    ## simple-ref-count.h: static void ns3::SimpleRefCount<ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter<ns3::OutputStreamWrapper> >::Cleanup() [member function]
+    cls.add_method('Cleanup', 
                    'void', 
                    [], 
-                   is_const=True)
+                   is_static=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3Packet_Ns3Empty_Ns3DefaultDeleter__lt__ns3Packet__gt___methods(root_module, cls):
@@ -2183,21 +2008,6 @@ def register_Ns3SimpleRefCount__Ns3Packet_Ns3Empty_Ns3DefaultDeleter__lt__ns3Pac
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::Packet, ns3::empty, ns3::DefaultDeleter<ns3::Packet> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Packet, ns3::empty, ns3::DefaultDeleter<ns3::Packet> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::Packet, ns3::empty, ns3::DefaultDeleter<ns3::Packet> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3PbbAddressBlock_Ns3Empty_Ns3DefaultDeleter__lt__ns3PbbAddressBlock__gt___methods(root_module, cls):
@@ -2210,21 +2020,6 @@ def register_Ns3SimpleRefCount__Ns3PbbAddressBlock_Ns3Empty_Ns3DefaultDeleter__l
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::PbbAddressBlock, ns3::empty, ns3::DefaultDeleter<ns3::PbbAddressBlock> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbAddressBlock, ns3::empty, ns3::DefaultDeleter<ns3::PbbAddressBlock> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbAddressBlock, ns3::empty, ns3::DefaultDeleter<ns3::PbbAddressBlock> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3PbbMessage_Ns3Empty_Ns3DefaultDeleter__lt__ns3PbbMessage__gt___methods(root_module, cls):
@@ -2237,21 +2032,6 @@ def register_Ns3SimpleRefCount__Ns3PbbMessage_Ns3Empty_Ns3DefaultDeleter__lt__ns
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::PbbMessage, ns3::empty, ns3::DefaultDeleter<ns3::PbbMessage> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbMessage, ns3::empty, ns3::DefaultDeleter<ns3::PbbMessage> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbMessage, ns3::empty, ns3::DefaultDeleter<ns3::PbbMessage> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3PbbPacket_Ns3Header_Ns3DefaultDeleter__lt__ns3PbbPacket__gt___methods(root_module, cls):
@@ -2264,21 +2044,6 @@ def register_Ns3SimpleRefCount__Ns3PbbPacket_Ns3Header_Ns3DefaultDeleter__lt__ns
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::PbbPacket, ns3::Header, ns3::DefaultDeleter<ns3::PbbPacket> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbPacket, ns3::Header, ns3::DefaultDeleter<ns3::PbbPacket> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbPacket, ns3::Header, ns3::DefaultDeleter<ns3::PbbPacket> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3PbbTlv_Ns3Empty_Ns3DefaultDeleter__lt__ns3PbbTlv__gt___methods(root_module, cls):
@@ -2291,21 +2056,6 @@ def register_Ns3SimpleRefCount__Ns3PbbTlv_Ns3Empty_Ns3DefaultDeleter__lt__ns3Pbb
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::PbbTlv, ns3::empty, ns3::DefaultDeleter<ns3::PbbTlv> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbTlv, ns3::empty, ns3::DefaultDeleter<ns3::PbbTlv> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::PbbTlv, ns3::empty, ns3::DefaultDeleter<ns3::PbbTlv> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3RadvdInterface_Ns3Empty_Ns3DefaultDeleter__lt__ns3RadvdInterface__gt___methods(root_module, cls):
@@ -2318,21 +2068,6 @@ def register_Ns3SimpleRefCount__Ns3RadvdInterface_Ns3Empty_Ns3DefaultDeleter__lt
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::RadvdInterface, ns3::empty, ns3::DefaultDeleter<ns3::RadvdInterface> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::RadvdInterface, ns3::empty, ns3::DefaultDeleter<ns3::RadvdInterface> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::RadvdInterface, ns3::empty, ns3::DefaultDeleter<ns3::RadvdInterface> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3RadvdPrefix_Ns3Empty_Ns3DefaultDeleter__lt__ns3RadvdPrefix__gt___methods(root_module, cls):
@@ -2345,21 +2080,6 @@ def register_Ns3SimpleRefCount__Ns3RadvdPrefix_Ns3Empty_Ns3DefaultDeleter__lt__n
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::RadvdPrefix, ns3::empty, ns3::DefaultDeleter<ns3::RadvdPrefix> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::RadvdPrefix, ns3::empty, ns3::DefaultDeleter<ns3::RadvdPrefix> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::RadvdPrefix, ns3::empty, ns3::DefaultDeleter<ns3::RadvdPrefix> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3RefCountBase_Ns3Empty_Ns3DefaultDeleter__lt__ns3RefCountBase__gt___methods(root_module, cls):
@@ -2372,21 +2092,42 @@ def register_Ns3SimpleRefCount__Ns3RefCountBase_Ns3Empty_Ns3DefaultDeleter__lt__
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::RefCountBase, ns3::empty, ns3::DefaultDeleter<ns3::RefCountBase> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::RefCountBase, ns3::empty, ns3::DefaultDeleter<ns3::RefCountBase> >::Ref() const [member function]
-    cls.add_method('Ref', 
+    return
+
+def register_Ns3SimpleRefCount__Ns3SpectrumConverter_Ns3Empty_Ns3DefaultDeleter__lt__ns3SpectrumConverter__gt___methods(root_module, cls):
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumConverter> >::SimpleRefCount() [constructor]
+    cls.add_constructor([])
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumConverter> >::SimpleRefCount(ns3::SimpleRefCount<ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumConverter> > const & o) [copy constructor]
+    cls.add_constructor([param('ns3::SimpleRefCount< ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter< ns3::SpectrumConverter > > const &', 'o')])
+    ## simple-ref-count.h: static void ns3::SimpleRefCount<ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumConverter> >::Cleanup() [member function]
+    cls.add_method('Cleanup', 
                    'void', 
                    [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::RefCountBase, ns3::empty, ns3::DefaultDeleter<ns3::RefCountBase> >::Unref() const [member function]
-    cls.add_method('Unref', 
+                   is_static=True)
+    return
+
+def register_Ns3SimpleRefCount__Ns3SpectrumModel_Ns3Empty_Ns3DefaultDeleter__lt__ns3SpectrumModel__gt___methods(root_module, cls):
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumModel> >::SimpleRefCount() [constructor]
+    cls.add_constructor([])
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumModel> >::SimpleRefCount(ns3::SimpleRefCount<ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumModel> > const & o) [copy constructor]
+    cls.add_constructor([param('ns3::SimpleRefCount< ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter< ns3::SpectrumModel > > const &', 'o')])
+    ## simple-ref-count.h: static void ns3::SimpleRefCount<ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumModel> >::Cleanup() [member function]
+    cls.add_method('Cleanup', 
                    'void', 
                    [], 
-                   is_const=True)
+                   is_static=True)
+    return
+
+def register_Ns3SimpleRefCount__Ns3SpectrumValue_Ns3Empty_Ns3DefaultDeleter__lt__ns3SpectrumValue__gt___methods(root_module, cls):
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumValue> >::SimpleRefCount() [constructor]
+    cls.add_constructor([])
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumValue> >::SimpleRefCount(ns3::SimpleRefCount<ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumValue> > const & o) [copy constructor]
+    cls.add_constructor([param('ns3::SimpleRefCount< ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter< ns3::SpectrumValue > > const &', 'o')])
+    ## simple-ref-count.h: static void ns3::SimpleRefCount<ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumValue> >::Cleanup() [member function]
+    cls.add_method('Cleanup', 
+                   'void', 
+                   [], 
+                   is_static=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3SystemThread_Ns3Empty_Ns3DefaultDeleter__lt__ns3SystemThread__gt___methods(root_module, cls):
@@ -2399,21 +2140,6 @@ def register_Ns3SimpleRefCount__Ns3SystemThread_Ns3Empty_Ns3DefaultDeleter__lt__
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::SystemThread, ns3::empty, ns3::DefaultDeleter<ns3::SystemThread> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::SystemThread, ns3::empty, ns3::DefaultDeleter<ns3::SystemThread> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::SystemThread, ns3::empty, ns3::DefaultDeleter<ns3::SystemThread> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3TraceSourceAccessor_Ns3Empty_Ns3DefaultDeleter__lt__ns3TraceSourceAccessor__gt___methods(root_module, cls):
@@ -2426,21 +2152,6 @@ def register_Ns3SimpleRefCount__Ns3TraceSourceAccessor_Ns3Empty_Ns3DefaultDelete
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::TraceSourceAccessor, ns3::empty, ns3::DefaultDeleter<ns3::TraceSourceAccessor> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::TraceSourceAccessor, ns3::empty, ns3::DefaultDeleter<ns3::TraceSourceAccessor> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::TraceSourceAccessor, ns3::empty, ns3::DefaultDeleter<ns3::TraceSourceAccessor> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3WifiInformationElement_Ns3Empty_Ns3DefaultDeleter__lt__ns3WifiInformationElement__gt___methods(root_module, cls):
@@ -2453,21 +2164,6 @@ def register_Ns3SimpleRefCount__Ns3WifiInformationElement_Ns3Empty_Ns3DefaultDel
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::WifiInformationElement, ns3::empty, ns3::DefaultDeleter<ns3::WifiInformationElement> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::WifiInformationElement, ns3::empty, ns3::DefaultDeleter<ns3::WifiInformationElement> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::WifiInformationElement, ns3::empty, ns3::DefaultDeleter<ns3::WifiInformationElement> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SimpleRefCount__Ns3Dot11sIeBeaconTimingUnit_Ns3Empty_Ns3DefaultDeleter__lt__ns3Dot11sIeBeaconTimingUnit__gt___methods(root_module, cls):
@@ -2480,21 +2176,6 @@ def register_Ns3SimpleRefCount__Ns3Dot11sIeBeaconTimingUnit_Ns3Empty_Ns3DefaultD
                    'void', 
                    [], 
                    is_static=True)
-    ## simple-ref-count.h: uint32_t ns3::SimpleRefCount<ns3::dot11s::IeBeaconTimingUnit, ns3::empty, ns3::DefaultDeleter<ns3::dot11s::IeBeaconTimingUnit> >::GetReferenceCount() const [member function]
-    cls.add_method('GetReferenceCount', 
-                   'uint32_t', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::dot11s::IeBeaconTimingUnit, ns3::empty, ns3::DefaultDeleter<ns3::dot11s::IeBeaconTimingUnit> >::Ref() const [member function]
-    cls.add_method('Ref', 
-                   'void', 
-                   [], 
-                   is_const=True)
-    ## simple-ref-count.h: void ns3::SimpleRefCount<ns3::dot11s::IeBeaconTimingUnit, ns3::empty, ns3::DefaultDeleter<ns3::dot11s::IeBeaconTimingUnit> >::Unref() const [member function]
-    cls.add_method('Unref', 
-                   'void', 
-                   [], 
-                   is_const=True)
     return
 
 def register_Ns3SystemThread_methods(root_module, cls):
@@ -3303,46 +2984,46 @@ def register_Ns3Vector3DValue_methods(root_module, cls):
                    [param('ns3::Vector3D const &', 'value')])
     return
 
-def register_Ns3TracedValue__Unsigned_int_methods(root_module, cls):
-    ## traced-value.h: ns3::TracedValue<unsigned int>::TracedValue() [constructor]
+def register_Ns3TracedValue__Double_methods(root_module, cls):
+    ## traced-value.h: ns3::TracedValue<double>::TracedValue() [constructor]
     cls.add_constructor([])
-    ## traced-value.h: ns3::TracedValue<unsigned int>::TracedValue(ns3::TracedValue<unsigned int> const & o) [copy constructor]
-    cls.add_constructor([param('ns3::TracedValue< unsigned int > const &', 'o')])
-    ## traced-value.h: ns3::TracedValue<unsigned int>::TracedValue(unsigned int const & v) [constructor]
-    cls.add_constructor([param('unsigned int const &', 'v')])
-    ## traced-value.h: ns3::TracedValue<unsigned int>::TracedValue(ns3::IntegerValue const & value) [constructor]
+    ## traced-value.h: ns3::TracedValue<double>::TracedValue(ns3::TracedValue<double> const & o) [copy constructor]
+    cls.add_constructor([param('ns3::TracedValue< double > const &', 'o')])
+    ## traced-value.h: ns3::TracedValue<double>::TracedValue(double const & v) [constructor]
+    cls.add_constructor([param('double const &', 'v')])
+    ## traced-value.h: ns3::TracedValue<double>::TracedValue(ns3::IntegerValue const & value) [constructor]
     cls.add_constructor([param('ns3::IntegerValue const &', 'value')])
-    ## traced-value.h: ns3::TracedValue<unsigned int>::TracedValue(ns3::UintegerValue const & value) [constructor]
+    ## traced-value.h: ns3::TracedValue<double>::TracedValue(ns3::UintegerValue const & value) [constructor]
     cls.add_constructor([param('ns3::UintegerValue const &', 'value')])
-    ## traced-value.h: ns3::TracedValue<unsigned int>::TracedValue(ns3::BooleanValue const & value) [constructor]
+    ## traced-value.h: ns3::TracedValue<double>::TracedValue(ns3::BooleanValue const & value) [constructor]
     cls.add_constructor([param('ns3::BooleanValue const &', 'value')])
-    ## traced-value.h: ns3::TracedValue<unsigned int>::TracedValue(ns3::EnumValue const & value) [constructor]
+    ## traced-value.h: ns3::TracedValue<double>::TracedValue(ns3::EnumValue const & value) [constructor]
     cls.add_constructor([param('ns3::EnumValue const &', 'value')])
-    ## traced-value.h: void ns3::TracedValue<unsigned int>::Connect(ns3::CallbackBase const & cb, std::basic_string<char,std::char_traits<char>,std::allocator<char> > path) [member function]
+    ## traced-value.h: void ns3::TracedValue<double>::Connect(ns3::CallbackBase const & cb, std::basic_string<char,std::char_traits<char>,std::allocator<char> > path) [member function]
     cls.add_method('Connect', 
                    'void', 
                    [param('ns3::CallbackBase const &', 'cb'), param('std::string', 'path')])
-    ## traced-value.h: void ns3::TracedValue<unsigned int>::ConnectWithoutContext(ns3::CallbackBase const & cb) [member function]
+    ## traced-value.h: void ns3::TracedValue<double>::ConnectWithoutContext(ns3::CallbackBase const & cb) [member function]
     cls.add_method('ConnectWithoutContext', 
                    'void', 
                    [param('ns3::CallbackBase const &', 'cb')])
-    ## traced-value.h: void ns3::TracedValue<unsigned int>::Disconnect(ns3::CallbackBase const & cb, std::basic_string<char,std::char_traits<char>,std::allocator<char> > path) [member function]
+    ## traced-value.h: void ns3::TracedValue<double>::Disconnect(ns3::CallbackBase const & cb, std::basic_string<char,std::char_traits<char>,std::allocator<char> > path) [member function]
     cls.add_method('Disconnect', 
                    'void', 
                    [param('ns3::CallbackBase const &', 'cb'), param('std::string', 'path')])
-    ## traced-value.h: void ns3::TracedValue<unsigned int>::DisconnectWithoutContext(ns3::CallbackBase const & cb) [member function]
+    ## traced-value.h: void ns3::TracedValue<double>::DisconnectWithoutContext(ns3::CallbackBase const & cb) [member function]
     cls.add_method('DisconnectWithoutContext', 
                    'void', 
                    [param('ns3::CallbackBase const &', 'cb')])
-    ## traced-value.h: unsigned int ns3::TracedValue<unsigned int>::Get() const [member function]
+    ## traced-value.h: double ns3::TracedValue<double>::Get() const [member function]
     cls.add_method('Get', 
-                   'unsigned int', 
+                   'double', 
                    [], 
                    is_const=True)
-    ## traced-value.h: void ns3::TracedValue<unsigned int>::Set(unsigned int const & v) [member function]
+    ## traced-value.h: void ns3::TracedValue<double>::Set(double const & v) [member function]
     cls.add_method('Set', 
                    'void', 
-                   [param('unsigned int const &', 'v')])
+                   [param('double const &', 'v')])
     return
 
 def register_Ns3ConfigMatchContainer_methods(root_module, cls):
@@ -3448,6 +3129,21 @@ def register_functions(root_module):
     module.add_function('MakeBooleanChecker', 
                         'ns3::Ptr< ns3::AttributeChecker const >', 
                         [])
+    ## callback.h: extern ns3::Callback<void, ns3::Ptr<ns3::Packet const>, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty> ns3::MakeBoundCallback(void (*)( ::ns3::Ptr<ns3::OutputStreamWrapper>,::ns3::Ptr<ns3::Packet const> ) * fnPtr, ns3::Ptr<ns3::OutputStreamWrapper> a) [free function]
+    module.add_function('MakeBoundCallback', 
+                        'ns3::Callback< void, ns3::Ptr< ns3::Packet const >, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty >', 
+                        [param('void ( * ) ( ns3::Ptr< ns3::OutputStreamWrapper >, ns3::Ptr< ns3::Packet const > ) *', 'fnPtr'), param('ns3::Ptr< ns3::OutputStreamWrapper >', 'a')], 
+                        template_parameters=['void', 'ns3::Ptr<ns3::OutputStreamWrapper>', 'ns3::Ptr<ns3::OutputStreamWrapper>', 'ns3::Ptr<ns3::Packet const>'])
+    ## callback.h: extern ns3::Callback<void, ns3::Ptr<ns3::Packet const>, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty> ns3::MakeBoundCallback(void (*)( ::ns3::Ptr<ns3::PcapFileWrapper>,::ns3::Ptr<ns3::Packet const> ) * fnPtr, ns3::Ptr<ns3::PcapFileWrapper> a) [free function]
+    module.add_function('MakeBoundCallback', 
+                        'ns3::Callback< void, ns3::Ptr< ns3::Packet const >, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty >', 
+                        [param('void ( * ) ( ns3::Ptr< ns3::PcapFileWrapper >, ns3::Ptr< ns3::Packet const > ) *', 'fnPtr'), param('ns3::Ptr< ns3::PcapFileWrapper >', 'a')], 
+                        template_parameters=['void', 'ns3::Ptr<ns3::PcapFileWrapper>', 'ns3::Ptr<ns3::PcapFileWrapper>', 'ns3::Ptr<ns3::Packet const>'])
+    ## callback.h: extern ns3::Callback<void,std::basic_string<char, std::char_traits<char>, std::allocator<char> >,ns3::Ptr<const ns3::Packet>,ns3::empty,ns3::empty,ns3::empty,ns3::empty,ns3::empty,ns3::empty,ns3::empty> ns3::MakeBoundCallback(void (*)( ::ns3::Ptr<ns3::OutputStreamWrapper>,::std::basic_string<char,std::char_traits<char>,std::allocator<char> >,::ns3::Ptr<ns3::Packet const> ) * fnPtr, ns3::Ptr<ns3::OutputStreamWrapper> a) [free function]
+    module.add_function('MakeBoundCallback', 
+                        'ns3::Callback< void, std::basic_string< char, std::char_traits< char >, std::allocator< char > >, ns3::Ptr< ns3::Packet const >, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty >', 
+                        [param('void ( * ) ( ns3::Ptr< ns3::OutputStreamWrapper >, std::string, ns3::Ptr< ns3::Packet const > ) *', 'fnPtr'), param('ns3::Ptr< ns3::OutputStreamWrapper >', 'a')], 
+                        template_parameters=['void', 'ns3::Ptr<ns3::OutputStreamWrapper>', 'ns3::Ptr<ns3::OutputStreamWrapper>', 'std::string', 'ns3::Ptr<ns3::Packet const>'])
     ## callback.h: extern ns3::Ptr<ns3::AttributeChecker const> ns3::MakeCallbackChecker() [free function]
     module.add_function('MakeCallbackChecker', 
                         'ns3::Ptr< ns3::AttributeChecker const >', 
@@ -3502,7 +3198,7 @@ def register_functions(root_module):
     module.add_function('TypeNameGet', 
                         'std::string', 
                         [], 
-                        template_parameters=['long'])
+                        template_parameters=['long long'])
     ## type-name.h: extern std::string ns3::TypeNameGet() [free function]
     module.add_function('TypeNameGet', 
                         'std::string', 
@@ -3539,6 +3235,7 @@ def register_functions(root_module):
                         [], 
                         template_parameters=['unsigned char'])
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
+    register_functions_ns3_FatalImpl(module.get_submodule('FatalImpl'), root_module)
     register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
     register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
@@ -3605,6 +3302,21 @@ def register_functions_ns3_Config(module, root_module):
     module.add_function('UnregisterRootNamespaceObject', 
                         'void', 
                         [param('ns3::Ptr< ns3::Object >', 'obj')])
+    return
+
+def register_functions_ns3_FatalImpl(module, root_module):
+    ## fatal-impl.h: extern void ns3::FatalImpl::FlushStreams() [free function]
+    module.add_function('FlushStreams', 
+                        'void', 
+                        [])
+    ## fatal-impl.h: extern void ns3::FatalImpl::RegisterStream(std::ostream * stream) [free function]
+    module.add_function('RegisterStream', 
+                        'void', 
+                        [param('std::ostream *', 'stream')])
+    ## fatal-impl.h: extern void ns3::FatalImpl::UnregisterStream(std::ostream * stream) [free function]
+    module.add_function('UnregisterStream', 
+                        'void', 
+                        [param('std::ostream *', 'stream')])
     return
 
 def register_functions_ns3_TimeStepPrecision(module, root_module):

@@ -145,7 +145,7 @@ YansWifiPhy::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
   m_channel = 0;
-  m_modes.clear ();
+  m_deviceRateSet.clear ();
   m_device = 0;
   m_mobility = 0;
   m_state = 0;
@@ -459,6 +459,7 @@ YansWifiPhy::StartReceivePacket (Ptr<Packet> packet,
         m_state->SwitchToRx (rxDuration);
         NS_ASSERT (m_endRxEvent.IsExpired ());
         NotifyRxBegin (packet);
+        m_interference.NotifyRxStart();
         m_endRxEvent = Simulator::Schedule (rxDuration, &YansWifiPhy::EndReceive, this, 
                                             packet,
                                             event);
@@ -504,6 +505,7 @@ YansWifiPhy::SendPacket (Ptr<const Packet> packet, WifiMode txMode, WifiPreamble
   if (m_state->IsStateRx ())
     {
       m_endRxEvent.Cancel ();
+      m_interference.NotifyRxEnd ();
     }
   NotifyTxBegin (packet);
   uint32_t dataRate500KbpsUnits = txMode.GetDataRate () / 500000;   
@@ -516,12 +518,12 @@ YansWifiPhy::SendPacket (Ptr<const Packet> packet, WifiMode txMode, WifiPreamble
 uint32_t 
 YansWifiPhy::GetNModes (void) const
 {
-  return m_modes.size ();
+  return m_deviceRateSet.size ();
 }
 WifiMode 
 YansWifiPhy::GetMode (uint32_t mode) const
 {
-  return m_modes[mode];
+  return m_deviceRateSet[mode];
 }
 uint32_t 
 YansWifiPhy::GetNTxPower (void) const
@@ -534,14 +536,15 @@ YansWifiPhy::Configure80211a (void)
 {
   NS_LOG_FUNCTION (this);
   m_channelStartingFrequency = 5e3; // 5.000 GHz 
-  m_modes.push_back (WifiPhy::Get6mba ());
-  m_modes.push_back (WifiPhy::Get9mba ());
-  m_modes.push_back (WifiPhy::Get12mba ());
-  m_modes.push_back (WifiPhy::Get18mba ());
-  m_modes.push_back (WifiPhy::Get24mba ());
-  m_modes.push_back (WifiPhy::Get36mba ());
-  m_modes.push_back (WifiPhy::Get48mba ());
-  m_modes.push_back (WifiPhy::Get54mba ());
+
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate6Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate9Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate12Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate18Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate24Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate36Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate48Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate54Mbps ());
 }
 
 
@@ -550,10 +553,11 @@ YansWifiPhy::Configure80211b (void)
 {
   NS_LOG_FUNCTION (this);
   m_channelStartingFrequency = 2412; // 2.412 GHz 
-  m_modes.push_back (WifiPhy::Get1mbb ());
-  m_modes.push_back (WifiPhy::Get2mbb ());
-  m_modes.push_back (WifiPhy::Get5_5mbb ());
-  m_modes.push_back (WifiPhy::Get11mbb ());
+
+  m_deviceRateSet.push_back (WifiPhy::GetDsssRate1Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetDsssRate2Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetDsssRate5_5Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetDsssRate11Mbps ());
 }
 
 void
@@ -561,14 +565,15 @@ YansWifiPhy::Configure80211_10Mhz (void)
 {
   NS_LOG_FUNCTION (this);
   m_channelStartingFrequency = 5e3; // 5.000 GHz, suppose 802.11a 
-  m_modes.push_back (WifiPhy::Get3mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get4_5mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get6mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get9mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get12mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get18mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get24mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get27mb10Mhz  ());
+
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate3MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate4_5MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate6MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate9MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate12MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate18MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate24MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate27MbpsBW10MHz ());
 }
 
 void
@@ -576,14 +581,15 @@ YansWifiPhy::Configure80211_5Mhz (void)
 {
   NS_LOG_FUNCTION (this); 
   m_channelStartingFrequency = 5e3; // 5.000 GHz, suppose 802.11a
-  m_modes.push_back (WifiPhy::Get1_5mb5Mhz ());
-  m_modes.push_back (WifiPhy::Get2_25mb5Mhz ());
-  m_modes.push_back (WifiPhy::Get3mb5Mhz ());
-  m_modes.push_back (WifiPhy::Get4_5mb5Mhz ());
-  m_modes.push_back (WifiPhy::Get6mb5Mhz ());
-  m_modes.push_back (WifiPhy::Get9mb5Mhz ());
-  m_modes.push_back (WifiPhy::Get12mb5Mhz ());
-  m_modes.push_back (WifiPhy::Get13_5mb5Mhz  ());
+
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate1_5MbpsBW5MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate2_25MbpsBW5MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate3MbpsBW5MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate4_5MbpsBW5MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate6MbpsBW5MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate9MbpsBW5MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate12MbpsBW5MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate13_5MbpsBW5MHz ());
 }
 
 void
@@ -591,11 +597,11 @@ YansWifiPhy::ConfigureHolland (void)
 {
   NS_LOG_FUNCTION (this);
   m_channelStartingFrequency = 5e3; // 5.000 GHz 
-  m_modes.push_back (WifiPhy::Get6mba ());
-  m_modes.push_back (WifiPhy::Get12mba ());
-  m_modes.push_back (WifiPhy::Get18mba ());
-  m_modes.push_back (WifiPhy::Get36mba ());
-  m_modes.push_back (WifiPhy::Get54mba ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate6Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate12Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate18Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate36Mbps ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate54Mbps ());
 }
 
 void
@@ -603,14 +609,15 @@ YansWifiPhy::Configure80211p_CCH (void)
 {
   NS_LOG_FUNCTION (this);
   m_channelStartingFrequency = 5e3; // 802.11p works over the 5Ghz freq range
-  m_modes.push_back (WifiPhy::Get3mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get4_5mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get6mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get9mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get12mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get18mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get24mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get27mb10Mhz  ());
+
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate3MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate4_5MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate6MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate9MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate12MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate18MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate24MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate27MbpsBW10MHz ());
 }
 
 void
@@ -618,14 +625,15 @@ YansWifiPhy::Configure80211p_SCH (void)
 {
   NS_LOG_FUNCTION (this);
   m_channelStartingFrequency = 5e3; // 802.11p works over the 5Ghz freq range
-  m_modes.push_back (WifiPhy::Get3mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get4_5mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get6mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get9mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get12mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get18mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get24mb10Mhz ());
-  m_modes.push_back (WifiPhy::Get27mb10Mhz  ());
+
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate3MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate4_5MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate6MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate9MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate12MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate18MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate24MbpsBW10MHz ());
+  m_deviceRateSet.push_back (WifiPhy::GetOfdmRate27MbpsBW10MHz ());
 }
 
 void 
@@ -726,7 +734,16 @@ YansWifiPhy::GetPowerDbm (uint8_t power) const
 {
   NS_ASSERT (m_txPowerBaseDbm <= m_txPowerEndDbm);
   NS_ASSERT (m_nTxPower > 0);
-  double dbm = m_txPowerBaseDbm + power * (m_txPowerEndDbm - m_txPowerBaseDbm) / m_nTxPower;
+  double dbm;
+  if (m_nTxPower > 1)
+    {
+      dbm = m_txPowerBaseDbm + power * (m_txPowerEndDbm - m_txPowerBaseDbm) / (m_nTxPower - 1);
+    }
+  else 
+    {
+      NS_ASSERT_MSG (m_txPowerBaseDbm == m_txPowerEndDbm, "cannot have TxPowerEnd != TxPowerStart with TxPowerLevels == 1");
+      dbm = m_txPowerBaseDbm;
+    }
   return dbm;
 }
 
@@ -739,6 +756,7 @@ YansWifiPhy::EndReceive (Ptr<Packet> packet, Ptr<InterferenceHelper::Event> even
 
   struct InterferenceHelper::SnrPer snrPer;
   snrPer = m_interference.CalculateSnrPer (event);
+  m_interference.NotifyRxEnd();
 
   NS_LOG_DEBUG ("mode="<<(event->GetPayloadMode ().GetDataRate ())<<
                 ", snr="<<snrPer.snr<<", per="<<snrPer.per<<", size="<<packet->GetSize ());

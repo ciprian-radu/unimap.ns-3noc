@@ -21,29 +21,36 @@
 #define CSMA_HELPER_H
 
 #include <string>
+
 #include "ns3/attribute.h"
 #include "ns3/object-factory.h"
 #include "ns3/net-device-container.h"
 #include "ns3/node-container.h"
 #include "ns3/csma-channel.h"
 #include "ns3/deprecated.h"
+#include "trace-helper.h"
 
 namespace ns3 {
 
 class Packet;
-class PcapWriter;
-class AsciiWriter;
 
 /**
  * \brief build a set of CsmaNetDevice objects
+ *
+ * Normally we eschew multiple inheritance, however, the classes 
+ * PcapUserHelperForDevice and AsciiTraceUserHelperForDevice are
+ * treated as "mixins".  A mixin is a self-contained class that
+ * encapsulates a general attribute or a set of functionality that
+ * may be of interest to many other classes.
  */
-class CsmaHelper
+class CsmaHelper : public PcapHelperForDevice, public AsciiTraceHelperForDevice
 {
 public:
   /**
    * Construct a CsmaHelper.
    */
   CsmaHelper ();
+  virtual ~CsmaHelper () {}
 
   /**
    * \param type the type of queue
@@ -84,113 +91,13 @@ public:
   void SetChannelAttribute (std::string n1, const AttributeValue &v1);
 
   /**
-   * \param filename filename prefix to use for pcap files.
-   * \param nodeid the id of the node to generate pcap output for.
-   * \param deviceid the id of the device to generate pcap output for.
-   * \param promiscuous If true capture all possible packets available at the device.
-   *
-   * Generate a pcap file which contains the link-level data observed
-   * by the specified deviceid within the specified nodeid. The pcap
-   * data is stored in the file prefix-nodeid-deviceid.pcap.
-   *
-   * This method should be invoked after the network topology has 
-   * been fully constructed.
-   */
-  static void EnablePcap (std::string filename, uint32_t nodeid, uint32_t deviceid, bool promiscuous);
-
-  /**
-   * \param filename filename prefix to use for pcap files.
-   * \param nd Net device in which you want to enable tracing.
-   * \param promiscuous If true capture all possible packets available at the device.
-   *
-   * Enable pcap output the indicated net device.
-   */
-  static void EnablePcap (std::string filename, Ptr<NetDevice> nd, bool promiscuous);
-
-  /**
-   * \param filename filename prefix to use for pcap files.
-   * \param ndName The name of the net device in which you want to enable tracing.
-   * \param promiscuous If true capture all possible packets available at the device.
-   *
-   * Enable pcap output the indicated net device.
-   */
-  static void EnablePcap (std::string filename, std::string ndName, bool promiscuous);
-
-  /**
-   * \param filename filename prefix to use for pcap files.
-   * \param d container of devices of type ns3::CsmaNetDevice
-   * \param promiscuous If true capture all possible packets available at the device.
-   *
-   * Enable pcap output on each input device which is of the ns3::CsmaNetDevice type.
-   */
-  static void EnablePcap (std::string filename, NetDeviceContainer d, bool promiscuous);
-
-  /**
-   * \param filename filename prefix to use for pcap files.
-   * \param n container of nodes.
-   * \param promiscuous If true capture all possible packets available at the device.
-   *
-   * Enable pcap output on each device which is of the
-   * ns3::CsmaNetDevice type and which is located in one of the 
-   * input nodes.
-   */
-  static void EnablePcap (std::string filename, NodeContainer n, bool promiscuous);
-  /**
-   * \param filename filename prefix to use for pcap files.
-   * \param promiscuous If true capture all possible packets available at the device.
-   *
-   * Enable pcap output on each device which is of the
-   * ns3::CsmaNetDevice type
-   */
-  static void EnablePcapAll (std::string filename, bool promiscuous);
-
-  /**
-   * \param os output stream
-   * \param nodeid the id of the node to generate ascii output for.
-   * \param deviceid the id of the device to generate ascii output for.
-   *
-   * Enable ascii output on the specified deviceid within the
-   * specified nodeid if it is of type ns3::CsmaNetDevice and dump 
-   * that to the specified stdc++ output stream.
-   */
-  static void EnableAscii (std::ostream &os, uint32_t nodeid, uint32_t deviceid);
-  /**
-   * \param os output stream
-   * \param d device container
-   *
-   * Enable ascii output on each device which is of the
-   * ns3::CsmaNetDevice type and which is located in the input
-   * device container and dump that to the specified
-   * stdc++ output stream.
-   */
-  static void EnableAscii (std::ostream &os, NetDeviceContainer d);
-  /**
-   * \param os output stream
-   * \param n node container
-   *
-   * Enable ascii output on each device which is of the
-   * ns3::CsmaNetDevice type and which is located in one
-   * of the input node and dump that to the specified
-   * stdc++ output stream.
-   */
-  static void EnableAscii (std::ostream &os, NodeContainer n);
-  /**
-   * \param os output stream
-   *
-   * Enable ascii output on each device which is of the
-   * ns3::CsmaNetDevice type and dump that to the specified
-   * stdc++ output stream.
-   */
-  static void EnableAsciiAll (std::ostream &os);
-
-  /**
    * This method creates an ns3::CsmaChannel with the attributes configured by
    * CsmaHelper::SetChannelAttribute, an ns3::CsmaNetDevice with the attributes
    * configured by CsmaHelper::SetDeviceAttribute and then adds the device
    * to the node and attaches the channel to the device.
    *
    * \param node The node to install the device in
-   * \returns A containter holding the added net device.
+   * \returns A container holding the added net device.
    */
   NetDeviceContainer Install (Ptr<Node> node) const;
 
@@ -201,7 +108,7 @@ public:
    * to the node and attaches the channel to the device.
    *
    * \param name The name of the node to install the device in
-   * \returns A containter holding the added net device.
+   * \returns A container holding the added net device.
    */
   NetDeviceContainer Install (std::string name) const;
 
@@ -212,7 +119,7 @@ public:
    *
    * \param node The node to install the device in
    * \param channel The channel to attach to the device.
-   * \returns A containter holding the added net device.
+   * \returns A container holding the added net device.
    */
   NetDeviceContainer Install (Ptr<Node> node, Ptr<CsmaChannel> channel) const;
 
@@ -223,7 +130,7 @@ public:
    *
    * \param node The node to install the device in
    * \param channelName The name of the channel to attach to the device.
-   * \returns A containter holding the added net device.
+   * \returns A container holding the added net device.
    */
   NetDeviceContainer Install (Ptr<Node> node, std::string channelName) const;
 
@@ -233,8 +140,8 @@ public:
    * attaches the provided channel to the device.
    *
    * \param nodeName The name of the node to install the device in
-   * \param channel The chanel to attach to the device.
-   * \returns A containter holding the added net device.
+   * \param channel The channel to attach to the device.
+   * \returns A container holding the added net device.
    */
   NetDeviceContainer Install (std::string nodeName, Ptr<CsmaChannel> channel) const;
 
@@ -244,8 +151,8 @@ public:
    * attaches the provided channel to the device.
    *
    * \param nodeName The name of the node to install the device in
-   * \param channelName The name of the chanel to attach to the device.
-   * \returns A containter holding the added net device.
+   * \param channelName The name of the channel to attach to the device.
+   * \returns A container holding the added net device.
    */
   NetDeviceContainer Install (std::string nodeName, std::string channelName) const;
 
@@ -257,7 +164,7 @@ public:
    * node; and attaches the channel to the device.
    *
    * \param c The NodeContainer holding the nodes to be changed.
-   * \returns A containter holding the added net devices.
+   * \returns A container holding the added net devices.
    */
   NetDeviceContainer Install (const NodeContainer &c) const;
 
@@ -269,7 +176,7 @@ public:
    *
    * \param c The NodeContainer holding the nodes to be changed.
    * \param channel The channel to attach to the devices.
-   * \returns A containter holding the added net devices.
+   * \returns A container holding the added net devices.
    */
   NetDeviceContainer Install (const NodeContainer &c, Ptr<CsmaChannel> channel) const;
 
@@ -281,7 +188,7 @@ public:
    *
    * \param c The NodeContainer holding the nodes to be changed.
    * \param channelName The name of the channel to attach to the devices.
-   * \returns A containter holding the added net devices.
+   * \returns A container holding the added net devices.
    */
   NetDeviceContainer Install (const NodeContainer &c, std::string channelName) const;
 
@@ -291,26 +198,35 @@ private:
    */
   Ptr<NetDevice> InstallPriv (Ptr<Node> node, Ptr<CsmaChannel> channel) const;
 
-  /*
+  /**
+   * \brief Enable pcap output on the indicated net device.
    * \internal
+   *
+   * NetDevice-specific implementation mechanism for hooking the trace and
+   * writing to the trace file.
+   *
+   * \param prefix Filename prefix to use for pcap files.
+   * \param nd Net device for which you want to enable tracing.
+   * \param promiscuous If true capture all possible packets available at the device.
+   * \param explicitFilename Treat the prefix as an explicit filename if true
    */
-  static void SniffEvent (Ptr<PcapWriter> writer, Ptr<const Packet> packet);
+  virtual void EnablePcapInternal (std::string prefix, Ptr<NetDevice> nd, bool promiscuous, bool explicitFilename);
 
-  static void AsciiRxEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet);
-  /*
+  /**
+   * \brief Enable ascii trace output on the indicated net device.
    * \internal
+   *
+   * NetDevice-specific implementation mechanism for hooking the trace and
+   * writing to the trace file.
+   *
+   * \param stream The output stream object to use when logging ascii traces.
+   * \param prefix Filename prefix to use for ascii trace files.
+   * \param nd Net device for which you want to enable tracing.
    */
-  static void AsciiEnqueueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet);
-
-  /*
-   * \internal
-   */
-  static void AsciiDequeueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet);
-
-  /*
-   * \internal
-   */
-  static void AsciiDropEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet);
+  virtual void EnableAsciiInternal (Ptr<OutputStreamWrapper> stream, 
+                                    std::string prefix, 
+                                    Ptr<NetDevice> nd,
+                                    bool explicitFilename);
 
   ObjectFactory m_queueFactory;
   ObjectFactory m_deviceFactory;

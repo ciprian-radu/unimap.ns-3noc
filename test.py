@@ -27,6 +27,7 @@ import Queue
 import signal
 import xml.dom.minidom
 import shutil
+import re
 
 #
 # XXX This should really be part of a waf command to list the configuration
@@ -44,6 +45,7 @@ interesting_config_items = [
     "ENABLE_NSC",
     "ENABLE_REAL_TIME",
     "ENABLE_EXAMPLES",
+    "ENABLE_PYTHON_BINDINGS",
 ]
 
 ENABLE_NSC = False
@@ -62,6 +64,7 @@ core_kinds = ["bvt", "core", "system", "unit"]
 #
 core_valgrind_skip_tests = [
     "ns3-tcp-cwnd",
+    "nsc-tcp-loss",
     "ns3-tcp-interoperability",
 ]
 
@@ -116,6 +119,9 @@ example_tests = [
     ("routing/static-routing-slash32", "True", "True"),
     ("routing/aodv", "True", "True"),
 
+    ("spectrum/adhoc-aloha-ideal-phy", "True", "True"),
+    ("spectrum/adhoc-aloha-ideal-phy-with-microwave-oven", "True", "True"),
+
     ("stats/wifi-example-sim", "True", "True"),
 
     ("tap/tap-wifi-dumbbell", "False", "True"), # Requires manual configuration
@@ -126,6 +132,9 @@ example_tests = [
     ("tcp/tcp-nsc-zoo", "ENABLE_NSC == True", "True"),
     ("tcp/tcp-star-server", "True", "True"),
 
+    ("topology-read/topology-read --input=../../examples/topology-read/Inet_small_toposample.txt", "True", "True"),
+    ("topology-read/topology-read --format=Rocketfuel --input=../../examples/topology-read/RocketFuel_toposample_1239_weights.txt", "True", "True"),
+
     ("tunneling/virtual-net-device", "True", "True"),
 
     ("tutorial/first", "True", "True"),
@@ -134,11 +143,18 @@ example_tests = [
     ("tutorial/third", "True", "True"),
     ("tutorial/fourth", "True", "True"),
     ("tutorial/fifth", "True", "True"),
+    ("tutorial/sixth", "True", "True"),
 
     ("udp/udp-echo", "True", "True"),
 
     ("wireless/mixed-wireless", "True", "True"),
-    ("wireless/multirate", "False", "True"), # Takes too long to run
+    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::AarfcdWifiManager", "True", "True"), 
+    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::AmrrWifiManager", "True", "True"), 
+    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::CaraWifiManager", "True", "True"), 
+    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::IdealWifiManager", "True", "True"), 
+    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::MinstrelWifiManager", "True", "True"), 
+    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::OnoeWifiManager", "True", "True"), 
+    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::RraaWifiManager", "True", "True"), 
     ("wireless/simple-wifi-frame-aggregation", "True", "True"),
     ("wireless/wifi-adhoc", "False", "True"), # Takes too long to run
     ("wireless/wifi-ap --verbose=0", "True", "True"), # Don't let it spew to stdout
@@ -148,6 +164,34 @@ example_tests = [
     ("wireless/wifi-simple-infra", "True", "True"),
     ("wireless/wifi-simple-interference", "True", "True"),
     ("wireless/wifi-wired-bridging", "True", "True"),
+
+    ("wimax/wimax-simple", "True", "True"),
+    ("wimax/wimax-ipv4", "True", "True"),
+    ("wimax/wimax-multicast", "True", "True"),
+]
+
+#
+# A list of python examples to run as smoke tests just to ensure that they 
+# runnable over time.  Also a condition under which to run the example (from
+# the waf configuration)
+#
+# XXX Should this not be read from a configuration file somewhere and not
+# hardcoded.
+#
+python_tests = [
+    ("csma/csma-bridge.py", "True"),
+
+    ("flowmon/wifi-olsr-flowmon.py", "True"),
+
+    ("routing/simple-routing-ping6.py", "True"),
+
+    ("tap/tap-csma-virtual-machine.py", "False"), # requires enable-sudo
+    ("tap/tap-wifi-virtual-machine.py", "False"), # requires enable-sudo
+
+    ("tutorial/first.py", "True"),
+
+    ("wireless/wifi-ap.py", "True"),
+    ("wireless/mixed-wireless.py", "True"),
 ]
 
 #
@@ -542,10 +586,11 @@ def read_waf_config():
 # its own shared libraries, so ns-3 doesn't hardcode a shared library search
 # path -- it is cooked up dynamically, so we do that too.
 #
-def make_library_path():
+def make_paths():
     have_DYLD_LIBRARY_PATH = False
     have_LD_LIBRARY_PATH = False
     have_PATH = False
+    have_PYTHONPATH = False
 
     keys = os.environ.keys()
     for key in keys:
@@ -555,6 +600,18 @@ def make_library_path():
             have_LD_LIBRARY_PATH = True
         if key == "PATH":
             have_PATH = True
+        if key == "PYTHONPATH":
+            have_PYTHONPATH = True
+
+    pypath = os.environ["PYTHONPATH"] = os.path.join (NS3_BUILDDIR, NS3_ACTIVE_VARIANT, "bindings", "python")
+
+    if not have_PYTHONPATH:
+        os.environ["PYTHONPATH"] = pypath
+    else:
+        os.environ["PYTHONPATH"] += ":" + pypath
+
+    if options.verbose:
+        print "os.environ[\"PYTHONPATH\"] == %s" % os.environ["PYTHONPATH"]
 
     if sys.platform == "darwin":
         if not have_DYLD_LIBRARY_PATH:
@@ -585,10 +642,98 @@ def make_library_path():
         if options.verbose:
             print "os.environ[\"LD_LIBRARY_PATH\"] == %s" % os.environ["LD_LIBRARY_PATH"]
 
-def run_job_synchronously(shell_command, directory, valgrind):
-    path_cmd = os.path.join (NS3_BUILDDIR, NS3_ACTIVE_VARIANT, shell_command)
+#
+# Short note on generating suppressions:
+#
+# See the valgrind documentation for a description of suppressions.  The easiest
+# way to generate a suppression expression is by using the valgrind 
+# --gen-suppressions option.  To do that you have to figure out how to run the 
+# test in question.
+#
+# If you do "test.py -v -g -s <suitename> then test.py will output most of what
+# you need.  For example, if you are getting a valgrind error in the
+# devices-mesh-dot11s-regression test suite, you can run:
+#
+#   ./test.py -v -g -s devices-mesh-dot11s-regression 
+#
+# You should see in the verbose output something that looks like:
+#
+#   Synchronously execute valgrind --suppressions=/home/craigdo/repos/ns-3-allinone-dev/ns-3-dev/testpy.supp
+#   --leak-check=full --error-exitcode=2 /home/craigdo/repos/ns-3-allinone-dev/ns-3-dev/build/debug/utils/test-runner 
+#   --suite=devices-mesh-dot11s-regression --basedir=/home/craigdo/repos/ns-3-allinone-dev/ns-3-dev 
+#   --tempdir=testpy-output/2010-01-12-22-47-50-CUT 
+#   --out=testpy-output/2010-01-12-22-47-50-CUT/devices-mesh-dot11s-regression.xml
+#
+# You need to pull out the useful pieces, and so could run the following to 
+# reproduce your error:
+#
+#   valgrind --suppressions=/home/craigdo/repos/ns-3-allinone-dev/ns-3-dev/testpy.supp
+#   --leak-check=full --error-exitcode=2 /home/craigdo/repos/ns-3-allinone-dev/ns-3-dev/build/debug/utils/test-runner 
+#   --suite=devices-mesh-dot11s-regression --basedir=/home/craigdo/repos/ns-3-allinone-dev/ns-3-dev 
+#   --tempdir=testpy-output 
+#
+# Hint: Use the first part of the command as is, and point the "tempdir" to 
+# somewhere real.  You don't need to specify an "out" file.
+#
+# When you run the above command you should see your valgrind error.  The 
+# suppression expression(s) can be generated by adding the --gen-suppressions=yes
+# option to valgrind.  Use something like:
+#
+#   valgrind --gen-suppressions=yes --suppressions=/home/craigdo/repos/ns-3-allinone-dev/ns-3-dev/testpy.supp
+#   --leak-check=full --error-exitcode=2 /home/craigdo/repos/ns-3-allinone-dev/ns-3-dev/build/debug/utils/test-runner 
+#   --suite=devices-mesh-dot11s-regression --basedir=/home/craigdo/repos/ns-3-allinone-dev/ns-3-dev 
+#   --tempdir=testpy-output 
+#
+# Now when valgrind detects an error it will ask:
+#
+#   ==27235== ---- Print suppression ? --- [Return/N/n/Y/y/C/c] ----
+#
+# to which you just enter 'y'<ret>.
+#
+# You will be provided with a suppression expression that looks something like
+# the following:
+#   {
+#     <insert_a_suppression_name_here>
+#     Memcheck:Addr8
+#     fun:_ZN3ns36dot11s15HwmpProtocolMac8SendPreqESt6vectorINS0_6IePreqESaIS3_EE
+#     fun:_ZN3ns36dot11s15HwmpProtocolMac10SendMyPreqEv
+#     fun:_ZN3ns36dot11s15HwmpProtocolMac18RequestDestinationENS_12Mac48AddressEjj
+#     ...
+#     the rest of the stack frame
+#     ...
+#   }
+#
+# You need to add a supression name which will only be printed out by valgrind in 
+# verbose mode (but it needs to be there in any case).  The entire stack frame is
+# shown to completely characterize the error, but in most cases you won't need 
+# all of that info.  For example, if you want to turn off all errors that happen
+# when the function (fun:) is called, you can just delete the rest of the stack
+# frame.  You can also use wildcards to make the mangled signatures more readable.
+#
+# I added the following to the testpy.supp file for this particular error:
+#
+#   {
+#     Supress invalid read size errors in SendPreq() when using HwmpProtocolMac
+#     Memcheck:Addr8
+#     fun:*HwmpProtocolMac*SendPreq*
+#   }
+#
+# Now, when you run valgrind the error will be suppressed.
+#
+VALGRIND_SUPPRESSIONS_FILE = "testpy.supp"
+
+def run_job_synchronously(shell_command, directory, valgrind, is_python):
+    (base, build) = os.path.split (NS3_BUILDDIR)
+    suppressions_path = os.path.join (base, VALGRIND_SUPPRESSIONS_FILE)
+
+    if is_python:
+        path_cmd = "python " + os.path.join (base, shell_command)
+    else:
+        path_cmd = os.path.join (NS3_BUILDDIR, NS3_ACTIVE_VARIANT, shell_command)
+
     if valgrind:
-        cmd = "valgrind --leak-check=full --error-exitcode=2 %s" % path_cmd
+        cmd = "valgrind --suppressions=%s --leak-check=full --show-reachable=yes --error-exitcode=2 %s" % (suppressions_path, 
+            path_cmd)
     else:
         cmd = path_cmd
 
@@ -600,11 +745,25 @@ def run_job_synchronously(shell_command, directory, valgrind):
     stdout_results, stderr_results = proc.communicate()
     elapsed_time = time.time() - start_time
 
+    retval = proc.returncode
+
+    #
+    # valgrind sometimes has its own idea about what kind of memory management
+    # errors are important.  We want to detect *any* leaks, so the way to do 
+    # that is to look for the presence of a valgrind leak summary section.
+    #
+    # If another error has occurred (like a test suite has failed), we don't 
+    # want to trump that error, so only do the valgrind output scan if the 
+    # test has otherwise passed (return code was zero).
+    #
+    if valgrind and retval == 0 and "== LEAK SUMMARY:" in stderr_results:
+        retval = 2
+    
     if options.verbose:
-        print "Return code = ", proc.returncode
+        print "Return code = ", retval
         print "stderr = ", stderr_results
 
-    return (proc.returncode, stdout_results, stderr_results, elapsed_time)
+    return (retval, stdout_results, stderr_results, elapsed_time)
 
 #
 # This class defines a unit of testing work.  It will typically refer to
@@ -615,6 +774,7 @@ class Job:
         self.is_break = False
         self.is_skip = False
         self.is_example = False
+        self.is_pyexample = False
         self.shell_command = ""
         self.display_name = ""
         self.basedir = ""
@@ -647,6 +807,15 @@ class Job:
     #
     def set_is_example(self, is_example):
         self.is_example = is_example
+
+    #
+    # Examples are treated differently than standard test suites.  This is
+    # mostly because they are completely unaware that they are being run as 
+    # tests.  So we have to do some special case processing to make them look
+    # like tests.
+    #
+    def set_is_pyexample(self, is_pyexample):
+        self.is_pyexample = is_pyexample
 
     #
     # This is the shell command that will be executed in the job.  For example,
@@ -753,7 +922,7 @@ class worker_thread(threading.Thread):
                 if options.verbose:
                     print "Skip %s" % job.shell_command
                 self.output_queue.put(job)
-                return
+                continue
 
             #
             # Otherwise go about the business of running tests as normal.
@@ -762,13 +931,14 @@ class worker_thread(threading.Thread):
                 if options.verbose:
                     print "Launch %s" % job.shell_command
 
-                if job.is_example:
+                if job.is_example or job.is_pyexample:
                     #
                     # If we have an example, the shell command is all we need to
-                    # know.  It will be something like "examples/udp-echo"
+                    # know.  It will be something like "examples/udp-echo" or 
+                    # "examples/mixed-wireless.py"
                     #
                     (job.returncode, standard_out, standard_err, et) = run_job_synchronously(job.shell_command, 
-                        job.cwd, options.valgrind)
+                        job.cwd, options.valgrind, job.is_pyexample)
                 else:
                     #
                     # If we're a test suite, we need to provide a little more info
@@ -777,13 +947,13 @@ class worker_thread(threading.Thread):
                     #
                     (job.returncode, standard_out, standard_err, et) = run_job_synchronously(job.shell_command + 
                         " --basedir=%s --tempdir=%s --out=%s" % (job.basedir, job.tempdir, job.tmp_file_name), 
-                        job.cwd, options.valgrind)
+                        job.cwd, options.valgrind, False)
 
                 job.set_elapsed_time(et)
 
                 if options.verbose:
                     print "returncode = %d" % job.returncode
-                    print "---------- beign standard out ----------"
+                    print "---------- begin standard out ----------"
                     print standard_out
                     print "---------- begin standard err ----------"
                     print standard_err
@@ -843,6 +1013,9 @@ def run_tests():
 
         proc = subprocess.Popen(waf_cmd, shell = True)
         proc.communicate()
+        if proc.returncode:
+            print >> sys.stderr, "Waf died. Not running tests"
+            return proc.returncode
 
     #
     # Pull some interesting configuration information out of waf, primarily
@@ -852,7 +1025,15 @@ def run_tests():
     #
     read_waf_active_variant()
     read_waf_config()
-    make_library_path()
+    make_paths()
+
+    #
+    # If lots of logging is enabled, we can crash Python when it tries to 
+    # save all of the text.  We just don't allow logging to be turned on when
+    # test.py runs.  If you want to see logging output from your tests, you
+    # have to run them using the test-runner directly.
+    #
+    os.environ["NS_LOG"] = ""
 
     #
     # There are a couple of options that imply we can to exit before starting
@@ -861,12 +1042,12 @@ def run_tests():
     #
     if options.kinds:
         path_cmd = os.path.join("utils", "test-runner --kinds")
-        (rc, standard_out, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False)
+        (rc, standard_out, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False, False)
         print standard_out
 
     if options.list:
         path_cmd = os.path.join("utils", "test-runner --list")
-        (rc, standard_out, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False)
+        (rc, standard_out, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False, False)
         print standard_out
 
     if options.kinds or options.list:
@@ -915,8 +1096,8 @@ def run_tests():
 
     #
     # We need to figure out what test suites to execute.  We are either given one 
-    # suite or example explicitly via the --suite or --example option, or we
-    # need to call into the test runner and ask it to list all of the available
+    # suite or example explicitly via the --suite or --example/--pyexample option,
+    # or we need to call into the test runner and ask it to list all of the available
     # test suites.  Further, we need to provide the constraint information if it
     # has been given to us.
     # 
@@ -927,7 +1108,8 @@ def run_tests():
     #  ./test.py --constrain=core:                          run all of the suites of all kinds
     #  ./test.py --constrain=unit:                          run all unit suites
     #  ./test,py --suite=some-test-suite:                   run a single suite
-    #  ./test,py --example=udp-echo:                        run no test suites
+    #  ./test,py --example=udp/udp-echo:                    run no test suites
+    #  ./test,py --pyexample=wireless/mixed-wireless.py:    run no test suites
     #  ./test,py --suite=some-suite --example=some-example: run the single suite
     #
     # We can also use the --constrain option to provide an ordering of test 
@@ -935,13 +1117,13 @@ def run_tests():
     #
     if len(options.suite):
         suites = options.suite + "\n"
-    elif len(options.example) == 0:
+    elif len(options.example) == 0 and len(options.pyexample) == 0:
         if len(options.constrain):
             path_cmd = os.path.join("utils", "test-runner --list --constrain=%s" % options.constrain)
-            (rc, suites, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False)
+            (rc, suites, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False, False)
         else:
             path_cmd = os.path.join("utils", "test-runner --list")
-            (rc, suites, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False)
+            (rc, suites, standard_err, et) = run_job_synchronously(path_cmd, os.getcwd(), False, False)
     else:
         suites = ""
 
@@ -1011,6 +1193,7 @@ def run_tests():
         if len(test):
             job = Job()
             job.set_is_example(False)
+            job.set_is_pyexample(False)
             job.set_display_name(test)
             job.set_tmp_file_name(os.path.join(testpy_output_dir, "%s.xml" % test))
             job.set_cwd(os.getcwd())
@@ -1068,20 +1251,21 @@ def run_tests():
     #  ./test,py:                                           run all of the examples
     #  ./test.py --constrain=unit                           run no examples
     #  ./test.py --constrain=example                        run all of the examples
-    #  ./test,py --suite=some-test-suite:                   run no examples
-    #  ./test,py --example=some-example:                    run the single example
-    #  ./test,py --suite=some-suite --example=some-example: run the single example
+    #  ./test.py --suite=some-test-suite:                   run no examples
+    #  ./test.py --example=some-example:                    run the single example
+    #  ./test.py --suite=some-suite --example=some-example: run the single example
     #
     # XXX could use constrain to separate out examples used for performance 
     # testing
     #
-    if len(options.suite) == 0 and len(options.example) == 0:
+    if len(options.suite) == 0 and len(options.example) == 0 and len(options.pyexample) == 0:
         if len(options.constrain) == 0 or options.constrain == "example":
             if ENABLE_EXAMPLES:
                 for test, do_run, do_valgrind_run in example_tests:
                     if eval(do_run):
                         job = Job()
                         job.set_is_example(True)
+                        job.set_is_pyexample(False)
                         job.set_display_name(test)
                         job.set_tmp_file_name("")
                         job.set_cwd(testpy_output_dir)
@@ -1106,6 +1290,7 @@ def run_tests():
         #
         job = Job()
         job.set_is_example(True)
+        job.set_is_pyexample(False)
         job.set_display_name(options.example)
         job.set_tmp_file_name("")
         job.set_cwd(testpy_output_dir)
@@ -1114,7 +1299,88 @@ def run_tests():
         job.set_shell_command("examples/%s" % options.example)
         
         if options.verbose:
-            print "Queue %s" % test
+            print "Queue %s" % options.example
+
+        input_queue.put(job)
+        jobs = jobs + 1
+        total_tests = total_tests + 1
+
+    #
+    # Run some Python examples as smoke tests.  We have a list of all of
+    # the example programs it makes sense to try and run.  Each example will
+    # have a condition associated with it that must evaluate to true for us
+    # to try and execute it.  This is used to determine if the example has
+    # a dependency that is not satisfied.
+    #
+    # We don't care at all how the trace files come out, so we just write them 
+    # to a single temporary directory.
+    #
+    # We need to figure out what python examples to execute.  We are either 
+    # given one pyexample explicitly via the --pyexample option, or we
+    # need to walk the list of python examples
+    #
+    # This translates into allowing the following options with respect to the 
+    # suites
+    #
+    #  ./test.py --constrain=pyexample           run all of the python examples
+    #  ./test.py --pyexample=some-example.py:    run the single python example
+    #
+    if len(options.suite) == 0 and len(options.example) == 0 and len(options.pyexample) == 0:
+        if len(options.constrain) == 0 or options.constrain == "pyexample":
+            if ENABLE_EXAMPLES:
+                for test, do_run in python_tests:
+                    if eval(do_run):
+                        job = Job()
+                        job.set_is_example(False)
+                        job.set_is_pyexample(True)
+                        job.set_display_name(test)
+                        job.set_tmp_file_name("")
+                        job.set_cwd(testpy_output_dir)
+                        job.set_basedir(os.getcwd())
+                        job.set_tempdir(testpy_output_dir)
+                        job.set_shell_command("examples/%s" % test)
+
+                        #
+                        # Python programs and valgrind do not work and play
+                        # well together, so we skip them under valgrind.
+                        # We go through the trouble of doing all of this
+                        # work to report the skipped tests in a consistent
+                        # way throught the output formatter.
+                        #
+                        if options.valgrind:
+                            job.set_is_skip (True)
+
+                        #
+                        # The user can disable python bindings, so we need
+                        # to pay attention to that and give some feedback
+                        # that we're not testing them
+                        #
+                        if not ENABLE_PYTHON_BINDINGS:
+                            job.set_is_skip (True)
+
+                        if options.verbose:
+                            print "Queue %s" % test
+
+                        input_queue.put(job)
+                        jobs = jobs + 1
+                        total_tests = total_tests + 1
+
+    elif len(options.pyexample):
+        #
+        # If you tell me to run a python example, I will try and run the example
+        # irrespective of any condition.
+        #
+        job = Job()
+        job.set_is_pyexample(True)
+        job.set_display_name(options.pyexample)
+        job.set_tmp_file_name("")
+        job.set_cwd(testpy_output_dir)
+        job.set_basedir(os.getcwd())
+        job.set_tempdir(testpy_output_dir)
+        job.set_shell_command("examples/%s" % options.pyexample)
+        
+        if options.verbose:
+            print "Queue %s" % options.pyexample
 
         input_queue.put(job)
         jobs = jobs + 1
@@ -1148,7 +1414,7 @@ def run_tests():
         if job.is_break:
             continue
 
-        if job.is_example:
+        if job.is_example or job.is_pyexample:
             kind = "Example"
         else:
             kind = "TestSuite"
@@ -1172,7 +1438,7 @@ def run_tests():
 
         print "%s: %s %s" % (status, kind, job.display_name)
 
-        if job.is_example == True:
+        if job.is_example or job.is_pyexample:
             #
             # Examples are the odd man out here.  They are written without any
             # knowledge that they are going to be run as a test, so we need to 
@@ -1355,9 +1621,20 @@ def main(argv):
     parser.add_option("-n", "--nowaf", action="store_true", dest="nowaf", default=False,
                       help="do not run waf before starting testing")
 
+    parser.add_option("-p", "--pyexample", action="store", type="string", dest="pyexample", default="",
+                      metavar="PYEXAMPLE",
+                      help="specify a single python example to run")
+
+    parser.add_option("-r", "--retain", action="store_true", dest="retain", default=False,
+                      help="retain all temporary files (which are normally deleted)")
+
     parser.add_option("-s", "--suite", action="store", type="string", dest="suite", default="",
                       metavar="TEST-SUITE",
                       help="specify a single test suite to run")
+
+    parser.add_option("-t", "--text", action="store", type="string", dest="text", default="",
+                      metavar="TEXT-FILE",
+                      help="write detailed test results into TEXT-FILE.txt")
 
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
                       help="print progress and informational messages")
@@ -1365,13 +1642,6 @@ def main(argv):
     parser.add_option("-w", "--web", "--html", action="store", type="string", dest="html", default="",
                       metavar="HTML-FILE",
                       help="write detailed test results into HTML-FILE.html")
-
-    parser.add_option("-r", "--retain", action="store_true", dest="retain", default=False,
-                      help="retain all temporary files (which are normally deleted)")
-
-    parser.add_option("-t", "--text", action="store", type="string", dest="text", default="",
-                      metavar="TEXT-FILE",
-                      help="write detailed test results into TEXT-FILE.txt")
 
     parser.add_option("-x", "--xml", action="store", type="string", dest="xml", default="",
                       metavar="XML-FILE",

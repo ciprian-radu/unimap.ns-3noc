@@ -70,13 +70,13 @@ public:
    * Values may range between -32768 and +32767.  
    */
   virtual void AddRoutingProtocol (Ptr<Ipv6RoutingProtocol> routingProtocol, int16_t priority);
-  
+
   /**
    * \brief Get the number of routing protocols.
    * \return number of routing protocols in the list
    */
   virtual uint32_t GetNRoutingProtocols (void) const;
-  
+
   /**
    * \brief Get pointer to routing protocol stored at index, 
    *
@@ -91,7 +91,7 @@ public:
   virtual Ptr<Ipv6RoutingProtocol> GetRoutingProtocol (uint32_t index, int16_t& priority) const;
 
   // Below are from Ipv6RoutingProtocol
-  virtual Ptr<Ipv6Route> RouteOutput (Ptr<Packet> p, const Ipv6Header &header, uint32_t oif, Socket::SocketErrno &sockerr);
+  virtual Ptr<Ipv6Route> RouteOutput (Ptr<Packet> p, const Ipv6Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr);
 
   virtual bool RouteInput (Ptr<const Packet> p, const Ipv6Header &header, Ptr<const NetDevice> idev,
                            UnicastForwardCallback ucb, MulticastForwardCallback mcb,

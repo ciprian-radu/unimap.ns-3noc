@@ -37,7 +37,7 @@
 // There are a number of command-line options available to control
 // the default behavior.  The list of available command-line options
 // can be listed with the following command:
-// ./waf --run "scratch/wifi-simple-adhoc-grid --help"
+// ./waf --run "wifi-simple-adhoc-grid --help"
 //
 // Note that all ns-3 attributes (not just the ones exposed in the below
 // script) can be changed at command line; see the ns-3 documentation.
@@ -47,21 +47,21 @@
 // the default of 500m.
 // To see this effect, try running:
 //
-// ./waf --run "scratch/wifi-simple-adhoc --distance=500"
-// ./waf --run "scratch/wifi-simple-adhoc --distance=1000"
-// ./waf --run "scratch/wifi-simple-adhoc --distance=1500"
+// ./waf --run "wifi-simple-adhoc --distance=500"
+// ./waf --run "wifi-simple-adhoc --distance=1000"
+// ./waf --run "wifi-simple-adhoc --distance=1500"
 // 
 // The source node and sink node can be changed like this:
 // 
-// ./waf --run "scratch/wifi-simple-adhoc --sourceNode=20 --sinkNode=10"
+// ./waf --run "wifi-simple-adhoc --sourceNode=20 --sinkNode=10"
 //
 // This script can also be helpful to put the Wifi layer into verbose
 // logging mode; this command will turn on all wifi logging:
 // 
-// ./waf --run "scratch/wifi-simple-adhoc-grid --verbose=1"
+// ./waf --run "wifi-simple-adhoc-grid --verbose=1"
 //
 // By default, trace file writing is off-- to enable it, try:
-// ./waf --run "scratch/wifi-simple-adhoc-grid --tracing=1"
+// ./waf --run "wifi-simple-adhoc-grid --tracing=1"
 //
 // When you are done tracing, you will notice many pcap trace files 
 // in your directory.  If you have tcpdump installed, you can try this:
@@ -109,7 +109,7 @@ static void GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize,
 
 int main (int argc, char *argv[])
 {
-  std::string phyMode ("wifib-1mbs");
+  std::string phyMode ("DsssRate1Mbps");
   double distance = 500;  // m
   uint32_t packetSize = 1000; // bytes
   uint32_t numPackets = 1;
@@ -159,8 +159,8 @@ int main (int argc, char *argv[])
   // This is one parameter that matters when using FixedRssLossModel
   // set it to zero; otherwise, gain will be added
   wifiPhy.Set ("RxGain", DoubleValue (-10) ); 
-  // ns-3 support RadioTap and Prism tracing extensions for 802.11b
-  wifiPhy.SetPcapFormat (YansWifiPhyHelper::PCAP_FORMAT_80211_RADIOTAP); 
+  // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
+  wifiPhy.SetPcapDataLinkType (YansWifiPhyHelper::DLT_IEEE802_11_RADIO); 
 
   YansWifiChannelHelper wifiChannel ;
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
@@ -169,6 +169,7 @@ int main (int argc, char *argv[])
 
   // Add a non-QoS upper mac, and disable rate control
   NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default ();
+  wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
                                 "DataMode",StringValue(phyMode),
                                    "ControlMode",StringValue(phyMode));
@@ -205,7 +206,7 @@ int main (int argc, char *argv[])
   Ipv4InterfaceContainer i = ipv4.Assign (devices);
 
   TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
-  Ptr<Socket> recvSink = Socket::CreateSocket (c.Get (0), tid);
+  Ptr<Socket> recvSink = Socket::CreateSocket (c.Get (sinkNode), tid);
   InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 80);
   recvSink->Bind (local);
   recvSink->SetRecvCallback (MakeCallback (&ReceivePacket));
@@ -216,10 +217,10 @@ int main (int argc, char *argv[])
 
   if (tracing == true)
     {
+      AsciiTraceHelper ascii;
+      wifiPhy.EnableAsciiAll (ascii.CreateFileStream ("wifi-simple-adhoc-grid.tr"));
       wifiPhy.EnablePcap ("wifi-simple-adhoc-grid", devices);
-      std::ofstream ascii;
-      ascii.open ("wifi-simple-adhoc-grid.tr");
-      YansWifiPhyHelper::EnableAsciiAll (ascii);
+
       // To do-- enable an IP-level trace that shows forwarding events only
     }
   

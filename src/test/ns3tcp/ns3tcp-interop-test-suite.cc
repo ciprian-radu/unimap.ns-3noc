@@ -87,7 +87,7 @@ private:
   virtual bool DoRun (void);
   virtual void DoTeardown (void);
 
-  void Ipv4L3Tx (std::string context, Ptr<const Packet> packet, uint32_t interfaceIndex);
+  void Ipv4L3Tx (std::string context, Ptr<const Packet> packet, Ptr<Ipv4> ipv4, uint32_t interface);
 
   std::string m_pcapFilename;
   PcapFile m_pcapFile;
@@ -114,12 +114,12 @@ Ns3TcpInteroperabilityTestCase::DoSetup (void)
 
   if (m_writeVectors)
     {
-      m_pcapFile.Open (m_pcapFilename, "w");
+      m_pcapFile.Open (m_pcapFilename, std::ios::out|std::ios::binary);
       m_pcapFile.Init(PCAP_LINK_TYPE, PCAP_SNAPLEN);
     }
   else
     {
-      m_pcapFile.Open (m_pcapFilename, "r");
+      m_pcapFile.Open (m_pcapFilename, std::ios::in|std::ios::binary);
       NS_ABORT_MSG_UNLESS (m_pcapFile.GetDataLinkType () == PCAP_LINK_TYPE, "Wrong response vectors in directory");
     }
 }
@@ -131,7 +131,7 @@ Ns3TcpInteroperabilityTestCase::DoTeardown (void)
 }
 
 void
-Ns3TcpInteroperabilityTestCase::Ipv4L3Tx (std::string context, Ptr<const Packet> packet, uint32_t interfaceIndex)
+Ns3TcpInteroperabilityTestCase::Ipv4L3Tx (std::string context, Ptr<const Packet> packet, Ptr<Ipv4> ipv4, uint32_t interface)
 {
   //
   // We're not testing IP so remove and toss the header.  In order to do this,
@@ -282,7 +282,7 @@ Ns3TcpInteroperabilityTestCase::DoRun (void)
 
   if (m_writeVectors)
     {
-      PointToPointHelper::EnablePcapAll ("tcp-interop");
+      pointToPoint.EnablePcapAll ("tcp-interop");
     }
 
   Simulator::Stop (Seconds(20));

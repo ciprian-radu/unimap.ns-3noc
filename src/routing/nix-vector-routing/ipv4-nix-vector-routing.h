@@ -33,9 +33,18 @@
 
 namespace ns3 {
 
+/**
+ * Map of Ipv4Address to NixVector
+ */
 typedef std::map<Ipv4Address, Ptr<NixVector> > NixMap_t;
+/**
+ * Map of Ipv4Address to Ipv4Route
+ */
 typedef std::map<Ipv4Address, Ptr<Ipv4Route> > Ipv4RouteMap_t;
 
+/**
+ * Nix-vector routing protocol
+ */
 class Ipv4NixVectorRouting : public Ipv4RoutingProtocol
 {
   public:
@@ -53,7 +62,7 @@ class Ipv4NixVectorRouting : public Ipv4RoutingProtocol
      *
      * @param node Node pointer 
      */
-    void SetNode (Ptr<Node>);
+    void SetNode (Ptr<Node> node);
 
     /** 
      * @brief Called when run-time link topology change occurs 
@@ -78,9 +87,9 @@ class Ipv4NixVectorRouting : public Ipv4RoutingProtocol
     void ResetTotalNeighbors (void);
 
     /*  takes in the source node and dest IP and calls GetNodeByIp, 
-     *  BFS, and BuildNixVector to finally return the built 
-     *  nix-vector */
-    Ptr<NixVector> GetNixVector (Ptr<Node>, Ipv4Address);
+     *  BFS, accounting for any output interface specified, and finally 
+     *  BuildNixVector to return the built nix-vector */
+    Ptr<NixVector> GetNixVector (Ptr<Node>, Ipv4Address, Ptr<NetDevice>);
 
     /* checks the cache based on dest IP for the nix-vector */
     Ptr<NixVector> GetNixVectorInCache (Ipv4Address);
@@ -115,21 +124,23 @@ class Ipv4NixVectorRouting : public Ipv4RoutingProtocol
     uint32_t FindNetDeviceForNixIndex (uint32_t nodeIndex, Ipv4Address & gatewayIp);
 
     /* Breadth first search algorithm
-     * Param1: Vector containing all nodes in the graph
+     * Param1: total number of nodes
      * Param2: Source Node
      * Param3: Dest Node
      * Param4: (returned) Parent vector for retracing routes
+     * Param5: specific output interface to use from source node, if not null
      * Returns: false if dest not found, true o.w.
      */
     bool BFS (uint32_t numberOfNodes, 
              Ptr<Node> source, 
              Ptr<Node> dest, 
-             std::vector< Ptr<Node> > & parentVector);
+             std::vector< Ptr<Node> > & parentVector,
+             Ptr<NetDevice> oif);
 
     void DoDispose (void);
 
     /* From Ipv4RoutingProtocol */
-    virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, uint32_t oif, Socket::SocketErrno &sockerr);
+    virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr);
     virtual bool RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<const NetDevice> idev,
                              UnicastForwardCallback ucb, MulticastForwardCallback mcb,
                              LocalDeliverCallback lcb, ErrorCallback ecb);  
@@ -153,5 +164,5 @@ class Ipv4NixVectorRouting : public Ipv4RoutingProtocol
      * number of bits */
     uint32_t m_totalNeighbors;
 };
-} // namepace ns3
+} // namespace ns3
 #endif

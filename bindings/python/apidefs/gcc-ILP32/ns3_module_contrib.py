@@ -3,6 +3,8 @@ from pybindgen import Module, FileCodeSink, param, retval, cppclass, typehandler
 def register_types(module):
     root_module = module.get_root()
     
+    ## average.h: ns3::Average<double> [class]
+    module.add_class('Average', template_parameters=['double'])
     ## delay-jitter-estimation.h: ns3::DelayJitterEstimation [class]
     module.add_class('DelayJitterEstimation')
     ## event-garbage-collector.h: ns3::EventGarbageCollector [class]
@@ -44,6 +46,12 @@ def register_types(module):
     
     nested_module = module.add_cpp_namespace('Config')
     register_types_ns3_Config(nested_module)
+    
+    
+    ## Register a nested module for the namespace FatalImpl
+    
+    nested_module = module.add_cpp_namespace('FatalImpl')
+    register_types_ns3_FatalImpl(nested_module)
     
     
     ## Register a nested module for the namespace TimeStepPrecision
@@ -92,6 +100,10 @@ def register_types_ns3_Config(module):
     root_module = module.get_root()
     
 
+def register_types_ns3_FatalImpl(module):
+    root_module = module.get_root()
+    
+
 def register_types_ns3_TimeStepPrecision(module):
     root_module = module.get_root()
     
@@ -121,6 +133,7 @@ def register_types_ns3_olsr(module):
     
 
 def register_methods(root_module):
+    register_Ns3Average__Double_methods(root_module, root_module['ns3::Average< double >'])
     register_Ns3DelayJitterEstimation_methods(root_module, root_module['ns3::DelayJitterEstimation'])
     register_Ns3EventGarbageCollector_methods(root_module, root_module['ns3::EventGarbageCollector'])
     register_Ns3FileConfig_methods(root_module, root_module['ns3::FileConfig'])
@@ -135,6 +148,71 @@ def register_methods(root_module):
     register_Ns3Gnuplot2dFunction_methods(root_module, root_module['ns3::Gnuplot2dFunction'])
     register_Ns3Gnuplot3dDataset_methods(root_module, root_module['ns3::Gnuplot3dDataset'])
     register_Ns3Gnuplot3dFunction_methods(root_module, root_module['ns3::Gnuplot3dFunction'])
+    return
+
+def register_Ns3Average__Double_methods(root_module, cls):
+    ## average.h: ns3::Average<double>::Average(ns3::Average<double> const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::Average< double > const &', 'arg0')])
+    ## average.h: ns3::Average<double>::Average() [constructor]
+    cls.add_constructor([])
+    ## average.h: double ns3::Average<double>::Avg() const [member function]
+    cls.add_method('Avg', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: uint32_t ns3::Average<double>::Count() const [member function]
+    cls.add_method('Count', 
+                   'uint32_t', 
+                   [], 
+                   is_const=True)
+    ## average.h: double ns3::Average<double>::Error90() const [member function]
+    cls.add_method('Error90', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: double ns3::Average<double>::Error95() const [member function]
+    cls.add_method('Error95', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: double ns3::Average<double>::Error99() const [member function]
+    cls.add_method('Error99', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: double ns3::Average<double>::Max() const [member function]
+    cls.add_method('Max', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: double ns3::Average<double>::Mean() const [member function]
+    cls.add_method('Mean', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: double ns3::Average<double>::Min() const [member function]
+    cls.add_method('Min', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: void ns3::Average<double>::Reset() [member function]
+    cls.add_method('Reset', 
+                   'void', 
+                   [])
+    ## average.h: double ns3::Average<double>::Stddev() const [member function]
+    cls.add_method('Stddev', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## average.h: void ns3::Average<double>::Update(double const & x) [member function]
+    cls.add_method('Update', 
+                   'void', 
+                   [param('double const &', 'x')])
+    ## average.h: double ns3::Average<double>::Var() const [member function]
+    cls.add_method('Var', 
+                   'double', 
+                   [], 
+                   is_const=True)
     return
 
 def register_Ns3DelayJitterEstimation_methods(root_module, cls):
@@ -509,6 +587,7 @@ def register_Ns3Gnuplot3dFunction_methods(root_module, cls):
 def register_functions(root_module):
     module = root_module
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
+    register_functions_ns3_FatalImpl(module.get_submodule('FatalImpl'), root_module)
     register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
     register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
@@ -519,6 +598,9 @@ def register_functions(root_module):
     return
 
 def register_functions_ns3_Config(module, root_module):
+    return
+
+def register_functions_ns3_FatalImpl(module, root_module):
     return
 
 def register_functions_ns3_TimeStepPrecision(module, root_module):

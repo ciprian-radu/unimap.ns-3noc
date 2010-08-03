@@ -1,9 +1,11 @@
+/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 #ifndef IPV4_RAW_SOCKET_IMPL_H
 #define IPV4_RAW_SOCKET_IMPL_H
 
 #include "ns3/socket.h"
 #include "ns3/ipv4-header.h"
 #include "ns3/ipv4-route.h"
+#include "ns3/ipv4-interface.h"
 #include <list>
 
 namespace ns3 {
@@ -40,7 +42,10 @@ public:
 				Address &fromAddress);
 
   void SetProtocol (uint16_t protocol);
-  bool ForwardUp (Ptr<const Packet> p, Ipv4Header ipHeader, Ptr<NetDevice> device);
+  bool ForwardUp (Ptr<const Packet> p, Ipv4Header ipHeader, Ptr<Ipv4Interface> incomingInterface);
+  virtual bool SetAllowBroadcast (bool allowBroadcast);
+  virtual bool GetAllowBroadcast () const;
+
 private:
   virtual void DoDispose (void);
 
@@ -59,6 +64,7 @@ private:
   bool m_shutdownSend;
   bool m_shutdownRecv;
   uint32_t m_icmpFilter;
+  bool m_iphdrincl;
 };
 
 } // namespace ns3

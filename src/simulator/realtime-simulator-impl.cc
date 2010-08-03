@@ -86,6 +86,10 @@ RealtimeSimulatorImpl::RealtimeSimulatorImpl ()
 }
 
 RealtimeSimulatorImpl::~RealtimeSimulatorImpl ()
+{}
+
+void
+RealtimeSimulatorImpl::DoDispose (void)
 {
   NS_LOG_FUNCTION_NOARGS ();
   while (m_events->IsEmpty () == false)
@@ -95,6 +99,7 @@ RealtimeSimulatorImpl::~RealtimeSimulatorImpl ()
     }
   m_events = 0;
   m_synchronizer = 0;
+  SimulatorImpl::DoDispose ();
 }
 
 void
@@ -156,7 +161,7 @@ RealtimeSimulatorImpl::ProcessOneEvent (void)
   //
   // We need to be able to have external events (such as a packet reception event)
   // cause us to re-evaluate our state.  The way this works is that the synchronizer
-  // gets interrupted and returs.  So, there is a possibility that things may change
+  // gets interrupted and returns.  So, there is a possibility that things may change
   // out from under us dynamically.  In this case, we need to re-evaluate how long to 
   // wait in a for-loop until we have waited sucessfully (until a timeout) for the 
   // event at the head of the event list.
@@ -820,6 +825,13 @@ RealtimeSimulatorImpl::GetMaximumSimulationTime (void) const
   // XXX: I am fairly certain other compilers use other non-standard
   // post-fixes to indicate 64 bit constants.
   return TimeStep (0x7fffffffffffffffLL);
+}
+
+// System ID for non-distributed simulation is always zero
+uint32_t 
+RealtimeSimulatorImpl::GetSystemId (void) const
+{
+  return 0;
 }
 
 uint32_t

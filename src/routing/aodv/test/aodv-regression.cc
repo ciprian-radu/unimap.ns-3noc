@@ -19,6 +19,8 @@
  */
 
 #include "aodv-regression.h"
+#include "bug-772.h"
+#include "loopback.h"
 
 #include "ns3/mesh-helper.h"
 #include "ns3/simulator.h"
@@ -58,6 +60,12 @@ public:
     AddTestCase (new ChainRegressionTest ("aodv-chain-regression-test"));
     // Bug 606 test case, should crash if bug is not fixed
     AddTestCase (new ChainRegressionTest ("bug-606-test", Seconds (10), 3, Seconds (1)));
+    // Bug 772 UDP test case
+    AddTestCase (new Bug772ChainTest ("udp-chain-test", "ns3::UdpSocketFactory", Seconds (3), 10));
+    // Bug 772 TCP test case
+    AddTestCase (new Bug772ChainTest ("tcp-chain-test", "ns3::TcpSocketFactory", Seconds (3), 10));
+    // Ping loopback test case
+    AddTestCase (new LoopbackTestCase ());
   }
 } g_aodvRegressionTestSuite;
  
@@ -131,8 +139,10 @@ ChainRegressionTest::CreateDevices ()
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default ();
   wifiPhy.SetChannel (wifiChannel.Create ());
+  // This test suite output was originally based on YansErrorRateModel   
+  wifiPhy.SetErrorRateModel ("ns3::YansErrorRateModel"); 
   WifiHelper wifi = WifiHelper::Default ();
-  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager", "DataMode", StringValue ("wifia-6mbs"), "RtsCtsThreshold", StringValue ("2200"));
+  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager", "DataMode", StringValue ("OfdmRate6Mbps"), "RtsCtsThreshold", StringValue ("2200"));
   NetDeviceContainer devices = wifi.Install (wifiPhy, wifiMac, *m_nodes); 
   
   // 2. Setup TCP/IP & AODV

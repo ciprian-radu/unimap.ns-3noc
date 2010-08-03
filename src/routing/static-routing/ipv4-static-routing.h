@@ -74,7 +74,7 @@ public:
   Ipv4StaticRouting ();
   virtual ~Ipv4StaticRouting ();
 
-  virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, uint32_t oif, Socket::SocketErrno &sockerr);
+  virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr);
 
   virtual bool RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr<const NetDevice> idev,
                              UnicastForwardCallback ucb, MulticastForwardCallback mcb,
@@ -238,7 +238,7 @@ public:
  *
  * Typically there are two main types of multicast routes:  routes of the 
  * first kind are used during forwarding.  All of the conditions must be
- * exlicitly provided.  The second kind of routes are used to get packets off
+ * explicitly provided.  The second kind of routes are used to get packets off
  * of a local node.  The difference is in the input interface.  Routes for
  * forwarding will always have an explicit input interface specified.  Routes
  * off of a node will always set the input interface to a wildcard specified
@@ -335,14 +335,14 @@ public:
  * route that matches the parameters and removes it.
  *
  * Wildcards may be provided to this function, but the wildcards are used to
- * exacly match wildcards in the routes (see AddMulticastRoute).  That is,
+ * exactly match wildcards in the routes (see AddMulticastRoute).  That is,
  * calling RemoveMulticastRoute with the origin set to "0.0.0.0" will not
  * remove routes with any address in the origin, but will only remove routes
  * with "0.0.0.0" set as the the origin.
  *
  * \param origin The IP address specified as the origin of packets for the
  * route.
- * \param group The IP address specified as the multicast group addres of
+ * \param group The IP address specified as the multicast group address of
  * the route.
  * \param inputInterface The network interface index specified as the expected
  * input interface for the route.
@@ -382,7 +382,7 @@ private:
   typedef std::list<Ipv4MulticastRoutingTableEntry *>::const_iterator MulticastRoutesCI;
   typedef std::list<Ipv4MulticastRoutingTableEntry *>::iterator MulticastRoutesI;
   
-  Ptr<Ipv4Route> LookupStatic (Ipv4Address dest);
+  Ptr<Ipv4Route> LookupStatic (Ipv4Address dest, Ptr<NetDevice> oif = 0);
   Ptr<Ipv4MulticastRoute> LookupStatic (Ipv4Address origin, Ipv4Address group,
                                     uint32_t interface);
 

@@ -6,9 +6,9 @@ def register_types(module):
     ## histogram.h: ns3::Histogram [class]
     module.add_class('Histogram')
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::FlowClassifier, ns3::empty, ns3::DefaultDeleter<ns3::FlowClassifier> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::FlowClassifier', 'ns3::empty', 'ns3::DefaultDeleter<ns3::FlowClassifier>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::FlowClassifier', 'ns3::empty', 'ns3::DefaultDeleter<ns3::FlowClassifier>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::FlowProbe, ns3::empty, ns3::DefaultDeleter<ns3::FlowProbe> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::FlowProbe', 'ns3::empty', 'ns3::DefaultDeleter<ns3::FlowProbe>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::FlowProbe', 'ns3::empty', 'ns3::DefaultDeleter<ns3::FlowProbe>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## flow-classifier.h: ns3::FlowClassifier [class]
     module.add_class('FlowClassifier', parent=root_module['ns3::SimpleRefCount< ns3::FlowClassifier, ns3::empty, ns3::DefaultDeleter<ns3::FlowClassifier> >'])
     ## flow-monitor.h: ns3::FlowMonitor [class]
@@ -26,7 +26,7 @@ def register_types(module):
     ## ipv4-flow-probe.h: ns3::Ipv4FlowProbe [class]
     module.add_class('Ipv4FlowProbe', parent=root_module['ns3::FlowProbe'])
     ## ipv4-flow-probe.h: ns3::Ipv4FlowProbe::DropReason [enumeration]
-    module.add_enum('DropReason', ['DROP_NO_ROUTE', 'DROP_TTL_EXPIRE', 'DROP_BAD_CHECKSUM', 'DROP_INVALID_REASON'], outer_class=root_module['ns3::Ipv4FlowProbe'])
+    module.add_enum('DropReason', ['DROP_NO_ROUTE', 'DROP_TTL_EXPIRE', 'DROP_BAD_CHECKSUM', 'DROP_QUEUE', 'DROP_INVALID_REASON'], outer_class=root_module['ns3::Ipv4FlowProbe'])
     module.add_container('std::map< unsigned int, ns3::FlowMonitor::FlowStats >', ('unsigned int', 'ns3::FlowMonitor::FlowStats'), container_type='map')
     module.add_container('std::map< unsigned int, ns3::FlowProbe::FlowStats >', ('unsigned int', 'ns3::FlowProbe::FlowStats'), container_type='map')
     typehandlers.add_type_alias('uint32_t', 'ns3::FlowPacketId')
@@ -40,6 +40,12 @@ def register_types(module):
     
     nested_module = module.add_cpp_namespace('Config')
     register_types_ns3_Config(nested_module)
+    
+    
+    ## Register a nested module for the namespace FatalImpl
+    
+    nested_module = module.add_cpp_namespace('FatalImpl')
+    register_types_ns3_FatalImpl(nested_module)
     
     
     ## Register a nested module for the namespace TimeStepPrecision
@@ -85,6 +91,10 @@ def register_types(module):
     
 
 def register_types_ns3_Config(module):
+    root_module = module.get_root()
+    
+
+def register_types_ns3_FatalImpl(module):
     root_module = module.get_root()
     
 
@@ -173,8 +183,6 @@ def register_Ns3Histogram_methods(root_module, cls):
     return
 
 def register_Ns3FlowClassifier_methods(root_module, cls):
-    ## flow-classifier.h: ns3::FlowClassifier::FlowClassifier(ns3::FlowClassifier const & arg0) [copy constructor]
-    cls.add_constructor([param('ns3::FlowClassifier const &', 'arg0')])
     ## flow-classifier.h: ns3::FlowClassifier::FlowClassifier() [constructor]
     cls.add_constructor([])
     ## flow-classifier.h: void ns3::FlowClassifier::SerializeToXmlStream(std::ostream & os, int indent) const [member function]
@@ -292,6 +300,8 @@ def register_Ns3FlowMonitorFlowStats_methods(root_module, cls):
     cls.add_instance_attribute('delayHistogram', 'ns3::Histogram', is_const=False)
     ## flow-monitor.h: ns3::FlowMonitor::FlowStats::delaySum [variable]
     cls.add_instance_attribute('delaySum', 'ns3::Time', is_const=False)
+    ## flow-monitor.h: ns3::FlowMonitor::FlowStats::flowInterruptionsHistogram [variable]
+    cls.add_instance_attribute('flowInterruptionsHistogram', 'ns3::Histogram', is_const=False)
     ## flow-monitor.h: ns3::FlowMonitor::FlowStats::jitterHistogram [variable]
     cls.add_instance_attribute('jitterHistogram', 'ns3::Histogram', is_const=False)
     ## flow-monitor.h: ns3::FlowMonitor::FlowStats::jitterSum [variable]
@@ -325,8 +335,6 @@ def register_Ns3FlowMonitorFlowStats_methods(root_module, cls):
     return
 
 def register_Ns3FlowProbe_methods(root_module, cls):
-    ## flow-probe.h: ns3::FlowProbe::FlowProbe(ns3::FlowProbe const & arg0) [copy constructor]
-    cls.add_constructor([param('ns3::FlowProbe const &', 'arg0')])
     ## flow-probe.h: void ns3::FlowProbe::AddPacketDropStats(ns3::FlowId flowId, uint32_t packetSize, uint32_t reasonCode) [member function]
     cls.add_method('AddPacketDropStats', 
                    'void', 
@@ -368,8 +376,6 @@ def register_Ns3FlowProbeFlowStats_methods(root_module, cls):
     return
 
 def register_Ns3Ipv4FlowClassifier_methods(root_module, cls):
-    ## ipv4-flow-classifier.h: ns3::Ipv4FlowClassifier::Ipv4FlowClassifier(ns3::Ipv4FlowClassifier const & arg0) [copy constructor]
-    cls.add_constructor([param('ns3::Ipv4FlowClassifier const &', 'arg0')])
     ## ipv4-flow-classifier.h: ns3::Ipv4FlowClassifier::Ipv4FlowClassifier() [constructor]
     cls.add_constructor([])
     ## ipv4-flow-classifier.h: bool ns3::Ipv4FlowClassifier::Classify(ns3::Ipv4Header const & ipHeader, ns3::Ptr<ns3::Packet const> ipPayload, uint32_t * out_flowId, uint32_t * out_packetId) [member function]
@@ -408,8 +414,6 @@ def register_Ns3Ipv4FlowClassifierFiveTuple_methods(root_module, cls):
     return
 
 def register_Ns3Ipv4FlowProbe_methods(root_module, cls):
-    ## ipv4-flow-probe.h: ns3::Ipv4FlowProbe::Ipv4FlowProbe(ns3::Ipv4FlowProbe const & arg0) [copy constructor]
-    cls.add_constructor([param('ns3::Ipv4FlowProbe const &', 'arg0')])
     ## ipv4-flow-probe.h: ns3::Ipv4FlowProbe::Ipv4FlowProbe(ns3::Ptr<ns3::FlowMonitor> monitor, ns3::Ptr<ns3::Ipv4FlowClassifier> classifier, ns3::Ptr<ns3::Node> node) [constructor]
     cls.add_constructor([param('ns3::Ptr< ns3::FlowMonitor >', 'monitor'), param('ns3::Ptr< ns3::Ipv4FlowClassifier >', 'classifier'), param('ns3::Ptr< ns3::Node >', 'node')])
     return
@@ -417,6 +421,7 @@ def register_Ns3Ipv4FlowProbe_methods(root_module, cls):
 def register_functions(root_module):
     module = root_module
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
+    register_functions_ns3_FatalImpl(module.get_submodule('FatalImpl'), root_module)
     register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
     register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
@@ -427,6 +432,9 @@ def register_functions(root_module):
     return
 
 def register_functions_ns3_Config(module, root_module):
+    return
+
+def register_functions_ns3_FatalImpl(module, root_module):
     return
 
 def register_functions_ns3_TimeStepPrecision(module, root_module):

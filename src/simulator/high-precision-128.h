@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2006 INRIA
+ * Copyright (c) 2010 INRIA
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -20,239 +20,109 @@
 #ifndef HIGH_PRECISION_128_H
 #define HIGH_PRECISION_128_H
 
+#include "ns3/simulator-config.h"
+#include <math.h>
 #include <stdint.h>
-#include "cairo-wideint-private.h"
 
-/**
- * This file contains an implementation of the HighPrecision class.
- * Each instance of the Time class also contains an instance of this
- * class which is used to perform all the arithmetic operations of
- * the Time class.
- *
- * This code is a bit ugly with a lot of inline methods for speed:
- * profiling this code on anything but the simplest scenarios shows
- * that it is a big bottleneck if great care in its implementation
- * is not performed. My observations are that what dominates are 
- * Division operations (there are really really super costly)
- * and Comparison operations (because there are typically a lot of
- * these in any complex timekeeping code).
- *
- * So, the code tries really hard to perform any of these 128 bit 
- * operations by doing all arithmetic on 64 bit integers when possible
- * (i.e., when there is no fractional part. This is a very common case).
- * Hence, the following code has a m_fastValue (64 bits) and a 
- * m_slowValue (128 bits). m_fastValue is used by default and the code
- * converts it to a m_slowValue when needed.
- *
- * If you want to monitor the efficiency of this strategy, you can 
- * enable the macro HP128INC below and call the HighPrecision::PrintStats
- * method at the end of the simulation.
- *
- *  Explanation of Slow and Fast values:
- *
- * HighPrecision class create a fastValue and a slowValue depending on the
- * input number. If the input is an integer with 0 fractional part, it will
- * use the fastValue which will contain the integer in a 64 bits format. If
- * it has a fractional part, the slowValue will be used. It is represented
- * simply as a high part slowValue.hi which will contain the integer part
- * and the fractional part slowValue.lo which will contain the factional
- * part as an integer (obtained by multiplying the fractional part by 2^64).
- *
- * Explanation of Slow and Fast operations:
- *
- * If both operands are fastValues, we will perform fast operations, i-e
- * simply using integer operations. If we have though one of the value is
- * slowValue we need to convert the fastValue into a slow one. It is simply
- * obtained by putting the slowValue.lo = 0 and slowValue.hi = fastValue.
- * After that we apply the slow operation which will be a 128 bits operation
- * with two 128 bits operands.
- *
- */
-
-
-#define noGATHER_STATISTICS 1
-
-#ifdef GATHER_STATISTICS
-#define HP128INC(x) x++
-#else
-#define HP128INC(x)
+#if defined(HAVE___UINT128_T) and !defined(HAVE_UINT128_T)
+typedef __uint128_t uint128_t;
+typedef __int128_t int128_t;
 #endif
 
 namespace ns3 {
 
-class HighPrecision 
+class HighPrecision
 {
 public:
   inline HighPrecision ();
   inline HighPrecision (int64_t value, bool dummy);
-  HighPrecision (double value);
+  inline HighPrecision (double value);
 
-  static void PrintStats (void);
-  
   inline int64_t GetInteger (void) const;
   inline double GetDouble (void) const;
-  inline bool Add (HighPrecision const &o);
-  inline bool Sub (HighPrecision const &o);
-  inline bool Mul (HighPrecision const &o);
-  bool Div (HighPrecision const &o);
+  inline void Add (HighPrecision const &o);
+  inline void Sub (HighPrecision const &o);
+  void Mul (HighPrecision const &o);
+  void Div (HighPrecision const &o);
 
   inline int Compare (HighPrecision const &o) const;
   inline static HighPrecision Zero (void);
 private:
-  int64_t SlowGetInteger (void) const;
-  double SlowGetDouble (void) const;
-  bool SlowAdd (HighPrecision const &o);
-  bool SlowSub (HighPrecision const &o);
-  bool SlowMul (HighPrecision const &o);
-  int SlowCompare (HighPrecision const &o) const;
-  cairo_uint128_t  Mul128(cairo_uint128_t , cairo_uint128_t );
-  inline void EnsureSlow (void);
-
-  static const double MAX_64;
-  bool m_isFast;
-  int64_t m_fastValue;
-  cairo_int128_t m_slowValue;
-
-#ifdef GATHER_STATISTICS
-  static int m_nfastadds;
-  static int m_nfastsubs;
-  static int m_nfastmuls;
-  static int m_nfastcmps;
-  static int m_nfastgets;
-  static int m_nslowadds;
-  static int m_nslowsubs;
-  static int m_nslowmuls;
-  static int m_nslowcmps;
-  static int m_nslowgets;
-  static int m_ndivs;
-  static int m_nconversions;
-#endif /* GATHER_STATISTICS */
+  int128_t m_value;
 };
 
-}; // namespace ns3
+} // namespace ns3
 
 namespace ns3 {
 
 HighPrecision::HighPrecision ()
-  : m_isFast (true),
-    m_fastValue (0)
+  : m_value (0)
 {}
-
 HighPrecision::HighPrecision (int64_t value, bool dummy)
-  : m_isFast (true),
-    m_fastValue (value)
-{}
+  : m_value (value)
+{
+  m_value <<= 64;
+}
 
 
-int64_t 
-HighPrecision::GetInteger (void) const
+
+int64_t HighPrecision::GetInteger (void) const
 {
-  if (m_isFast)
-    {
-      HP128INC (m_nfastgets);
-      return m_fastValue;
-    }
-  else
-    {
-      HP128INC (m_nslowgets);
-      return SlowGetInteger ();
-    }
+  int128_t v = m_value >> 64;
+  return v;
 }
-double HighPrecision::GetDouble (void) const
-{
-  if (m_isFast)
-    {
-      HP128INC (m_nfastgets);
-      double retval = m_fastValue;
-      return retval;
-    }
-  else
-    {
-      HP128INC (m_nslowgets);
-      return SlowGetDouble ();
-    }
-}
-bool 
+
+void
 HighPrecision::Add (HighPrecision const &o)
 {
-  if (m_isFast && o.m_isFast)
-    {
-      HP128INC (m_nfastadds);
-      m_fastValue += o.m_fastValue;
-      return false;
-    }
-  else
-    {
-      HP128INC (m_nslowadds);
-      return SlowAdd (o);
-    }
+  m_value += o.m_value;
 }
-bool 
+void
 HighPrecision::Sub (HighPrecision const &o)
 {
-  if (m_isFast && o.m_isFast)
-    {
-      HP128INC (m_nfastsubs);
-      m_fastValue -= o.m_fastValue;
-      return false;
-    }
-  else
-    {
-      HP128INC (m_nslowsubs);
-      return SlowSub (o);
-    }
-}
-bool 
-HighPrecision::Mul (HighPrecision const &o)
-{
-  if (m_isFast && o.m_isFast)
-    {
-      HP128INC (m_nfastmuls);
-      m_fastValue *= o.m_fastValue;
-      return false;
-    }
-  else
-    {
-      HP128INC (m_nslowmuls);
-      return SlowMul (o);
-    }
+  m_value -= o.m_value;
 }
 
 int 
 HighPrecision::Compare (HighPrecision const &o) const
 {
-  if (m_isFast && o.m_isFast)
-    {
-      HP128INC (m_nfastcmps);
-      if (m_fastValue < o.m_fastValue)
-        {
-          return -1;
-        }
-      else if (m_fastValue == o.m_fastValue)
-        {
-          return 0;
-        }
-      else
-        {
-          return +1;
-        }
-    }
-  else
-    {
-      HP128INC (m_nslowcmps);
-      return SlowCompare (o);
-    }
-  // The below statement is unreachable but necessary for optimized
-  // builds with gcc-4.0.x due to a compiler bug.
-  return 0;  
+  return (m_value < o.m_value)?-1:(m_value == o.m_value)?0:1;
 }
-HighPrecision 
+
+HighPrecision
 HighPrecision::Zero (void)
 {
   return HighPrecision ();
 }
 
+#define HP128_MAX_64 18446744073709551615.0
+double 
+HighPrecision::GetDouble (void) const
+{
+  bool is_negative = m_value < 0;
+  uint128_t value = is_negative ? -m_value:m_value;
+  uint64_t hi = value >> 64;
+  uint64_t lo = value;
+  double flo = lo;
+  flo /= HP128_MAX_64;
+  double retval = hi;
+  retval += flo;
+  retval = is_negative ? -retval : retval;
+  return retval;
+}
+HighPrecision::HighPrecision (double value)
+{
+  bool is_negative = value < 0;
+  value = is_negative?-value:value;
+  double hi = floor (value);
+  double lo = (value - hi) * HP128_MAX_64;
+  m_value = (int128_t)hi;
+  m_value <<= 64;
+  m_value += (int128_t)lo;
+  m_value = is_negative?-m_value:m_value;
+}
+#undef HP128_MAX_64
 
-}; // namespace ns3
+} // namespace ns3
 
 #endif /* HIGH_PRECISION_128_H */

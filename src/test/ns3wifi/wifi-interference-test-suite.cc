@@ -28,6 +28,7 @@
 #include "ns3/config.h"
 #include "ns3/string.h"
 #include "ns3/uinteger.h"
+#include "ns3/double.h"
 #include "ns3/data-rate.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/internet-stack-helper.h"
@@ -148,8 +149,8 @@ WifiInterferenceTestCase::WifiSimpleInterference (std::string phyMode,double Prs
   wifiPhy.Set ("RxGain", DoubleValue (0) ); 
   wifiPhy.Set ("CcaMode1Threshold", DoubleValue (0.0) );
   
-  // ns-3 support RadioTap and Prism tracing extensions for 802.11b
-  wifiPhy.SetPcapFormat (YansWifiPhyHelper::PCAP_FORMAT_80211_RADIOTAP); 
+  // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
+  wifiPhy.SetPcapDataLinkType (YansWifiPhyHelper::DLT_IEEE802_11_RADIO); 
   
   YansWifiChannelHelper wifiChannel ;
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
@@ -229,7 +230,7 @@ bool
 WifiInterferenceTestCase::DoRun (void)
 {
 
-  std::string phyMode ("wifib-1mbs");
+  std::string phyMode ("DsssRate1Mbps");
   double Prss = -90;  // -dBm
   double Irss = -90;  // -dBm
   double delta = 0;  // microseconds

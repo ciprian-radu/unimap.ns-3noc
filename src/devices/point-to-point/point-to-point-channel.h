@@ -69,7 +69,7 @@ public:
    * \param txTime Transmit time to apply
    * \returns true if successful (currently always true)
    */
-  bool TransmitStart (Ptr<Packet> p, Ptr<PointToPointNetDevice> src, Time txTime);
+  virtual bool TransmitStart (Ptr<Packet> p, Ptr<PointToPointNetDevice> src, Time txTime);
 
   /**
    * \brief Get number of devices on this channel
@@ -91,6 +91,35 @@ public:
    */
   virtual Ptr<NetDevice> GetDevice (uint32_t i) const;
 
+protected:
+  /*
+   * \brief Get the delay associated with this channel
+   * \returns Time delay
+   */
+  Time GetDelay (void) const;
+
+  /*
+   * \brief Check to make sure the link is initialized
+   * \returns true if initialized, asserts otherwise
+   */
+  bool IsInitialized (void) const;
+
+  /*
+   * \brief Get the net-device source 
+   * \param i the link requested
+   * \returns Ptr to PointToPointNetDevice source for the 
+   * specified link
+   */
+  Ptr<PointToPointNetDevice> GetSource (uint32_t i) const;
+
+  /*
+   * \brief Get the net-device destination
+   * \param i the link requested
+   * \returns Ptr to PointToPointNetDevice destination for 
+   * the specified link
+   */
+  Ptr<PointToPointNetDevice> GetDestination (uint32_t i) const;
+
 private:
   // Each point to point link has exactly two net devices
   static const int N_DEVICES = 2;
@@ -102,7 +131,7 @@ private:
    * The trace source for the packet transmission animation events that the 
    * device can fire.
    * Arguments to the callback are the packet, transmitting
-   * net device, receiving net device, transmittion time and 
+   * net device, receiving net device, transmission time and 
    * packet receipt time.
    *
    * @see class CallBackTraceSource

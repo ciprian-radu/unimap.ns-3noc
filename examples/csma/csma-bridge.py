@@ -123,9 +123,8 @@ def main(argv):
     # Trace output will be sent to the file "csma-bridge.tr"
     #
     #print "Configure Tracing."
-    #std.ofstream ascii
-    #ascii.open("csma-bridge.tr")
-    #CsmaHelper.EnableAsciiAll(ascii)
+    #ascii = ns3.AsciiTraceHelper();
+    #csma.EnableAsciiAll(ascii.CreateFileStream ("csma-bridge.tr"));
 
     #
     # Also configure some tcpdump traces; each interface will be traced.
@@ -134,7 +133,7 @@ def main(argv):
     # and can be read by the "tcpdump -r" command(use "-tt" option to
     # display timestamps correctly)
     #
-    ns3.CsmaHelper.EnablePcapAll("csma-bridge", False)
+    csma.EnablePcapAll("csma-bridge", False)
 
     #
     # Now, do the actual simulation.

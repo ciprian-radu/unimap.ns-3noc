@@ -80,6 +80,9 @@ class Socket;
  * until the originally scheduled transmission, and this time remaining
  * information is cached and used to schedule the next transmission
  * upon restarting.
+ *
+ * If the underlying socket type supports broadcast, this application
+ * will automatically enable the SetAllowBroadcast(true) socket option.  
  */
 class OnOffApplication : public Application 
 {
@@ -90,7 +93,14 @@ public:
 
   virtual ~OnOffApplication();
 
-  void SetMaxBytes(uint32_t maxBytes);
+  /**
+   * \param maxBytes the total number of bytes to send
+   *
+   * Set the total number of bytes to send. Once these bytes are sent, no packet 
+   * is sent again, even in on state. The value zero means that there is no 
+   * limit.
+   */
+  void SetMaxBytes (uint32_t maxBytes);
 
 protected:
   virtual void DoDispose (void);
@@ -111,9 +121,9 @@ private:
 
 
   // Event handlers
-  void StartSending();
-  void StopSending();
-  void SendPacket();
+  void StartSending ();
+  void StopSending ();
+  void SendPacket ();
 
   Ptr<Socket>     m_socket;       // Associated socket
   Address         m_peer;         // Peer address

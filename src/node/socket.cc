@@ -33,6 +33,8 @@ namespace ns3 {
 
 Socket::Socket (void)
 {
+  m_boundnetdevice = 0;
+  m_recvpktinfo = false;
   NS_LOG_FUNCTION_NOARGS ();
 }
 
@@ -297,6 +299,39 @@ Socket::DoDispose (void)
   m_receivedData = MakeNullCallback<void,Ptr<Socket> > ();
 }
 
+void
+Socket::BindToNetDevice (Ptr<NetDevice> netdevice)
+{
+  if (netdevice != 0)
+    {
+      bool found = false;
+      for (uint32_t i = 0; i < GetNode()->GetNDevices (); i++)
+        {
+          if (GetNode()->GetDevice (i) == netdevice)
+            {
+              found = true;
+              break;
+            }
+        }
+        NS_ASSERT_MSG (found, "Socket cannot be bound to a NetDevice not existing on the Node");
+    }
+  m_boundnetdevice = netdevice;
+  return;
+}
+
+Ptr<NetDevice>
+Socket::GetBoundNetDevice ()
+{
+  return m_boundnetdevice;
+}
+
+void 
+Socket::SetRecvPktInfo (bool flag)
+{
+  NS_LOG_FUNCTION_NOARGS ();
+  m_recvpktinfo = flag;
+}
+
 /***************************************************************
  *           Socket Tags
  ***************************************************************/
@@ -317,6 +352,7 @@ SocketAddressTag::GetAddress (void) const
   return m_address;
 }
 
+NS_OBJECT_ENSURE_REGISTERED (SocketAddressTag);
 
 TypeId
 SocketAddressTag::GetTypeId (void)
@@ -369,6 +405,7 @@ SocketIpTtlTag::GetTtl (void) const
   return m_ttl;
 }
 
+NS_OBJECT_ENSURE_REGISTERED (SocketIpTtlTag);
 
 TypeId
 SocketIpTtlTag::GetTypeId (void)
@@ -424,6 +461,8 @@ SocketSetDontFragmentTag::IsEnabled (void) const
 {
   return m_dontFragment;
 }
+
+NS_OBJECT_ENSURE_REGISTERED (SocketSetDontFragmentTag);
 
 TypeId 
 SocketSetDontFragmentTag::GetTypeId (void)

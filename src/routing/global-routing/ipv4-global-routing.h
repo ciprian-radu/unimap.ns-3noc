@@ -27,6 +27,7 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4.h"
 #include "ns3/ipv4-routing-protocol.h"
+#include "ns3/random-variable.h"
 
 namespace ns3 {
 
@@ -80,7 +81,8 @@ public:
   Ipv4GlobalRouting ();
   virtual ~Ipv4GlobalRouting ();
 
-  virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, uint32_t oif, Socket::SocketErrno &sockerr);
+  // These methods inherited from base class
+  virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr);
 
   virtual bool RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr<const NetDevice> idev,
                              UnicastForwardCallback ucb, MulticastForwardCallback mcb,
@@ -172,10 +174,10 @@ public:
  * \brief Get a route from the global unicast routing table.
  *
  * Externally, the unicast global routing table appears simply as a table with
- * n entries.  The one sublety of note is that if a default route has been set
+ * n entries.  The one subtlety of note is that if a default route has been set
  * it will appear as the zeroth entry in the table.  This means that if you
  * add only a default route, the table will have one entry that can be accessed
- * either by explicity calling GetDefaultRoute () or by calling GetRoute (0).
+ * either by explicitly calling GetDefaultRoute () or by calling GetRoute (0).
  * 
  * Similarly, if the default route has been set, calling RemoveRoute (0) will
  * remove the default route.
@@ -194,7 +196,7 @@ public:
  * \brief Remove a route from the global unicast routing table.
  *
  * Externally, the unicast global routing table appears simply as a table with
- * n entries.  The one sublety of note is that if a default route has been set
+ * n entries.  The one subtlety of note is that if a default route has been set
  * it will appear as the zeroth entry in the table.  This means that if the
  * default route has been set, calling RemoveRoute (0) will remove the
  * default route.
@@ -212,6 +214,13 @@ protected:
   void DoDispose (void);
 
 private:
+  /// Set to true if packets are randomly routed among ECMP; set to false for using only one route consistently
+  bool m_randomEcmpRouting;
+  /// Set to true if this interface should respond to interface events by globallly recomputing routes 
+  bool m_respondToInterfaceEvents;
+  /// A uniform random number generator for randomly routing packets among ECMP 
+  UniformVariable m_rand;
+
   typedef std::list<Ipv4RoutingTableEntry *> HostRoutes;
   typedef std::list<Ipv4RoutingTableEntry *>::const_iterator HostRoutesCI;
   typedef std::list<Ipv4RoutingTableEntry *>::iterator HostRoutesI;
@@ -222,7 +231,7 @@ private:
   typedef std::list<Ipv4RoutingTableEntry *>::const_iterator ASExternalRoutesCI;
   typedef std::list<Ipv4RoutingTableEntry *>::iterator ASExternalRoutesI;
 
-  Ptr<Ipv4Route> LookupGlobal (Ipv4Address dest);
+  Ptr<Ipv4Route> LookupGlobal (Ipv4Address dest, Ptr<NetDevice> oif = 0);
 
   HostRoutes m_hostRoutes;
   NetworkRoutes m_networkRoutes;

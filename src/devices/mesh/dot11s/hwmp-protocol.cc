@@ -710,7 +710,6 @@ HwmpProtocol::Install (Ptr<MeshPointDevice> mp)
       //Installing airtime link metric:
       Ptr<AirtimeLinkMetricCalculator> metric = CreateObject <AirtimeLinkMetricCalculator> ();
       mac->SetLinkMetricCallback (MakeCallback (&AirtimeLinkMetricCalculator::CalculateMetric, metric));
-      metric->SetPhyStandard (mac->GetPhyStandard ());
     }
   mp->SetRoutingProtocol (this);
   // Mesh point aggregates all installed protocols
@@ -1156,7 +1155,7 @@ HwmpProtocol::Report (std::ostream & os) const
 void
 HwmpProtocol::ResetStats ()
 {
-  m_stats = Statistics::Statistics ();
+  m_stats = Statistics ();
   for (HwmpProtocolMacMap::const_iterator plugin = m_interfaces.begin (); plugin != m_interfaces.end (); plugin ++)
     {
       plugin->second->ResetStats ();

@@ -27,12 +27,14 @@
 #include "ns3/object-factory.h"
 #include "yans-wifi-channel.h"
 #include "yans-wifi-phy.h"
-#include "propagation-loss-model.h"
-#include "propagation-delay-model.h"
+#include "ns3/propagation-loss-model.h"
+#include "ns3/propagation-delay-model.h"
 
 NS_LOG_COMPONENT_DEFINE ("YansWifiChannel");
 
 namespace ns3 {
+
+NS_OBJECT_ENSURE_REGISTERED (YansWifiChannel);
 
 TypeId 
 YansWifiChannel::GetTypeId (void)

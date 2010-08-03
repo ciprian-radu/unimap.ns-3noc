@@ -57,9 +57,11 @@ public:
   virtual Time GetDelayLeft (const EventId &id) const;
   virtual Time GetMaximumSimulationTime (void) const;
   virtual void SetScheduler (ObjectFactory schedulerFactory);
+  virtual uint32_t GetSystemId (void) const; 
   virtual uint32_t GetContext (void) const;
 
 private:
+  virtual void DoDispose (void);
   void ProcessOneEvent (void);
   uint64_t NextTs (void) const;
   typedef std::list<EventId> DestroyEvents;

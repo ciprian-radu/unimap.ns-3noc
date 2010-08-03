@@ -20,6 +20,7 @@
 #include "packet.h"
 #include "ns3/assert.h"
 #include "ns3/log.h"
+#include "ns3/simulator.h"
 #include "ns3/test.h"
 #include <string>
 #include <stdarg.h>
@@ -59,35 +60,38 @@ ByteTagIterator::Item::Item (TypeId tid, uint32_t start, uint32_t end, TagBuffer
     m_start (start),
     m_end (end),
     m_buffer (buffer)
-{}
-bool 
+{
+}
+bool
 ByteTagIterator::HasNext (void) const
 {
   return m_current.HasNext ();
 }
-ByteTagIterator::Item 
+ByteTagIterator::Item
 ByteTagIterator::Next (void)
 {
   ByteTagList::Iterator::Item i = m_current.Next ();
-  return ByteTagIterator::Item (i.tid, 
-                                i.start-m_current.GetOffsetStart (), 
-                                i.end-m_current.GetOffsetStart (), 
+  return ByteTagIterator::Item (i.tid,
+                                i.start-m_current.GetOffsetStart (),
+                                i.end-m_current.GetOffsetStart (),
                                 i.buf);
 }
 ByteTagIterator::ByteTagIterator (ByteTagList::Iterator i)
   : m_current (i)
-{}
+{
+}
 
 
 PacketTagIterator::PacketTagIterator (const struct PacketTagList::TagData *head)
   : m_current (head)
-{}
-bool 
+{
+}
+bool
 PacketTagIterator::HasNext (void) const
 {
   return m_current != 0;
 }
-PacketTagIterator::Item 
+PacketTagIterator::Item
 PacketTagIterator::Next (void)
 {
   NS_ASSERT (HasNext ());
@@ -98,13 +102,14 @@ PacketTagIterator::Next (void)
 
 PacketTagIterator::Item::Item (const struct PacketTagList::TagData *data)
   : m_data (data)
-{}
-TypeId 
+{
+}
+TypeId
 PacketTagIterator::Item::GetTypeId (void) const
 {
   return m_data->tid;
 }
-void 
+void
 PacketTagIterator::Item::GetTag (Tag &tag) const
 {
   NS_ASSERT (tag.GetInstanceTypeId () == m_data->tid);
@@ -125,7 +130,13 @@ Packet::Packet ()
   : m_buffer (),
     m_byteTagList (),
     m_packetTagList (),
-    m_metadata (m_globalUid, 0),
+    /* The upper 32 bits of the packet id in 
+     * metadata is for the system id. For non-
+     * distributed simulations, this is simply 
+     * zero.  The lower 32 bits are for the 
+     * global UID
+     */
+    m_metadata (static_cast<uint64_t> (Simulator::GetSystemId ()) << 32 | m_globalUid, 0),
     m_nixVector (0)
 {
   m_globalUid++;
@@ -137,8 +148,8 @@ Packet::Packet (const Packet &o)
     m_packetTagList (o.m_packetTagList),
     m_metadata (o.m_metadata)
 {
-  o.m_nixVector ? m_nixVector = o.m_nixVector->Copy () 
-                : m_nixVector = 0;
+  o.m_nixVector ? m_nixVector = o.m_nixVector->Copy ()
+    : m_nixVector = 0;
 }
 
 Packet &
@@ -153,7 +164,7 @@ Packet::operator = (const Packet &o)
   m_packetTagList = o.m_packetTagList;
   m_metadata = o.m_metadata;
   o.m_nixVector ? m_nixVector = o.m_nixVector->Copy () 
-                : m_nixVector = 0;
+    : m_nixVector = 0;
   return *this;
 }
 
@@ -161,16 +172,39 @@ Packet::Packet (uint32_t size)
   : m_buffer (size),
     m_byteTagList (),
     m_packetTagList (),
-    m_metadata (m_globalUid, size),
+    /* The upper 32 bits of the packet id in 
+     * metadata is for the system id. For non-
+     * distributed simulations, this is simply 
+     * zero.  The lower 32 bits are for the 
+     * global UID
+     */
+    m_metadata (static_cast<uint64_t> (Simulator::GetSystemId ()) << 32 | m_globalUid, size),
     m_nixVector (0)
 {
   m_globalUid++;
 }
+Packet::Packet (uint8_t const *buffer, uint32_t size, bool magic)
+  : m_buffer (0, false),
+    m_byteTagList (),
+    m_packetTagList (),
+    m_metadata (0,0),
+    m_nixVector (0)
+{
+  NS_ASSERT (magic);
+  Deserialize (buffer, size);
+}
+
 Packet::Packet (uint8_t const*buffer, uint32_t size)
   : m_buffer (),
     m_byteTagList (),
     m_packetTagList (),
-    m_metadata (m_globalUid, size),
+    /* The upper 32 bits of the packet id in 
+     * metadata is for the system id. For non-
+     * distributed simulations, this is simply 
+     * zero.  The lower 32 bits are for the 
+     * global UID
+     */
+    m_metadata (static_cast<uint64_t> (Simulator::GetSystemId ()) << 32 | m_globalUid, size),
     m_nixVector (0)
 {
   m_globalUid++;
@@ -186,7 +220,8 @@ Packet::Packet (const Buffer &buffer,  const ByteTagList &byteTagList,
     m_packetTagList (packetTagList),
     m_metadata (metadata),
     m_nixVector (0)
-{}
+{
+}
 
 Ptr<Packet>
 Packet::CreateFragment (uint32_t start, uint32_t length) const
@@ -212,12 +247,6 @@ Packet::GetNixVector (void) const
 {
   return m_nixVector;
 } 
-
-uint32_t 
-Packet::GetSize (void) const
-{
-  return m_buffer.GetSize ();
-}
 
 void
 Packet::AddHeader (const Header &header)
@@ -350,14 +379,7 @@ Packet::PeekData (void) const
 uint32_t 
 Packet::CopyData (uint8_t *buffer, uint32_t size) const
 {
-  Buffer::Iterator i = m_buffer.Begin ();
-  uint32_t cur = 0;
-  while (!i.IsEnd () && cur < size)
-    {
-      buffer[cur] = i.ReadU8 ();
-      cur++;
-    }
-  return cur;
+  return m_buffer.CopyData (buffer, size);
 }
 
 void
@@ -366,7 +388,7 @@ Packet::CopyData(std::ostream *os, uint32_t size) const
   return m_buffer.CopyData (os, size);
 }
 
-uint32_t 
+uint64_t 
 Packet::GetUid (void) const
 {
   return m_metadata.GetUid ();
@@ -412,41 +434,41 @@ Packet::Print (std::ostream &os) const
       if (item.isFragment)
         {
           switch (item.type) {
-          case PacketMetadata::Item::PAYLOAD:
-            os << "Payload";
-            break;
-          case PacketMetadata::Item::HEADER:
-          case PacketMetadata::Item::TRAILER:
-            os << item.tid.GetName ();
-            break;
-          }
+            case PacketMetadata::Item::PAYLOAD:
+              os << "Payload";
+              break;
+            case PacketMetadata::Item::HEADER:
+            case PacketMetadata::Item::TRAILER:
+              os << item.tid.GetName ();
+              break;
+            }
           os << " Fragment [" << item.currentTrimedFromStart<<":"
              << (item.currentTrimedFromStart + item.currentSize) << "]";
         }
       else
         {
           switch (item.type) {
-          case PacketMetadata::Item::PAYLOAD:
-            os << "Payload (size=" << item.currentSize << ")";
-            break;
-          case PacketMetadata::Item::HEADER:
-          case PacketMetadata::Item::TRAILER:
-            os << item.tid.GetName () << " (";
-            {
-              NS_ASSERT (item.tid.HasConstructor ());
-              Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
-              NS_ASSERT (!constructor.IsNull ());
-              ObjectBase *instance = constructor ();
-              NS_ASSERT (instance != 0);
-              Chunk *chunk = dynamic_cast<Chunk *> (instance);
-              NS_ASSERT (chunk != 0);
-              chunk->Deserialize (item.current);
-              chunk->Print (os);
-              delete chunk;
+            case PacketMetadata::Item::PAYLOAD:
+              os << "Payload (size=" << item.currentSize << ")";
+              break;
+            case PacketMetadata::Item::HEADER:
+            case PacketMetadata::Item::TRAILER:
+              os << item.tid.GetName () << " (";
+              {
+                NS_ASSERT (item.tid.HasConstructor ());
+                Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
+                NS_ASSERT (!constructor.IsNull ());
+                ObjectBase *instance = constructor ();
+                NS_ASSERT (instance != 0);
+                Chunk *chunk = dynamic_cast<Chunk *> (instance);
+                NS_ASSERT (chunk != 0);
+                chunk->Deserialize (item.current);
+                chunk->Print (os);
+                delete chunk;
+              }
+              os << ")";
+              break;
             }
-            os << ")";
-            break;
-          }          
         }
       if (i.HasNext ())
         {
@@ -465,58 +487,58 @@ Packet::Print (std::ostream &os) const
       if (item.isFragment)
         {
           switch (item.type) {
-          case PacketMetadata::Item::PAYLOAD:
-            os << "Payload";
-            break;
-          case PacketMetadata::Item::HEADER:
-          case PacketMetadata::Item::TRAILER:
-            os << item.tid.GetName ();
-            break;
-          }
+            case PacketMetadata::Item::PAYLOAD:
+              os << "Payload";
+              break;
+            case PacketMetadata::Item::HEADER:
+            case PacketMetadata::Item::TRAILER:
+              os << item.tid.GetName ();
+              break;
+            }
           os << " Fragment [" << item.currentTrimedFromStart<<":"
              << (item.currentTrimedFromStart + item.currentSize) << "]";
         }
       else
         {
           switch (item.type) {
-          case PacketMetadata::Item::PAYLOAD:
-            os << "Payload (size=" << item.currentSize << ")";
-            break;
-          case PacketMetadata::Item::HEADER:
-          case PacketMetadata::Item::TRAILER:
-            os << item.tid.GetName () << "(";
-            {
-              NS_ASSERT (item.tid.HasConstructor ());
-              Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
-              NS_ASSERT (constructor.IsNull ());
-              ObjectBase *instance = constructor ();
-              NS_ASSERT (instance != 0);
-              Chunk *chunk = dynamic_cast<Chunk *> (instance);
-              NS_ASSERT (chunk != 0);
-              chunk->Deserialize (item.current);
-              for (uint32_t j = 0; j < item.tid.GetAttributeN (); j++)
-                {
-                  std::string attrName = item.tid.GetAttributeName (j);
-                  std::string value;
-                  bool ok = chunk->GetAttribute (attrName, value);
-                  NS_ASSERT (ok);
-                  os << attrName << "=" << value;
-                  if ((j + 1) < item.tid.GetAttributeN ())
-                    {
-                      os << ",";
-                    }
-                }
+            case PacketMetadata::Item::PAYLOAD:
+              os << "Payload (size=" << item.currentSize << ")";
+              break;
+            case PacketMetadata::Item::HEADER:
+            case PacketMetadata::Item::TRAILER:
+              os << item.tid.GetName () << "(";
+              {
+                NS_ASSERT (item.tid.HasConstructor ());
+                Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
+                NS_ASSERT (constructor.IsNull ());
+                ObjectBase *instance = constructor ();
+                NS_ASSERT (instance != 0);
+                Chunk *chunk = dynamic_cast<Chunk *> (instance);
+                NS_ASSERT (chunk != 0);
+                chunk->Deserialize (item.current);
+                for (uint32_t j = 0; j < item.tid.GetAttributeN (); j++)
+                  {
+                    std::string attrName = item.tid.GetAttributeName (j);
+                    std::string value;
+                    bool ok = chunk->GetAttribute (attrName, value);
+                    NS_ASSERT (ok);
+                    os << attrName << "=" << value;
+                    if ((j + 1) < item.tid.GetAttributeN ())
+                      {
+                        os << ",";
+                      }
+                  }
+              }
+              os << ")";
+              break;
             }
-            os << ")";
-            break;
-          }          
         }
       if (i.HasNext ())
         {
           os << " ";
         }
     }
-#endif   
+#endif
 }
 
 PacketMetadata::ItemIterator 
@@ -539,48 +561,197 @@ Packet::EnableChecking (void)
   PacketMetadata::EnableChecking ();
 }
 
-Buffer 
-Packet::Serialize (void) const
+uint32_t Packet::GetSerializedSize (void) const
 {
-  NS_LOG_FUNCTION (this);
-  Buffer buffer;
-  uint32_t reserve;
+  uint32_t size = 0;
 
-  // write metadata
-  reserve = m_metadata.GetSerializedSize ();
-  buffer.AddAtStart (reserve);
-  m_metadata.Serialize (buffer.Begin (), reserve);
+  if (m_nixVector)
+    {
+      // increment total size by the size of the nix-vector
+      // ensuring 4-byte boundary
+      size += ((m_nixVector->GetSerializedSize () + 3) & (~3));
 
-  // write tags
+      // add 4-bytes for entry of total length of nix-vector
+      size += 4;
+    }
+  else
+    {
+      // if no nix-vector, still have to add 4-bytes
+      // to account for the entry of total size for 
+      // nix-vector in the buffer
+      size += 4;
+    }
+
+  //Tag size
   //XXX
-  //reserve = m_tags.GetSerializedSize ();
-  //buffer.AddAtStart (reserve);
-  //m_tags.Serialize (buffer.Begin (), reserve);
-  
-  // aggregate byte buffer, metadata, and tags
-  Buffer tmp = m_buffer.CreateFullCopy ();
-  tmp.AddAtEnd (buffer);
-  
-  // write byte buffer size.
-  tmp.AddAtStart (4);
-  tmp.Begin ().WriteU32 (m_buffer.GetSize ());
+  //size += m_tags.GetSerializedSize ();
 
-  return tmp;
+  // increment total size by size of meta-data 
+  // ensuring 4-byte boundary
+  size += ((m_metadata.GetSerializedSize () + 3) & (~3));
+
+  // add 4-bytes for entry of total length of meta-data
+  size += 4;
+
+  // increment total size by size of buffer 
+  // ensuring 4-byte boundary
+  size += ((m_buffer.GetSerializedSize () + 3) & (~3));
+
+  // add 4-bytes for entry of total length of buffer 
+  size += 4;
+
+  return size;
 }
-void 
-Packet::Deserialize (Buffer buffer)
+
+uint32_t 
+Packet::Serialize (uint8_t* buffer, uint32_t maxSize) const
+{
+  uint32_t* p = reinterpret_cast<uint32_t *> (buffer);
+  uint32_t size = 0;
+
+  // if nix-vector exists, serialize it
+  if (m_nixVector)
+    {
+      uint32_t nixSize = m_nixVector->GetSerializedSize ();
+      if (size + nixSize <= maxSize)
+        {
+          // put the total length of nix-vector in the
+          // buffer. this includes 4-bytes for total 
+          // length itself
+          *p++ = nixSize + 4;
+          size += nixSize;
+
+          // serialize the nix-vector
+          uint32_t serialized = 
+            m_nixVector->Serialize (p, nixSize);
+          if (serialized)
+            {
+              // increment p by nixSize bytes
+              // ensuring 4-byte boundary
+              p += ((nixSize+3) & (~3)) / 4;
+            }
+          else
+            {
+              return 0;
+            }
+        }
+      else 
+        {
+          return 0;
+        }
+    }
+  else
+    { 
+      // no nix vector, set zero length, 
+      // ie 4-bytes, since it must include 
+      // length for itself
+      if (size + 4 <= maxSize)
+        {
+          size += 4;
+          *p++ = 4;
+        }
+      else
+        {
+          return 0;
+        }
+    }
+
+  // Serialize Tags
+  // XXX
+
+  // Serialize Metadata
+  uint32_t metaSize = m_metadata.GetSerializedSize ();
+  if (size + metaSize <= maxSize)
+    {
+      // put the total length of metadata in the
+      // buffer. this includes 4-bytes for total 
+      // length itself
+      *p++ = metaSize + 4;
+      size += metaSize;
+
+      // serialize the metadata
+      uint32_t serialized = 
+        m_metadata.Serialize (reinterpret_cast<uint8_t *> (p), metaSize); 
+      if (serialized)
+        {
+          // increment p by metaSize bytes
+          // ensuring 4-byte boundary
+          p += ((metaSize+3) & (~3)) / 4;
+        }
+      else
+        {
+          return 0;
+        }
+    }
+  else
+    {
+      return 0;
+    }
+
+  // Serialize the packet contents
+  uint32_t bufSize = m_buffer.GetSerializedSize ();
+  if (size + bufSize <= maxSize)
+    {
+      // put the total length of the buffer in the
+      // buffer. this includes 4-bytes for total 
+      // length itself
+      *p++ = bufSize + 4;
+      size += bufSize;
+
+      // serialize the buffer
+      uint32_t serialized = 
+        m_buffer.Serialize (reinterpret_cast<uint8_t *> (p), bufSize);
+      if (serialized)
+        {
+          // increment p by bufSize bytes
+          // ensuring 4-byte boundary
+          p += ((bufSize+3) & (~3)) / 4;
+        }
+      else 
+        {
+          return 0;
+        }
+    }
+  else
+    {
+      return 0;
+    }
+
+  // Serialized successfully
+  return 1;
+}
+
+uint32_t 
+Packet::Deserialize (const uint8_t* buffer, uint32_t size)
 {
   NS_LOG_FUNCTION (this);
-  Buffer buf = buffer;
-  // read size
-  uint32_t packetSize = buf.Begin ().ReadU32 ();
-  buf.RemoveAtStart (4);
 
-  // read buffer.
-  buf.RemoveAtEnd (buf.GetSize () - packetSize);
-  m_buffer = buf;
-  buffer.RemoveAtStart (4 + packetSize);
+  const uint32_t* p = reinterpret_cast<const uint32_t *> (buffer);
 
+  // read nix-vector
+  NS_ASSERT (!m_nixVector);
+  uint32_t nixSize = *p++;
+  size -= nixSize;
+
+  // if size less than zero, the buffer 
+  // will be overrun, assert
+  NS_ASSERT (size >= 0);
+
+  if (nixSize > 4)
+    {
+      Ptr<NixVector> nix = Create<NixVector> ();
+      uint32_t nixDeserialized = nix->Deserialize (p, nixSize);
+      if (!nixDeserialized)
+        {
+          // nix-vector not deserialized
+          // completely
+          return 0;
+        }
+      m_nixVector = nix;
+      // increment p by nixSize ensuring
+      // 4-byte boundary
+      p += ((((nixSize - 4) + 3) & (~3)) / 4);
+    }
 
   // read tags
   //XXX
@@ -588,9 +759,45 @@ Packet::Deserialize (Buffer buffer)
   //buffer.RemoveAtStart (tagsDeserialized);
 
   // read metadata
+  uint32_t metaSize = *p++;
+  size -= metaSize;
+
+  // if size less than zero, the buffer 
+  // will be overrun, assert
+  NS_ASSERT (size >= 0);
+
   uint32_t metadataDeserialized = 
-    m_metadata.Deserialize (buffer.Begin ());
-  buffer.RemoveAtStart (metadataDeserialized);
+    m_metadata.Deserialize (reinterpret_cast<const uint8_t *> (p), metaSize);
+  if (!metadataDeserialized)
+    {
+      // meta-data not deserialized 
+      // completely
+      return 0;
+    }
+  // increment p by metaSize ensuring 
+  // 4-byte boundary
+  p += ((((metaSize - 4) + 3) & (~3)) / 4);
+
+  // read buffer contents
+  uint32_t bufSize = *p++;
+  size -= bufSize;
+
+  // if size less than zero, the buffer 
+  // will be overrun, assert
+  NS_ASSERT (size >= 0);
+
+  uint32_t bufferDeserialized =
+    m_buffer.Deserialize (reinterpret_cast<const uint8_t *> (p), bufSize);
+  if (!bufferDeserialized)
+    {
+      // buffer not deserialized 
+      // completely
+      return 0;
+    }
+
+  // return zero if did not deserialize the 
+  // number of expected bytes
+  return (size == 0);
 }
 
 void 
@@ -710,7 +917,7 @@ public:
       .SetParent<Tag> ()
       .AddConstructor<ATestTag<N> > ()
       .HideFromDocumentation ()
-      ;
+    ;
     return tid;
   }
   virtual TypeId GetInstanceTypeId (void) const {
@@ -760,7 +967,7 @@ public:
       .SetParent<Header> ()
       .AddConstructor<ATestHeader<N> > ()
       .HideFromDocumentation ()
-      ;
+    ;
     return tid;
   }
   virtual TypeId GetInstanceTypeId (void) const {
@@ -811,7 +1018,7 @@ public:
       .SetParent<Header> ()
       .AddConstructor<ATestTrailer<N> > ()
       .HideFromDocumentation ()
-      ;
+    ;
     return tid;
   }
   virtual TypeId GetInstanceTypeId (void) const {
@@ -851,7 +1058,7 @@ struct Expected
 {
   Expected (uint32_t n_, uint32_t start_, uint32_t end_)
     : n (n_), start (start_), end (end_) {}
-  
+
   uint32_t n;
   uint32_t start;
   uint32_t end;
@@ -865,7 +1072,7 @@ struct Expected
 #define CHECK(p, n, ...)                                \
   DoCheck (p, __FILE__, __LINE__, n, __VA_ARGS__)
 
-class PacketTest: public TestCase 
+class PacketTest : public TestCase
 {
 public:
   PacketTest ();
@@ -876,7 +1083,8 @@ private:
 
 
 PacketTest::PacketTest ()
-  : TestCase ("Packet") {}
+  : TestCase ("Packet") {
+}
 
 void
 PacketTest::DoCheck (Ptr<const Packet> p, const char *file, int line, uint32_t n, ...)
@@ -923,7 +1131,7 @@ PacketTest::DoRun (void)
   Ptr<Packet> packet = Create<Packet> ();
   packet->AddAtEnd (pkt1);
   packet->AddAtEnd (pkt2);
-  
+
   NS_TEST_EXPECT_MSG_EQ (packet->GetSize (), 11, "trivial");
 
   std::string msg = std::string (reinterpret_cast<const char *>(packet->PeekData ()),
@@ -1013,7 +1221,7 @@ PacketTest::DoRun (void)
     CHECK (tmp, 1, E (20, 0, 100));
     tmp->AddTrailer (ATestTrailer<10> ());
     CHECK (tmp, 1, E (20, 0, 100));
-    
+
   }
 
   {
@@ -1078,7 +1286,7 @@ PacketTest::DoRun (void)
   }
 
   {
-    // bug 572                                                                  
+    // bug 572
     Ptr<Packet> tmp = Create<Packet> (1000);
     tmp->AddByteTag (ATestTag<20> ());
     CHECK (tmp, 1, E (20, 0, 1000));

@@ -117,7 +117,7 @@ def main(argv):
     mac = ns3.NqosWifiMacHelper.Default()
     mac.SetType("ns3::AdhocWifiMac")
     wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
-                                  "DataMode", ns3.StringValue("wifia-54mbs"))
+                                  "DataMode", ns3.StringValue("OfdmRate54Mbps"))
     wifiPhy = ns3.YansWifiPhyHelper.Default()
     wifiChannel = ns3.YansWifiChannelHelper.Default()
     wifiPhy.SetChannel(wifiChannel.Create())
@@ -316,9 +316,10 @@ def main(argv):
     #  Let's set up some ns-2-like ascii traces, using another helper class
     # 
     #std.ofstream ascii
-    #ascii.open("mixed-wireless.tr")
-    #WifiHelper.EnableAsciiAll(ascii)
-    #CsmaHelper.EnableAsciiAll(ascii)
+    #ascii = ns3.AsciiTraceHelper();
+    #stream = ascii.CreateFileStream("mixed-wireless.tr");
+    #wifiPhy.EnableAsciiAll(stream);
+    #csma.EnableAsciiAll(stream);
     print "(tracing not done for Python)"
     #  Look at nodes 11, 13 only
     # WifiHelper.EnableAscii(ascii, 11, 0); 
@@ -327,7 +328,8 @@ def main(argv):
     #  Let's do a pcap trace on the backbone devices
     wifiPhy.EnablePcap("mixed-wireless", backboneDevices)
     #  Let's additionally trace the application Sink, ifIndex 0
-    ns3.CsmaHelper.EnablePcap("mixed-wireless", appSink.GetId(), 0, False)
+    csma = ns3.CsmaHelper()
+    csma.EnablePcapAll("mixed-wireless", False)
 
 #   #ifdef ENABLE_FOR_TRACING_EXAMPLE
 #     Config.Connect("/NodeList/*/$MobilityModel/CourseChange",

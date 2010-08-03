@@ -112,7 +112,7 @@ uint8_t Ipv6Extension::ProcessOptions (Ptr<Packet>& packet, uint8_t offset, uint
           switch (optionType)
             {
             case 0:
-              optionLength = *(data + processedSize + 1);
+              optionLength = *(data + processedSize + 1) + 2;
               break;
 
             case 1:
@@ -523,7 +523,7 @@ void Ipv6ExtensionFragment::GetFragments (Ptr<Packet> packet, uint32_t maxFragme
 }
 
 Ipv6ExtensionFragment::Fragments::Fragments ()
-: m_moreFragment (0)
+  : m_moreFragment (0)
 {
 }
 

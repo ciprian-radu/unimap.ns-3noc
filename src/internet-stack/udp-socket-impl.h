@@ -28,6 +28,7 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/udp-socket.h"
+#include "ns3/ipv4-interface.h"
 #include "icmpv4.h"
 
 namespace ns3 {
@@ -77,6 +78,9 @@ public:
   virtual int GetSockName (Address &address) const; 
   virtual int MulticastJoinGroup (uint32_t interfaceIndex, const Address &groupAddress);
   virtual int MulticastLeaveGroup (uint32_t interfaceIndex, const Address &groupAddress);
+  virtual void BindToNetDevice (Ptr<NetDevice> netdevice);
+  virtual bool SetAllowBroadcast (bool allowBroadcast);
+  virtual bool GetAllowBroadcast () const;
 
 private:
   // Attributes set through UdpSocket base class 
@@ -97,7 +101,8 @@ private:
   friend class UdpSocketFactory;
   // invoked by Udp class
   int FinishBind (void);
-  void ForwardUp (Ptr<Packet> p, Ipv4Address ipv4, uint16_t port);
+  void ForwardUp (Ptr<Packet> p, Ipv4Header header, uint16_t port, 
+                  Ptr<Ipv4Interface> incomingInterface);
   void Destroy (void);
   int DoSend (Ptr<Packet> p);
   int DoSendTo (Ptr<Packet> p, const Address &daddr);
@@ -117,7 +122,8 @@ private:
   bool m_shutdownSend;
   bool m_shutdownRecv;
   bool m_connected;
-
+  bool m_allowBroadcast;
+  
   std::queue<Ptr<Packet> > m_deliveryQueue;
   uint32_t m_rxAvailable;
   

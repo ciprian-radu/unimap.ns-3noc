@@ -17,12 +17,165 @@
  */
 
 #include "ns3/test.h"
+#include "ns3/assert.h"
+#include "ns3/abort.h"
 
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <string.h>
+
+extern bool gBreakOnFailure;
 
 using namespace ns3;
+
+//
+// Create a temporary directory for use by test programs.  This is not a 
+// foolproof thing, but a reasonably good way to get a throwaway directory
+// while running tests in a debugger.
+//  
+std::string
+TempDir (void)
+{
+  char *path = NULL;
+
+  path = getenv ("TMP");
+  if (path == NULL)
+    {
+      path = getenv ("TEMP");
+      if (path == NULL)
+        {
+          path = const_cast<char *> ("/tmp");
+        }
+    }
+
+  //
+  // Just in case the user wants to go back and find the output, we give
+  // a hint as to which dir we created by including a time hint.
+  //
+  time_t now = time (NULL);
+  struct tm *tm_now = localtime (&now);
+  
+  //
+  // But we also randomize the name in case there are multiple users doing
+  // this at the same time
+  //
+  srand (time (0));
+  long int n = rand ();
+
+  //
+  // The final path to the directory is going to look something like
+  // 
+  //   /tmp/ns3-14.30.29.32767
+  //
+  // The first segment comes from one of the temporary directory env 
+  // variables or /tmp if not found.  The directory name starts with an
+  // identifier telling folks who is making all of the temp directories
+  // and then the local time (in this case 14.30.29 -- which is 2:30 and
+  // 29 seconds PM).
+  //
+  char dirname[1024];
+  snprintf (dirname, sizeof(dirname),  "%s/ns-3.%d.%d.%d.%ld", path, tm_now->tm_hour, tm_now->tm_min, tm_now->tm_sec, n);
+
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__CYGWIN__)
+  if(mkdir(dirname) == 0)
+#else
+  if (mkdir (dirname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0)
+#endif
+    {
+      return dirname;
+    } 
+  else
+    {
+      return "";
+    }
+}
+
+//
+// Test suites may need to figure out where their source directory is in order
+// to find test vectors.  To do that they will need to know  where the base 
+// directory of the distribution is (the directory in which "src" is found).
+// It is painful for a user debugging test suites to always provide that dir
+// so we try and find it in the current directory tree.
+//
+std::string
+BaseDir (void)
+{
+  //
+  // Get an absolute path to the current working directory.  Following code
+  // depends on the leading '/'
+  //
+  char pathbuf[PATH_MAX];
+  if (getcwd (pathbuf, sizeof(pathbuf)) == NULL)
+    {
+      NS_ABORT_MSG ("Basedir():  unable to getcwd()");
+    }
+
+  //
+  // Walk up the directory tree looking for a directory that has files that
+  // indicate it is the base of an ns-3 distribution.  We use VERSION and
+  // LICENSE which have been there from the beginning of time.
+  //
+  for (;;)
+    {
+      bool haveVersion = false;
+      bool haveLicense = false;
+
+      //
+      // Open the directory file for the current directory and loop through
+      // the directory entries.
+      //
+      DIR *dp = opendir (pathbuf);
+      if (dp != NULL)
+        {
+          while (struct dirent *de = readdir (dp))
+            {
+              if (strcmp (de->d_name, "VERSION") == 0)
+                {
+                  haveVersion = true;
+                }
+
+              if (strcmp (de->d_name, "LICENSE") == 0)
+                {
+                  haveLicense = true;
+                }
+            }
+        }
+      closedir (dp);
+
+      //
+      // If there's a file named VERSION and a file named LICENSE in this
+      // directory, we assume it's our base directory.
+      //
+      if (haveVersion && haveLicense)
+        {
+          return pathbuf;
+        }
+
+      //
+      // Strip off the last segment of the current directory.
+      //
+      char *last = strrchr (pathbuf, '/');
+      NS_ASSERT_MSG (last, "No \"/\" found in absolute path ???");
+      *last = '\0';
+
+      if (strlen(pathbuf) == 0)
+        {
+          return "";
+        }
+    }
+
+  //
+  // Quiet the compiler.
+  //
+  return "";
+}
 
 //
 // Run one of the test suites.  Returns an integer with the boolean sense of
@@ -39,6 +192,8 @@ main (int argc, char *argv[])
   bool doSuite = false;
   bool doKinds = false;
 
+  gBreakOnFailure = false;
+
   bool haveBasedir = false;
   bool haveTempdir = false;
   bool haveOutfile = false;
@@ -50,9 +205,15 @@ main (int argc, char *argv[])
   std::string outfileName;
   std::string typeName;
 
+
   for (int i = 1; i < argc; ++i)
     {
       std::string arg(argv[i]);
+
+      if (arg.find ("--assert") != std::string::npos)
+        {
+          gBreakOnFailure = true;
+        }
 
       if (arg.find ("--basedir=") != std::string::npos)
         {
@@ -116,6 +277,7 @@ main (int argc, char *argv[])
   //
   if (doHelp)
     {
+      std::cout << "  --assert:               Tell tests to segfault (like assert) if an error is detected" << std::endl;
       std::cout << "  --basedir=dir:          Set the base directory (where to find src) to \"dir\"" << std::endl;
       std::cout << "  --tempdir=dir:          Set the temporary directory (where to find data files) to \"dir\"" << std::endl;
       std::cout << "  --constrain=test-type:  Constrain checks to test suites of type \"test-type\"" << std::endl;
@@ -208,19 +370,50 @@ main (int argc, char *argv[])
     }
 
   //
-  // If we haven't been asked to run a test suite, we are just going to happily
-  // try and run everything.  Test suites are possibly going to need to figure
-  // out where there source directory is, and to do that they will need to know
-  // where the base directory of the distribution is (the directory in which 
-  // "src" is found).  We could try and run without it, but when it is needed,
-  // the test will fail with an assertion.  So to be safe, we require a basedir
-  // to proceed.
+  // We have a lot of options possible to provide flexibility.  It can become
+  // painful, however, to provide all of the options when debugging, and it 
+  // turns out that not all tests require all options.  It is really helpful
+  // to try and put together some reasonable defaults if we're not provided
+  // them.
   //
+  if (!haveTempdir)
+    {
+      //
+      // No temporary directory was provided.  We don't know if the selected
+      // test or tests will need one, but we can cook something up.  The 
+      // tmpnam function has its own set of problems, so we'll just do our 
+      // own thing.
+      //
+      tempdir = TempDir ();
+      if (tempdir.size ()) 
+        {
+          std::cout << "Temporary directory not provided.  Using \"" << tempdir << "\"" << std::endl;
+          haveTempdir = true;
+        }
+      else
+        {
+          std::cout << "Temporary directory not provided and unable to create one." << std::endl;
+          return true;
+        }
+    }
 
   if (haveBasedir == false)
     {
-      std::cout << "Must specify a base directory to run tests (use --basedir option)" << std::endl;
-      return true;
+      //
+      // No basedir was provided.  If we don't have it, we can try and find it 
+      // in the current directory tree.
+      //
+      basedir = BaseDir ();
+      if (basedir.size ()) 
+        {
+          std::cout << "Base directory not provided.  Using \"" << basedir << "\"" << std::endl;
+          haveBasedir = true;
+        }
+      else
+        {
+          std::cout << "Base directory not provided and unable to find one." << std::endl;
+          return true;
+        }
     }
 
   //
@@ -272,6 +465,7 @@ main (int argc, char *argv[])
   //
   if (suiteRan == false)
     {
+      std::cout << "Unable to find a test to run (constraints too severe or test not found)" << std::endl;
       return true;
     }
 

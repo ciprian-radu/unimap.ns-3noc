@@ -22,6 +22,7 @@
 #include "ns3/mesh-wifi-interface-mac.h"
 #include "ns3/mesh-wifi-beacon.h"
 #include "ns3/log.h"
+#include "ns3/boolean.h"
 #include "ns3/wifi-phy.h"
 #include "ns3/dcf-manager.h"
 #include "ns3/mac-rx-middle.h"
@@ -101,7 +102,10 @@ MeshWifiInterfaceMac::MeshWifiInterfaceMac () :
   m_beaconDca->SetMaxCw (0);
   m_beaconDca->SetAifsn (1);
   m_beaconDca->SetManager (m_dcfManager);
-  
+
+  // Construct the EDCAFs. The ordering is important - highest
+  // priority (see Table 9-1 in IEEE 802.11-2007) must be created
+  // first.
   SetQueue (AC_VO);
   SetQueue (AC_VI);
   SetQueue (AC_BE);
@@ -194,6 +198,11 @@ MeshWifiInterfaceMac::SetWifiPhy (Ptr<WifiPhy> phy)
   m_phy = phy;
   m_dcfManager->SetupPhyListener (phy);
   m_low->SetPhy (phy);
+}
+Ptr<WifiPhy>
+MeshWifiInterfaceMac::GetWifiPhy () const
+{
+  return m_phy;
 }
 void
 MeshWifiInterfaceMac::SetWifiRemoteStationManager (Ptr<WifiRemoteStationManager> stationManager)
@@ -384,20 +393,19 @@ MeshWifiInterfaceMac::ForwardDown (Ptr<const Packet> const_packet, Mac48Address 
   // Assert that address1 is set. Assert will fail e.g. if there is no installed routing plugin.
   NS_ASSERT (hdr.GetAddr1 () != Mac48Address ());
   // Queue frame
-  WifiRemoteStation *destination = m_stationManager->Lookup (to);
-  if (destination->IsBrandNew ())
+  if (m_stationManager->IsBrandNew (to))
     {
       // in adhoc mode, we assume that every destination
       // supports all the rates we support.
       for (uint32_t i = 0; i < m_phy->GetNModes (); i++)
         {
-          destination->AddSupportedMode (m_phy->GetMode (i));
+          m_stationManager->AddSupportedMode (to, m_phy->GetMode (i));
         }
-      destination->RecordDisassociated ();
+      m_stationManager->RecordDisassociated (to);
     }
   //Classify: application sets a tag, which is removed here
   // Get Qos tag:
-  AccessClass ac = AC_BE;
+  AcIndex ac = AC_BE;
   QosTag tag;
   if (packet->RemovePacketTag (tag))
     {
@@ -592,14 +600,13 @@ MeshWifiInterfaceMac::Receive (Ptr<Packet> packet, WifiMacHeader const *hdr)
       if (beacon_hdr.GetSsid ().IsEqual (GetSsid ()))
         {
           SupportedRates rates = beacon_hdr.GetSupportedRates ();
-          WifiRemoteStation * peerSta = m_stationManager->Lookup (hdr->GetAddr2 ());
 
           for (uint32_t i = 0; i < m_phy->GetNModes (); i++)
             {
               WifiMode mode = m_phy->GetMode (i);
               if (rates.IsSupportedRate (mode.GetDataRate ()))
                 {
-                  peerSta->AddSupportedMode (mode);
+                  m_stationManager->AddSupportedMode (hdr->GetAddr2 (), mode);
                   if (rates.IsBasicRate (mode.GetDataRate ()))
                     {
                       m_stationManager->AddBasicMode (mode);
@@ -692,10 +699,10 @@ MeshWifiInterfaceMac::Report (std::ostream & os) const
 void
 MeshWifiInterfaceMac::ResetStats ()
 {
-  m_stats = Statistics::Statistics ();
+  m_stats = Statistics ();
 }
 void
-MeshWifiInterfaceMac::SetQueue (AccessClass ac)
+MeshWifiInterfaceMac::SetQueue (AcIndex ac)
 {
   if (m_queues.find (ac) != m_queues.end ())
     {
@@ -719,6 +726,16 @@ void
 MeshWifiInterfaceMac::TxFailed (WifiMacHeader const &hdr)
 {
   m_txErrCallback (hdr);
+}
+void
+MeshWifiInterfaceMac::DoStart ()
+{
+  m_beaconDca->Start ();
+  for (Queues::iterator i = m_queues.begin (); i != m_queues.end (); i ++)
+  {
+    i->second->Start ();
+  }
+  WifiMac::DoStart ();
 }
 
 void 

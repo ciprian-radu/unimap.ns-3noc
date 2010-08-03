@@ -22,6 +22,12 @@ def register_types(module):
     register_types_ns3_Config(nested_module)
     
     
+    ## Register a nested module for the namespace FatalImpl
+    
+    nested_module = module.add_cpp_namespace('FatalImpl')
+    register_types_ns3_FatalImpl(nested_module)
+    
+    
     ## Register a nested module for the namespace TimeStepPrecision
     
     nested_module = module.add_cpp_namespace('TimeStepPrecision')
@@ -65,6 +71,10 @@ def register_types(module):
     
 
 def register_types_ns3_Config(module):
+    root_module = module.get_root()
+    
+
+def register_types_ns3_FatalImpl(module):
     root_module = module.get_root()
     
 
@@ -266,6 +276,11 @@ def register_Ns3CsmaNetDevice_methods(root_module, cls):
     cls.add_method('SetQueue', 
                    'void', 
                    [param('ns3::Ptr< ns3::Queue >', 'queue')])
+    ## csma-net-device.h: ns3::Ptr<ns3::Queue> ns3::CsmaNetDevice::GetQueue() const [member function]
+    cls.add_method('GetQueue', 
+                   'ns3::Ptr< ns3::Queue >', 
+                   [], 
+                   is_const=True)
     ## csma-net-device.h: void ns3::CsmaNetDevice::SetReceiveErrorModel(ns3::Ptr<ns3::ErrorModel> em) [member function]
     cls.add_method('SetReceiveErrorModel', 
                    'void', 
@@ -290,15 +305,6 @@ def register_Ns3CsmaNetDevice_methods(root_module, cls):
     cls.add_method('SetReceiveEnable', 
                    'void', 
                    [param('bool', 'enable')])
-    ## csma-net-device.h: void ns3::CsmaNetDevice::SetFrameSize(uint16_t frameSize) [member function]
-    cls.add_method('SetFrameSize', 
-                   'void', 
-                   [param('uint16_t', 'frameSize')])
-    ## csma-net-device.h: uint16_t ns3::CsmaNetDevice::GetFrameSize() const [member function]
-    cls.add_method('GetFrameSize', 
-                   'uint16_t', 
-                   [], 
-                   is_const=True)
     ## csma-net-device.h: void ns3::CsmaNetDevice::SetEncapsulationMode(ns3::CsmaNetDevice::EncapsulationMode mode) [member function]
     cls.add_method('SetEncapsulationMode', 
                    'void', 
@@ -432,11 +438,6 @@ def register_Ns3CsmaNetDevice_methods(root_module, cls):
                    'void', 
                    [], 
                    visibility='protected', is_virtual=True)
-    ## csma-net-device.h: ns3::Ptr<ns3::Queue> ns3::CsmaNetDevice::GetQueue() const [member function]
-    cls.add_method('GetQueue', 
-                   'ns3::Ptr< ns3::Queue >', 
-                   [], 
-                   is_const=True, visibility='protected')
     ## csma-net-device.h: void ns3::CsmaNetDevice::AddHeader(ns3::Ptr<ns3::Packet> p, ns3::Mac48Address source, ns3::Mac48Address dest, uint16_t protocolNumber) [member function]
     cls.add_method('AddHeader', 
                    'void', 
@@ -447,6 +448,7 @@ def register_Ns3CsmaNetDevice_methods(root_module, cls):
 def register_functions(root_module):
     module = root_module
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
+    register_functions_ns3_FatalImpl(module.get_submodule('FatalImpl'), root_module)
     register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
     register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
@@ -457,6 +459,9 @@ def register_functions(root_module):
     return
 
 def register_functions_ns3_Config(module, root_module):
+    return
+
+def register_functions_ns3_FatalImpl(module, root_module):
     return
 
 def register_functions_ns3_TimeStepPrecision(module, root_module):

@@ -140,9 +140,7 @@ main (int argc, char *argv[])
   wifi.SetRemoteStationManager ("ns3::ArfWifiManager");
 
   wifiMac.SetType ("ns3::NqapWifiMac", 
-                   "Ssid", SsidValue (ssid), 
-                   "BeaconGeneration", BooleanValue (true), 
-                   "BeaconInterval", TimeValue (Seconds (2.5)));
+                   "Ssid", SsidValue (ssid));
   NetDeviceContainer devicesLeft = wifi.Install (wifiPhy, wifiMac, nodesLeft.Get (0));
 
 
@@ -217,7 +215,8 @@ main (int argc, char *argv[])
   apps.Start (Seconds (1.0));
 
   wifiPhy.EnablePcapAll ("tap-wifi-dumbbell");
-  CsmaHelper::EnablePcapAll ("tap-wifi-dumbbell", false);
+
+  csmaRight.EnablePcapAll ("tap-wifi-dumbbell", false);
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
   Simulator::Stop (Seconds (60.));

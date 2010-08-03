@@ -111,10 +111,6 @@ public:
    * Unused for now.
    */
   Time GetMaxPropagationDelay (void) const;
-  /**
-   * \returns the maximum size of a MAC-level data payload.
-   */
-  uint32_t GetMaxMsduSize (void) const;
 
   /**
    * \returns the MAC address associated to this MAC layer.
@@ -146,7 +142,7 @@ public:
    * dequeued as soon as the DCF function determines that
    * access it granted to this MAC.  The extra parameter "from" allows
    * this device to operate in a bridged mode, forwarding received
-   * frames without altering the source addresss.
+   * frames without altering the source address.
    */
   virtual void Enqueue (Ptr<const Packet> packet, Mac48Address to, Mac48Address from) = 0;
   /**
@@ -179,6 +175,13 @@ public:
    * \param linkDown the callback to invoke when the link becomes down.
    */
   virtual void SetLinkDownCallback (Callback<void> linkDown) = 0;
+  /* Next functions are not pure virtual so non Qos WifiMacs are not
+   * forced to implement them.
+   */
+  virtual void SetBasicBlockAckTimeout (Time blockAckTimeout);
+  virtual Time GetBasicBlockAckTimeout (void) const;
+  virtual void SetCompressedBlockAckTimeout (Time blockAckTimeout);
+  virtual Time GetCompressedBlockAckTimeout (void) const;
 
   /**
    * Public method used to fire a MacTx trace.  Implemented for encapsulation 
@@ -215,8 +218,8 @@ public:
   void ConfigureStandard (enum WifiPhyStandard standard);
 
 protected:
-  void ConfigureDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AccessClass ac);
-  void ConfigureCCHDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AccessClass ac);
+  void ConfigureDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AcIndex ac);
+  void ConfigureCCHDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AcIndex ac);
 private:
   static Time GetDefaultMaxPropagationDelay (void);
   static Time GetDefaultSlot (void);
@@ -224,6 +227,10 @@ private:
   static Time GetDefaultEifsNoDifs (void);
   static Time GetDefaultCtsAckDelay (void);
   static Time GetDefaultCtsAckTimeout (void);
+  static Time GetDefaultBasicBlockAckDelay (void);
+  static Time GetDefaultBasicBlockAckTimeout (void);
+  static Time GetDefaultCompressedBlockAckDelay (void);
+  static Time GetDefaultCompressedBlockAckTimeout (void);
   /**
    * \param standard the phy standard to be used
    *
@@ -235,7 +242,6 @@ private:
   virtual void FinishConfigureStandard (enum WifiPhyStandard standard) = 0;
 
   Time m_maxPropagationDelay;
-  uint32_t m_maxMsduSize;
 
   void Configure80211a (void);
   void Configure80211b (void);

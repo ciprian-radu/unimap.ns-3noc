@@ -99,9 +99,7 @@ main (int argc, char *argv[])
   staDevices = wifi.Install (phy, mac, wifiStaNodes);
 
   mac.SetType ("ns3::NqapWifiMac", 
-    "Ssid", SsidValue (ssid),
-    "BeaconGeneration", BooleanValue (true),
-    "BeaconInterval", TimeValue (Seconds (2.5)));
+    "Ssid", SsidValue (ssid));
 
   NetDeviceContainer apDevices;
   apDevices = wifi.Install (phy, mac, wifiApNode);
@@ -162,9 +160,9 @@ main (int argc, char *argv[])
 
   Simulator::Stop (Seconds (10.0));
 
-  PointToPointHelper::EnablePcapAll ("third");
+  pointToPoint.EnablePcapAll ("third");
   phy.EnablePcap ("third", apDevices.Get (0));
-  CsmaHelper::EnablePcap ("third", csmaDevices.Get (0), true);
+  csma.EnablePcap ("third", csmaDevices.Get (0), true);
 
   Simulator::Run ();
   Simulator::Destroy ();

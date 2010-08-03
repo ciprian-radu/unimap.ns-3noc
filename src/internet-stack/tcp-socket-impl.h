@@ -28,9 +28,11 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/event-id.h"
+#include "ns3/ipv4-header.h"
+#include "ipv4-interface.h"
 #include "tcp-typedefs.h"
 #include "pending-data.h"
-#include "sequence-number.h"
+#include "ns3/sequence-number.h"
 #include "rtt-estimator.h"
 
 
@@ -54,7 +56,7 @@ class TcpHeader;
  * control.  Finite send buffer semantics are modeled, but as of yet, finite
  * receive buffer modelling is unimplemented.
  *
- * The closedown of these sockets is as of yet not compliant with the relevent
+ * The closedown of these sockets is as of yet not compliant with the relevant
  * RFCs, i.e. the FIN handshaking isn't correct.  While this is visible at the
  * PCAP tracing level, it has no effect on the statistics users are interested
  * in, i.e. throughput, delay, etc. of actual payload data.
@@ -95,12 +97,16 @@ public:
   virtual Ptr<Packet> RecvFrom (uint32_t maxSize, uint32_t flags,
     Address &fromAddress);
   virtual int GetSockName (Address &address) const; 
+  virtual void BindToNetDevice (Ptr<NetDevice> netdevice);
+  virtual bool SetAllowBroadcast (bool allowBroadcast);
+  virtual bool GetAllowBroadcast () const;
 
 private:
   friend class Tcp;
   // invoked by Tcp class
   int FinishBind (void);
-  void ForwardUp (Ptr<Packet> p, Ipv4Address ipv4, uint16_t port);
+  void ForwardUp (Ptr<Packet> p, Ipv4Header header, uint16_t port,
+                  Ptr<Ipv4Interface> incomingInterface);
   void Destroy (void);
   int DoSendTo (Ptr<Packet> p, const Address &daddr);
   int DoSendTo (Ptr<Packet> p, Ipv4Address daddr, uint16_t dport);
@@ -113,10 +119,11 @@ private:
                       Ipv4Address saddr, Ipv4Address daddr);
   bool ProcessPacketAction (Actions_t a, Ptr<Packet> p,
                                        const TcpHeader& tcpHeader,
-                                       const Address& fromAddress);
+                                       const Address& fromAddress,
+                                       const Address& toAddress);
   Actions_t ProcessEvent (Events_t e);
   bool SendPendingData(bool withAck = false);
-  void CompleteFork(Ptr<Packet>, const TcpHeader&, const Address& fromAddress);
+  void CompleteFork(Ptr<Packet>, const TcpHeader&, const Address& fromAddress, const Address& toAddress);
   void ConnectionSucceeded();
   
   //methods for window management
@@ -130,17 +137,17 @@ private:
   uint16_t AdvertisedWindowSize();
 
   // Manage data tx/rx
-  void NewRx (Ptr<Packet>, const TcpHeader&, const Address&);
-  void RxBufFinishInsert (SequenceNumber);
+  void NewRx (Ptr<Packet>, const TcpHeader&, const Address& fromAddress, const Address& toAddress);
+  void RxBufFinishInsert (SequenceNumber32);
   Ptr<TcpSocketImpl> Copy ();
-  virtual void NewAck (SequenceNumber seq); 
+  virtual void NewAck (SequenceNumber32 seq); 
   virtual void DupAck (const TcpHeader& t, uint32_t count); 
   virtual void ReTxTimeout ();
   void DelAckTimeout ();
   void LastAckTimeout ();
   void PersistTimeout ();
   void Retransmit ();
-  void CommonNewAck (SequenceNumber seq, bool skipTimer = false);
+  void CommonNewAck (SequenceNumber32 seq, bool skipTimer = false);
   // All timers are cancelled when the endpoint is deleted, to insure
   // we don't have additional activity
   void CancelAllTimers();
@@ -177,17 +184,13 @@ private:
   Ipv4EndPoint *m_endPoint;
   Ptr<Node> m_node;
   Ptr<TcpL4Protocol> m_tcp;
-  Ipv4Address m_remoteAddress;
-  uint16_t m_remotePort;
-  //these two are so that the socket/endpoint cloning works
-  Ipv4Address m_localAddress;
-  uint16_t m_localPort;
+
   enum SocketErrno m_errno;
   bool m_shutdownSend;
   bool m_shutdownRecv;
   bool m_connected;
   
-  //manage the state infomation
+  //manage the state information
   States_t m_state;
   bool m_closeNotified;
   bool m_closeRequestNotified;
@@ -196,13 +199,16 @@ private:
 
   
   //sequence info, sender side
-  SequenceNumber m_nextTxSequence;
-  SequenceNumber m_highTxMark;
-  SequenceNumber m_highestRxAck;
-  SequenceNumber m_lastRxAck;
+  SequenceNumber32 m_nextTxSequence;
+  SequenceNumber32 m_highTxMark;
+  SequenceNumber32 m_highestRxAck;
+  SequenceNumber32 m_lastRxAck;
   
-  //sequence info, reciever side
-  SequenceNumber m_nextRxSequence; //next expected sequence
+  //sequence info, receiver side
+  SequenceNumber32 m_nextRxSequence; //next expected sequence
+
+  //sequence number where fin was sent or received
+  SequenceNumber32 m_finSequence;
 
   //Rx buffer
   UnAckData_t m_bufferedData; //buffer which sorts out of sequence data
@@ -215,7 +221,7 @@ private:
 
   //this is kind of the tx buffer
   PendingData* m_pendingData;
-  SequenceNumber m_firstPendingSequence;
+  SequenceNumber32 m_firstPendingSequence;
 
   // Window management
   uint32_t                       m_segmentSize;          //SegmentSize

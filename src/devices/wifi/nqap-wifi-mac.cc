@@ -21,6 +21,7 @@
 #include "ns3/log.h"
 #include "ns3/simulator.h"
 #include "ns3/node.h"
+#include "ns3/boolean.h"
 
 #include "nqap-wifi-mac.h"
 #include "dca-txop.h"
@@ -49,7 +50,7 @@ NqapWifiMac::GetTypeId (void)
     .SetParent<WifiMac> ()
     .AddConstructor<NqapWifiMac> ()
     .AddAttribute ("BeaconInterval", "Delay between two beacons",
-                   TimeValue (Seconds (0.1)),
+                   TimeValue (MicroSeconds (102400)),
                    MakeTimeAccessor (&NqapWifiMac::GetBeaconInterval,
                                      &NqapWifiMac::SetBeaconInterval),
                    MakeTimeChecker ())
@@ -279,6 +280,10 @@ void
 NqapWifiMac::SetBeaconInterval (Time interval)
 {
   NS_LOG_FUNCTION (this << interval);
+  if ((interval.GetMicroSeconds () % 1024) != 0)
+    {
+      NS_LOG_WARN ("beacon interval should be multiple of 1024us, see IEEE Std. 802.11-2007, section 11.1.1.1");
+    }
   m_beaconInterval = interval;
 }
 void
@@ -311,13 +316,19 @@ void
 NqapWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to, Mac48Address from)
 {
   NS_LOG_FUNCTION (this << packet << to << from);
-  ForwardDown (packet, from, to);
+  if (to.IsBroadcast () || m_stationManager->IsAssociated (to))
+    {
+      ForwardDown (packet, from, to);
+    }
 }
 void 
 NqapWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to)
 {
   NS_LOG_FUNCTION (this << packet << to);
-  ForwardDown (packet, m_low->GetAddress (), to);
+  if (to.IsBroadcast () || m_stationManager->IsAssociated (to))
+    {
+      ForwardDown (packet, m_low->GetAddress (), to);
+    }
 }
 bool 
 NqapWifiMac::SupportsSendFrom (void) const
@@ -416,24 +427,22 @@ void
 NqapWifiMac::TxOk (const WifiMacHeader &hdr)
 {
   NS_LOG_FUNCTION (this);
-  WifiRemoteStation *station = m_stationManager->Lookup (hdr.GetAddr1 ());
   if (hdr.IsAssocResp () && 
-      station->IsWaitAssocTxOk ()) 
+      m_stationManager->IsWaitAssocTxOk (hdr.GetAddr1 ())) 
     {
       NS_LOG_DEBUG ("associated with sta="<<hdr.GetAddr1 ());
-      station->RecordGotAssocTxOk ();
+      m_stationManager->RecordGotAssocTxOk (hdr.GetAddr1 ());
     }
 }
 void 
 NqapWifiMac::TxFailed (const WifiMacHeader &hdr)
 {
   NS_LOG_FUNCTION (this);
-  WifiRemoteStation *station = m_stationManager->Lookup (hdr.GetAddr1 ());
   if (hdr.IsAssocResp () && 
-      station->IsWaitAssocTxOk ()) 
+      m_stationManager->IsWaitAssocTxOk (hdr.GetAddr1 ())) 
     {
       NS_LOG_DEBUG ("assoc failed with sta="<<hdr.GetAddr1 ());
-      station->RecordGotAssocTxFailed ();
+      m_stationManager->RecordGotAssocTxFailed (hdr.GetAddr1 ());
     }
 }
 void 
@@ -442,7 +451,6 @@ NqapWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
   NS_LOG_FUNCTION (this << packet << hdr);
 
   Mac48Address from = hdr->GetAddr2 ();
-  WifiRemoteStation *fromStation = m_stationManager->Lookup (from);
 
   if (hdr->IsData ()) 
     {
@@ -450,17 +458,16 @@ NqapWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
       if (!hdr->IsFromDs () && 
           hdr->IsToDs () &&
           bssid == GetAddress () &&
-          fromStation->IsAssociated ()) 
+          m_stationManager->IsAssociated (from)) 
         {
           Mac48Address to = hdr->GetAddr3 ();
-          WifiRemoteStation *toStation = m_stationManager->Lookup (to);
           if (to == GetAddress ()) 
             {
               NS_LOG_DEBUG ("frame for me from="<<from);
               ForwardUp (packet, from, bssid);
             } 
           else if (to.IsGroup () ||
-                   toStation->IsAssociated ())
+                   m_stationManager->IsAssociated (to))
             {
               NS_LOG_DEBUG ("forwarding frame from="<<from<<", to="<<to);
               Ptr<Packet> copy = packet->Copy ();
@@ -530,17 +537,17 @@ NqapWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
                       WifiMode mode = m_phy->GetMode (j);
                       if (rates.IsSupportedRate (mode.GetDataRate ()))
                         {
-                          fromStation->AddSupportedMode (mode);
+                          m_stationManager->AddSupportedMode (from, mode);
                         }
                     }
-                  fromStation->RecordWaitAssocTxOk ();
+                  m_stationManager->RecordWaitAssocTxOk (from);
                   // send assoc response with success status.
                   SendAssocResp (hdr->GetAddr2 (), true);
                 }
             } 
           else if (hdr->IsDisassociation ()) 
             {
-              fromStation->RecordDisassociated ();
+              m_stationManager->RecordDisassociated (from);
             } 
           else if (hdr->IsReassocReq ()) 
             {
@@ -606,6 +613,8 @@ NqapWifiMac::DoStart (void)
     {
       m_beaconEvent = Simulator::ScheduleNow (&NqapWifiMac::SendOneBeacon, this);
     }
+  m_dca->Start ();
+  m_beaconDca->Start ();
   WifiMac::DoStart ();
 }
 

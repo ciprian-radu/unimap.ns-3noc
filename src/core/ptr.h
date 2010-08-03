@@ -51,7 +51,7 @@ namespace ns3 {
  * If you want to store a newed object into a smart pointer,
  * we recommend you to use the Create template functions
  * to create the object and store it in a smart pointer to avoid
- * memory leaks. These functions are really small conveniance
+ * memory leaks. These functions are really small convenience
  * functions and their goal is just is save you a small
  * bit of typing.
  */
@@ -382,6 +382,20 @@ StaticCast (Ptr<T2> const&p)
   return Ptr<T1> (static_cast<T1 *> (PeekPointer (p)));
 }
 
+
+template <typename T>
+Ptr<T> Copy (Ptr<T> object)
+{
+  Ptr<T> p = Ptr<T> (new T (*PeekPointer (object)), false);
+  return p;
+}
+
+template <typename T>
+Ptr<T> Copy (Ptr<const T> object)
+{
+  Ptr<T> p = Ptr<T> (new T (*PeekPointer (object)), false);
+  return p;
+}
 
 /****************************************************
  *      Member method implementations.

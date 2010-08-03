@@ -26,7 +26,7 @@
 
 #include "ns3/packet.h"
 #include "pending-data.h"
-#include "sequence-number.h"
+#include "ns3/sequence-number.h"
 
 #include "ns3/ptr.h"
 namespace ns3
@@ -53,15 +53,55 @@ public:
   virtual void Clear ();// Remove all associated data
   virtual void Add (uint32_t s, const uint8_t* d = 0);// Add some data to end
   virtual void Add (Ptr<Packet> p);
-  // Inquire available data from (f,o) sequence pair
-  virtual uint32_t SizeFromSeq (const SequenceNumber&, const SequenceNumber&);
+  /**
+   * This method returns the number of bytes in the PendingData buffer
+   * beyond the sequence number specified by seqOffset.
+   *
+   * The variables seqFront and seqOffset correspond to a sequence number
+   * space in use by the user.  What is significant in this method is the
+   * difference between them; i.e. the quantity (seqOffset - seqFront). 
+   * This difference is subtracted from Size(), yielding the number of
+   * bytes beyond seqOffset, from the user perspective, in the PendingData
+   * buffer.
+   *
+   * If the first number specified is not a sequence number that corresponds
+   * to the first data byte in the PendingData buffer, the computation
+   * returned will be in error.
+   * 
+   * \return number of bytes 
+   * \param seqFront sequence number of assumed first byte in the PendingData
+   * \param seqOffset sequence number of offset 
+   */
+  virtual uint32_t SizeFromSeq (const SequenceNumber32& seqFront, const SequenceNumber32& seqOffset);
   // Inquire available data from offset
-  virtual uint32_t SizeFromOffset (uint32_t);
+  /**
+   * \return number of bytes in the data buffer beyond the offset specified
+   * \param offset offset (from zero) 
+   */
+  virtual uint32_t SizeFromOffset (uint32_t offset);
   // Available size from sequence difference 
-  virtual uint32_t OffsetFromSeq (const SequenceNumber&, const SequenceNumber&);
+  /**
+   * Subtracts seqFront from seqOffset after enforcing seqFront is less
+   * than seqOffset
+   *
+   * \param seqFront sequence number to be subtracted from seqOffset
+   * \param seqOffset higher sequence number
+   * \return seqOffset-seqFront
+   */
+  virtual uint32_t OffsetFromSeq (const SequenceNumber32& seqFront, const SequenceNumber32& seqOffset);
   virtual Ptr<Packet> CopyFromOffset (uint32_t, uint32_t);  // Size, offset, ret packet
   // Copy data, size, offset specified by sequence difference
-  virtual Ptr<Packet> CopyFromSeq (uint32_t, const SequenceNumber&, const SequenceNumber&);
+  virtual Ptr<Packet> CopyFromSeq (uint32_t, const SequenceNumber32&, const SequenceNumber32&);
+  /**
+   * Permits object to clear any pending data between seqFront and 
+   * seqOffset - 1).  Callers should check the return value to determine
+   * whether any data was removed from the front.
+   *
+   * \param seqFront sequence number to start to try to remove from 
+   * \param seqOffset first sequence number in buffer that should be retained
+   * \return number of bytes from the front that were removed from the buffer
+   */
+  virtual uint32_t RemoveToSeq (const SequenceNumber32& seqFront, const SequenceNumber32& seqOffset);
   PendingData*   Copy () const;          // Create a copy of this header
   PendingData*   CopyS (uint32_t);         // Copy with new size
   PendingData*   CopySD (uint32_t, uint8_t*); // Copy with new size, new data

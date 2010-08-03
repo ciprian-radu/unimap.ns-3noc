@@ -21,7 +21,8 @@
 #ifndef __NIX_VECTOR_H__
 #define __NIX_VECTOR_H__
 
-#include "ns3/object.h"
+#include "ns3/ptr.h"
+#include "ns3/simple-ref-count.h"
 #include "ns3/buffer.h"
 
 namespace ns3 {
@@ -46,7 +47,7 @@ namespace ns3 {
  * bits long and can store multiple neighbor-indexes.  A 
  * fair amount of bit manipulation is used to store these 
  * neighbor-indexes efficiently.  A vector is used so that 
- * the nix-vector can grow arbitraily if the topoplogy and 
+ * the nix-vector can grow arbitraily if the topology and 
  * route requires a large number of neighbor-indexes.
  *
  * As the nix-vector travels along the route, an internal 
@@ -59,15 +60,25 @@ namespace ns3 {
  * routed.
  */
 
-class NixVector : public Object
+class NixVector : public SimpleRefCount<NixVector>
 {
   public:
     NixVector ();
-    NixVector (const NixVector &o);
     ~NixVector ();
+    /**
+     * \return a copy of this nix-vector
+     */
     Ptr<NixVector> Copy (void) const;
+    /**
+     * \param o the NixVector to copy to a new NixVector
+     *          using a constructor
+     */
+    NixVector (const NixVector &o);
+    /**
+     * \param o the NixVector to copy to a new NixVector using the
+     *          equals operator
+     */
     NixVector &operator = (const NixVector &o);
-    static TypeId GetTypeId (void);
     /**
      * \param newBits the neighbor-index to be added to the vector
      * \param numberOfBits the number of bits that newBits contains
@@ -105,17 +116,27 @@ class NixVector : public Object
      */
     uint32_t GetSerializedSize (void) const;
     /**
-     * \param i Buffer iterator for writing
+     * \return zero if buffer not large enough
      *
-     * \param size number of bytes to write
+     * \param buffer points to serialization buffer
+     *
+     * \param maxSize max number of bytes to write
+     *
+     * This nix-vector is serialized into the raw character 
+     * buffer parameter.
      */
-    void Serialize (Buffer::Iterator i, uint32_t size) const;
+    uint32_t Serialize (uint32_t* buffer, uint32_t maxSize) const;
     /**
-     * \return the number of bytes deserialized
+     * \return zero if a complete nix-vector is not deserialized
      *
-     * \param i Buffer iterator for reading
+     * \param buffer points to buffer for deserialization
+     *
+     * \param size number of bytes to deserialize
+     *
+     * The raw character buffer containing all the nix-vector 
+     * information is deserialized into this nix-vector.
      */
-    uint32_t Deserialize (Buffer::Iterator i);
+    uint32_t Deserialize (const uint32_t* buffer, uint32_t size);
     /**
      * \return number of bits of numberOfNeighbors
      *
@@ -126,14 +147,15 @@ class NixVector : public Object
      * AddNeighborIndex or ExtractNeighborIndex.
      */
     uint32_t BitCount (uint32_t numberOfNeighbors) const;  
-    /* for printing of nix-vector */
-    void DumpNixVector (std::ostream &os) const;
-    /* for printing of nix-vector */
-    friend std::ostream & operator <<( std::ostream &outs, const NixVector &nix); 
 
 
   private:
     typedef std::vector<uint32_t> NixBits_t;
+
+    /* for printing of nix-vector */
+    void DumpNixVector (std::ostream &os) const;
+    /* for printing of nix-vector */
+    friend std::ostream & operator <<( std::ostream &outs, const NixVector &nix); 
 
     /* the actual nix-vector */
     NixBits_t m_nixVector;

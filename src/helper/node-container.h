@@ -189,10 +189,10 @@ public:
    * Nodes
    *
    * \code
-   *   uint32_t nNodes = continer.GetN ();
+   *   uint32_t nNodes = container.GetN ();
    *   for (uint32_t i = 0 i < nNodes; ++i)
    *     {
-   *       Ptr<Node> p = continer.Get (i)
+   *       Ptr<Node> p = container.Get (i)
    *       i->method ();  // some Node method
    *     }
    * \endcode
@@ -235,6 +235,20 @@ public:
    * \param n The number of Nodes to create
    */
   void Create (uint32_t n);
+
+  /**
+   * \brief Create n nodes with specified systemId for distributed simulations 
+   * and append pointers to them to the end of this NodeContainer.
+   *
+   * Nodes are at the heart of any ns-3 simulation.  One of the first tasks that
+   * any simulation needs to do is to create a number of nodes.  This method
+   * automates that task, and adds the ability to specify systemId for 
+   * distributed simulations.
+   *
+   * \param n The number of Nodes to create
+   * \param systemId The system id or rank associated with this node
+   */
+  void Create (uint32_t n, uint32_t systemId);
 
   /**
    * \brief Append the contents of another NodeContainer to the end of

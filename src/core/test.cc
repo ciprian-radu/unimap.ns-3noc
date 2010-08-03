@@ -21,8 +21,9 @@
 #include "abort.h"
 #include <math.h>
 
-namespace ns3 {
+bool gBreakOnFailure = false;
 
+namespace ns3 {
 
 //
 // XML files have restrictions on certain characters that may be present in
@@ -64,7 +65,7 @@ TestDoubleIsEqual (const double x1, const double x2, const double epsilon)
   //
   {
     double max = (fabs (x1) > fabs (x2)) ? x1 : x2;
-    frexp (max, &exponent);
+    (void)frexp (max, &exponent);
   }
 
   //

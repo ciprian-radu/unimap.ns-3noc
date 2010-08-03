@@ -25,6 +25,8 @@
 #include <utility>
 #include <vector>
 #include <queue>
+#include <algorithm>
+#include <iostream>
 #include "ns3/assert.h"
 #include "ns3/fatal-error.h"
 #include "ns3/log.h"
@@ -32,6 +34,7 @@
 #include "ns3/ipv4.h"
 #include "ns3/ipv4-routing-protocol.h"
 #include "ns3/ipv4-list-routing.h"
+#include "ns3/mpi-interface.h"
 #include "global-router-interface.h"
 #include "global-route-manager-impl.h"
 #include "candidate-queue.h"
@@ -40,6 +43,34 @@
 NS_LOG_COMPONENT_DEFINE ("GlobalRouteManager");
 
 namespace ns3 {
+
+std::ostream& 
+operator<< (std::ostream& os, const SPFVertex::NodeExit_t& exit)
+{
+  os << "(" << exit.first << " ," << exit.second << ")";
+  return os;
+}
+
+std::ostream& 
+operator<< (std::ostream& os, const SPFVertex::ListOfSPFVertex_t& vs)
+{
+  typedef SPFVertex::ListOfSPFVertex_t::const_iterator CIter_t;
+  os << "{";
+  for (CIter_t iter = vs.begin (); iter != vs.end ();)
+    {
+      os << (*iter)->m_vertexId;
+      if (++iter != vs.end ()) 
+        {
+          os << ", ";
+        }
+      else 
+        { 
+          break;
+        }
+    }
+  os << "}";
+  return os;
+}
 
 // ---------------------------------------------------------------------------
 //
@@ -54,7 +85,7 @@ SPFVertex::SPFVertex () :
   m_distanceFromRoot (SPF_INFINITY), 
   m_rootOif (SPF_INFINITY),
   m_nextHop ("0.0.0.0"),
-  m_parent (0),
+  m_parents (),
   m_children (),
   m_vertexProcessed (false)
 {
@@ -67,11 +98,12 @@ SPFVertex::SPFVertex (GlobalRoutingLSA* lsa) :
   m_distanceFromRoot (SPF_INFINITY), 
   m_rootOif (SPF_INFINITY),
   m_nextHop ("0.0.0.0"),
-  m_parent (0),
+  m_parents (),
   m_children (),
   m_vertexProcessed (false)
 {
   NS_LOG_FUNCTION_NOARGS ();
+
   if (lsa->GetLSType () == GlobalRoutingLSA::RouterLSA) 
     {
       NS_LOG_LOGIC ("Setting m_vertexType to VertexRouter");
@@ -86,17 +118,53 @@ SPFVertex::SPFVertex (GlobalRoutingLSA* lsa) :
 
 SPFVertex::~SPFVertex ()
 {
-  NS_LOG_FUNCTION_NOARGS ();
-  for ( ListOfSPFVertex_t::iterator i = m_children.begin ();
-        i != m_children.end ();
-        i++)
+  NS_LOG_FUNCTION (m_vertexId);
+  
+  NS_LOG_LOGIC ("Children vertices - " << m_children);
+  NS_LOG_LOGIC ("Parent verteices - " << m_parents);
+
+  // find this node from all its parents and remove the entry of this node
+  // from all its parents
+  for (ListOfSPFVertex_t::iterator piter = m_parents.begin (); 
+      piter != m_parents.end (); 
+      piter++)
     {
-      SPFVertex *p = *i;
+      // remove the current vertex from its parent's children list. Check
+      // if the size of the list is reduced, or the child<->parent relation
+      // is not bidirectional
+      uint32_t orgCount = (*piter)->m_children.size ();
+      (*piter)->m_children.remove (this);
+      uint32_t newCount = (*piter)->m_children.size ();
+      if (orgCount > newCount)
+        {
+          NS_ASSERT_MSG (orgCount > newCount, "Unable to find the current vertex from its parents --- impossible!");
+        }
+    }
+
+  // delete children
+  while (m_children.size () > 0)
+    {
+      // pop out children one by one. Some children may disapper 
+      // when deleting some other children in the list. As a result,
+      // it is necessary to use pop to walk through all children, instead
+      // of using iterator.
+      //
+      // Note that m_children.pop_front () is not necessary as this
+      // p is removed from the children list when p is deleted
+      SPFVertex* p = m_children.front ();
+      // 'p' == 0, this child is already deleted by its other parent
+      if (p == 0) continue;
+      NS_LOG_LOGIC ("Parent vertex-" << m_vertexId << " deleting its child vertex-" << p->GetVertexId ());
       delete p;
       p = 0;
-      *i = 0;
     }
   m_children.clear ();
+  // delete parents
+  m_parents.clear ();
+  // delete root exit direction
+  m_ecmpRootExits.clear ();
+
+  NS_LOG_LOGIC ("Vertex-" << m_vertexId << " completed deleted");
 }
 
   void 
@@ -155,49 +223,132 @@ SPFVertex::GetDistanceFromRoot (void) const
   return m_distanceFromRoot;
 }
 
-  void 
-SPFVertex::SetOutgoingInterfaceId (int32_t id)
-{
-  NS_LOG_FUNCTION (id);
-  m_rootOif = id;
-}
-
-  uint32_t 
-SPFVertex::GetOutgoingInterfaceId (void) const
-{
-  NS_LOG_FUNCTION_NOARGS ();
-  return m_rootOif;
-}
-
-  void 
-SPFVertex::SetNextHop (Ipv4Address nextHop)
-{
-  NS_LOG_FUNCTION (nextHop);
-  m_nextHop = nextHop;
-}
-
-  Ipv4Address
-SPFVertex::GetNextHop (void) const
-{
-  NS_LOG_FUNCTION_NOARGS ();
-  return m_nextHop;
-}
-
   void
 SPFVertex::SetParent (SPFVertex* parent)
 {
   NS_LOG_FUNCTION (parent);
-  m_parent = parent;
+
+  // always maintain only one parent when using setter/getter methods
+  m_parents.clear ();
+  m_parents.push_back (parent);
 }
 
   SPFVertex* 
-SPFVertex::GetParent (void) const
+SPFVertex::GetParent (uint32_t i) const
 {
   NS_LOG_FUNCTION_NOARGS ();
-  return m_parent;
+
+  // If the index i is out-of-range, return 0 and do nothing
+  if (m_parents.size () <= i)
+    {
+      NS_LOG_LOGIC ("Index to SPFVertex's parent is out-of-range.");
+      return 0;
+    }
+  ListOfSPFVertex_t::const_iterator iter = m_parents.begin ();
+  while (i-- > 0) 
+    {
+      iter++;
+    }
+  return *iter;
 }
 
-  uint32_t 
+void 
+SPFVertex::MergeParent (const SPFVertex* v)
+{
+  NS_LOG_FUNCTION (v);
+
+  NS_LOG_LOGIC ("Before merge, list of parents = " << m_parents);
+  // combine the two lists first, and then remove any duplicated after
+  m_parents.insert (m_parents.end (), 
+    v->m_parents.begin (), v->m_parents.end ());
+  // remove duplication
+  m_parents.sort ();
+  m_parents.unique ();
+  NS_LOG_LOGIC ("After merge, list of parents = " << m_parents);
+}
+
+void 
+SPFVertex::SetRootExitDirection (Ipv4Address nextHop, int32_t id)
+{
+  NS_LOG_FUNCTION (nextHop << id);
+  
+  // always maintain only one root's exit
+  m_ecmpRootExits.clear ();
+  m_ecmpRootExits.push_back (NodeExit_t (nextHop, id));
+  // update the following in order to be backward compatitable with
+  // GetNextHop and GetOutgoingInterface methods
+  m_nextHop = nextHop;
+  m_rootOif = id;
+}
+
+void 
+SPFVertex::SetRootExitDirection (SPFVertex::NodeExit_t exit)
+{
+  NS_LOG_FUNCTION (exit);
+  SetRootExitDirection (exit.first, exit.second);
+}
+
+SPFVertex::NodeExit_t
+SPFVertex::GetRootExitDirection (uint32_t i) const
+{
+  NS_LOG_FUNCTION (i);
+  typedef ListOfNodeExit_t::const_iterator CIter_t;
+
+  NS_ASSERT_MSG (i < m_ecmpRootExits.size (), "Index out-of-range when accessing SPFVertex::m_ecmpRootExits!");
+  CIter_t iter = m_ecmpRootExits.begin ();
+  while (i-- > 0) {iter++;}
+
+  return *iter;
+}
+
+SPFVertex::NodeExit_t 
+SPFVertex::GetRootExitDirection () const
+{
+  NS_LOG_FUNCTION_NOARGS ();
+
+  NS_ASSERT_MSG (m_ecmpRootExits.size () <= 1, "Assumed there is at most one exit from the root to this vertex");
+  return GetRootExitDirection (0);
+}
+
+void 
+SPFVertex::MergeRootExitDirections (const SPFVertex* vertex)
+{
+  NS_LOG_FUNCTION (vertex);
+
+  // obtain the external list of exit directions
+  //
+  // Append the external list into 'this' and remove duplication afterward
+  const ListOfNodeExit_t& extList = vertex->m_ecmpRootExits;
+  m_ecmpRootExits.insert (m_ecmpRootExits.end (), 
+    extList.begin(), extList.end ());
+  m_ecmpRootExits.sort ();
+  m_ecmpRootExits.unique ();
+}
+
+void 
+SPFVertex::InheritAllRootExitDirections (const SPFVertex* vertex)
+{
+  NS_LOG_FUNCTION (vertex);
+
+  // discard all exit direction currently associated with this vertex,
+  // and copy all the exit directions from the given vertex
+  if (m_ecmpRootExits.size () > 0)
+    {
+      NS_LOG_WARN ("x root exit directions in this vertex are going to be discarded");
+    }
+  m_ecmpRootExits.clear ();
+  m_ecmpRootExits.insert (m_ecmpRootExits.end (), 
+      vertex->m_ecmpRootExits.begin (), vertex->m_ecmpRootExits.end ());
+}
+
+uint32_t 
+SPFVertex::GetNRootExitDirections () const
+{
+  NS_LOG_FUNCTION_NOARGS ();
+  return m_ecmpRootExits.size ();
+}
+
+uint32_t 
 SPFVertex::GetNChildren (void) const
 {
   NS_LOG_FUNCTION_NOARGS ();
@@ -376,7 +527,7 @@ GlobalRouteManagerLSDB::GetLSAByLinkData (Ipv4Address addr) const
 
 GlobalRouteManagerImpl::GlobalRouteManagerImpl () 
 : 
-  m_spfroot (0) 
+  m_spfroot (0)
 {
   NS_LOG_FUNCTION_NOARGS ();
   m_lsdb = new GlobalRouteManagerLSDB ();
@@ -536,6 +687,7 @@ GlobalRouteManagerImpl::InitializeRoutes ()
 //
 // Walk the list of nodes in the system.
 //
+  NS_LOG_INFO ("About to start SPF calculation");
   NodeList::Iterator listEnd = NodeList::End ();
   for (NodeList::Iterator i = NodeList::Begin (); i != listEnd; i++)
     {
@@ -546,6 +698,13 @@ GlobalRouteManagerImpl::InitializeRoutes ()
 //
       Ptr<GlobalRouter> rtr = 
         node->GetObject<GlobalRouter> ();
+
+      // Ignore nodes that are not assigned to our systemId (distributed sim)
+      if (node->GetSystemId () != MpiInterface::GetSystemId ()) 
+        {
+          continue;
+        }
+      
 //
 // if the node has a global router interface, then run the global routing
 // algorithms.
@@ -555,6 +714,7 @@ GlobalRouteManagerImpl::InitializeRoutes ()
           SPFCalculate (rtr->GetRouterId ());
         }
     }
+  NS_LOG_INFO ("Finished SPF calculation");
 }
 
 //
@@ -688,15 +848,14 @@ GlobalRouteManagerImpl::SPFNext (SPFVertex* v, CandidateQueue& candidate)
 // Is there already vertex w in candidate list?
       if (w_lsa->GetStatus () == GlobalRoutingLSA::LSA_SPF_NOT_EXPLORED)
         {
-
-// prepare vertex w
-          w = new SPFVertex (w_lsa);
 // Calculate nexthop to w
 // We need to figure out how to actually get to the new router represented
 // by <w>.  This will (among other things) find the next hop address to send
 // packets destined for this network to, and also find the outbound interface
 // used to forward the packets.
-//
+
+// prepare vertex w
+          w = new SPFVertex (w_lsa);
           if (SPFNexthopCalculation (v, w, l, distance))
             {
               w_lsa->SetStatus (GlobalRoutingLSA::LSA_SPF_CANDIDATE);
@@ -710,6 +869,9 @@ GlobalRouteManagerImpl::SPFNext (SPFVertex* v, CandidateQueue& candidate)
                 v->GetVertexId () << ", distance: " <<
                 w->GetDistanceFromRoot ());
             }
+          else
+            NS_ASSERT_MSG (0, "SPFNexthopCalculation never " 
+              << "return false, but it does now!");
         }
       else if (w_lsa->GetStatus () == GlobalRoutingLSA::LSA_SPF_CANDIDATE)
         {
@@ -720,22 +882,54 @@ GlobalRouteManagerImpl::SPFNext (SPFVertex* v, CandidateQueue& candidate)
 //
 // So, locate the vertex in the candidate queue and take a look at the 
 // distance.
-          w = candidate.Find (w_lsa->GetLinkStateId ());
-          if (w->GetDistanceFromRoot () < distance)
+
+/* (quagga-0.98.6) W is already on the candidate list; call it cw.
+* Compare the previously calculated cost (cw->distance)
+* with the cost we just determined (w->distance) to see
+* if we've found a shorter path.
+*/
+          SPFVertex* cw;
+          cw = candidate.Find (w_lsa->GetLinkStateId ());
+          if (cw->GetDistanceFromRoot () < distance)
             {
 //
 // This is not a shorter path, so don't do anything.
 //
               continue;
             }
-          else if (w->GetDistanceFromRoot () == distance)
+          else if (cw->GetDistanceFromRoot () == distance)
             {
 //
-// This path is one with an equal cost.  Do nothing for now -- we're not doing
-// equal-cost multipath cases yet.
+// This path is one with an equal cost.  
 //
+              NS_LOG_LOGIC ("Equal cost multiple paths found.");
+
+// At this point, there are two instances 'w' and 'cw' of the
+// same vertex, the vertex that is currently being considered
+// for adding into the shortest path tree. 'w' is the instance
+// as seen from the root via vertex 'v', and 'cw' is the instance 
+// as seen from the root via some other vertices other than 'v'.
+// These two instances are being merged in the following code.
+// In particular, the parent nodes, the next hops, and the root's
+// output interfaces of the two instances are being merged.
+// 
+// Note that this is functionally equivalent to calling
+// ospf_nexthop_merge (cw->nexthop, w->nexthop) in quagga-0.98.6
+// (ospf_spf.c::859), although the detail implementation
+// is very different from quagga (blame ns3::GlobalRouteManagerImpl)
+
+// prepare vertex w
+              w = new SPFVertex (w_lsa);
+              SPFNexthopCalculation (v, w, l, distance);
+              cw->MergeRootExitDirections (w);
+              cw->MergeParent (w);
+// SPFVertexAddParent (w) is necessary as the destructor of 
+// SPFVertex checks if the vertex and its parent is linked
+// bidirectionally
+              SPFVertexAddParent (w);
+              delete w;
             }
-          else
+          else // cw->GetDistanceFromRoot () > w->GetDistanceFromRoot ()
             {
 // 
 // this path represents a new, lower-cost path to <w> (the vertex we found in
@@ -745,7 +939,7 @@ GlobalRouteManagerImpl::SPFNext (SPFVertex* v, CandidateQueue& candidate)
 // N.B. the nexthop_calculation is conditional, if it finds a valid nexthop
 // it will call spf_add_parents, which will flush the old parents
 //
-              if (SPFNexthopCalculation (v, w, l, distance))
+              if (SPFNexthopCalculation (v, cw, l, distance))
                 {
 //
 // If we've changed the cost to get to the vertex represented by <w>, we 
@@ -753,7 +947,7 @@ GlobalRouteManagerImpl::SPFNext (SPFVertex* v, CandidateQueue& candidate)
 //
                   candidate.Reorder ();
                 }
-            } // new lower cost path found   
+            } // new lower cost path found  
         } // end W is already on the candidate list
     } // end loop over the links in V's LSA
 }
@@ -847,20 +1041,21 @@ GlobalRouteManagerImpl::SPFNexthopCalculation (
 // from the root node to the host represented by vertex <w>, you have to send
 // the packet to the next hop address specified in w->m_nextHop.
 //
-          w->SetNextHop (linkRemote->GetLinkData ());
+          Ipv4Address nextHop = linkRemote->GetLinkData ();
 // 
 // Now find the outgoing interface corresponding to the point to point link
 // from the perspective of <v> -- remember that <l> is the link "from"
 // <v> "to" <w>.
 //
-          w->SetOutgoingInterfaceId (
-            FindOutgoingInterfaceId (l->GetLinkData ()));
+          uint32_t outIf = FindOutgoingInterfaceId (l->GetLinkData ());
+
+          w->SetRootExitDirection (nextHop, outIf);
           w->SetDistanceFromRoot (distance);
           w->SetParent (v);
           NS_LOG_LOGIC ("Next hop from " << 
             v->GetVertexId () << " to " << w->GetVertexId () << 
-            " goes through next hop " << w->GetNextHop () <<
-            " via outgoing interface " << w->GetOutgoingInterfaceId () <<
+            " goes through next hop " << nextHop <<
+            " via outgoing interface " << outIf <<
             " with distance " << distance);
         }  // end W is a router vertes
       else 
@@ -870,14 +1065,16 @@ GlobalRouteManagerImpl::SPFNexthopCalculation (
           GlobalRoutingLSA* w_lsa = w->GetLSA ();
           NS_ASSERT (w_lsa->GetLSType () == GlobalRoutingLSA::NetworkLSA);
 // Find outgoing interface ID for this network
-          w->SetOutgoingInterfaceId (
-            FindOutgoingInterfaceId (w_lsa->GetLinkStateId (), 
-            w_lsa->GetNetworkLSANetworkMask () ));
+          uint32_t outIf = FindOutgoingInterfaceId (w_lsa->GetLinkStateId (), 
+            w_lsa->GetNetworkLSANetworkMask () );
+// Set the next hop to 0.0.0.0 meaning "not exist"
+          Ipv4Address nextHop = Ipv4Address::GetZero ();
+          w->SetRootExitDirection (nextHop, outIf);
           w->SetDistanceFromRoot (distance);
           w->SetParent (v);
           NS_LOG_LOGIC ("Next hop from " << 
             v->GetVertexId () << " to network " << w->GetVertexId () << 
-            " via outgoing interface " << w->GetOutgoingInterfaceId () <<
+            " via outgoing interface " << outIf <<
             " with distance " << distance);
           return 1;
         }
@@ -901,18 +1098,18 @@ GlobalRouteManagerImpl::SPFNexthopCalculation (
  * use can then be derived from the next hop IP address (or 
  * it can be inherited from the parent network).
  */
-                w->SetNextHop (linkRemote->GetLinkData ());
-                w->SetOutgoingInterfaceId (v->GetOutgoingInterfaceId ());
+                Ipv4Address nextHop = linkRemote->GetLinkData ();
+                uint32_t outIf = v->GetRootExitDirection ().second;
+                w->SetRootExitDirection (nextHop, outIf);
                 NS_LOG_LOGIC ("Next hop from " << 
                   v->GetVertexId () << " to " << w->GetVertexId () << 
-                  " goes through next hop " << w->GetNextHop () <<
-                  " via outgoing interface " << w->GetOutgoingInterfaceId ());
+                  " goes through next hop " << nextHop <<
+                  " via outgoing interface " << outIf);
             }
         }
       else 
         {
-          w->SetNextHop (v->GetNextHop ());
-          w->SetOutgoingInterfaceId (v->GetOutgoingInterfaceId ());
+          w->SetRootExitDirection (v->GetRootExitDirection ());
         }
     }
   else 
@@ -930,8 +1127,7 @@ GlobalRouteManagerImpl::SPFNexthopCalculation (
 // (shortest) paths.  So the next hop and outoing interface remain the same
 // (are inherited).
 //
-      w->SetNextHop (v->GetNextHop ());
-      w->SetOutgoingInterfaceId (v->GetOutgoingInterfaceId ());
+      w->InheritAllRootExitDirections (v);
     }
 //
 // In all cases, we need valid values for the distance metric and a parent.
@@ -1210,6 +1406,7 @@ GlobalRouteManagerImpl::SPFCalculate (Ipv4Address root)
 // of the routers found in the Global Router Link Records and added tehm to 
 // the candidate list.
 //
+      NS_LOG_LOGIC (candidate);
       v = candidate.Pop ();
       NS_LOG_LOGIC ("Popped vertex " << v->GetVertexId ());
 //
@@ -1228,8 +1425,7 @@ GlobalRouteManagerImpl::SPFCalculate (Ipv4Address root)
 //
 // Note that when there is a choice of vertices closest to the root, network
 // vertices must be chosen before router vertices in order to necessarily
-// find all equal-cost paths. We don't do this at this moment, we should add
-// the treatment above codes. -- kunihiro. 
+// find all equal-cost paths. 
 //
 // RFC2328 16.1. (4). 
 //
@@ -1402,11 +1598,6 @@ GlobalRouteManagerImpl::SPFAddASExternal (GlobalRoutingLSA *extlsa, SPFVertex *v
           Ipv4Address tempip = extlsa->GetLinkStateId ();
           tempip = tempip.CombineMask (tempmask);
 
-          NS_LOG_LOGIC (" Node " << node->GetId () <<
-              " add route to " << tempip <<
-              " with mask " << tempmask <<
-              " using next hop " << v->GetNextHop () <<
-              " via interface " << v->GetOutgoingInterfaceId ());
 //
 // Here's why we did all of that work.  We're going to add a host route to the
 // host address found in the m_linkData field of the point-to-point link
@@ -1427,20 +1618,28 @@ GlobalRouteManagerImpl::SPFAddASExternal (GlobalRoutingLSA *extlsa, SPFVertex *v
             }
           Ptr<Ipv4GlobalRouting> gr = router->GetRoutingProtocol ();
           NS_ASSERT (gr);
-          if (v->GetOutgoingInterfaceId () >= 0)
+          // walk through all next-hop-IPs and out-going-interfaces for reaching
+          // the stub network gateway 'v' from the root node
+          for (uint32_t i = 0; i < v->GetNRootExitDirections (); i++)
             {
-              gr->AddASExternalRouteTo (tempip, tempmask, v->GetNextHop (), v->GetOutgoingInterfaceId ());
-              NS_LOG_LOGIC ("Node " << node->GetId () <<
-                  " add network route to " << tempip <<
-                  " using next hop " << v->GetNextHop () <<
-                  " via interface " << v->GetOutgoingInterfaceId ());
-            }
-          else
-            {
-              NS_LOG_LOGIC ("Node " << node->GetId () <<
-                  " NOT able to add network route to " << tempip <<
-                  " using next hop " << v->GetNextHop () <<
-                  " since outgoing interface id is negative");
+              SPFVertex::NodeExit_t exit = v->GetRootExitDirection (i);
+              Ipv4Address nextHop = exit.first;
+              int32_t outIf = exit.second;
+              if (outIf >= 0)
+                {
+                  gr->AddASExternalRouteTo (tempip, tempmask, nextHop, outIf);
+                  NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                    " add external network route to " << tempip <<
+                    " using next hop " << nextHop <<
+                    " via interface " << outIf);
+                }
+              else
+                {
+                  NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                    " NOT able to add network route to " << tempip <<
+                    " using next hop " << nextHop <<
+                    " since outgoing interface id is negative");
+                }
             }
           return;
         } // if
@@ -1566,15 +1765,9 @@ GlobalRouteManagerImpl::SPFIntraAddStub (GlobalRoutingLinkRecord *l, SPFVertex* 
           NS_ASSERT_MSG (v->GetLSA (), 
             "GlobalRouteManagerImpl::SPFIntraAddRouter (): "
             "Expected valid LSA in SPFVertex* v");
-          Ipv4Mask tempmask ("255.255.255.0");
+          Ipv4Mask tempmask (l->GetLinkData ().Get ());
           Ipv4Address tempip = l->GetLinkId ();
           tempip = tempip.CombineMask (tempmask);
-
-          NS_LOG_LOGIC (" Node " << node->GetId () <<
-            " add route to " << tempip <<
-            " with mask " << tempmask <<
-            " using next hop " << v->GetNextHop () <<
-            " via interface " << v->GetOutgoingInterfaceId ());
 //
 // Here's why we did all of that work.  We're going to add a host route to the
 // host address found in the m_linkData field of the point-to-point link
@@ -1596,20 +1789,28 @@ GlobalRouteManagerImpl::SPFIntraAddStub (GlobalRoutingLinkRecord *l, SPFVertex* 
             }
           Ptr<Ipv4GlobalRouting> gr = router->GetRoutingProtocol ();
           NS_ASSERT (gr);
-          if (v->GetOutgoingInterfaceId () >= 0)
+          // walk through all next-hop-IPs and out-going-interfaces for reaching
+          // the stub network gateway 'v' from the root node
+          for (uint32_t i = 0; i < v->GetNRootExitDirections (); i++)
             {
-              gr->AddNetworkRouteTo (tempip, tempmask, v->GetNextHop (), v->GetOutgoingInterfaceId ());
-              NS_LOG_LOGIC ("Node " << node->GetId () <<
-                " add network route to " << tempip <<
-                " using next hop " << v->GetNextHop () <<
-                " via interface " << v->GetOutgoingInterfaceId ());
-            }
-          else
-            {
-              NS_LOG_LOGIC ("Node " << node->GetId () <<
-                " NOT able to add network route to " << tempip <<
-                " using next hop " << v->GetNextHop () <<
-                " since outgoing interface id is negative");
+              SPFVertex::NodeExit_t exit = v->GetRootExitDirection (i);
+              Ipv4Address nextHop = exit.first;
+              int32_t outIf = exit.second;
+              if (outIf >= 0)
+                {
+                  gr->AddNetworkRouteTo (tempip, tempmask, nextHop, outIf);
+                  NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                    " add network route to " << tempip <<
+                    " using next hop " << nextHop <<
+                    " via interface " << outIf);
+                }
+              else
+                {
+                  NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                    " NOT able to add network route to " << tempip <<
+                    " using next hop " << nextHop <<
+                    " since outgoing interface id is negative");
+                }
             }
           return;
         } // if
@@ -1802,11 +2003,6 @@ GlobalRouteManagerImpl::SPFIntraAddRouter (SPFVertex* v)
                 {
                   continue;
                 }
-
-              NS_LOG_LOGIC (" Node " << node->GetId () <<
-                " add route to " << lr->GetLinkData () <<
-                " using next hop " << v->GetNextHop () <<
-                " via interface " << v->GetOutgoingInterfaceId ());
 //
 // Here's why we did all of that work.  We're going to add a host route to the
 // host address found in the m_linkData field of the point-to-point link
@@ -1827,22 +2023,31 @@ GlobalRouteManagerImpl::SPFIntraAddRouter (SPFVertex* v)
                 }
               Ptr<Ipv4GlobalRouting> gr = router->GetRoutingProtocol ();
               NS_ASSERT (gr);
-              if (v->GetOutgoingInterfaceId () >= 0)
-                {
-                  gr->AddHostRouteTo (lr->GetLinkData (), v->GetNextHop (),
-                    v->GetOutgoingInterfaceId ());
-                  NS_LOG_LOGIC ("Node " << node->GetId () <<
-                    " adding host route to " << lr->GetLinkData () <<
-                    " using next hop " << v->GetNextHop () <<
-                    " and outgoing interface " << v->GetOutgoingInterfaceId ());
-                }
-              else
-                {
-                  NS_LOG_LOGIC ("Node " << node->GetId () <<
-                    " NOT able to add host route to " << lr->GetLinkData () <<
-                    " using next hop " << v->GetNextHop () <<
-                    " since outgoing interface id is negative");
-                }
+              // walk through all available exit directions due to ECMP,
+              // and add host route for each of the exit direction toward
+              // the vertex 'v'
+              for (uint32_t i = 0; i < v->GetNRootExitDirections (); i++)
+              {
+                SPFVertex::NodeExit_t exit = v->GetRootExitDirection (i);
+                Ipv4Address nextHop = exit.first;
+                int32_t outIf = exit.second;
+                if (outIf >= 0)
+                  {
+                    gr->AddHostRouteTo (lr->GetLinkData (), nextHop,
+                      outIf);
+                    NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                      " adding host route to " << lr->GetLinkData () <<
+                      " using next hop " << nextHop <<
+                      " and outgoing interface " << outIf);
+                  }
+                else
+                  {
+                    NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                      " NOT able to add host route to " << lr->GetLinkData () <<
+                      " using next hop " << nextHop <<
+                      " since outgoing interface id is negative " << outIf);
+                  }
+              } // for all routes from the root the vertex 'v'
             }
 //
 // Done adding the routes for the selected node.
@@ -1931,21 +2136,30 @@ GlobalRouteManagerImpl::SPFIntraAddTransit (SPFVertex* v)
             }
           Ptr<Ipv4GlobalRouting> gr = router->GetRoutingProtocol ();
           NS_ASSERT (gr);
-          if (v->GetOutgoingInterfaceId () >= 0)
-            {
-              gr->AddNetworkRouteTo (tempip, tempmask, v->GetNextHop (),
-                v->GetOutgoingInterfaceId ());
-              NS_LOG_LOGIC ("Node " << node->GetId () <<
-                " add network route to " << tempip <<
-                " using next hop " << v->GetNextHop () <<
-                " via interface " << v->GetOutgoingInterfaceId ());
-            }
-          else
-            {
-              NS_LOG_LOGIC ("Node " << node->GetId () <<
-                " NOT able to add network route to " << tempip <<
-                " using next hop " << v->GetNextHop () <<
-                " since outgoing interface id is negative");
+          // walk through all available exit directions due to ECMP,
+          // and add host route for each of the exit direction toward
+          // the vertex 'v'
+          for (uint32_t i = 0; i < v->GetNRootExitDirections (); i++)
+          {
+            SPFVertex::NodeExit_t exit = v->GetRootExitDirection (i);
+            Ipv4Address nextHop = exit.first;
+            int32_t outIf = exit.second;
+
+            if (outIf >= 0)
+              {
+                gr->AddNetworkRouteTo (tempip, tempmask, nextHop, outIf);
+                NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                  " add network route to " << tempip <<
+                  " using next hop " << nextHop <<
+                  " via interface " << outIf);
+              }
+            else
+              {
+                NS_LOG_LOGIC ("(Route " << i << ") Node " << node->GetId () <<
+                  " NOT able to add network route to " << tempip <<
+                  " using next hop " << nextHop <<
+                  " since outgoing interface id is negative " << outIf);
+              }
             }
         }
     } 
@@ -1960,13 +2174,18 @@ GlobalRouteManagerImpl::SPFIntraAddTransit (SPFVertex* v)
 // Given a pointer to a vertex, it links back to the vertex's parent that it
 // already has set and adds itself to that vertex's list of children.
 //
-// For now, only one parent (not doing equal-cost multipath)
-//
   void
 GlobalRouteManagerImpl::SPFVertexAddParent (SPFVertex* v)
 {
   NS_LOG_FUNCTION (v);
-  v->GetParent ()->AddChild (v);
+
+  for (uint32_t i=0;;)
+    {
+      SPFVertex* parent;
+      // check if all parents of vertex v
+      if ((parent = v->GetParent (i++)) == 0) break;
+      parent->AddChild (v);
+    }
 }
 
 } // namespace ns3

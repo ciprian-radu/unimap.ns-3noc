@@ -28,15 +28,15 @@
 namespace ns3 {
 
 /**
+ * \ingroup mobility
  * \brief a (time, location) pair.
- *
  */
 class Waypoint
 {
 public:
   /**
-   * \param _time time of waypoint.
-   * \param _position position of waypoint corresponding to the given time.
+   * \param waypointTime time of waypoint.
+   * \param waypointPosition position of waypoint corresponding to the given time.
    *
    * Create a waypoint.
    */
@@ -53,6 +53,7 @@ public:
 };
 
 /**
+ * \ingroup mobility
  * \class ns3::WaypointValue
  * \brief hold objects of type ns3::Waypoint
  */

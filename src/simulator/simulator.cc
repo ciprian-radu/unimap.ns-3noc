@@ -217,20 +217,17 @@ Simulator::Schedule (Time const &time, const Ptr<EventImpl> &ev)
   return DoSchedule (time, GetPointer (ev));
 }
 
-void
-Simulator::ScheduleWithContext (uint32_t context, Time const &time, const Ptr<EventImpl> &ev)
-{
-  NS_LOG_FUNCTION (time << context << ev);
-  return DoScheduleWithContext (context, time, GetPointer (ev));
-}
-
 EventId
 Simulator::ScheduleNow (const Ptr<EventImpl> &ev)
 {
   NS_LOG_FUNCTION (ev);
   return DoScheduleNow (GetPointer (ev));
 }
-
+void
+Simulator::ScheduleWithContext (uint32_t context, const Time &time, EventImpl *impl)
+{
+  return GetImpl ()->ScheduleWithContext (context, time, impl);
+}
 EventId
 Simulator::ScheduleDestroy (const Ptr<EventImpl> &ev)
 {
@@ -241,11 +238,6 @@ EventId
 Simulator::DoSchedule (Time const &time, EventImpl *impl)
 {
   return GetImpl ()->Schedule (time, impl);
-}
-void
-Simulator::DoScheduleWithContext (uint32_t context, Time const &time, EventImpl *impl)
-{
-  return GetImpl ()->ScheduleWithContext (context, time, impl);
 }
 EventId 
 Simulator::DoScheduleNow (EventImpl *impl)
@@ -270,7 +262,7 @@ void
 Simulator::ScheduleWithContext (uint32_t context, Time const &time, void (*f) (void))
 {
   NS_LOG_FUNCTION (time << context << f);
-  return DoScheduleWithContext (context, time, MakeEvent (f));
+  return ScheduleWithContext (context, time, MakeEvent (f));
 }
 
 EventId
@@ -291,6 +283,10 @@ void
 Simulator::Remove (const EventId &ev)
 {
   NS_LOG_FUNCTION (&ev);
+  if (*PeekImpl () == 0)
+    {
+      return;
+    }
   return GetImpl ()->Remove (ev);
 }
 
@@ -298,6 +294,10 @@ void
 Simulator::Cancel (const EventId &ev)
 {
   NS_LOG_FUNCTION (&ev);
+  if (*PeekImpl () == 0)
+    {
+      return;
+    }
   return GetImpl ()->Cancel (ev);
 }
 
@@ -305,6 +305,10 @@ bool
 Simulator::IsExpired (const EventId &id)
 {
   NS_LOG_FUNCTION (&id);
+  if (*PeekImpl () == 0)
+    {
+      return true;
+    }
   return GetImpl ()->IsExpired (id);
 }
 
@@ -324,8 +328,22 @@ Simulator::GetMaximumSimulationTime (void)
 uint32_t
 Simulator::GetContext (void)
 {
-  NS_LOG_FUNCTION_NOARGS ();
   return GetImpl ()->GetContext ();
+}
+
+uint32_t
+Simulator::GetSystemId (void)
+{
+  NS_LOG_FUNCTION_NOARGS ();
+
+  if (*PeekImpl () != 0)
+    {
+      return GetImpl ()->GetSystemId ();
+    }
+  else
+    {
+      return 0;
+    }
 }
 
 void

@@ -84,14 +84,12 @@ public:
   /**
    * \brief Receive a packet up the protocol stack
    * \param p The Packet to dump the contents into
-   * \param source The source's Ipv4Address
-   * \param destination The destinations Ipv4Address
+   * \param header IPv4 Header information
    * \param interface the interface from which the packet is coming.
    */
   // inherited from Ipv4L4Protocol
   virtual enum Ipv4L4Protocol::RxStatus Receive(Ptr<Packet> p, 
-                                                Ipv4Address const &source,
-                                                Ipv4Address const &destination,
+                                                Ipv4Header const &header,
                                                 Ptr<Ipv4Interface> interface);
 
   /**
@@ -101,7 +99,7 @@ public:
    * \param icmpType The type of the message from the ICMP header
    * \param icmpCode The message code from the ICMP header
    * \param icmpInfo 32-bit integer carrying informational value of varying semantics.
-   * \param payloadSource The IP source addresss from the IP header of the packet
+   * \param payloadSource The IP source address from the IP header of the packet
    * \param payloadDestination The IP destination address from the IP header of the packet
    * \param payload Payload of the ICMP packet
    */

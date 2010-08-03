@@ -59,7 +59,7 @@ public:
   typedef Callback<void, Ptr<Ipv6MulticastRoute>, Ptr<const Packet>, const Ipv6Header &> MulticastForwardCallback;
   typedef Callback<void, Ptr<const Packet>, const Ipv6Header &, uint32_t > LocalDeliverCallback;
   typedef Callback<void, Ptr<const Packet>, const Ipv6Header &, Socket::SocketErrno > ErrorCallback;
-  
+
   /**
    * \brief Query routing cache for an existing route, for an outbound packet
    *
@@ -70,14 +70,14 @@ public:
    * \param p packet to be routed.  Note that this method may modify the packet.
    *          Callers may also pass in a null pointer. 
    * \param header input parameter (used to form key to search for the route)
-   * \param oif Output interface index.  May be zero, or may be bound via
+   * \param oif Output interface device.  May be zero, or may be bound via
    *            socket options to a particular output interface.
    * \param sockerr Output parameter; socket errno 
    *
    * \returns a code that indicates what happened in the lookup
    */
-  virtual Ptr<Ipv6Route> RouteOutput (Ptr<Packet> p, const Ipv6Header &header, uint32_t oif, Socket::SocketErrno &sockerr) = 0;
-  
+  virtual Ptr<Ipv6Route> RouteOutput (Ptr<Packet> p, const Ipv6Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr) = 0;
+
   /**
    * \brief Route an input packet (to be forwarded or locally delivered)
    *
@@ -100,8 +100,8 @@ public:
    *          forwarding or delivering the packet, false otherwise
    */ 
   virtual bool RouteInput  (Ptr<const Packet> p, const Ipv6Header &header, Ptr<const NetDevice> idev, 
-                             UnicastForwardCallback ucb, MulticastForwardCallback mcb, 
-                             LocalDeliverCallback lcb, ErrorCallback ecb) = 0;
+                            UnicastForwardCallback ucb, MulticastForwardCallback mcb, 
+                            LocalDeliverCallback lcb, ErrorCallback ecb) = 0;
 
   /**
    * \brief Notify when specified interface goes UP.
@@ -111,7 +111,7 @@ public:
    * \param interface the index of the interface we are being notified about
    */
   virtual void NotifyInterfaceUp (uint32_t interface) = 0;
-  
+
   /**
    * \brief Notify when specified interface goes DOWN.
    *

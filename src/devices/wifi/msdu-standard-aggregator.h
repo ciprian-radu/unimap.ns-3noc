@@ -32,7 +32,7 @@ public:
   MsduStandardAggregator ();
   ~MsduStandardAggregator ();
   /**
-   * \param packet Packet we have to insert into </i>aggregatedPacket</i>.
+   * \param packet Packet we have to insert into <i>aggregatedPacket</i>.
    * \param aggregatedPacket Packet that will contain <i>packet</i>, if aggregation is possible, 
    * \param src Source address of <i>packet</i>.
    * \param dest Destination address of <i>packet</i>.
@@ -45,7 +45,7 @@ public:
 private:
   /*  Calculates how much padding must be added to the end of aggregated packet,
       after that a new packet is added.
-      Each A-MSDU subframe is padded so that its length is multiple of 4 octects.
+      Each A-MSDU subframe is padded so that its length is multiple of 4 octets.
    */
   uint32_t CalculatePadding (Ptr<const Packet> packet);
 

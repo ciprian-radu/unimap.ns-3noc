@@ -34,7 +34,7 @@ def register_types(module):
     ## scheduler.h: ns3::Scheduler::EventKey [struct]
     module.add_class('EventKey', outer_class=root_module['ns3::Scheduler'])
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::EventImpl, ns3::empty, ns3::DefaultDeleter<ns3::EventImpl> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::EventImpl', 'ns3::empty', 'ns3::DefaultDeleter<ns3::EventImpl>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::EventImpl', 'ns3::empty', 'ns3::DefaultDeleter<ns3::EventImpl>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simulator-impl.h: ns3::SimulatorImpl [class]
     module.add_class('SimulatorImpl', parent=root_module['ns3::Object'])
     ## synchronizer.h: ns3::Synchronizer [class]
@@ -82,6 +82,12 @@ def register_types(module):
     register_types_ns3_Config(nested_module)
     
     
+    ## Register a nested module for the namespace FatalImpl
+    
+    nested_module = module.add_cpp_namespace('FatalImpl')
+    register_types_ns3_FatalImpl(nested_module)
+    
+    
     ## Register a nested module for the namespace TimeStepPrecision
     
     nested_module = module.add_cpp_namespace('TimeStepPrecision')
@@ -125,6 +131,10 @@ def register_types(module):
     
 
 def register_types_ns3_Config(module):
+    root_module = module.get_root()
+    
+
+def register_types_ns3_FatalImpl(module):
     root_module = module.get_root()
     
 
@@ -235,24 +245,24 @@ def register_Ns3EventId_methods(root_module, cls):
 def register_Ns3HighPrecision_methods(root_module, cls):
     ## high-precision-128.h: ns3::HighPrecision::HighPrecision(ns3::HighPrecision const & arg0) [copy constructor]
     cls.add_constructor([param('ns3::HighPrecision const &', 'arg0')])
-    ## high-precision-128.h: ns3::HighPrecision::HighPrecision(double value) [constructor]
-    cls.add_constructor([param('double', 'value')])
     ## high-precision-128.h: ns3::HighPrecision::HighPrecision() [constructor]
     cls.add_constructor([])
     ## high-precision-128.h: ns3::HighPrecision::HighPrecision(int64_t value, bool dummy) [constructor]
     cls.add_constructor([param('int64_t', 'value'), param('bool', 'dummy')])
-    ## high-precision-128.h: bool ns3::HighPrecision::Add(ns3::HighPrecision const & o) [member function]
+    ## high-precision-128.h: ns3::HighPrecision::HighPrecision(double value) [constructor]
+    cls.add_constructor([param('double', 'value')])
+    ## high-precision-128.h: void ns3::HighPrecision::Add(ns3::HighPrecision const & o) [member function]
     cls.add_method('Add', 
-                   'bool', 
+                   'void', 
                    [param('ns3::HighPrecision const &', 'o')])
     ## high-precision-128.h: int ns3::HighPrecision::Compare(ns3::HighPrecision const & o) const [member function]
     cls.add_method('Compare', 
                    'int', 
                    [param('ns3::HighPrecision const &', 'o')], 
                    is_const=True)
-    ## high-precision-128.h: bool ns3::HighPrecision::Div(ns3::HighPrecision const & o) [member function]
+    ## high-precision-128.h: void ns3::HighPrecision::Div(ns3::HighPrecision const & o) [member function]
     cls.add_method('Div', 
-                   'bool', 
+                   'void', 
                    [param('ns3::HighPrecision const &', 'o')])
     ## high-precision-128.h: double ns3::HighPrecision::GetDouble() const [member function]
     cls.add_method('GetDouble', 
@@ -264,18 +274,13 @@ def register_Ns3HighPrecision_methods(root_module, cls):
                    'int64_t', 
                    [], 
                    is_const=True)
-    ## high-precision-128.h: bool ns3::HighPrecision::Mul(ns3::HighPrecision const & o) [member function]
+    ## high-precision-128.h: void ns3::HighPrecision::Mul(ns3::HighPrecision const & o) [member function]
     cls.add_method('Mul', 
-                   'bool', 
-                   [param('ns3::HighPrecision const &', 'o')])
-    ## high-precision-128.h: static void ns3::HighPrecision::PrintStats() [member function]
-    cls.add_method('PrintStats', 
                    'void', 
-                   [], 
-                   is_static=True)
-    ## high-precision-128.h: bool ns3::HighPrecision::Sub(ns3::HighPrecision const & o) [member function]
+                   [param('ns3::HighPrecision const &', 'o')])
+    ## high-precision-128.h: void ns3::HighPrecision::Sub(ns3::HighPrecision const & o) [member function]
     cls.add_method('Sub', 
-                   'bool', 
+                   'void', 
                    [param('ns3::HighPrecision const &', 'o')])
     ## high-precision-128.h: static ns3::HighPrecision ns3::HighPrecision::Zero() [member function]
     cls.add_method('Zero', 
@@ -317,6 +322,11 @@ def register_Ns3Simulator_methods(root_module, cls):
                    'ns3::Time', 
                    [], 
                    is_static=True)
+    ## simulator.h: static uint32_t ns3::Simulator::GetSystemId() [member function]
+    cls.add_method('GetSystemId', 
+                   'uint32_t', 
+                   [], 
+                   is_static=True)
     ## simulator.h: static bool ns3::Simulator::IsExpired(ns3::EventId const & id) [member function]
     cls.add_method('IsExpired', 
                    'bool', 
@@ -331,7 +341,7 @@ def register_Ns3Simulator_methods(root_module, cls):
     cls.add_method('Next', 
                    'ns3::Time', 
                    [], 
-                   is_static=True)
+                   is_static=True, deprecated=True)
     ## simulator.h: static ns3::Time ns3::Simulator::Now() [member function]
     cls.add_method('Now', 
                    'ns3::Time', 
@@ -346,7 +356,7 @@ def register_Ns3Simulator_methods(root_module, cls):
     cls.add_method('RunOneEvent', 
                    'void', 
                    [], 
-                   is_static=True)
+                   is_static=True, deprecated=True)
     ## simulator.h: static void ns3::Simulator::SetImplementation(ns3::Ptr<ns3::SimulatorImpl> impl) [member function]
     cls.add_method('SetImplementation', 
                    'void', 
@@ -795,6 +805,11 @@ def register_Ns3SimulatorImpl_methods(root_module, cls):
                    'ns3::Time', 
                    [], 
                    is_pure_virtual=True, is_const=True, is_virtual=True)
+    ## simulator-impl.h: uint32_t ns3::SimulatorImpl::GetSystemId() const [member function]
+    cls.add_method('GetSystemId', 
+                   'uint32_t', 
+                   [], 
+                   is_pure_virtual=True, is_const=True, is_virtual=True)
     ## simulator-impl.h: bool ns3::SimulatorImpl::IsExpired(ns3::EventId const & ev) const [member function]
     cls.add_method('IsExpired', 
                    'bool', 
@@ -1129,6 +1144,11 @@ def register_Ns3DefaultSimulatorImpl_methods(root_module, cls):
                    'ns3::Time', 
                    [], 
                    is_const=True, is_virtual=True)
+    ## default-simulator-impl.h: uint32_t ns3::DefaultSimulatorImpl::GetSystemId() const [member function]
+    cls.add_method('GetSystemId', 
+                   'uint32_t', 
+                   [], 
+                   is_const=True, is_virtual=True)
     ## default-simulator-impl.h: static ns3::TypeId ns3::DefaultSimulatorImpl::GetTypeId() [member function]
     cls.add_method('GetTypeId', 
                    'ns3::TypeId', 
@@ -1204,6 +1224,11 @@ def register_Ns3DefaultSimulatorImpl_methods(root_module, cls):
                    'void', 
                    [param('ns3::Time const &', 'time')], 
                    is_virtual=True)
+    ## default-simulator-impl.h: void ns3::DefaultSimulatorImpl::DoDispose() [member function]
+    cls.add_method('DoDispose', 
+                   'void', 
+                   [], 
+                   visibility='private', is_virtual=True)
     return
 
 def register_Ns3EventImpl_methods(root_module, cls):
@@ -1418,6 +1443,11 @@ def register_Ns3RealtimeSimulatorImpl_methods(root_module, cls):
                    'ns3::RealtimeSimulatorImpl::SynchronizationMode', 
                    [], 
                    is_const=True)
+    ## realtime-simulator-impl.h: uint32_t ns3::RealtimeSimulatorImpl::GetSystemId() const [member function]
+    cls.add_method('GetSystemId', 
+                   'uint32_t', 
+                   [], 
+                   is_const=True, is_virtual=True)
     ## realtime-simulator-impl.h: static ns3::TypeId ns3::RealtimeSimulatorImpl::GetTypeId() [member function]
     cls.add_method('GetTypeId', 
                    'ns3::TypeId', 
@@ -1522,6 +1552,11 @@ def register_Ns3RealtimeSimulatorImpl_methods(root_module, cls):
                    'void', 
                    [param('ns3::Time const &', 'time')], 
                    is_virtual=True)
+    ## realtime-simulator-impl.h: void ns3::RealtimeSimulatorImpl::DoDispose() [member function]
+    cls.add_method('DoDispose', 
+                   'void', 
+                   [], 
+                   visibility='private', is_virtual=True)
     return
 
 def register_Ns3TimeChecker_methods(root_module, cls):
@@ -1619,6 +1654,7 @@ def register_functions(root_module):
                         'ns3::Time', 
                         [param('uint64_t', 'ts')])
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
+    register_functions_ns3_FatalImpl(module.get_submodule('FatalImpl'), root_module)
     register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
     register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
@@ -1629,6 +1665,9 @@ def register_functions(root_module):
     return
 
 def register_functions_ns3_Config(module, root_module):
+    return
+
+def register_functions_ns3_FatalImpl(module, root_module):
     return
 
 def register_functions_ns3_TimeStepPrecision(module, root_module):

@@ -44,6 +44,236 @@ to this file based on your experience, please contribute a patch or drop
 us a note on ns-developers mailing list.  </p>
 
 <hr>
+<h1>Changes from ns-3.8 to ns-3.9</h1>
+
+<h2>Changes to build system:</h2>
+
+<h2>New API:</h2>
+<ul>
+<li><b>Wifi set block ack threshold:"</b> Two methods for setting block ack
+parameters for a specific access class: 
+<pre>
+void QosWifiMacHelper::SetBlockAckThresholdForAc (enum AccessClass accessClass, uint8_t threshold);
+void QosWifiMacHelper::SetBlockAckInactivityTimeoutForAc (enum AccessClass accessClass, uint16_t timeout);
+</pre>
+</ul>
+<ul><b>Receive List Error Model:"</b>  Another basic error model that allows
+the user to specify a list of received packets that should be errored.  The
+list corresponds not to the packet UID but to the sequence of received
+packets as observed by the error model.   See src/common/error-model.h
+</ul>
+<ul><b>Respond to interface events:"</b> New attribute for Ipv4GlobalRouting,
+"RespondToInterfaceEvents", which when enabled, will cause global routes
+to be recomputed upon any interface or address notification event from IPv4.
+</ul>
+
+<h2>Changes to existing API:</h2>
+
+<ul>
+<li><b>Changes to construction and naming of Wi-Fi transmit rates:</b>
+A reorganisation of the construction of Wi-Fi transmit rates has been
+undertaken with the aim of simplifying the task of supporting further
+IEEE 802.11 PHYs. This work has been completed under the auspices of
+Bug 871.
+
+From the viewpoint of simulation scripts not part of the ns-3
+distribution, the key change is that WifiMode names of the form
+wifi<em>x</em>-<em>n</em>mbs are now invalid. Names now take the
+form <em>Cccc</em>Rate<em>n</em>Mbps[BW<em>b</em>MHz],
+where <em>n</em> is the root bitrate in megabits-per-second as before
+(with only significant figures included, and an underscore replacing
+any decimal point), and <em>Cccc</em> is a representation of the
+Modulation Class as defined in Table 9-2 of IEEE
+Std. 802.11-2007. Currently-supported options for <em>Cccc</em>
+are <em>Ofdm</em> and <em>Dsss</em>. For modulation classes where
+optional reduced-bandwidth transmission is possible, this is captured
+in the final part of the form above, with <em>b</em> specifying the
+nominal signal bandwidth in megahertz.
+
+<li><b>Consolidation of classes support Wi-Fi Information Elements:</b>
+When the <em>mesh</em> module was introduced it added a class
+hierarchy for modelling of the various Information Elements that were
+required. In this release, this class hierarchy has extended by moving
+the base classes (WifiInformationElement and
+WifiInformationElementVector) into the <em>wifi</em> module. This
+change is intended to ease the addition of support for modelling of
+further Wi-Fi functionality.
+</ul>
+
+<h2>Changed behavior:</h2>
+<ul>
+<li><b>Queue trace behavior during Enqueue changed:</b> The behavior of the
+Enqueue trace source has been changed to be more intuitive and to agree with
+documentation.  Enqueue and Drop events in src/node/queue.cc are now mutually
+exclusive.  In the past, the meaning of an Enqueue event was that the Queue
+Enqueue operation was being attempted; and this could be followed by a Drop
+event if the Queue was full.  The new behavior is such that a packet is either
+Enqueue'd successfully or Drop'ped.
+
+<li><b>Drop trace logged for Ipv4/6 forwarding failure:</b> Fixed bug 861; this 
+will add ascii traces (drops) in Ipv4 and Ipv6 traces for forwarding failures
+
+<li><b>Changed default WiFi error rate model for OFDM modulation types:</b> 
+Adopted more conservative ErrorRateModel for OFDM modulation types (a/g).
+This will require 4 to 5 more dB of received power to get similar results
+as before, so users may observe a reduced WiFi range when using the defaults.
+See tracker issie 944 for more details.
+</ul>
+
+<hr>
+<h1>Changes from ns-3.7 to ns-3.8</h1>
+
+<h2>Changes to build system:</h2>
+
+<h2>New API:</h2>
+
+<ul>
+<li><b>Matrix propagation loss model:</b> This radio propagation model uses a two-dimensional matrix
+of path loss indexed by source and destination nodes.
+
+<li><b>WiMAX net device</b>: The developed WiMAX model attempts to provide an accurate MAC and
+PHY level implementation of the 802.16 specification with the Point-to-Multipoint (PMP) mode and the WirelessMAN-OFDM 
+PHY layer. By adding WimaxNetDevice objects to ns-3 nodes, one can create models of
+802.16-based networks. The source code for the WiMAX models lives in the directory src/devices/wimax.
+The model is mainly composed of three layers:
+<ul>
+<li>The convergence sublayer (CS)
+<li>The MAC Common Part Sublayer (MAC-CPS)
+<li>The Physical layer
+</ul>
+The main way that users who write simulation scripts will typically
+interact with the Wimax models is through the helper API and through
+the publicly visible attributes of the model.
+The helper API is defined in src/helper/wimax-helper.{cc,h}.
+Three examples containing some code that shows how to setup a 802.16 network are located under examples/wimax/ 
+
+<li><b>MPI Interface for distributed simulation:</b> Enables access
+to necessary MPI information such as MPI rank and size.
+
+<li><b>Point-to-point remote channel:</b> Enables point-to-point 
+connection between net-devices on different simulators, for use 
+with distributed simulation.
+
+<li><b>GetSystemId in simulator:</b> For use with distributed 
+simulation, GetSystemId returns zero by non-distributed 
+simulators.  For the distributed simulator, it returns the 
+MPI rank.
+
+<li><b>Enhancements to src/core/random-variable.cc/h:</b> New Zeta random variable generator. The Zeta random 
+distribution is tightly related to the Zipf distribution (already in ns-3.7). See the documentation, 
+especially because sometimes the Zeta distribution is called Zipf and viceversa. Here we conform to the 
+Wikipedia naming convention, i.e., Zipf is bounded while Zeta isn't. 
+
+<li><b>Two-ray ground propagation loss model:</b> Calculates the crossover distance under which Friis is used. The antenna 
+height is set to the nodes z coordinate, but can be added to using the model parameter SetHeightAboveZ, which 
+will affect ALL stations
+
+<li><b>Pareto random variable</b> has two new constructors to specify scale and shape:
+<pre>
+ParetoVariable (std::pair<double, double> params);
+ParetoVariable (std::pair<double, double> params, double b);
+</pre>
+</ul>
+
+<h2>Changes to existing API:</h2>
+<ul>
+<li><b>Tracing Helpers</b>: The organization of helpers for both pcap and ascii
+tracing, in devices and protocols, has been reworked.  Instead of each device 
+and protocol helper re-implementing trace enable methods, classes have been 
+developed to implement user-level tracing in a consistent way; and device and 
+protocol helpers use those classes to provide tracing functionality.<br>
+In addition to consistent operation across all helpers, the object name service
+has been integrated into the trace file naming scheme.<br>
+The internet stack helper has been extensively massaged to make it easier to 
+manage traces originating from protocols.  It used to be the case that there 
+was essentially no opportunity to filter tracing on interfaces, and resulting
+trace file names collided with those created by devices.  File names are now
+disambiguated and one can enable traces on a protocol/interface basis analogously
+to the node/device granularity of device-based helpers.<br>
+The primary user-visible results of this change are that trace-related functions
+have been changed from static functions to method calls; and a new object has
+been developed to hold streams for ascii traces.<br>
+New functionality is present for ascii traces.  It is now possible to create
+multiple ascii trace files automatically just as was possible for pcap trace 
+files.<br>
+The implementation of the helper code has been designed also to provide 
+functionality to make it easier for sophisticated users to hook traces of 
+various kinds and write results to (file) streams.
+Before:
+<pre>
+  CsmaHelper::EnablePcapAll ();
+
+  std::ofstream ascii;
+  ascii.open ("csma-one-subnet.tr", std::ios_base::binary | std::ios_base::out);
+  CsmaHelper::EnableAsciiAll (ascii);
+
+  InternetStackHelper::EnableAsciiAll (ascii);
+</pre>
+After:
+<pre>
+  CsmaHelper csmaHelper;
+  InternetStackHelper stack;
+  csmaHelper.EnablePcapAll ();
+
+  AsciiTraceHelper ascii;
+  csma.EnableAsciiAll (ascii.CreateFileStream ("csma-one-subnet.tr"));
+
+  stack.EnableAsciiIpv4All (stream);
+</pre>
+
+
+<li><b>Serialization and Deserialization</b> in buffer, nix-vector, 
+packet-metadata, and packet has been modified to use raw character 
+buffers, rather than the Buffer class
+<pre>
++ uint32_t Buffer::GetSerializedSize (void) const;
++ uint32_t Buffer::Serialize (uint8_t* buffer, uint32_t maxSize) const;
++ uint32_t Buffer::Deserialize (uint8_t* buffer, uint32_t size); 
+
+- void NixVector::Serialize (Buffer::Iterator i, uint32_t size) const;
++ uint32_t NixVector::Serialize (uint32_t* buffer, uint32_t maxSize) const;
+- uint32_t NixVector::Deserialize (Buffer::Iterator i);
++ uint32_t NixVector::Deserialize (uint32_t* buffer, uint32_t size);
+
+- void PacketMetadata::Serialize (Buffer::Iterator i, uint32_t size) const;
++ uint32_t PacketMetadata::Serialize (uint8_t* buffer, uint32_t maxSize) const;
+- uint32_t PacketMetadata::Deserialize (Buffer::Iterator i);
++ uint32_t PacketMetadata::Deserialize (uint8_t* buffer, uint32_t size);
+
++ uint32_t Packet::GetSerializedSize (void) const;
+- Buffer Packet::Serialize (void) const;
++ uint32_t Packet::Serialize (uint8_t* buffer, uint32_t maxSize) const;
+- void Packet::Deserialize (Buffer buffer);
++ Packet::Packet (uint8_t const*buffer, uint32_t size, bool magic);
+</pre>
+<li><b>PacketMetadata uid</b> has been changed to a 64-bit value. The 
+lower 32 bits give the uid, while the upper 32-bits give the MPI rank 
+for distributed simulations. For non-distributed simulations, the 
+upper 32 bits are simply zero.
+<pre>
+- inline PacketMetadata (uint32_t uid, uint32_t size);
++ inline PacketMetadata (uint64_t uid, uint32_t size);
+- uint32_t GetUid (void) const;
++ uint64_t GetUid (void) const;
+- PacketMetadata::PacketMetadata (uint32_t uid, uint32_t size);
++ PacketMetadata::PacketMetadata (uint64_t uid, uint32_t size); 
+
+- uint32_t Packet::GetUid (void) const;
++ uint64_t Packet::GetUid (void) const;
+</pre>
+
+<li><b>Moved propagation models</b> from src/devices/wifi to src/common
+
+<li><b>Moved Mtu attribute from base class NetDevice</b> This attribute is
+now found in all NetDevice subclasses.  
+</ul>
+
+<h2>Changed behavior:</h2>
+<ul>
+
+</ul>
+
+<hr>
 <h1>Changes from ns-3.6 to ns-3.7</h1>
 
 
@@ -52,6 +282,11 @@ us a note on ns-developers mailing list.  </p>
 <h2>New API:</h2>
 
 <ul>
+<li><b>Equal-cost multipath for global routing:</b> Enables quagga's
+equal cost multipath for Ipv4GlobalRouting, and adds an attribute that
+can enable it with random packet distribution policy across equal cost routes.
+<li><b>Binding sockets to devices:</b> A method analogous to a SO_BINDTODEVICE
+socket option has been introduced to class Socket:  <pre>virtual void Socket::BindToNetDevice (Ptr&lt;NetDevice&gt; netdevice);</pre>
 <li><b>Simulator event contexts</b>: The Simulator API now keeps track of a per-event
 'context' (a 32bit integer which, by convention identifies a node by its id). Simulator::GetContext
 returns the context of the currently-executing event while Simulator::ScheduleWithContext creates an
@@ -59,7 +294,7 @@ event with a context different from the execution context of the caller. This AP
 by the ns-3 logging system to report the execution context of each log line.
 <li><b>Object::DoStart</b>: Users who need to complete their object setup at the start of a simulation
 can override this virtual method, perform their adhoc setup, and then, must chain up to their parent.
-<li><b>Aod hoc On-Demand Distance Vector (AODV)</b> routing model, 
+<li><b>Ad hoc On-Demand Distance Vector (AODV)</b> routing model, 
 <a href=http://www.ietf.org/rfc/rfc3561.txt>RFC 3561</a> </li>
 <li><b>Ipv4::IsDestinationAddress (Ipv4Address address, uint32_t iif)</b> Method added to support checks of whether a destination address should be accepted 
 as one of the host's own addresses.  RFC 1122 Strong/Weak end system behavior can be changed with a new attribute (WeakEsModel) in class Ipv4.  </li>
@@ -76,6 +311,20 @@ and loose routing) are available.</li>
 
 <h2>Changes to existing API:</h2>
 <ul>
+<li><b>Ipv4RoutingProtocol::RouteOutput</b> no longer takes an outgoing 
+interface index but instead takes an outgoing device pointer; this affects all
+subclasses of Ipv4RoutingProtocol.
+<pre>
+-  virtual Ptr&lt;Ipv4Route&gt; RouteOutput (Ptr&lt;Packet&gt; p, const Ipv4Header &header, uint32_t oif, Socket::SocketErrno &sockerr) = 0;
++  virtual Ptr&lt;Ipv4Route&gt; RouteOutput (Ptr&lt;Packet&gt; p, const Ipv4Header &header, Ptr&lt;NetDevice&gt; oif, Socket::SocketErrno &sockerr) = 0;
+</pre>
+<li><b>Ipv6RoutingProtocol::RouteOutput</b> no longer takes an outgoing 
+interface index but instead takes an outgoing device pointer; this affects all
+subclasses of Ipv6RoutingProtocol.
+<pre>
+-  virtual Ptr&lt;Ipv6Route&gt; RouteOutput (Ptr&lt;Packet&gt; p, const Ipv6Header &header, uint32_t oif, Socket::SocketErrno &sockerr) = 0;
++  virtual Ptr&lt;Ipv6Route&gt; RouteOutput (Ptr&lt;Packet&gt; p, const Ipv6Header &header, Ptr&lt;NetDevice&gt; oif, Socket::SocketErrno &sockerr) = 0;
+</pre>
 <li><b>Application::Start</b> and <b>Application::Stop</b> have been renamed to
 <b>Application::SetStartTime</b> and <b>Application::SetStopTime</b>.
 <li><b>Channel::Send</b>: this method does not really exist but each subclass of the Channel
@@ -149,7 +398,7 @@ Before:
 NodeContainer hubNode;
 NodeContainer spokeNodes;
 hubNode.Create (1);
-Ptr<Node> hub = hubNode.Get (0);
+Ptr&lt;Node&gt; hub = hubNode.Get (0);
 spokeNodes.Create (nNodes - 1);
 
 PointToPointHelper pointToPoint;
@@ -408,8 +657,8 @@ GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
 <pre>
 -  static void EnablePcap (std::string filename, uint32_t nodeid, uint32_t deviceid);
 +         void EnablePcap (std::string filename, uint32_t nodeid, uint32_t deviceid);
--  static void EnablePcap (std::string filename, Ptr<NetDevice> nd);
-+         void EnablePcap (std::string filename, Ptr<NetDevice> nd);
+-  static void EnablePcap (std::string filename, Ptr&lt;NetDevice&gt; nd);
++         void EnablePcap (std::string filename, Ptr&lt;NetDevice&gt; nd);
 -  static void EnablePcap (std::string filename, std::string ndName);
 +         void EnablePcap (std::string filename, std::string ndName);
 -  static void EnablePcap (std::string filename, NetDeviceContainer d);
@@ -1000,7 +1249,7 @@ buffer.
 In the case of a receiver window collapse, when a advertised zero-window
 packet is received, the sender enters the persist probing state in which
 it sends probe packets with one payload byte at exponentially backed-off
-intervals up to 60s.  The reciever will continue to send advertised 
+intervals up to 60s.  The receiver will continue to send advertised 
 zero-window ACKs of the old data so long as the receiver buffer remains full.
 When the receiver window clears up due to an application read, the TCP
 will finally ACK the probe byte, and update its advertised window appropriately.

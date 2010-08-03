@@ -72,8 +72,16 @@ Ipv4Mask::Ipv4Mask (char const *mask)
 {
   if (*mask == ASCII_SLASH)
     {
-      m_mask = static_cast<uint32_t> (atoi (++mask));
-      NS_ASSERT (m_mask <= 32);
+      uint32_t plen = static_cast<uint32_t> (atoi (++mask));
+      NS_ASSERT (plen <= 32);
+      if (plen > 0)
+        {
+          m_mask = 0xffffffff << (32 - plen);
+        }
+      else
+        {
+          m_mask = 0;
+        }
     }
   else
     {
@@ -230,6 +238,13 @@ Ipv4Address::IsMulticast (void) const
 // 239.255.255.255 (which is E0000000 through EFFFFFFF in hex).
 //
   return (m_address >= 0xe0000000 && m_address <= 0xefffffff);
+}
+
+bool 
+Ipv4Address::IsLocalMulticast (void) const
+{
+  // Link-Local multicast address is 224.0.0.0/24
+  return (m_address & 0xffffff00) == 0xe0000000;
 }
 
 void

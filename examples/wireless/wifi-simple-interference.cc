@@ -59,7 +59,7 @@
 // For instance, for this configuration, the interfering frame arrives
 // at -90 dBm with a time offset of 3.2 microseconds:
 //
-// ./waf --run "scratch/wifi-simple-interference --Irss=-90 --delta=3.2"
+// ./waf --run "wifi-simple-interference --Irss=-90 --delta=3.2"
 //
 // Note that all ns-3 attributes (not just the ones exposed in the below
 // script) can be changed at command line; see the documentation.
@@ -67,7 +67,7 @@
 // This script can also be helpful to put the Wifi layer into verbose
 // logging mode; this command will turn on all wifi logging:
 // 
-// ./waf --run "scratch/wifi-simple-interference --verbose=1"
+// ./waf --run "wifi-simple-interference --verbose=1"
 //
 // When you are done, you will notice a pcap trace file in your directory.
 // If you have tcpdump installed, you can try this:
@@ -125,7 +125,7 @@ int main (int argc, char *argv[])
 {
 //  LogComponentEnable ("InterferenceHelper", LOG_LEVEL_ALL);
  
-  std::string phyMode ("wifib-1mbs");
+  std::string phyMode ("DsssRate1Mbps");
   double Prss = -80;  // -dBm
   double Irss = -95;  // -dBm
   double delta = 0;  // microseconds
@@ -180,8 +180,8 @@ int main (int argc, char *argv[])
   wifiPhy.Set ("RxGain", DoubleValue (0) ); 
   wifiPhy.Set ("CcaMode1Threshold", DoubleValue (0.0) );
 
-  // ns-3 support RadioTap and Prism tracing extensions for 802.11b
-  wifiPhy.SetPcapFormat (YansWifiPhyHelper::PCAP_FORMAT_80211_RADIOTAP); 
+  // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
+  wifiPhy.SetPcapDataLinkType (YansWifiPhyHelper::DLT_IEEE802_11_RADIO); 
 
   YansWifiChannelHelper wifiChannel ;
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
@@ -231,12 +231,14 @@ int main (int argc, char *argv[])
 
   Ptr<Socket> source = Socket::CreateSocket (c.Get (1), tid);
   InetSocketAddress remote = InetSocketAddress (Ipv4Address ("255.255.255.255"), 80);
+  source->SetAllowBroadcast (true);
   source->Connect (remote);
 
   // Interferer will send to a different port; we will not see a
   // "Received packet" message
   Ptr<Socket> interferer = Socket::CreateSocket (c.Get (2), tid);
   InetSocketAddress interferingAddr = InetSocketAddress (Ipv4Address ("255.255.255.255"), 49000);
+  interferer->SetAllowBroadcast (true);
   interferer->Connect (interferingAddr);
 
   // Tracing

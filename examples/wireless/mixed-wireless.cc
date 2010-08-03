@@ -146,7 +146,7 @@ main (int argc, char *argv[])
   NqosWifiMacHelper mac = NqosWifiMacHelper::Default ();
   mac.SetType ("ns3::AdhocWifiMac");
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-                                "DataMode", StringValue ("wifia-54mbs"));
+                                "DataMode", StringValue ("OfdmRate54Mbps"));
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default ();
   wifiPhy.SetChannel (wifiChannel.Create ());
@@ -283,9 +283,7 @@ main (int argc, char *argv[])
                "ActiveProbing", BooleanValue (false));
       NetDeviceContainer staDevices = wifiInfra.Install (wifiPhy, macInfra, stas);
       // setup ap.
-      macInfra.SetType ("ns3::NqapWifiMac", "Ssid", SsidValue (ssid),
-               "BeaconGeneration", BooleanValue (true),
-               "BeaconInterval", TimeValue (Seconds (2.5)));
+      macInfra.SetType ("ns3::NqapWifiMac", "Ssid", SsidValue (ssid));
       NetDeviceContainer apDevices = wifiInfra.Install (wifiPhy, macInfra, backbone.Get (i));
       // Collect all of these new devices
       NetDeviceContainer infraDevices (apDevices, staDevices);
@@ -381,20 +379,26 @@ main (int argc, char *argv[])
   /////////////////////////////////////////////////////////////////////////// 
 
   NS_LOG_INFO ("Configure Tracing.");
-  std::ofstream ascii;
   if (enableTracing == true)
    {
-      //
-      // Let's set up some ns-2-like ascii traces, using another helper class
-      //
-      ascii.open ("mixed-wireless.tr");
-      YansWifiPhyHelper::EnableAsciiAll (ascii);
-      CsmaHelper::EnableAsciiAll (ascii);
-      InternetStackHelper::EnableAsciiAll (ascii);
+      CsmaHelper csma;
+
+     //
+     // Let's set up some ns-2-like ascii traces, using another helper class
+     //
+     AsciiTraceHelper ascii;
+     Ptr<OutputStreamWrapper> stream = ascii.CreateFileStream ("mixed-wireless.tr");
+     wifiPhy.EnableAsciiAll (stream);
+     csma.EnableAsciiAll (stream);
+     internet.EnableAsciiIpv4All (stream);
 
       // Let's do a pcap trace on the application source and sink, ifIndex 0
       // Csma captures in non-promiscuous mode
-      CsmaHelper::EnablePcap ("mixed-wireless", appSource->GetId (), 0, false);
+#if 0
+      csma.EnablePcap ("mixed-wireless", appSource->GetId (), 0, false);
+#else
+      csma.EnablePcapAll ("mixed-wireless", false);
+#endif
       wifiPhy.EnablePcap ("mixed-wireless", appSink->GetId (), 0);
       wifiPhy.EnablePcap ("mixed-wireless", 9, 2);
       wifiPhy.EnablePcap ("mixed-wireless", 9, 0);

@@ -45,6 +45,7 @@ class MacLow;
 class WifiMacHeader;
 class AmsduSubframeHeader;
 class MsduAggregator;
+class MgtAddBaRequestHeader;
 
 class QstaWifiMac : public WifiMac
 {
@@ -80,6 +81,10 @@ public:
   virtual void SetAddress (Mac48Address address);
   virtual void SetSsid (Ssid ssid);
   virtual Mac48Address GetBssid (void) const;
+  virtual void SetBasicBlockAckTimeout (Time blockAckTimeout);
+  virtual void SetCompressedBlockAckTimeout (Time blockAckTimeout);
+  virtual Time GetBasicBlockAckTimeout (void) const;
+  virtual Time GetCompressedBlockAckTimeout (void) const;
 
   void SetMaxMissedBeacons (uint32_t missed);
   void SetProbeRequestTimeout (Time timeout);
@@ -87,6 +92,7 @@ public:
   void StartActiveAssociation (void);
 
 private:
+  void DoStart ();
   void SetBssid (Mac48Address bssid);
   Mac48Address GetBroadcastBssid (void);
   void Receive (Ptr<Packet> p, const WifiMacHeader *hdr);
@@ -100,6 +106,7 @@ private:
   void ProbeRequestTimeout (void);
   void SendAssociationRequest (void);
   void SendProbeRequest (void);
+  void SendAddBaResponse (const MgtAddBaRequestHeader *reqHdr, Mac48Address originator);
   void TryToEnsureAssociated (void);
   bool IsAssociated (void) const;
   bool IsWaitAssocResp (void) const;
@@ -114,13 +121,13 @@ private:
   QstaWifiMac &operator = (const QstaWifiMac &);
   QstaWifiMac (const QstaWifiMac &);
   virtual void FinishConfigureStandard (enum WifiPhyStandard standard);
-  void SetQueue (enum AccessClass ac);
+  void SetQueue (enum AcIndex ac);
   Ptr<EdcaTxopN> GetVOQueue (void) const;
   Ptr<EdcaTxopN> GetVIQueue (void) const;
   Ptr<EdcaTxopN> GetBEQueue (void) const;
   Ptr<EdcaTxopN> GetBKQueue (void) const;
 
-  typedef std::map<AccessClass, Ptr<EdcaTxopN> > Queues;
+  typedef std::map<AcIndex, Ptr<EdcaTxopN> > Queues;
   typedef std::list<std::pair<Ptr<Packet>, AmsduSubframeHeader> > DeaggregatedMsdus;
   typedef std::list<std::pair<Ptr<Packet>, AmsduSubframeHeader> >::const_iterator DeaggregatedMsdusCI;
     

@@ -90,7 +90,7 @@ int main (int argc, char *argv[])
   double wifiX = 0.0;
 
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
-  wifiPhy.SetPcapFormat(YansWifiPhyHelper::PCAP_FORMAT_80211_RADIOTAP);
+  wifiPhy.SetPcapDataLinkType (YansWifiPhyHelper::DLT_IEEE802_11_RADIO); 
 
   for (uint32_t i = 0; i < nWifis; ++i)
     {
@@ -125,9 +125,7 @@ int main (int argc, char *argv[])
       mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
       mobility.Install (backboneNodes.Get (i));
       wifiMac.SetType ("ns3::NqapWifiMac",
-		   "Ssid", SsidValue (ssid),
-		   "BeaconGeneration", BooleanValue (true),
-		   "BeaconInterval", TimeValue (Seconds (2.5)));
+		   "Ssid", SsidValue (ssid));
       apDev = wifi.Install (wifiPhy, wifiMac, backboneNodes.Get (i));
 
       NetDeviceContainer bridgeDev;
@@ -191,7 +189,7 @@ int main (int argc, char *argv[])
   os.open ("wifi-wired-bridging.mob");
   MobilityHelper::EnableAsciiAll (os);
 
-  Simulator::Stop (Seconds (100.0));
+  Simulator::Stop (Seconds (5.0));
   Simulator::Run ();
   Simulator::Destroy ();
 }

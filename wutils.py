@@ -112,6 +112,11 @@ def get_proc_env(os_env=None):
     else:
         proc_env['PYTHONPATH'] = pymoddir
 
+    if 'PATH' in proc_env:
+        proc_env['PATH'] = os.pathsep.join(list(env['NS3_EXECUTABLE_PATH']) + [proc_env['PATH']])
+    else:
+        proc_env['PATH'] = os.pathsep.join(list(env['NS3_EXECUTABLE_PATH']))
+
     return proc_env
 
 def run_argv(argv, env, os_env=None, cwd=None, force_no_valgrind=False):
@@ -121,16 +126,12 @@ def run_argv(argv, env, os_env=None, cwd=None, force_no_valgrind=False):
             raise Utils.WafError("Options --command-template and --valgrind are conflicting")
         if not env['VALGRIND']:
             raise Utils.WafError("valgrind is not installed")
-        argv = [env['VALGRIND'], "--leak-check=full", "--error-exitcode=1"] + argv
+        argv = [env['VALGRIND'], "--leak-check=full", "--show-reachable=yes", "--error-exitcode=1"] + argv
         proc = subprocess.Popen(argv, env=proc_env, cwd=cwd, stderr=subprocess.PIPE)
-        reg = re.compile ('definitely lost: ([^ ]+) bytes')
         error = False
         for line in proc.stderr:
             sys.stderr.write(line)
-            result = reg.search(line)
-            if result is None:
-                continue
-            if result.group(1) != "0":
+            if "== LEAK SUMMARY" in line:
                 error = True
         retval = proc.wait()
         if retval == 0 and error:
@@ -146,7 +147,20 @@ def run_argv(argv, env, os_env=None, cwd=None, force_no_valgrind=False):
             except WindowsError, ex:
                 raise Utils.WafError("Command %s raised exception %s" % (argv, ex))
     if retval:
-        raise Utils.WafError("Command %s exited with code %i" % (argv, retval))
+        signame = None
+        if retval < 0: # signal?
+            import signal
+            for name, val in vars(signal).iteritems():
+                if len(name) > 3 and name[:3] == 'SIG' and name[3] != '_':
+                    if val == -retval:
+                        signame = name
+                        break
+        if signame:
+            raise Utils.WafError("Command %s terminated with signal %s."
+                                 " Run it under a debugger to get more information "
+                                 "(./waf --run <program> --command-template=\"gdb --args %%s <args>\")." % (argv, signame))
+        else:
+            raise Utils.WafError("Command %s exited with code %i" % (argv, retval))
     return retval
 
 def get_run_program(program_string, command_template=None):

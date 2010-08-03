@@ -40,6 +40,7 @@ namespace flame {
 // FlameTag
 //-----------------------------------------------------------------------------
 NS_OBJECT_ENSURE_REGISTERED (FlameTag);
+NS_OBJECT_ENSURE_REGISTERED (FlameProtocol);
 
 TypeId
 FlameTag::GetTypeId ()
@@ -117,7 +118,7 @@ FlameProtocol::GetTypeId ()
                     MakeTimeChecker ()
                     )
     .AddAttribute ( "MaxCost",
-                    "Cost threshold after which packet will be dropeed",
+                    "Cost threshold after which packet will be dropped",
                     UintegerValue (32),
                     MakeUintegerAccessor (
                         &FlameProtocol::m_maxCost),

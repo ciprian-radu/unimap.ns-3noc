@@ -29,6 +29,26 @@
 @node Downloading ns-3
 @section Downloading ns-3
 
+@cindex Prerequisites
+@cindex Dependencies
+The @command{ns-3} system as a whole is a fairly complex system and has a
+number of dependencies on other components.  Along with the systems you will
+most likely deal with every day (the GNU toolchain, Mercurial, you programmer
+editor) you will need to ensure that a number of additional libraries are
+present on your system before proceeding.  @command{ns-3} provides a wiki
+for your reading pleasure that includes pages with many useful hints and tips.
+One such page is the ``Installation'' page,
+@uref{http://www.nsnam.org/wiki/index.php/Installation}.
+
+The ``Prerequisites'' section of this wiki page explains which packages are 
+required to support common @command{ns-3} options, and also provides the 
+commands used to install them for common Linux variants.  Cygwin users will
+have to use the Cygwin installer (if you are a Cygwin user, you used it to
+install Cygwin). 
+
+You may want to take this opportunity to explore the @command{ns-3} wiki 
+a bit since there really is a wealth of information there. 
+
 @cindex Linux
 @cindex Cygwin
 @cindex GNU
@@ -37,9 +57,10 @@
 @cindex Waf
 From this point forward, we are going to assume that the reader is working in
 Linux or a Linux emulation environment (Linux, Cygwin, etc.) and has the GNU
-toolchain installed and verified.  We are also going to assume that you have
-Mercurial and Waf installed and running on the target system as described in
-the Getting Started section of the  @command{ns-3} web site: 
+toolchain installed and verified along with the prerequisites mentioned 
+above.  We are also going to assume that you have Mercurial and Waf installed
+and running on the target system as described in the ``Getting Started'' section 
+of the  @command{ns-3} web site: 
 @uref{http://www.nsnam.org/getting_started.html}.
 
 @cindex tarball
@@ -415,7 +436,7 @@ default or require support from the underlying system to work properly.
 For instance, to enable XmlTo, the library libxml-2.0 must be found on the
 system.  If this library were not found, the corresponding @command{ns-3} feature 
 would not be enabled and a message would be displayed.  Note further that there is 
-a feature to use the progarm @code{sudo} to set the suid bit of certain programs.
+a feature to use the program @code{sudo} to set the suid bit of certain programs.
 This is not enabled by default and so this feature is reported as ``not enabled.''
 
 Now go ahead and switch back to the debug build.
@@ -600,6 +621,34 @@ produces the following output.
 @end verbatim
 
 @emph{Congratulations.  You are now an ns-3 user.}
+
+@emph{What do I do if I don't see the output?}
+
+If you don't see @code{waf} messages indicating that the build was 
+completed successfully, but do not see the ``Hello Simulator'' output, 
+chances are that you have switched your build mode to ``optimized'' in 
+the ``Building with Waf'' section, but have missed the change back to 
+``debug'' mode.  All of the console output used in this tutorial uses a 
+special @command{ns-3} logging component that is useful for printing 
+user messages to the console.  Output from this component is 
+automatically disabled when you compile optimized code -- it is 
+``optimized out.''  If you don't see the ``Hello Simulator'' output,
+type the following,
+
+@verbatim
+  ./waf -d debug configure
+@end verbatim
+
+to tell @code{waf} to build the debug versions of the @command{ns-3} 
+programs.  You must still build the actual debug version of the code by
+typing,
+
+@verbatim
+  ./waf
+@end verbatim
+
+Now, if you run the @code{hello-simulator} program, you should see the 
+expected output.
 
 If you want to run programs under another tool such as gdb or valgrind,
 see this @uref{http://www.nsnam.org/wiki/index.php/User_FAQ#How_to_run_NS-3_programs_under_another_tool,,wiki entry}.

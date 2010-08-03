@@ -28,8 +28,11 @@ import Configure
 import Scripting
 
 sys.path.insert(0, os.path.abspath('waf-tools'))
+try:
+    import cflags # override the build profiles from waf
+finally:
+    sys.path.pop(0)
 
-import cflags # override the build profiles from waf
 cflags.profiles = {
 	# profile name: [optimization_level, warnings_level, debug_level]
 	'debug':     [0, 2, 3],
@@ -112,6 +115,7 @@ def dist_hook():
 
 def set_options(opt):
     # options provided by the modules
+    opt.tool_options('compiler_cc')
     opt.tool_options('compiler_cxx')
     opt.tool_options('cflags')
 
@@ -194,6 +198,10 @@ def set_options(opt):
                    help=('Compile NS-3 statically: works only on linux, without python'),
                    dest='enable_static', action='store_true',
                    default=False)
+    opt.add_option('--enable-mpi',
+                   help=('Compile NS-3 with MPI and distributed simulation support'),
+                   dest='enable_mpi', action='store_true',
+                   default=False)
     opt.add_option('--doxygen-no-build',
                    help=('Run doxygen to generate html documentation from source comments, '
                          'but do not wait for ns-3 to finish the full build.'),
@@ -206,18 +214,23 @@ def set_options(opt):
     opt.sub_options('src/internet-stack')
 
 
-def _check_compilation_flag(conf, flag):
+def _check_compilation_flag(conf, flag, mode='cxx'):
     """
     Checks if the C++ compiler accepts a certain compilation flag or flags
     flag: can be a string or a list of strings
     """
 
     env = conf.env.copy()
-    env.append_value('CXXFLAGS', flag)
+    if mode == 'cxx':
+        fname = 'test.cc'
+        env.append_value('CXXFLAGS', flag)
+    else:
+        fname = 'test.c'
+        env.append_value('CCFLAGS', flag)
     try:
         retval = conf.run_c_code(code='#include <stdio.h>\nint main() { return 0; }\n',
-                                 env=env, compile_filename='test.cc',
-                                 compile_mode='cxx',type='cprogram', execute=False)
+                                 env=env, compile_filename=fname,
+                                 compile_mode=mode, type='cprogram', execute=False)
     except Configure.ConfigurationError:
         ok = False
     else:
@@ -236,13 +249,14 @@ def configure(conf):
     conf.env['NS3_OPTIONAL_FEATURES'] = []
 
     conf.env['NS3_BUILDDIR'] = conf.blddir
+    conf.check_tool('compiler_cc')
     conf.check_tool('compiler_cxx')
-    conf.check_tool('cflags')
+    conf.check_tool('cflags', ['waf-tools'])
     try:
-        conf.check_tool('pkgconfig')
+        conf.check_tool('pkgconfig', ['waf-tools'])
     except Configure.ConfigurationError:
         pass
-    conf.check_tool('command')
+    conf.check_tool('command', ['waf-tools'])
 
     # Check for the location of regression reference traces
     if Options.options.regression_traces is not None:
@@ -277,12 +291,6 @@ def configure(conf):
     conf.setenv(variant_name)
     env = variant_env
 
-    env.append_value('CXXDEFINES', 'RUN_SELF_TESTS')
-    
-    if env['COMPILER_CXX'] == 'g++' and 'CXXFLAGS' not in os.environ:
-        if conf.check_compilation_flag('-Wno-error=deprecated-declarations'):
-            env.append_value('CXXFLAGS', '-Wno-error=deprecated-declarations')
-        
     if Options.options.build_profile == 'debug':
         env.append_value('CXXDEFINES', 'NS3_ASSERT_ENABLE')
         env.append_value('CXXDEFINES', 'NS3_LOG_ENABLE')
@@ -318,6 +326,27 @@ def configure(conf):
     if Options.options.enable_modules:
         conf.env['NS3_ENABLED_MODULES'] = ['ns3-'+mod for mod in
                                            Options.options.enable_modules.split(',')]
+    # for MPI
+    conf.find_program('mpic++', var='MPI')
+    if Options.options.enable_mpi and conf.env['MPI']:
+        p = subprocess.Popen([conf.env['MPI'], '-showme:compile'], stdout=subprocess.PIPE)
+        flags = p.stdout.read().rstrip().split()
+        p.wait()
+        env.append_value("CXXFLAGS_MPI", flags)
+
+        p = subprocess.Popen([conf.env['MPI'], '-showme:link'], stdout=subprocess.PIPE)
+        flags = p.stdout.read().rstrip().split()
+        p.wait()
+        env.append_value("LINKFLAGS_MPI", flags)
+
+        env.append_value('CXXDEFINES', 'NS3_MPI')
+        conf.report_optional_feature("mpi", "MPI Support", True, '')
+        conf.env['ENABLE_MPI'] = True
+    else:
+        if Options.options.enable_mpi:
+            conf.report_optional_feature("mpi", "MPI Support", False, 'mpic++ not found')
+        else:
+            conf.report_optional_feature("mpi", "MPI Support", False, 'option --enable-mpi not selected')
 
     # for suid bits
     conf.find_program('sudo', var='SUDO')
@@ -387,6 +416,23 @@ def configure(conf):
     if have_gsl:
         conf.env.append_value('CXXDEFINES', "ENABLE_GSL")
         conf.env.append_value('CCDEFINES', "ENABLE_GSL")
+
+    # for compiling C code, copy over the CXX* flags
+    conf.env.append_value('CCFLAGS', conf.env['CXXFLAGS'])
+    conf.env.append_value('CCDEFINES', conf.env['CXXDEFINES'])
+
+    def add_gcc_flag(flag):
+        if env['COMPILER_CXX'] == 'g++' and 'CXXFLAGS' not in os.environ:
+            if conf.check_compilation_flag(flag, mode='cxx'):
+                env.append_value('CXXFLAGS', flag)
+        if env['COMPILER_CC'] == 'gcc' and 'CCFLAGS' not in os.environ:
+            if conf.check_compilation_flag(flag, mode='cc'):
+                env.append_value('CCFLAGS', flag)
+
+    add_gcc_flag('-Wno-error=deprecated-declarations')
+    add_gcc_flag('-fstrict-aliasing')
+    add_gcc_flag('-Wstrict-aliasing')
+
 
     # append user defined flags after all our ones
     for (confvar, envvar) in [['CCFLAGS', 'CCFLAGS_EXTRA'],
@@ -475,6 +521,8 @@ def add_examples_programs(bld):
     env = bld.env_of_name('default')
     if env['ENABLE_EXAMPLES']:
         for dir in os.listdir('examples'):
+            if dir.startswith('.') or dir == 'CVS':
+                continue
             if os.path.isdir(os.path.join('examples', dir)):
                 bld.add_subdirs(os.path.join('examples', dir))
 
@@ -697,12 +745,14 @@ class run_python_unit_tests_task(Task.TaskBase):
                         self.bld.env, proc_env, force_no_valgrind=True)
 
 def check_shell(bld):
-    if 'NS3_MODULE_PATH' not in os.environ:
+    if ('NS3_MODULE_PATH' not in os.environ) or ('NS3_EXECUTABLE_PATH' not in os.environ):
         return
     env = bld.env
     correct_modpath = os.pathsep.join(env['NS3_MODULE_PATH'])
     found_modpath = os.environ['NS3_MODULE_PATH']
-    if found_modpath != correct_modpath:
+    correct_execpath = os.pathsep.join(env['NS3_EXECUTABLE_PATH'])
+    found_execpath = os.environ['NS3_EXECUTABLE_PATH']
+    if (found_modpath != correct_modpath) or (correct_execpath != found_execpath):
         msg = ("Detected shell (./waf shell) with incorrect configuration\n"
                "=========================================================\n"
                "Possible reasons for this problem:\n"
@@ -728,7 +778,8 @@ def shell(ctx):
         shell = os.environ.get("SHELL", "/bin/sh")
 
     env = wutils.bld.env
-    wutils.run_argv([shell], env, {'NS3_MODULE_PATH': os.pathsep.join(env['NS3_MODULE_PATH'])})
+    os_env = {'NS3_MODULE_PATH': os.pathsep.join(env['NS3_MODULE_PATH']), 'NS3_EXECUTABLE_PATH': os.pathsep.join(env['NS3_EXECUTABLE_PATH'])}
+    wutils.run_argv([shell], env, os_env)
 
 def _doxygen(bld):
     env = wutils.bld.env
@@ -742,6 +793,13 @@ def _doxygen(bld):
         return
 
     prog = program_obj.path.find_or_declare(ccroot.get_target_name(program_obj)).abspath(env)
+
+    if not os.path.exists(prog):
+        Logs.error("print-introspected-doxygen has not been built yet."
+                   " You need to build ns-3 at least once before "
+                   "generating doxygen docs...")
+        raise SystemExit(1)
+
     out = open(os.path.join('doc', 'introspected-doxygen.h'), 'w')
 
     if subprocess.Popen([prog], stdout=out, env=proc_env).wait():

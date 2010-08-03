@@ -30,7 +30,6 @@
 #include "ns3/propagation-loss-model.h"
 #include "ns3/mobility-model.h"
 #include "ns3/log.h"
-#include "ns3/pcap-writer.h"
 #include "ns3/config.h"
 #include "ns3/simulator.h"
 #include "ns3/names.h"
@@ -136,6 +135,7 @@ WifiHelper::EnableLogComponents (void)
   LogComponentEnable ("Cara", LOG_LEVEL_ALL);
   LogComponentEnable ("DcaTxop", LOG_LEVEL_ALL);
   LogComponentEnable ("DcfManager", LOG_LEVEL_ALL);
+  LogComponentEnable ("DsssErrorRateModel", LOG_LEVEL_ALL);
   LogComponentEnable ("EdcaTxopN", LOG_LEVEL_ALL);
   LogComponentEnable ("InterferenceHelper", LOG_LEVEL_ALL);
   LogComponentEnable ("Jakes", LOG_LEVEL_ALL);
@@ -143,6 +143,7 @@ WifiHelper::EnableLogComponents (void)
   LogComponentEnable ("MacRxMiddle", LOG_LEVEL_ALL);
   LogComponentEnable ("MsduAggregator", LOG_LEVEL_ALL);
   LogComponentEnable ("MsduStandardAggregator", LOG_LEVEL_ALL);
+  LogComponentEnable ("NistErrorRateModel", LOG_LEVEL_ALL);
   LogComponentEnable ("NqapWifiMac", LOG_LEVEL_ALL);
   LogComponentEnable ("NqstaWifiMac", LOG_LEVEL_ALL);
   LogComponentEnable ("OnoeWifiRemoteStation", LOG_LEVEL_ALL);

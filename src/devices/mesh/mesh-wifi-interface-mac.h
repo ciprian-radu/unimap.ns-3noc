@@ -91,7 +91,8 @@ public:
   virtual void  SetAddress (Mac48Address address);
   virtual void  SetSsid (Ssid ssid);
   //\}
-
+  ///Needed to obtain phy to calculate TX-duration
+  Ptr<WifiPhy> GetWifiPhy () const;
   ///\name Each mesh point interfaces must know the mesh point address
   //\{
   void SetMeshPointAddress (Mac48Address);
@@ -158,7 +159,7 @@ public:
   void ResetStats ();
   /// Enable/disable beacons
   void SetBeaconGeneration (bool enable);
-  void SetQueue (AccessClass ac);
+  void SetQueue (AcIndex ac);
   WifiPhyStandard GetPhyStandard () const;
   virtual void FinishConfigureStandard (enum WifiPhyStandard standard);
 private:
@@ -179,9 +180,11 @@ private:
   bool GetBeaconGeneration () const;
   /// Real d-tor
   virtual void DoDispose ();
+  ///Initiator at t=0
+  void DoStart ();
 
 private:
-  typedef std::map<AccessClass, Ptr<DcaTxop> > Queues;
+  typedef std::map<AcIndex, Ptr<DcaTxop> > Queues;
   typedef std::vector<Ptr<MeshWifiInterfaceMacPlugin> > PluginList;
   ///\name Wifi MAC internals
   //\{

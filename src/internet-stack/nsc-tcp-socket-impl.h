@@ -29,7 +29,7 @@
 #include "ns3/event-id.h"
 #include "tcp-typedefs.h"
 #include "pending-data.h"
-#include "sequence-number.h"
+#include "ns3/sequence-number.h"
 
 struct INetStreamSocket;
 
@@ -82,13 +82,16 @@ public:
   virtual Ptr<Packet> RecvFrom (uint32_t maxSize, uint32_t flags,
     Address &fromAddress);
   virtual int GetSockName (Address &address) const; 
+  virtual bool SetAllowBroadcast (bool allowBroadcast);
+  virtual bool GetAllowBroadcast () const;
 
 private:
   void NSCWakeup(void);
   friend class Tcp;
   // invoked by Tcp class
   int FinishBind (void);
-  void ForwardUp (Ptr<Packet> p, Ipv4Address ipv4, uint16_t port);
+  void ForwardUp (Ptr<Packet> p, Ipv4Header header, uint16_t port, 
+                  Ptr<Ipv4Interface> incomingInterface);
   void Destroy (void);
   //methods for state
   bool SendPendingData(void);
@@ -141,7 +144,7 @@ private:
   bool m_shutdownRecv;
   bool m_connected;
   
-  //manage the state infomation
+  //manage the state information
   States_t m_state;
   bool m_closeOnEmpty;
 

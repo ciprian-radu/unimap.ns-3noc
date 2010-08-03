@@ -45,7 +45,6 @@ class Node;
 class Socket;
 class Ipv4RawSocketImpl;
 class Ipv4L4Protocol;
-class Ipv4L4Protocol;
 class Icmpv4L4Protocol;
 
 
@@ -162,6 +161,15 @@ public:
    */
   void Send (Ptr<Packet> packet, Ipv4Address source, 
 	     Ipv4Address destination, uint8_t protocol, Ptr<Ipv4Route> route);
+  /**
+   * \param packet packet to send
+   * \param ipHeader IP Header
+   * \param route route entry
+   *
+   * Higher-level layers call this method to send a packet with IPv4 Header
+   * (Intend to be used with IpHeaderInclude attribute.)
+   */
+  void Send (Ptr<Packet> packet, Ipv4Header ipHeader, Ptr<Ipv4Route> route);
 
   uint32_t AddInterface (Ptr<NetDevice> device);
   Ptr<Ipv4Interface> GetInterface (uint32_t i) const;
@@ -258,10 +266,10 @@ private:
   TracedCallback<const Ipv4Header &, Ptr<const Packet>, uint32_t> m_localDeliverTrace;
 
   // The following two traces pass a packet with an IP header
-  TracedCallback<Ptr<const Packet>, uint32_t> m_txTrace;
-  TracedCallback<Ptr<const Packet>, uint32_t> m_rxTrace;
+  TracedCallback<Ptr<const Packet>, Ptr<Ipv4>,  uint32_t> m_txTrace;
+  TracedCallback<Ptr<const Packet>, Ptr<Ipv4>, uint32_t> m_rxTrace;
   // <ip-header, payload, reason, ifindex> (ifindex not valid if reason is DROP_NO_ROUTE)
-  TracedCallback<const Ipv4Header &, Ptr<const Packet>, DropReason, uint32_t> m_dropTrace;
+  TracedCallback<const Ipv4Header &, Ptr<const Packet>, DropReason, Ptr<Ipv4>, uint32_t> m_dropTrace;
 
   Ptr<Ipv4RoutingProtocol> m_routingProtocol;
 

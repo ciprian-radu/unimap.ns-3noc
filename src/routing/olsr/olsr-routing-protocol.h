@@ -38,6 +38,7 @@
 #include "ns3/traced-callback.h"
 #include "ns3/ipv4.h"
 #include "ns3/ipv4-routing-protocol.h"
+#include "ns3/ipv4-static-routing.h"
 
 #include <vector>
 #include <map>
@@ -59,17 +60,24 @@ struct RoutingTableEntry
     destAddr (), nextAddr (),
     interface (0), distance (0) {};
 };
+
 class RoutingProtocol;
+
 /// Testcase for MPR computation mechanism
 class OlsrMprTestCase : public TestCase {
 public:
   OlsrMprTestCase ();
   ~OlsrMprTestCase ();
+  /// \brief Run test case
   virtual bool DoRun (void);
   ;
 };
 
-
+///
+/// \ingroup olsr
+///
+/// \brief OLSR routing protocol for IPv4
+///
 class RoutingProtocol : public Ipv4RoutingProtocol
 {
 public:
@@ -79,12 +87,48 @@ public:
   RoutingProtocol ();
   virtual ~RoutingProtocol ();
 
+  ///
+  /// \brief Set the OLSR main address to the first address on the indicated
+  ///        interface 
+  /// \param interface IPv4 interface index
+  ///
   void SetMainInterface (uint32_t interface);
+
+  /// 
+  /// Dump the neighbor table, two-hop neighbor table, and routing table
+  /// to logging output (NS_LOG_DEBUG log level).  If logging is disabled,
+  /// this function does nothing.
+  /// 
+  void Dump (void);
+
+  /**
+   * Return the list of routing table entries discovered by OLSR
+   **/
+  std::vector<RoutingTableEntry> GetRoutingTableEntries () const;
+
+private:
+  std::set<uint32_t> m_interfaceExclusions;
+  Ptr<Ipv4StaticRouting> m_routingTableAssociation;
+
+public:
+  std::set<uint32_t> GetInterfaceExclusions () const
+    {
+      return m_interfaceExclusions;
+    }
+  void SetInterfaceExclusions (std::set<uint32_t> exceptions);
+
+  /// Inject Association to be sent in HNA message
+  void AddHostNetworkAssociation (Ipv4Address networkAddr, Ipv4Mask netmask);
+
+  /// Inject Associations from an Ipv4StaticRouting instance
+  void SetRoutingTableAssociation (Ptr<Ipv4StaticRouting> routingTable);
 
 protected:
   virtual void DoStart (void);
 private:
   std::map<Ipv4Address, RoutingTableEntry> m_table; ///< Data structure for the routing table.
+
+  Ptr<Ipv4StaticRouting> m_hnaRoutingTable;
 
   EventGarbageCollector m_events;
 
@@ -104,6 +148,8 @@ private:
   Time m_tcInterval;
   /// MID messages' emission interval.
   Time m_midInterval;
+  /// HNA messages' emission interval.
+  Time m_hnaInterval;
   /// Willingness for forwarding packets on behalf of other nodes.
   uint8_t m_willingness;
 	
@@ -112,11 +158,8 @@ private:
 
   Ptr<Ipv4> m_ipv4;
 	
-private:
-
   void Clear ();
   uint32_t GetSize () const { return m_table.size (); }
-  std::vector<RoutingTableEntry> GetEntries () const;
   void RemoveEntry (const Ipv4Address &dest);
   void AddEntry (const Ipv4Address &dest,
                  const Ipv4Address &next,
@@ -132,7 +175,7 @@ private:
                       RoutingTableEntry &outEntry) const;
 
   // From Ipv4RoutingProtocol
-  virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, uint32_t oif, Socket::SocketErrno &sockerr);
+  virtual Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr);
    virtual bool RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr<const NetDevice> idev,
                              UnicastForwardCallback ucb, MulticastForwardCallback mcb,
                              LocalDeliverCallback lcb, ErrorCallback ecb);  
@@ -168,6 +211,9 @@ private:
   Timer m_midTimer;
   void MidTimerExpire ();
 
+  Timer m_hnaTimer;
+  void HnaTimerExpire ();
+
   void DupTupleTimerExpire (Ipv4Address address, uint16_t sequenceNumber);
   bool m_linkTupleTimerFirstTime;
   void LinkTupleTimerExpire (Ipv4Address neighborIfaceAddr);
@@ -175,6 +221,7 @@ private:
   void MprSelTupleTimerExpire (Ipv4Address mainAddr);
   void TopologyTupleTimerExpire (Ipv4Address destAddr, Ipv4Address lastAddr);
   void IfaceAssocTupleTimerExpire (Ipv4Address ifaceAddr);
+  void AssociationTupleTimerExpire (Ipv4Address gatewayAddr, Ipv4Address networkAddr, Ipv4Mask netmask);
 
   void IncrementAnsn ();
 
@@ -191,6 +238,7 @@ private:
   void SendHello ();
   void SendTc ();
   void SendMid ();
+  void SendHna ();
 
   void NeighborLoss (const LinkTuple &tuple);
   void AddDuplicateTuple (const DuplicateTuple &tuple);
@@ -208,6 +256,8 @@ private:
   void RemoveTopologyTuple (const TopologyTuple &tuple);
   void AddIfaceAssocTuple (const IfaceAssocTuple &tuple);
   void RemoveIfaceAssocTuple (const IfaceAssocTuple &tuple);
+  void AddAssociationTuple (const AssociationTuple &tuple);
+  void RemoveAssociationTuple (const AssociationTuple &tuple);
 
   void ProcessHello (const olsr::MessageHeader &msg,
                      const Ipv4Address &receiverIface,
@@ -215,6 +265,8 @@ private:
   void ProcessTc (const olsr::MessageHeader &msg,
                   const Ipv4Address &senderIface);
   void ProcessMid (const olsr::MessageHeader &msg,
+                   const Ipv4Address &senderIface);
+  void ProcessHna (const olsr::MessageHeader &msg,
                    const Ipv4Address &senderIface);
 
   void LinkSensing (const olsr::MessageHeader &msg,

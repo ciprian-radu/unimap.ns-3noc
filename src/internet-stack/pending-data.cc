@@ -28,19 +28,25 @@
 
 #include <string.h>
 
-#include "pending-data.h"
 #include "ns3/fatal-error.h"
+#include "ns3/log.h"
+#include "pending-data.h"
+
+NS_LOG_COMPONENT_DEFINE ("PendingData");
+
 namespace ns3
 {
 
 PendingData::PendingData () : size (0), data (0),
                msgSize (0), responseSize (0)
 {
+  NS_LOG_FUNCTION (this);
 }
 
 PendingData::PendingData (uint32_t s, uint8_t* d, uint32_t msg, uint32_t resp)
   : size (s), data (0), msgSize (msg), responseSize (resp)
 {
+  NS_LOG_FUNCTION (this << s);
   if (d)
     {
       data.push_back (Create<Packet> (d, size));
@@ -51,6 +57,7 @@ PendingData::PendingData(const std::string& s)
   : size (s.length () + 1), data (0),
     msgSize (0), responseSize (0)
 {
+  NS_LOG_FUNCTION (this << s.length() + 1);
   data.push_back (Create<Packet> ((uint8_t*)s.c_str(), size));
 }
 
@@ -58,35 +65,42 @@ PendingData::PendingData(const PendingData& c)
   : size (c.Size ()), data (c.data),
     msgSize (c.msgSize), responseSize (c.responseSize)
 {
+  NS_LOG_FUNCTION (this << c.Size ());
 }
 
 PendingData::~PendingData()
 {
+  NS_LOG_FUNCTION (this);
 }
 
 PendingData* PendingData::Copy () const
 {
+  NS_LOG_FUNCTION (this);
   return new PendingData (*this);
 };
 
 PendingData* PendingData::CopyS (uint32_t s)
 { // Copy, but with new size (assumes no associated data);
+  NS_LOG_FUNCTION (this << s);
   return new PendingData (s, 0, msgSize, responseSize);
 }
 
 PendingData* PendingData::CopySD (uint32_t s, uint8_t* d)
 { // Copy, but with new size (assumes no associated data);
+  NS_LOG_FUNCTION (this << s);
   return new PendingData (s, d, msgSize, responseSize);
 }
 
 void PendingData::Clear ()
 { // Remove all pending data
+  NS_LOG_FUNCTION (this);
   data.clear();
   size = 0;
 }
 
 void PendingData::Add (uint32_t s, const uint8_t* d)
 {
+  NS_LOG_FUNCTION (this << s);
   if (d == 0)
   {
     data.push_back(Create<Packet> (d,s));
@@ -100,34 +114,40 @@ void PendingData::Add (uint32_t s, const uint8_t* d)
 
 void PendingData::Add (Ptr<Packet> p)
 {
+  NS_LOG_FUNCTION (this);
   data.push_back(p);
   size += p->GetSize();
 }
 
-uint32_t PendingData::SizeFromSeq (const SequenceNumber& f, const SequenceNumber& o)
+uint32_t PendingData::SizeFromSeq (const SequenceNumber32& seqFront, const SequenceNumber32& seqOffset)
 {
-  uint32_t o1 = OffsetFromSeq (f,o); // Offset to start of unused data
+  NS_LOG_FUNCTION (this << seqFront << seqOffset);
+  uint32_t o1 = OffsetFromSeq (seqFront, seqOffset); // Offset to start of unused data
   return SizeFromOffset (o1);      // Amount of data after offset
 }
 
-uint32_t PendingData::SizeFromOffset (uint32_t o)
+uint32_t PendingData::SizeFromOffset (uint32_t offset)
 { // Find out how much data is available from offset
-  if (o > size) return 0;     // No data at requested offset
-  return size - o;            // Available data after offset
+  NS_LOG_FUNCTION (this << offset);
+  // XXX should this return zero, or error out?
+  if (offset > size) return 0;     // No data at requested offset
+  return size - offset;            // Available data after offset
 }
 
-uint32_t PendingData::OffsetFromSeq (const SequenceNumber& f, const SequenceNumber& o)
+uint32_t PendingData::OffsetFromSeq (const SequenceNumber32& seqFront, const SequenceNumber32& seqOffset)
 { // f is the first sequence number in this data, o is offset sequence
-  if (o < f) 
+  NS_LOG_FUNCTION (this << seqFront << seqOffset);
+  if (seqOffset < seqFront) 
     {
       return 0; // HuH?  Shouldn't happen
     }
-  return o - f;
+  return seqOffset - seqFront;
 }
 
 Ptr<Packet> PendingData::CopyFromOffset (uint32_t s, uint32_t o)
 { // Make a copy of data from starting position "o" for "s" bytes
   // Return NULL if results in zero length data
+  NS_LOG_FUNCTION (this << s << o);
   uint32_t s1 = std::min (s, SizeFromOffset (o)); // Insure not beyond end of data
   if (s1 == 0)
     {
@@ -182,7 +202,10 @@ Ptr<Packet> PendingData::CopyFromOffset (uint32_t s, uint32_t o)
         {
           outPacket->AddAtEnd (data[i]);
         }
-      outPacket->AddAtEnd(endFragment);
+      if (endFragment)
+        {
+          outPacket->AddAtEnd(endFragment);
+        }
       NS_ASSERT(outPacket->GetSize() == s1);
       return outPacket;
     }
@@ -192,9 +215,41 @@ Ptr<Packet> PendingData::CopyFromOffset (uint32_t s, uint32_t o)
     }
 }
 
-Ptr<Packet> PendingData::CopyFromSeq (uint32_t s, const SequenceNumber& f, const SequenceNumber& o)
+Ptr<Packet> PendingData::CopyFromSeq (uint32_t s, const SequenceNumber32& f, const SequenceNumber32& o)
 {
+  NS_LOG_FUNCTION (this << s << f << o);
   return CopyFromOffset (s, OffsetFromSeq(f,o));
+}
+
+uint32_t
+PendingData::RemoveToSeq (const SequenceNumber32& seqFront, const SequenceNumber32& seqOffset)
+{
+  NS_LOG_FUNCTION (this << seqFront << seqOffset);
+  uint32_t count = OffsetFromSeq (seqFront, seqOffset);
+  NS_ASSERT_MSG (count <= size, "Trying to remove more data than in the buffer"); 
+  if (count == size)
+    {
+      Clear ();
+      return size;
+    }
+  // Remove whole packets, if possible, from the front of the data
+  // Do not perform buffer manipulations within packet; if a whole packet
+  // cannot be removed, leave it alone
+  std::vector<Ptr<Packet> >::iterator endI = data.begin ();
+  uint32_t current = 0;
+  // Any packet whose data has been completely acked can be removed
+  for (std::vector<Ptr<Packet> >::iterator dataI = data.begin (); dataI < data.end (); dataI++)
+    {
+      if (current + (*dataI)->GetSize () > count)
+        {
+          break;
+        }
+      current += (*dataI)->GetSize ();
+      ++endI;
+    }
+  data.erase (data.begin (), endI);
+  size -= current;
+  return current;
 }
 
 }//namepsace ns3

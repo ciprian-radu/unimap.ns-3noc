@@ -62,6 +62,10 @@ DefaultSimulatorImpl::DefaultSimulatorImpl ()
 }
 
 DefaultSimulatorImpl::~DefaultSimulatorImpl ()
+{}
+
+void 
+DefaultSimulatorImpl::DoDispose (void)
 {
   while (!m_events->IsEmpty ())
     {
@@ -69,8 +73,8 @@ DefaultSimulatorImpl::~DefaultSimulatorImpl ()
       next.impl->Unref ();
     }
   m_events = 0;
+  SimulatorImpl::DoDispose ();
 }
-
 void
 DefaultSimulatorImpl::Destroy ()
 {
@@ -100,6 +104,13 @@ DefaultSimulatorImpl::SetScheduler (ObjectFactory schedulerFactory)
         }
     }
   m_events = scheduler;
+}
+
+// System ID for non-distributed simulation is always zero
+uint32_t 
+DefaultSimulatorImpl::GetSystemId (void) const
+{
+  return 0;
 }
 
 void

@@ -94,7 +94,7 @@ main (int argc, char *argv[])
     {
       AddressValue remoteAddress (InetSocketAddress (star.GetHubIpv4Address (i), port));
       onOffHelper.SetAttribute ("Remote", remoteAddress);
-      spokeApps.Add (onOffHelper.Install (star.GetSpoke (i)));
+      spokeApps.Add (onOffHelper.Install (star.GetSpokeNode (i)));
   }
   spokeApps.Start (Seconds (1.0));
   spokeApps.Stop (Seconds (10.0));
@@ -109,7 +109,7 @@ main (int argc, char *argv[])
   //
   // Do pcap tracing on all point-to-point devices on all nodes.
   //
-  PointToPointHelper::EnablePcapAll ("star");
+  pointToPoint.EnablePcapAll ("star");
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();

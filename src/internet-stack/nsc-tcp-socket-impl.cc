@@ -17,6 +17,9 @@
  * Author: Florian Westphal <fw@strlen.de>
  */
 
+#define NS_LOG_APPEND_CONTEXT                                   \
+  if (m_node) { std::clog << Simulator::Now ().GetSeconds () << " [node " << m_node->GetId () << "] "; } 
+
 #include "ns3/node.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/log.h"
@@ -97,6 +100,7 @@ NscTcpSocketImpl::NscTcpSocketImpl(const NscTcpSocketImpl& sock)
     m_connected (sock.m_connected),
     m_state (sock.m_state),
     m_closeOnEmpty (sock.m_closeOnEmpty),
+    m_txBufferSize (sock.m_txBufferSize),
     m_segmentSize (sock.m_segmentSize),
     m_rxWindowSize (sock.m_rxWindowSize),
     m_advertisedWindowSize (sock.m_advertisedWindowSize),
@@ -218,22 +222,22 @@ NscTcpSocketImpl::Bind (const Address &address)
   if (ipv4 == Ipv4Address::GetAny () && port == 0)
     {
       m_endPoint = m_tcp->Allocate ();
-      NS_LOG_LOGIC ("TcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
+      NS_LOG_LOGIC ("NscTcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
     }
   else if (ipv4 == Ipv4Address::GetAny () && port != 0)
     {
       m_endPoint = m_tcp->Allocate (port);
-      NS_LOG_LOGIC ("TcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
+      NS_LOG_LOGIC ("NscTcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
     }
   else if (ipv4 != Ipv4Address::GetAny () && port == 0)
     {
       m_endPoint = m_tcp->Allocate (ipv4);
-      NS_LOG_LOGIC ("TcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
+      NS_LOG_LOGIC ("NscTcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
     }
   else if (ipv4 != Ipv4Address::GetAny () && port != 0)
     {
       m_endPoint = m_tcp->Allocate (ipv4, port);
-      NS_LOG_LOGIC ("TcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
+      NS_LOG_LOGIC ("NscTcpSocketImpl "<<this<<" got an endpoint: "<<m_endPoint);
     }
 
   m_localPort = port;
@@ -272,6 +276,7 @@ NscTcpSocketImpl::Close (void)
       return 0;
     }
 
+  NS_LOG_LOGIC("NscTcp socket " << this << " calling disconnect(); moving to CLOSED");
   m_nscTcpSocket->disconnect();
   m_state = CLOSED;
   ShutdownSend ();
@@ -461,7 +466,8 @@ NscTcpSocketImpl::GetRxAvailable (void) const
 }
 
 void
-NscTcpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Address ipv4, uint16_t port)
+NscTcpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
+                             Ptr<Ipv4Interface> incomingInterface)
 {
   NSCWakeup();
 }
@@ -568,7 +574,7 @@ bool NscTcpSocketImpl::ReadPendingData (void)
   if (err == 0 && len == 0)
     {
       NS_LOG_LOGIC ("ReadPendingData got EOF from socket");
-      m_state = CLOSED;
+      m_state = CLOSE_WAIT;
       return false;
     }
   m_errno = GetNativeNs3Errno(err);
@@ -811,6 +817,22 @@ NscTcpSocketImpl::GetNativeNs3Errno(int error) const
     }
   NS_ASSERT_MSG(0, "Unknown NSC error");
   return ERROR_INVAL;
+}
+
+bool
+NscTcpSocketImpl::SetAllowBroadcast (bool allowBroadcast)
+{
+  if (allowBroadcast)
+    {
+      return false;
+    }
+  return true;
+}
+
+bool
+NscTcpSocketImpl::GetAllowBroadcast () const
+{
+  return false;
 }
 
 }//namespace ns3

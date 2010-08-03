@@ -9,20 +9,16 @@ http://www.nsnam.org including tutorials: http://www.nsnam.org/tutorials.html
 Consult the file CHANGES.html for more detailed information about changed
 API and behavior across ns-3 releases.
 
-Release 3.7
+Release 3.9
 ===========
 
 Availability
 ------------
-This release is not yet available
+This release is not yet available.
 
 Supported platforms
 -------------------
-ns-3.7 has been tested on the following platforms:
-  - linux x86 gcc 4.4.1, 4.2, 4.1, and, 3.4.6.
-  - linux x86_64 gcc 4.4.0, 4.3.2, 4.2.3, 4.2.1, 4.1.3, 3.4.6
-  - MacOS X ppc and x86 (gcc 4.0.x and 4.2.x)
-  - cygwin gcc 3.4.4 (debug only), gcc 4.3.2 (debug and optimized)
+ns-3.9 has been tested on the following platforms:
 
 Not all ns-3 options are available on all platforms; consult the
 wiki for more information:
@@ -31,30 +27,315 @@ http://www.nsnam.org/wiki/index.php/Installation
 New user-visible features
 -------------------------
 
-  a) The ns-3 logging macros (NS_LOG_*) now report automatically the node id
-     of the event which called the macro.
+   - A reorganisation of the construction of Wi-Fi transmit rates has
+     been undertaken with the aim of simplifying the task of
+     supporting further IEEE 802.11 PHYs. This work has been completed
+     under the auspices of Bug 871. A consequence of this work is that
+     WifiModes have a new (hopefully future-proof) naming, and
+     simulations which specify rates by name will need updating. The
+     list of new rate names is given in the error message produced
+     when an attempt is made to use any invalid rate name (including
+     those that were previously valid).
 
-  b) Ad hoc On-Demand Distance Vector (AODV) routing model according to RFC 3561. 
+   - A new OFDM error rate model for WiFi (NistErrorRateModel); this model
+     has been validated in clear-channel testbed tests.  For 802.11b, it
+     uses the same underlying model as the YansErrorRateModel, but it differs
+     from YansErrorRateModel for OFDM modes (802.11a/g).  The default
+     YansWifiPhyHelper has been changed to use this model.
 
-  c) Net-anim:
-     - interface for animation of point-to-point links.
-     - dumbbell, grid, and star examples in examples/animation
+   - A brand new NS-2 mobility trace reader supports BonnMotion, SUMO, TraNS, 
+     etc. traces.
 
-  d) Topology Helper classes:
+   - An energy model for nodes and devices, including an energy source
+     model and device energy models allowing energy-aware devices
+     to notify the energy source about energy consumption.  
+
+Bugs fixed
+----------
+The following lists many of the bugs that were fixed since ns-3.7, in
+many cases referencing the Bugzilla bug number
+
+   - IPv4 global routing code; stub networks were assumed to be /24
+     and added as /24 networks even if the mask is actually different
+   - bug 842 - ns-3-dev crashes using block acks
+   - OLSR was generating messages on non-OLSR interfaces
+   - bug 861 - Forwarding drops (due to no route found) were not being logged 
+               in IPv4 or IPv6 ascii traces
+   - ICMPv4 objects not properly registered; affected serialization code
+   - bug 875 - Set FCS included flag in Radiotap header
+   - bug 702 - Global routing doesn't respond to interface events
+   - bug 906 - NSC TCP socket fork did not copy txbuffersize over
+   - bug 828: PacketSocket::Close does not unregister protocol handler
+   - bug 900:  RawTextConfigLoad::Default does not load configurations
+   - bug 858 - support MSG_PEEK in IPv4/IPv6 raw socket
+   - bug 932 - Support IP_HDRINCL option for Ipv4RawSocket
+   - bug 871 - naming for WifiPhyStandard
+   - bug 946 - Rocketfuel topology dataset support for topology reader
+   - bug 881 - Reorganise to allow wider use of WifiInformationElement
+   - bug 671 - add packet-info-tag.cc for IP_PKTINFO/IPV6_PKTINFO
+
+Known issues
+------------
+
+Release 3.8
+===========
+
+Availability
+------------
+This release is immediately available from:
+http://www.nsnam.org/releases/ns-allinone-3.8.tar.bz2
+
+Supported platforms
+-------------------
+ns-3.8 has been tested on the following platforms:
+  - linux x86 gcc 4.4.0, 4.3.2, 4.2, 4.1.1, 4.1 and 3.4.6 (debug and optimized)
+  - linux x86_64 gcc 4.4.0, 4.3.2, 4.2.4, 4.2.3, 4.2.1, 4.1.3, 3.4.6 (debug and optimized)
+  - MacOS X ppc gcc 4.0.x and 4.2.x (debug and optimized)
+  - cygwin gcc 4.3.4 (debug and optimized)
+
+Not all ns-3 options are available on all platforms; consult the
+wiki for more information:
+http://www.nsnam.org/wiki/index.php/Installation
+
+New user-visible features
+-------------------------
+  a) WiMAX net device: Allow to simulated IEEE 802.16 point to multi-point based networks 
+
+  b) Distributed simulation for point-to-point networks using the Message 
+     Passing Interface (MPI) standard.
+    
+  c) Matrix propagation loss model uses a two-dimensional matrix of path loss indexed 
+     by source and destination nodes.
+
+  d) Topology read system: Allows quick and easy creation of large topologies by reading 
+     Inet or Orbis files
+
+  e) Gauss-Markov mobility model: Adds 3-d adaptation of Gauss-Markov mobility model which 
+     has both memory and variability
+
+  f) Steady-state random waypoint mobility model: Based on random waypoint mobility (RWM) model for case when 
+     speed, pause and position are uniformly distributed random variables. However, initial values of these 
+     parameters are not from uniform distribution but from stationary distribution of RWM model.
+
+  g) Two-ray ground propagation loss model: Calculates the crossover distance under which Friis is used. 
+     The antenna height is set to the nodes z coordinate, but can be added to using the model parameter 
+     SetHeightAboveZ, which will affect ALL stations
+
+
+API changes from ns-3.7
+-----------------------
+API changes for this release are documented in the file CHANGES.html. 
+
+Bugs fixed
+----------
+The following lists many of the bugs that were fixed since ns-3.7, in
+many cases referencing the Bugzilla bug number
+   - bug 155 - std::ostream & os" parameters not Python friendly
+   - bug 184 - GtkConfigStore do not support ConfigureDefault
+   - bug 407 - OLSR is missing HNA support
+   - bug 414 - No ReceiveErrorModel in SimpleNetDevice
+   - bug 602 - WifiRemoteStation lacks information about the access class of outgoing packets
+   - bug 622 - [PATCH] Friendly names for pcap traces
+   - bug 683 - Helper methods for pcap tracing with explicit filenames
+   - bug 706 - Backoff counting when starting NS.
+   - bug 720 - TapBridge creation fails from a script outside the ns3 tree
+   - bug 731 - Send function in point-to-point-net-device fails to check the return value of the Dequeue function
+   - bug 747 - Listening TCP socket closes on RST
+   - bug 748 - Cloned TCP socket uses wrong source address
+   - bug 772 - AODV is unable to correctly buffer packets waiting for route reply
+   - bug 777 - AODV ignores specified outgoing interface in RouteOutput()
+   - bug 778 - OLSR ignores specified outgoing interface in RouteOutput()
+   - bug 787 - Addition of Two Ray Ground model to propagation loss model and tests
+   - bug 788 - OLSR_NEIGH_HOLD_TIME should be 3 times OLSR_REFRESH_INTERVAL 
+   - bug 789 - [PATCH] Globalrouting externalroutes to use the new GetRootExitDirections()
+   - bug 794 - Ipv4Mask constructor for "/yy"-notation is wrong
+   - bug 796 - TCP bug in ns-3-dev branch : Crash detected during retesting of Chord on ns-3-dev branch
+   - bug 797 - Enhancements to src/core/random-variable.cc/h
+   - bug 801 - ns-3.7 and SVN not coexisting nicely
+   - bug 802 - Minstrel algorithm causes segmentation fault
+   - bug 804 - null-pointer references in 3.7 internet stack
+   - bug 806 - TCP doesn't work over a CSMA link
+   - bug 807 - ns2-mobility-helper.cc: node id parsed wrong
+   - bug 809 - Missing Python binding for Ipv4GlobalRouting::GetRoute
+   - bug 810 - In TCP, Socket::GetSockName() does not return the local socket address
+   - bug 812 - Assert when getting socket in RecvReply for AODV
+   - bug 813 - Nqos AP sends packet to non associated STA
+   - bug 814 - Function logging causing assert in wireless examples
+   - bug 815 - waf shell file descriptor leak
+   - bug 816 - tap-creator deadlock when python bindings enabled
+   - bug 817 - Pareto rng constructors using scale and shape instead of mean and shape
+   - bug 818 - TCP Socket implementation does not set ACK flag on retransmits
+   - bug 819 - Build break when gtk not installed
+   - bug 820 - Bad things happen in test.py when logging is enabled
+   - bug 821 - AODV asserts with function logging enabled
+   - bug 822 - Move Mtu attribute from NetDevice base class to subclasses
+   - bug 825 - UDP-Client-server's packet loss counter not properly reset
+   - bug 828 - PacketSocket::Close does not unregister protocol handler
+   - bug 829 - TCP unbound memory problem (pending data)
+   - bug 833 - OnOffApplication with PacketSocket: sniffs all traffic
+   - bug 834 - Incorrect signature of Ipv4FlowProbe::DropLogger
+   - bug 835 - Unlimited receive queues in sockets == evil
+   - bug 836 - Delay is incremented over time with BsUplinkSchedulerSimple and BsUplinkSchedulerRtps
+   - bug 838 - ns-3 can't compile on MacOS with 32bit processor
+   - bug 839 - TestSuite wimax-ss-mac-layer crashes on Darwin 9.8.0 Power Macintosh
+   - bug 840 - BS scheduler does not support fragmentation for UGS flows
+   - bug 841 - Multicast transmission breaks with QoS Wifi
+   - bug 844 - YansWifiPhy::GetPowerDbm off-by-one problem when calculating Tx power
+   - bug 847 - Segfaults on BaseStationNetDevice with OnOffApplication and rtPS sched
+   - bug 849 - stray patch files in lwip directory
+   - bug 850 - Ipv4GlobalRouting::LookupGlobal bug
+   - bug 855 - waf dies badly when switching from debug to optimized build or vice versa
+   - bug 856 - initialize vbl
+   - bug 857 - Link-Local Multicast handle in Ipv4 Output processing 
+   - bug 859 - Output interface estimation for the source address bound socket in IPv4 Raw socket
+   - bug 860 - waf sometimes dies while executing ns3header or gen_ns3_module_header tasks in case of 
+               parallel jobs
+   - bug 862 - NotifyInterfaceUp() Adds network route even when netmask is /32
+   - bug 863 - Wrong Scalar arithmetics
+   - bug 864 - Invalid return value in UdpSocketImpl::Send and Ipv4RawSocketImpl::Send
+   - bug 865 - Ipv4RawSocketImpl::RecvFrom does not return from address all the time.
+   - bug 866 - WiMAX mobility models not aggregated to Node
+   - bug 867 - Minor bug in Ipv4L3Protocol::Send()
+   - bug 868 - invalid packet size after Ipv4L3Protocol::Send
+   - bug 872 - ns3::PcapFileWrapper::Write explodes stack
+   - bug 873 - Queue occupancy counter not decremented in WifiMacQueue::Remove()
+   - bug 876 - Tcp socket does not handle ShutdownRecv correctly
+   - bug 877 - python bindings broken with multiple inheritance ?
+   - bug 880 - Node sending a packet to itself via 127.0.0.1 aborts
+   - bug 885 - Error in Ascii tracing in Python examples
+   - bug 888 - Writing ascii trace to addtional tests fails
+   - bug 891 - WiMAX device helper does not include propagation loss model by default 
+   - bug 894 - ./waf --run error message upon segfault
+   - bug 895 - SimpleOfdmWimaxPhy SNR computation
+   - bug 899 - EmuNetDevice::SetPromiscReceiveCallback not implemented
+
+Known issues
+------------
+ns-3 builds have been known to fail on the following platforms:
+  - gcc 3.3 and earlier
+  - optimized builds on gcc 3.4.4 and 3.4.5
+  - optimized builds on linux x86 gcc 4.0.x
+
+
+Release 3.7
+===========
+
+Availability
+------------
+This release is immediately available from:
+http://www.nsnam.org/releases/ns-allinone-3.7.tar.bz2
+
+Supported platforms
+-------------------
+ns-3.7 has been tested on the following platforms:
+  - linux x86 gcc 4.4.0, 4.3.2, 4.2, 4.1.1, 4.1 and 3.4.6 (debug and optimized)
+  - linux x86_64 gcc 4.4.0, 4.3.2, 4.2.4, 4.2.3, 4.2.1, 4.1.3, 3.4.6 (debug and optimized)
+  - MacOS X ppc gcc 4.0.x and 4.2.x (debug and optimized)
+  - cygwin gcc 3.4.4 (debug only), gcc 4.3.2 (debug and optimized)
+
+Unofficially supported platform
+-------------------
+- mingw gcc 3.4.5 (debug only)
+
+Not all ns-3 options are available on all platforms; consult the
+wiki for more information:
+http://www.nsnam.org/wiki/index.php/Installation
+
+New user-visible features
+-------------------------
+
+  a) Ad hoc On-Demand Distance Vector (AODV) routing model (RFC 3561)
+
+  b) IPv6 extensions support to add IPv6 extensions and options.  Two 
+     examples (fragmentation and loose routing) are available.
+
+  c) NetAnim interface: Provides an interface to the Qt-based NetAnim 
+     animator, which supports static, point-to-point topology-based 
+     packet animations.
+
+  d) New topology helpers have been introduced
      - PointToPointDumbbellHelper
      - PointToPointGridHelper
      - PointToPointStarHelper
      - CsmaStarHelper
 
-  e) IPv6 extensions support and two new examples for fragmentation and loose routing.
+  e) Equal-cost multipath for global routing: Enables quagga's equal 
+     cost multipath for Ipv4GlobalRouting, and adds an attribute that
+     can enable it with random packet distribution policy across 
+     equal cost routes.
+
+  f) Binding sockets to devices:  A method analogous to a SO_BINDTODEVICE
+     socket option has been introduced to class Socket
+
+  g) Object::DoStart: Users who need to complete their object setup at 
+     the start of a simulation can override this virtual method, perform their 
+     adhoc setup, and then, must chain up to their parent.
+
+  h) Ipv4::IsDestinationAddress method added to support checks of whether a 
+     destination address should be accepted as one of the host's own 
+     addresses.  
+
+  i) UniformDiscPositionAllocator added; distributes uniformly the nodes 
+     within a disc of given radius. 
+
+  j) ChannelNumber attribute added to YansWifiPhy. Now it is possible to 
+     setup wifi channel using WifiPhyHelper::Set() method.
+
+  k) WaypointMobilityModel provides a method to add mobility as a set of 
+     (time, position) pairs
+
+  l) 802.11p WiFi standards 
+  
+  m) UDP Client/Server application
+
+  n) Support transactions in the SQLite output interface, making it usable for larger amounts of data
 
 API changes from ns-3.6
 -----------------------
 API changes for this release are documented in the file CHANGES.html. 
 
+Bugs fixed
+----------
+The following lists many of the bugs that were fixed since ns-3.6, in
+many cases referencing the Bugzilla bug number
+   - bug 752: Object::DoStart is not executed for objects created at t > 0
+   - bug 767:  Incorrect modulation for 802.11a modes
+   - bug 725: wifi fragmentation and RTS cannot be used at the same time
+   - bug 782: CreateTap () requires IP address in modes other than 
+     CONFIGURE_LOCAL.
+   - bug 769: Queue::GetTotalReceived{Bytes,Packets}() broken
+   - bug 738 ReceiveErrorModel called too late
+   - Fix NSC improper response to FIN
+   - Fixed bug in serialization of PbbAddressBlock.
+   - Fix bug 780 (problem in RoutingTableComputation with asymetric links), 
+     while adding debugging methods to OLSR.  
+   - bug 759: Ipv6 uses wrong outgoing interface.
+   - bug 770: IPv6 size calculation for unknown options is wrong.
+   - bug 771: Radvd does not set ttl value.
+   - Fix bug 606:  Arp depends on IP routing system
+   - pad out CSMA payloads to 46 bytes if needed
+   - Drop CSMA packets with CRC errors, rescan, dox tweaks
+   - Add FCS capability to CSMA
+   - Mesh:Dot11s: fixed airtime metric
+   - Get emu working again:  Add Dix/Llc option, add and use contextual 
+     realtime schedule ops, don't refcount realtime simulator impl
+   - bug 695 - DcfManager::UpdateBackoff () uses slow HighPrecision::Div()
+   - bug 674 - EIFS is not handled correctly in DcfManager::GetAccessGrantStart
+   - bug 739 -  OLSR: Strange HTime value in HELLO messages 
+   - bug 746 -  UDP source address is not set to bound address
+   - bug 735 Update Olsr for local delivery
+   - bug 740 OLSR MprCompute () works wrong: fixed
+   - bug 729 Enable IPv6 over PPP.
+   - bug 645: fixes for opening stats file with OMNeT++
+   - bug 689: default energy detection and CCA thresholds are changed to be 
+     more realistic.
+   - bug 733: OLSR MPR Computation give incorrect result
+   - Mesh: HWMP: fixed proactive routes
+   - Mesh: fixed FLAME PATH_UPDATE procedure, fixed mesh.cc 
+
 Known issues
 ------------
-ns-3.6 build is known to fail on the following platforms:
+ns-3 builds have been known to fail on the following platforms:
   - gcc 3.3 and earlier
   - optimized builds on gcc 3.4.4 and 3.4.5
   - optimized builds on linux x86 gcc 4.0.x

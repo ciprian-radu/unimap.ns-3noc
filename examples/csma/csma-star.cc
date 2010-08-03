@@ -146,7 +146,7 @@ main (int argc, char *argv[])
     {
       AddressValue remoteAddress (InetSocketAddress (star.GetHubIpv4Address (i), port));
       onOffHelper.SetAttribute ("Remote", remoteAddress);
-      spokeApps.Add (onOffHelper.Install (star.GetSpoke (i)));
+      spokeApps.Add (onOffHelper.Install (star.GetSpokeNode (i)));
     }
 
   spokeApps.Start (Seconds (1.0));
@@ -182,7 +182,7 @@ main (int argc, char *argv[])
   //
   // Do pcap tracing on all devices on all nodes.
   //
-  CsmaHelper::EnablePcapAll ("csma-star", false);
+  csma.EnablePcapAll ("csma-star", false);
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();

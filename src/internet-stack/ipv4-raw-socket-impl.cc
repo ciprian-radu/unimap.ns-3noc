@@ -1,10 +1,14 @@
+/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
+#include <netinet/in.h>
 #include "ipv4-raw-socket-impl.h"
 #include "ipv4-l3-protocol.h"
 #include "icmpv4.h"
+#include "ns3/ipv4-packet-info-tag.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/node.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
+#include "ns3/boolean.h"
 #include "ns3/log.h"
 
 NS_LOG_COMPONENT_DEFINE ("Ipv4RawSocketImpl");
@@ -27,6 +31,19 @@ Ipv4RawSocketImpl::GetTypeId (void)
 		   UintegerValue (0),
 		   MakeUintegerAccessor (&Ipv4RawSocketImpl::m_icmpFilter),
 		   MakeUintegerChecker<uint32_t> ())
+    // 
+    //  from raw (7), linux, returned length of Send/Recv should be
+    // 
+    //            | IP_HDRINC on  |      off    |
+    //  ----------+---------------+-------------+-
+    //  Send(Ipv4)| hdr + payload | payload     |
+    //  Recv(Ipv4)| hdr + payload | hdr+payload |
+    //  ----------+---------------+-------------+-
+    .AddAttribute ("IpHeaderInclude", 
+		   "Include IP Header information (a.k.a setsockopt (IP_HDRINCL)).",
+		   BooleanValue (false),
+		   MakeBooleanAccessor (&Ipv4RawSocketImpl::m_iphdrincl),
+		   MakeBooleanChecker ())
     ;
   return tid;
 }
@@ -170,24 +187,53 @@ Ipv4RawSocketImpl::SendTo (Ptr<Packet> p, uint32_t flags,
   InetSocketAddress ad = InetSocketAddress::ConvertFrom (toAddress);
   Ptr<Ipv4L3Protocol> ipv4 = m_node->GetObject<Ipv4L3Protocol> ();
   Ipv4Address dst = ad.GetIpv4 ();
+  Ipv4Address src = m_src;
   if (ipv4->GetRoutingProtocol ())
     {
       Ipv4Header header;
-      header.SetDestination (dst);
-      header.SetProtocol (m_protocol);
+      if (!m_iphdrincl)
+        {
+          header.SetDestination (dst);
+          header.SetProtocol (m_protocol);
+        }
+      else
+        {
+          p->RemoveHeader (header);
+          dst = header.GetDestination ();
+          src = header.GetSource ();
+        }
       SocketErrno errno_ = ERROR_NOTERROR;//do not use errno as it is the standard C last error number 
       Ptr<Ipv4Route> route;
-      uint32_t oif = 0; //specify non-zero if bound to a source address
+      Ptr<NetDevice> oif = m_boundnetdevice; //specify non-zero if bound to a source address
+      if (!oif && src != Ipv4Address::GetAny ())
+        {
+          int32_t index = ipv4->GetInterfaceForAddress (src);
+          NS_ASSERT (index >= 0);
+          oif = ipv4->GetNetDevice (index);
+          NS_LOG_LOGIC ("Set index " << oif << "from source " << src);
+        }
+
       // TBD-- we could cache the route and just check its validity
       route = ipv4->GetRoutingProtocol ()->RouteOutput (p, header, oif, errno_);
       if (route != 0)
         {
           NS_LOG_LOGIC ("Route exists");
-          ipv4->Send (p, route->GetSource (), dst, m_protocol, route);
+          if (!m_iphdrincl)
+            {
+              ipv4->Send (p, route->GetSource (), dst, m_protocol, route);
+            }
+          else
+            {
+              ipv4->Send (p, header, route);
+            }
+          NotifyDataSent (p->GetSize ());
+          NotifySend (GetTxAvailable ());
+          return p->GetSize();
         }
       else
         {
           NS_LOG_DEBUG ("dropped because no outgoing route.");
+          return -1;
         }
     }
   return 0;
@@ -221,15 +267,18 @@ Ipv4RawSocketImpl::RecvFrom (uint32_t maxSize, uint32_t flags,
     }
   struct Data data = m_recv.front ();
   m_recv.pop_front ();
+  InetSocketAddress inet = InetSocketAddress (data.fromIp, data.fromProtocol);
+  fromAddress = inet;
   if (data.packet->GetSize () > maxSize)
     {
       Ptr<Packet> first = data.packet->CreateFragment (0, maxSize);
-      data.packet->RemoveAtStart (maxSize);
+      if (!(flags & MSG_PEEK))
+        {
+          data.packet->RemoveAtStart (maxSize);
+        }
       m_recv.push_front (data);
       return first;
     }
-  InetSocketAddress inet = InetSocketAddress (data.fromIp, data.fromProtocol);
-  fromAddress = inet;
   return data.packet;
 }
 
@@ -241,9 +290,9 @@ Ipv4RawSocketImpl::SetProtocol (uint16_t protocol)
 }
 
 bool 
-Ipv4RawSocketImpl::ForwardUp (Ptr<const Packet> p, Ipv4Header ipHeader, Ptr<NetDevice> device)
+Ipv4RawSocketImpl::ForwardUp (Ptr<const Packet> p, Ipv4Header ipHeader, Ptr<Ipv4Interface> incomingInterface)
 {
-  NS_LOG_FUNCTION (this << *p << ipHeader << device);
+  NS_LOG_FUNCTION (this << *p << ipHeader << incomingInterface);
   if (m_shutdownRecv)
     {
       return false;
@@ -254,6 +303,14 @@ Ipv4RawSocketImpl::ForwardUp (Ptr<const Packet> p, Ipv4Header ipHeader, Ptr<NetD
       ipHeader.GetProtocol () == m_protocol)
     {
       Ptr<Packet> copy = p->Copy ();
+      // Should check via getsockopt ()..
+      if (this->m_recvpktinfo)
+        {
+          Ipv4PacketInfoTag tag;
+          copy->RemovePacketTag (tag);
+          tag.SetRecvIf (incomingInterface->GetDevice ()->GetIfIndex ());
+          copy->AddPacketTag (tag);
+        }
       if (m_protocol == 1)
 	{
 	  Icmpv4Header icmpHeader;
@@ -276,6 +333,22 @@ Ipv4RawSocketImpl::ForwardUp (Ptr<const Packet> p, Ipv4Header ipHeader, Ptr<NetD
       return true;
     }
   return false;
+}
+
+bool
+Ipv4RawSocketImpl::SetAllowBroadcast (bool allowBroadcast)
+{
+  if (!allowBroadcast)
+    {
+      return false;
+    }
+  return true;
+}
+
+bool
+Ipv4RawSocketImpl::GetAllowBroadcast () const
+{
+  return true;
 }
 
 } // namespace ns3

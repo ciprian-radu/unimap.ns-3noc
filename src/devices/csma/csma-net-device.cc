@@ -50,11 +50,10 @@ CsmaNetDevice::GetTypeId (void)
                    Mac48AddressValue (Mac48Address ("ff:ff:ff:ff:ff:ff")),
                    MakeMac48AddressAccessor (&CsmaNetDevice::m_address),
                    MakeMac48AddressChecker ())
-    .AddAttribute ("FrameSize", 
-                   "The maximum size of a packet sent over this device.",
-                   UintegerValue (DEFAULT_FRAME_SIZE),
-                   MakeUintegerAccessor (&CsmaNetDevice::SetFrameSize,
-                                         &CsmaNetDevice::GetFrameSize),
+    .AddAttribute ("Mtu", "The MAC-level Maximum Transmission Unit",
+                   UintegerValue (DEFAULT_MTU),
+                   MakeUintegerAccessor (&CsmaNetDevice::SetMtu,
+                                         &CsmaNetDevice::GetMtu),
                    MakeUintegerChecker<uint16_t> ())
     .AddAttribute ("EncapsulationMode", 
                    "The link-layer encapsulation type to use.",
@@ -173,8 +172,6 @@ CsmaNetDevice::CsmaNetDevice ()
   // to change it here.
   //
   m_encapMode = DIX;
-  m_frameSize = DEFAULT_FRAME_SIZE;
-  m_mtu = MtuFromFrameSize (m_frameSize);
 }
 
 CsmaNetDevice::~CsmaNetDevice()
@@ -192,76 +189,14 @@ CsmaNetDevice::DoDispose ()
   NetDevice::DoDispose ();
 }
 
-  uint32_t
-CsmaNetDevice::MtuFromFrameSize (uint32_t frameSize)
-{
-  NS_LOG_FUNCTION (frameSize);
-
-  NS_ASSERT_MSG (frameSize <= std::numeric_limits<uint16_t>::max (), 
-                 "CsmaNetDevice::MtuFromFrameSize(): Frame size should be derived from 16-bit quantity: " << frameSize);
-
-  uint32_t newSize;
-
-  switch (m_encapMode) 
-    {
-    case DIX:
-      newSize = frameSize - ETHERNET_OVERHEAD;
-      break;
-    case LLC: 
-      {
-        LlcSnapHeader llc;
-
-        NS_ASSERT_MSG ((uint32_t)(frameSize - ETHERNET_OVERHEAD) >= llc.GetSerializedSize (), 
-                       "CsmaNetDevice::MtuFromFrameSize(): Given frame size too small to support LLC mode");
-        newSize = frameSize - ETHERNET_OVERHEAD - llc.GetSerializedSize ();
-      }
-      break;
-    case ILLEGAL:
-    default:
-      NS_FATAL_ERROR ("CsmaNetDevice::MtuFromFrameSize(): Unknown packet encapsulation mode");
-      return 0;
-    }
-
-  return newSize;
-}
-  
-  uint32_t
-CsmaNetDevice::FrameSizeFromMtu (uint32_t mtu)
-{
-  NS_LOG_FUNCTION (mtu);
-
-  uint32_t newSize;
-
-  switch (m_encapMode) 
-    {
-    case DIX:
-      newSize = mtu + ETHERNET_OVERHEAD;
-      break;
-    case LLC: 
-      {
-        LlcSnapHeader llc;
-        newSize = mtu + ETHERNET_OVERHEAD + llc.GetSerializedSize ();
-      }
-      break;
-    case ILLEGAL:
-    default:
-      NS_FATAL_ERROR ("CsmaNetDevice::FrameSizeFromMtu(): Unknown packet encapsulation mode");
-      return 0;
-    }
-
-  return newSize;
-}
-
   void 
 CsmaNetDevice::SetEncapsulationMode (enum EncapsulationMode mode)
 {
   NS_LOG_FUNCTION (mode);
 
   m_encapMode = mode;
-  m_mtu = MtuFromFrameSize (m_frameSize);
 
   NS_LOG_LOGIC ("m_encapMode = " << m_encapMode);
-  NS_LOG_LOGIC ("m_frameSize = " << m_frameSize);
   NS_LOG_LOGIC ("m_mtu = " << m_mtu);
 }
 
@@ -272,24 +207,13 @@ CsmaNetDevice::GetEncapsulationMode (void)
   return m_encapMode;
 }
   
-  bool
+bool
 CsmaNetDevice::SetMtu (uint16_t mtu)
 {
-  NS_LOG_FUNCTION (mtu);
-
-  uint32_t newFrameSize = FrameSizeFromMtu (mtu);
-
-  if (newFrameSize > std::numeric_limits<uint16_t>::max ())
-    {
-      NS_LOG_WARN ("CsmaNetDevice::SetMtu(): Frame size overflow, MTU not set.");
-      return false;
-    }
-
-  m_frameSize = newFrameSize;
+  NS_LOG_FUNCTION (this << mtu);
   m_mtu = mtu;
 
   NS_LOG_LOGIC ("m_encapMode = " << m_encapMode);
-  NS_LOG_LOGIC ("m_frameSize = " << m_frameSize);
   NS_LOG_LOGIC ("m_mtu = " << m_mtu);
 
   return true;
@@ -302,24 +226,6 @@ CsmaNetDevice::GetMtu (void) const
   return m_mtu;
 }
 
-  void 
-CsmaNetDevice::SetFrameSize (uint16_t frameSize)
-{
-  NS_LOG_FUNCTION (frameSize);
-
-  m_frameSize = frameSize;
-  m_mtu = MtuFromFrameSize (frameSize);
-
-  NS_LOG_LOGIC ("m_encapMode = " << m_encapMode);
-  NS_LOG_LOGIC ("m_frameSize = " << m_frameSize);
-  NS_LOG_LOGIC ("m_mtu = " << m_mtu);
-}
-
-  uint16_t
-CsmaNetDevice::GetFrameSize (void) const
-{
-  return m_frameSize;
-}
 
   void
 CsmaNetDevice::SetSendEnable (bool sendEnable)
@@ -381,7 +287,6 @@ CsmaNetDevice::AddHeader (Ptr<Packet> p,   Mac48Address source,  Mac48Address de
   NS_LOG_LOGIC ("p->GetSize () = " << p->GetSize ());
   NS_LOG_LOGIC ("m_encapMode = " << m_encapMode);
   NS_LOG_LOGIC ("m_mtu = " << m_mtu);
-  NS_LOG_LOGIC ("m_frameSize = " << m_frameSize);
 
   uint16_t lengthType = 0;
   switch (m_encapMode) 
@@ -435,7 +340,7 @@ CsmaNetDevice::AddHeader (Ptr<Packet> p,   Mac48Address source,  Mac48Address de
         // but with an LLC/SNAP header added to the payload as in IEEE 802.2
         //      
         lengthType = p->GetSize ();
-        NS_ASSERT_MSG (lengthType <= m_frameSize - 18,
+        NS_ASSERT_MSG (lengthType <= GetMtu (),
           "CsmaNetDevice::AddHeader(): 802.3 Length/Type field with LLC/SNAP: "
           "length interpretation must not exceed device frame size minus overhead");
       }
@@ -772,6 +677,12 @@ CsmaNetDevice::Receive (Ptr<Packet> packet, Ptr<CsmaNetDevice> senderDevice)
       return;
     }
 
+  if (m_receiveErrorModel && m_receiveErrorModel->IsCorrupt (packet) )
+    {
+      NS_LOG_LOGIC ("Dropping pkt due to error model ");
+      m_phyRxDropTrace (packet);
+    }
+
   //
   // Trace sinks will expect complete packets, not packets without some of the
   // headers.
@@ -800,76 +711,68 @@ CsmaNetDevice::Receive (Ptr<Packet> packet, Ptr<CsmaNetDevice> senderDevice)
   NS_LOG_LOGIC ("Pkt source is " << header.GetSource ());
   NS_LOG_LOGIC ("Pkt destination is " << header.GetDestination ());
 
-  if (m_receiveErrorModel && m_receiveErrorModel->IsCorrupt (packet) )
+  uint16_t protocol;
+  //
+  // If the length/type is less than 1500, it corresponds to a length 
+  // interpretation packet.  In this case, it is an 802.3 packet and 
+  // will also have an 802.2 LLC header.  If greater than 1500, we
+  // find the protocol number (Ethernet type) directly.
+  //
+  if (header.GetLengthType () <= 1500)
     {
-      NS_LOG_LOGIC ("Dropping pkt due to error model ");
-      m_phyRxDropTrace (packet);
+      LlcSnapHeader llc;
+      packet->RemoveHeader (llc);
+      protocol = llc.GetType ();
     }
   else
     {
-      uint16_t protocol;
-      //
-      // If the length/type is less than 1500, it corresponds to a length 
-      // interpretation packet.  In this case, it is an 802.3 packet and 
-      // will also have an 802.2 LLC header.  If greater than 1500, we
-      // find the protocol number (Ethernet type) directly.
-      //
-      if (header.GetLengthType () <= 1500)
-        {
-          LlcSnapHeader llc;
-          packet->RemoveHeader (llc);
-          protocol = llc.GetType ();
-        }
-      else
-        {
-          protocol = header.GetLengthType ();
-        }
+      protocol = header.GetLengthType ();
+    }
 
-      //
-      // Classify the packet based on its destination.
-      //
-      PacketType packetType;
+  //
+  // Classify the packet based on its destination.
+  //
+  PacketType packetType;
 
-      if (header.GetDestination ().IsBroadcast ())
-        {
-          packetType = PACKET_BROADCAST;
-        }
-      else if (header.GetDestination ().IsGroup ())
-        {
-          packetType = PACKET_MULTICAST;          
-        }
-      else if (header.GetDestination () == m_address)
-        {
-          packetType = PACKET_HOST;
-        }
-      else
-        {
-          packetType = PACKET_OTHERHOST;
-        }
+  if (header.GetDestination ().IsBroadcast ())
+    {
+      packetType = PACKET_BROADCAST;
+    }
+  else if (header.GetDestination ().IsGroup ())
+    {
+      packetType = PACKET_MULTICAST;          
+    }
+  else if (header.GetDestination () == m_address)
+    {
+      packetType = PACKET_HOST;
+    }
+  else
+    {
+      packetType = PACKET_OTHERHOST;
+    }
 
-      // 
-      // For all kinds of packetType we receive, we hit the promiscuous sniffer
-      // hook and pass a copy up to the promiscuous callback.  Pass a copy to 
-      // make sure that nobody messes with our packet.
-      //
-      m_promiscSnifferTrace (originalPacket);
-      if (!m_promiscRxCallback.IsNull ())
-        {
-          m_macPromiscRxTrace (originalPacket);
-          m_promiscRxCallback (this, packet, protocol, header.GetSource (), header.GetDestination (), packetType);
-        }
+  // 
+  // For all kinds of packetType we receive, we hit the promiscuous sniffer
+  // hook and pass a copy up to the promiscuous callback.  Pass a copy to 
+  // make sure that nobody messes with our packet.
+  //
+  m_promiscSnifferTrace (originalPacket);
+  if (!m_promiscRxCallback.IsNull ())
+    {
+      m_macPromiscRxTrace (originalPacket);
+      m_promiscRxCallback (this, packet, protocol, header.GetSource (), header.GetDestination (), packetType);
+    }
 
-      //
-      // If this packet is not destined for some other host, it must be for us
-      // as either a broadcast, multicast or unicast.  We need to hit the mac
-      // packet received trace hook and forward the packet up the stack.
-      //
-      if (packetType != PACKET_OTHERHOST)
-        {
-          m_snifferTrace (originalPacket);
-          m_macRxTrace (originalPacket);
-          m_rxCallback (this, packet, protocol, header.GetSource ());
-        }
+  //
+  // If this packet is not destined for some other host, it must be for us
+  // as either a broadcast, multicast or unicast.  We need to hit the mac
+  // packet received trace hook and forward the packet up the stack.
+  //
+  if (packetType != PACKET_OTHERHOST)
+    {
+      m_snifferTrace (originalPacket);
+      m_macRxTrace (originalPacket);
+      m_rxCallback (this, packet, protocol, header.GetSource ());
     }
 }
 

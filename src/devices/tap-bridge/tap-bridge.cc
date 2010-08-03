@@ -33,6 +33,7 @@
 #include "ns3/simulator.h"
 #include "ns3/realtime-simulator-impl.h"
 #include "ns3/system-thread.h"
+#include "ns3/uinteger.h"
 
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -74,6 +75,11 @@ TapBridge::GetTypeId (void)
   static TypeId tid = TypeId ("ns3::TapBridge")
     .SetParent<NetDevice> ()
     .AddConstructor<TapBridge> ()
+    .AddAttribute ("Mtu", "The MAC-level Maximum Transmission Unit",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&TapBridge::SetMtu,
+                                         &TapBridge::GetMtu),
+                   MakeUintegerChecker<uint16_t> ())                   
     .AddAttribute ("DeviceName", 
                    "The name of the tap device to create.",
                    StringValue (""),
@@ -126,7 +132,6 @@ TapBridge::GetTypeId (void)
 TapBridge::TapBridge ()
 : m_node (0),
   m_ifIndex (0),
-  m_mtu (0),
   m_sock (-1),
   m_startEvent (),
   m_stopEvent (),
@@ -204,6 +209,14 @@ TapBridge::StartTapDevice (void)
   //
   Ptr<RealtimeSimulatorImpl> impl = DynamicCast<RealtimeSimulatorImpl> (Simulator::GetImplementation ());
   m_rtImpl = GetPointer (impl);
+
+  //
+  // A similar story exists for the node ID.  We can't just naively do a
+  // GetNode ()->GetId () since GetNode is going to give us a Ptr<Node> which
+  // is reference counted.  We need to stash away the node ID for use in the
+  // read thread.
+  //
+  m_nodeId = GetNode ()->GetId ();
 
   //
   // Spin up the tap bridge and start receiving packets.
@@ -329,6 +342,18 @@ TapBridge::CreateTap (void)
   //
   std::string path = TapBufferToString((uint8_t *)&un, len);
   NS_LOG_INFO ("Encoded Unix socket as \"" << path << "\"");
+
+  //
+  // Tom Goff reports the possiblility of a deadlock when trying to acquire the
+  // python GIL here.  He says that this might be due to trying to access Python
+  // objects after fork() without calling PyOS_AfterFork() to properly reset 
+  // Python state (including the GIL).  Originally these next three lines were
+  // done after the fork, but were moved here to work around the deadlock.
+  //
+  Ptr<NetDevice> nd = GetBridgedNetDevice ();
+  Ptr<Node> n = nd->GetNode ();
+  Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+
   //
   // Fork and exec the process to create our socket.  If we're us (the parent)
   // we wait for the child (the creator) to complete and read the socket it 
@@ -357,6 +382,7 @@ TapBridge::CreateTap (void)
       //
       // We want to get as much of this stuff automagically as possible.
       //
+      // For CONFIGURE_LOCAL mode only:
       // <IP-address> is the IP address we are going to set in the newly 
       // created Tap device on the Linux host.  At the point in the simulation
       // where devices are coming up, we should have all of our IP addresses
@@ -364,20 +390,35 @@ TapBridge::CreateTap (void)
       // the new Tap device from the IP address associated with the bridged
       // net device.
       //
-      Ptr<NetDevice> nd = GetBridgedNetDevice ();
-      Ptr<Node> n = nd->GetNode ();
-      Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-      uint32_t index = ipv4->GetInterfaceForDevice (nd);
-      if (ipv4->GetNAddresses (index) > 1)
-        {
-          NS_LOG_WARN ("Underlying bridged NetDevice has multiple IP addresses; using first one.");
-        }
-      Ipv4Address ipv4Address = ipv4->GetAddress (index, 0).GetLocal ();
 
-      //
-      // The net mask is sitting right there next to the ipv4 address.
-      //
-      Ipv4Mask ipv4Mask = ipv4->GetAddress (index, 0).GetMask ();
+      bool wantIp = (m_mode == CONFIGURE_LOCAL);
+
+      if (wantIp
+            && (ipv4 == 0)
+            && m_tapIp.IsBroadcast ()
+            && m_tapNetmask.IsEqual (Ipv4Mask::GetOnes ()))
+        {
+          NS_FATAL_ERROR ("TapBridge::CreateTap(): Tap device IP configuration requested but neither IP address nor IP netmask is provided");
+        }
+
+      // Some stub values to make tap-creator happy
+      Ipv4Address ipv4Address ("255.255.255.255");
+      Ipv4Mask ipv4Mask ("255.255.255.255");
+
+      if (ipv4 != 0)
+        {
+          uint32_t index = ipv4->GetInterfaceForDevice (nd);
+          if (ipv4->GetNAddresses (index) > 1)
+            {
+              NS_LOG_WARN ("Underlying bridged NetDevice has multiple IP addresses; using first one.");
+            }
+          ipv4Address = ipv4->GetAddress (index, 0).GetLocal ();
+
+          //
+          // The net mask is sitting right there next to the ipv4 address.
+          //
+          ipv4Mask = ipv4->GetAddress (index, 0).GetMask ();
+        }
 
       //
       // The MAC address should also already be assigned and waiting for us in
@@ -457,8 +498,8 @@ TapBridge::CreateTap (void)
       //
       // Execute the socket creation process image.
       //
-      status = ::execl (FindCreator ("tap-creator").c_str (), 
-                        FindCreator ("tap-creator").c_str (), // argv[0] (filename)
+      status = ::execlp ("tap-creator", 
+                        "tap-creator",                        // argv[0] (filename)
                         ossDeviceName.str ().c_str (),        // argv[1] (-d<device name>)
                         ossGateway.str ().c_str (),           // argv[2] (-g<gateway>)
                         ossIp.str ().c_str (),                // argv[3] (-i<IP address>)
@@ -469,10 +510,10 @@ TapBridge::CreateTap (void)
                         (char *)NULL);
 
       //
-      // If the execl successfully completes, it never returns.  If it returns it failed or the OS is
+      // If the execlp successfully completes, it never returns.  If it returns it failed or the OS is
       // broken.  In either case, we bail.
       //
-      NS_FATAL_ERROR ("TapBridge::CreateTap(): Back from execl(), errno = " << ::strerror (errno));
+      NS_FATAL_ERROR ("TapBridge::CreateTap(): Back from execlp(), errno = " << ::strerror (errno));
     }
   else
     {
@@ -594,44 +635,6 @@ TapBridge::CreateTap (void)
     }
 }
 
-std::string
-TapBridge::FindCreator (std::string creatorName)
-{
-  NS_LOG_FUNCTION (creatorName);
-
-  std::list<std::string> locations;
-
-  // The path to the bits if we're sitting in the root of the repo
-  locations.push_back ("./build/optimized/src/devices/tap-bridge/");
-  locations.push_back ("./build/debug/src/devices/tap-bridge/");
-
-  // if in src
-  locations.push_back ("../build/optimized/src/devices/tap-bridge/");
-  locations.push_back ("../build/debug/src/devices/tap-bridge/");
-
-  // if in src/devices
-  locations.push_back ("../../build/optimized/src/devices/tap-bridge/");
-  locations.push_back ("../../build/debug/src/devices/tap-bridge/");
-
-  // if in src/devices/tap-bridge
-  locations.push_back ("../../../build/optimized/src/devices/tap-bridge/");
-  locations.push_back ("../../../build/debug/src/devices/tap-bridge/");
-
-  for (std::list<std::string>::const_iterator i = locations.begin (); i != locations.end (); ++i)
-    {
-      struct stat st;
-
-      if (::stat ((*i + creatorName).c_str (), &st) == 0)
-	{
-          NS_LOG_INFO ("Found Creator " << *i + creatorName);                  
-	  return *i + creatorName;
-	}
-    }
-
-  NS_FATAL_ERROR ("TapBridge::FindCreator(): Couldn't find creator");
-  return ""; // quiet compiler
-}
-
 void
 TapBridge::ReadThread (void)
 {
@@ -666,11 +669,10 @@ TapBridge::ReadThread (void)
           return;
         }
 
-      NS_LOG_INFO ("TapBridge::ReadThread(): Received packet on node " << m_node->GetId ());
+      NS_LOG_INFO ("TapBridge::ReadThread(): Received packet on node " << m_nodeId);
       NS_LOG_INFO ("TapBridge::ReadThread(): Scheduling handler");
       NS_ASSERT_MSG (m_rtImpl, "EmuNetDevice::ReadThread(): Realtime simulator implementation pointer not set");
-      m_rtImpl->ScheduleRealtimeNowWithContext (GetNode ()->GetId (),
-        MakeEvent (&TapBridge::ForwardToBridgedDevice, this, buf, len));
+      m_rtImpl->ScheduleRealtimeNowWithContext (m_nodeId, MakeEvent (&TapBridge::ForwardToBridgedDevice, this, buf, len));
       buf = 0;
     }
 }

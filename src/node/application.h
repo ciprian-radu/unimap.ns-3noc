@@ -67,7 +67,7 @@ public:
 
   /**
    * \brief Specify application start time
-   * \param startTime Start time for this application,
+   * \param start Start time for this application,
    *        relative to the current simulation time.
    *
    * Applications start at various times in the simulation scenario.
@@ -80,7 +80,7 @@ public:
   
   /**
    * \brief Specify application stop time
-   * \param stopTime Stop time for this application, relative to the
+   * \param stop Stop time for this application, relative to the
    *        current simulation time.
    *
    * Once an application has started, it is sometimes useful
@@ -105,7 +105,7 @@ private:
   /**
    * \brief Application specific startup code
    *
-   * The StartApplication method is called at the start time specifed by Start
+   * The StartApplication method is called at the start time specified by Start
    * This method should be overridden by all or most application
    * subclasses.
    */
@@ -114,7 +114,7 @@ private:
   /**
    * \brief Application specific shutdown code
    *
-   * The StopApplication method is called at the stop time specifed by Stop
+   * The StopApplication method is called at the stop time specified by Stop
    * This method should be overridden by all or most application
    * subclasses.
    */

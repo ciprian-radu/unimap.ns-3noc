@@ -28,15 +28,15 @@
 // There are a number of command-line options available to control
 // the default behavior.  The list of available command-line options
 // can be listed with the following command:
-// ./waf --run "scratch/wifi-simple-infra --help"
+// ./waf --run "wifi-simple-infra --help"
 //
 // For instance, for this configuration, the physical layer will
 // stop successfully receiving packets when rss drops below -97 dBm.
 // To see this effect, try running:
 //
-// ./waf --run "scratch/wifi-simple-infra --rss=-97 --numPackets=20"
-// ./waf --run "scratch/wifi-simple-infra --rss=-98 --numPackets=20"
-// ./waf --run "scratch/wifi-simple-infra --rss=-99 --numPackets=20"
+// ./waf --run "wifi-simple-infra --rss=-97 --numPackets=20"
+// ./waf --run "wifi-simple-infra --rss=-98 --numPackets=20"
+// ./waf --run "wifi-simple-infra --rss=-99 --numPackets=20"
 //
 // Note that all ns-3 attributes (not just the ones exposed in the below
 // script) can be changed at command line; see the documentation.
@@ -44,7 +44,7 @@
 // This script can also be helpful to put the Wifi layer into verbose
 // logging mode; this command will turn on all wifi logging:
 // 
-// ./waf --run "scratch/wifi-simple-infra --verbose=1"
+// ./waf --run "wifi-simple-infra --verbose=1"
 //
 // When you are done, you will notice two pcap trace files in your directory.
 // If you have tcpdump installed, you can try this:
@@ -92,7 +92,7 @@ static void GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize,
 
 int main (int argc, char *argv[])
 {
-  std::string phyMode ("wifib-1mbs");
+  std::string phyMode ("DsssRate1Mbps");
   double rss = -80;  // -dBm
   uint32_t packetSize = 1000; // bytes
   uint32_t numPackets = 1;
@@ -135,8 +135,8 @@ int main (int argc, char *argv[])
   // This is one parameter that matters when using FixedRssLossModel
   // set it to zero; otherwise, gain will be added
   wifiPhy.Set ("RxGain", DoubleValue (0) ); 
-  // ns-3 support RadioTap and Prism tracing extensions for 802.11b
-  wifiPhy.SetPcapFormat (YansWifiPhyHelper::PCAP_FORMAT_80211_RADIOTAP); 
+  // ns-3 supports RadioTap and Prism tracing extensions for 802.11b
+  wifiPhy.SetPcapDataLinkType (YansWifiPhyHelper::DLT_IEEE802_11_RADIO); 
 
   YansWifiChannelHelper wifiChannel ;
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
@@ -160,9 +160,7 @@ int main (int argc, char *argv[])
   NetDeviceContainer staDevice = wifi.Install (wifiPhy, wifiMac, c.Get(0));
   NetDeviceContainer devices = staDevice;
   // setup ap.
-  wifiMac.SetType ("ns3::NqapWifiMac", "Ssid", SsidValue (ssid),
-                   "BeaconGeneration", BooleanValue (true),
-                   "BeaconInterval", TimeValue (Seconds (2.5)));
+  wifiMac.SetType ("ns3::NqapWifiMac", "Ssid", SsidValue (ssid));
   NetDeviceContainer apDevice = wifi.Install (wifiPhy, wifiMac, c.Get(1));
   devices.Add (apDevice);
 
@@ -192,6 +190,7 @@ int main (int argc, char *argv[])
 
   Ptr<Socket> source = Socket::CreateSocket (c.Get (1), tid);
   InetSocketAddress remote = InetSocketAddress (Ipv4Address ("255.255.255.255"), 80);
+  source->SetAllowBroadcast (true);
   source->Connect (remote);
 
   // Tracing

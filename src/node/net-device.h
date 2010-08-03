@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Author: Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
- * Modified by Emmanuelle Laprise to remove dependance on LLC headers
+ * Modified by Emmanuelle Laprise to remove dependence on LLC headers
  */
 #ifndef NET_DEVICE_H
 #define NET_DEVICE_H
@@ -167,7 +167,7 @@ public:
    * encapsulated in an abstract Address to avoid dependencies on the exact
    * MAC address format.
    *
-   * A default imlementation of GetMulticast is provided, but this
+   * A default implementation of GetMulticast is provided, but this
    * method simply NS_ASSERTS.  In the case of net devices that do not support
    * multicast, clients are expected to test NetDevice::IsMulticast and avoid
    * attempting to map multicast packets.  Subclasses of NetDevice that do

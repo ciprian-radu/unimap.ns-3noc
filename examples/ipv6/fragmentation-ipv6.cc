@@ -54,9 +54,9 @@ public:
    */
   inline void AddAddress (Ptr<Node>& n, uint32_t interface, Ipv6Address address)
   {
-      Ptr<Ipv6> ipv6 = n->GetObject<Ipv6> ();
-      ipv6->AddAddress (interface, address);
-    }
+    Ptr<Ipv6> ipv6 = n->GetObject<Ipv6> ();
+    ipv6->AddAddress (interface, address);
+  }
 
   /**
    * \brief Print the routing table.
@@ -64,27 +64,27 @@ public:
    */
   inline void PrintRoutingTable (Ptr<Node>& n)
   {
-      Ptr<Ipv6StaticRouting> routing = 0;
-      Ipv6StaticRoutingHelper routingHelper;
-      Ptr<Ipv6> ipv6 = n->GetObject<Ipv6> ();
-      uint32_t nbRoutes = 0;
-      Ipv6RoutingTableEntry route;
+    Ptr<Ipv6StaticRouting> routing = 0;
+    Ipv6StaticRoutingHelper routingHelper;
+    Ptr<Ipv6> ipv6 = n->GetObject<Ipv6> ();
+    uint32_t nbRoutes = 0;
+    Ipv6RoutingTableEntry route;
 
-      routing = routingHelper.GetStaticRouting (ipv6);
+    routing = routingHelper.GetStaticRouting (ipv6);
 
-      std::cout << "Routing table of " << n << " : " << std::endl;
-      std::cout << "Destination\t\t\t\t" << "Gateway\t\t\t\t\t" << "Interface\t" <<  "Prefix to use" << std::endl;
+    std::cout << "Routing table of " << n << " : " << std::endl;
+    std::cout << "Destination\t\t\t\t" << "Gateway\t\t\t\t\t" << "Interface\t" <<  "Prefix to use" << std::endl;
 
-      nbRoutes = routing->GetNRoutes ();
-      for (uint32_t i = 0 ; i < nbRoutes ; i++)
-        {
-          route = routing->GetRoute (i);
-          std::cout << route.GetDest () << "\t"
-            << route.GetGateway () << "\t"
-            << route.GetInterface () << "\t"
-            << route.GetPrefixToUse () << "\t"
-            << std::endl;
-        }
+    nbRoutes = routing->GetNRoutes ();
+    for (uint32_t i = 0 ; i < nbRoutes ; i++)
+      {
+        route = routing->GetRoute (i);
+        std::cout << route.GetDest () << "\t"
+          << route.GetGateway () << "\t"
+          << route.GetInterface () << "\t"
+          << route.GetPrefixToUse () << "\t"
+          << std::endl;
+      }
   } 
 };
 
@@ -150,10 +150,9 @@ int main (int argc, char** argv)
   apps.Start (Seconds (2.0));
   apps.Stop (Seconds (20.0));
 
-  std::ofstream ascii;
-  ascii.open ("fragmentation-ipv6.tr");
-  CsmaHelper::EnablePcapAll (std::string ("fragmentation-ipv6"), true);
-  CsmaHelper::EnableAsciiAll (ascii);
+  AsciiTraceHelper ascii;
+  csma.EnableAsciiAll (ascii.CreateFileStream ("fragmentation-ipv6.tr"));
+  csma.EnablePcapAll (std::string ("fragmentation-ipv6"), true);
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();

@@ -33,6 +33,8 @@ NS_LOG_COMPONENT_DEFINE ("PacketSocket");
 
 namespace ns3 {
 
+NS_OBJECT_ENSURE_REGISTERED (PacketSocket);
+
 TypeId
 PacketSocket::GetTypeId (void)
 {
@@ -43,7 +45,7 @@ PacketSocket::GetTypeId (void)
                      MakeTraceSourceAccessor (&PacketSocket::m_dropTrace))
     .AddAttribute ("RcvBufSize",
                    "PacketSocket maximum receive buffer size (bytes)",
-                   UintegerValue (0xffffffffl),
+                   UintegerValue (131072),
                    MakeUintegerAccessor (&PacketSocket::m_rcvBufSize),
                    MakeUintegerChecker<uint32_t> ())
     ;
@@ -184,6 +186,10 @@ PacketSocket::Close(void)
     {
       m_errno = ERROR_BADF;
       return -1;
+    }
+  else if (m_state == STATE_BOUND || m_state == STATE_CONNECTED)
+    {
+      m_node->UnregisterProtocolHandler (MakeCallback (&PacketSocket::ForwardUp, this));
     }
   m_state = STATE_CLOSED;
   m_shutdownSend = true;
@@ -455,6 +461,22 @@ PacketSocket::GetSockName (Address &address) const
   address = ad;
   
   return 0;
+}
+
+bool
+PacketSocket::SetAllowBroadcast (bool allowBroadcast)
+{
+  if (allowBroadcast)
+    {
+      return false;
+    }
+  return true;
+}
+
+bool
+PacketSocket::GetAllowBroadcast () const
+{
+  return false;
 }
 
 }//namespace ns3

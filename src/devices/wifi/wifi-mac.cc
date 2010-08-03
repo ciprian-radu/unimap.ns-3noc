@@ -69,6 +69,63 @@ WifiMac::GetDefaultCtsAckTimeout (void)
   return ctsTimeout;
 }
 
+Time
+WifiMac::GetDefaultBasicBlockAckDelay (void)
+{
+  // This value must be rivisited
+  return MicroSeconds (250);
+}
+Time
+WifiMac::GetDefaultCompressedBlockAckDelay (void)
+{
+  // This value must be rivisited
+  return MicroSeconds (68);
+}
+Time
+WifiMac::GetDefaultBasicBlockAckTimeout (void)
+{
+  Time blockAckTimeout = GetDefaultSifs ();
+  blockAckTimeout += GetDefaultBasicBlockAckDelay ();
+  blockAckTimeout += MicroSeconds (GetDefaultMaxPropagationDelay ().GetMicroSeconds () * 2);
+  blockAckTimeout += GetDefaultSlot ();
+  return blockAckTimeout;
+}
+Time
+WifiMac::GetDefaultCompressedBlockAckTimeout (void)
+{
+  Time blockAckTimeout = GetDefaultSifs ();
+  blockAckTimeout += GetDefaultCompressedBlockAckDelay ();
+  blockAckTimeout += MicroSeconds (GetDefaultMaxPropagationDelay ().GetMicroSeconds () * 2);
+  blockAckTimeout += GetDefaultSlot ();
+  return blockAckTimeout;
+}
+
+void
+WifiMac::SetBasicBlockAckTimeout (Time blockAckTimeout)
+{
+  //this method must be implemented by QoS WifiMacs
+}
+
+Time
+WifiMac::GetBasicBlockAckTimeout (void) const
+{
+  //this method must be implemented by QoS WifiMacs
+  return MicroSeconds (0);
+}
+
+void
+WifiMac::SetCompressedBlockAckTimeout (Time blockAckTimeout)
+{
+  //this methos must be implemented by QoS WifiMacs
+}
+
+Time
+WifiMac::GetCompressedBlockAckTimeout (void) const
+{
+  //this method must be implemented by QoS WifiMacs
+  return MicroSeconds (0);
+}
+
 TypeId 
 WifiMac::GetTypeId (void)
 {
@@ -83,6 +140,16 @@ WifiMac::GetTypeId (void)
                    TimeValue (GetDefaultCtsAckTimeout ()),
                    MakeTimeAccessor (&WifiMac::GetAckTimeout,
                                      &WifiMac::SetAckTimeout),
+                   MakeTimeChecker ())
+    .AddAttribute ("BasicBlockAckTimeout", "When this timeout expires, the BASIC_BLOCK_ACK_REQ/BASIC_BLOCK_ACK handshake has failed.",
+                   TimeValue (GetDefaultBasicBlockAckTimeout ()),
+                   MakeTimeAccessor (&WifiMac::GetBasicBlockAckTimeout,
+                                     &WifiMac::SetBasicBlockAckTimeout),
+                   MakeTimeChecker ())
+    .AddAttribute ("CompressedBlockAckTimeout", "When this timeout expires, the COMPRESSED_BLOCK_ACK_REQ/COMPRESSED_BLOCK_ACK handshake has failed.",
+                   TimeValue (GetDefaultCompressedBlockAckTimeout ()),
+                   MakeTimeAccessor (&WifiMac::GetCompressedBlockAckTimeout,
+                                     &WifiMac::SetCompressedBlockAckTimeout),
                    MakeTimeChecker ())
     .AddAttribute ("Sifs", "The value of the SIFS constant.",
                    TimeValue (GetDefaultSifs ()),
@@ -108,11 +175,6 @@ WifiMac::GetTypeId (void)
                    TimeValue (GetDefaultMaxPropagationDelay ()),
                    MakeTimeAccessor (&WifiMac::m_maxPropagationDelay),
                    MakeTimeChecker ())
-    .AddAttribute ("MaxMsduSize", "The maximum size of an MSDU accepted by the MAC layer."
-                   "This value conforms to the specification.",
-		   UintegerValue (2304),
-		   MakeUintegerAccessor (&WifiMac::m_maxMsduSize),
-		   MakeUintegerChecker<uint16_t> (1,2304))
     .AddAttribute ("Ssid", "The ssid we want to belong to.",
 		   SsidValue (Ssid ("default")),
 		   MakeSsidAccessor (&WifiMac::GetSsid,
@@ -163,12 +225,6 @@ Time
 WifiMac::GetMaxPropagationDelay (void) const
 {
   return m_maxPropagationDelay;
-}
-
-uint32_t 
-WifiMac::GetMaxMsduSize (void) const
-{
-  return m_maxMsduSize;
 }
 
 void 
@@ -300,7 +356,7 @@ WifiMac::Configure80211p_SCH (void)
 }
 
 void
-WifiMac::ConfigureDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AccessClass ac)
+WifiMac::ConfigureDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AcIndex ac)
 {
   /* see IEE802.11 section 7.3.2.29 */
   switch (ac) {
@@ -336,7 +392,7 @@ WifiMac::ConfigureDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum Access
 }
 
 void
-WifiMac::ConfigureCCHDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AccessClass ac)
+WifiMac::ConfigureCCHDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AcIndex ac)
 {
   /* see IEEE 1609.4-2006 section 6.3.1, Table 1 */
   switch (ac) {

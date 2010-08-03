@@ -27,6 +27,7 @@
 #include "ns3/ipv4-routing-protocol.h"
 #include "ns3/udp-socket-factory.h"
 #include "ns3/trace-source-accessor.h"
+#include "ns3/ipv4-packet-info-tag.h"
 #include "udp-socket-impl.h"
 #include "udp-l4-protocol.h"
 #include "ipv4-end-point.h"
@@ -66,6 +67,7 @@ UdpSocketImpl::UdpSocketImpl ()
     m_rxAvailable (0)
 {
   NS_LOG_FUNCTION_NOARGS ();
+  m_allowBroadcast = false;
 }
 
 UdpSocketImpl::~UdpSocketImpl ()
@@ -296,7 +298,10 @@ int
 UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
 {
   NS_LOG_FUNCTION (this << p << dest << port);
-
+  if (m_boundnetdevice)
+    {
+      NS_LOG_LOGIC("Bound interface number " << m_boundnetdevice->GetIfIndex());
+    }
   if (m_endPoint == 0)
     {
       if (Bind () == -1)
@@ -367,6 +372,11 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
   //
   if (dest.IsBroadcast ())
     {
+      if (!m_allowBroadcast)
+        {
+          m_errno = ERROR_OPNOTSUPP;
+          return -1;
+        }
       NS_LOG_LOGIC ("Limited broadcast start.");
       for (uint32_t i = 0; i < ipv4->GetNInterfaces (); i++ )
         {
@@ -375,6 +385,12 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
           Ipv4Address addri = iaddr.GetLocal ();
           if (addri == Ipv4Address ("127.0.0.1"))
             continue;
+          // Check if interface-bound socket
+          if (m_boundnetdevice) 
+            {
+              if (ipv4->GetNetDevice(i) != m_boundnetdevice)
+                continue;
+            }
           Ipv4Mask maski = iaddr.GetMask ();
           if (maski == Ipv4Mask::GetOnes ())
             {
@@ -405,6 +421,9 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
     {
       m_udp->Send(p->Copy (), m_endPoint->GetLocalAddress(), dest,
                   m_endPoint->GetLocalPort(), port, 0);
+      NotifyDataSent (p->GetSize ());
+      NotifySend (GetTxAvailable ());
+      return p->GetSize();
     }
   else if (ipv4->GetRoutingProtocol () != 0)
     {
@@ -413,12 +432,27 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
       header.SetProtocol (UdpL4Protocol::PROT_NUMBER);
       Socket::SocketErrno errno_;
       Ptr<Ipv4Route> route;
-      uint32_t oif = 0; //specify non-zero if bound to a source address
+      Ptr<NetDevice> oif = m_boundnetdevice; //specify non-zero if bound to a specific device
       // TBD-- we could cache the route and just check its validity
       route = ipv4->GetRoutingProtocol ()->RouteOutput (p, header, oif, errno_); 
       if (route != 0)
         {
           NS_LOG_LOGIC ("Route exists");
+          if (!m_allowBroadcast)
+            {
+              uint32_t outputIfIndex = ipv4->GetInterfaceForDevice (route->GetOutputDevice ());
+              uint32_t ifNAddr = ipv4->GetNAddresses (outputIfIndex);
+              for (uint32_t addrI = 0; addrI < ifNAddr; ++addrI)
+                {
+                  Ipv4InterfaceAddress ifAddr = ipv4->GetAddress (outputIfIndex, addrI);
+                  if (dest == ifAddr.GetBroadcast ())
+                    {
+                      m_errno = ERROR_OPNOTSUPP;
+                      return -1;
+                    }
+                }
+            }
+          
           header.SetSource (route->GetSource ());
           m_udp->Send (p->Copy (), header.GetSource (), header.GetDestination (),
                        m_endPoint->GetLocalPort (), port, route);
@@ -522,6 +556,8 @@ UdpSocketImpl::GetSockName (Address &address) const
     }
   else
     {
+      // It is possible to call this method on a socket without a name
+      // in which case, behavior is unspecified
       address = InetSocketAddress(Ipv4Address::GetZero(), 0);
     }
   return 0;
@@ -555,18 +591,47 @@ UdpSocketImpl::MulticastLeaveGroup (uint32_t interface, const Address &groupAddr
   return 0;
 }
 
-void 
-UdpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Address ipv4, uint16_t port)
+void
+UdpSocketImpl::BindToNetDevice (Ptr<NetDevice> netdevice)
 {
-  NS_LOG_FUNCTION (this << packet << ipv4 << port);
+  NS_LOG_FUNCTION (netdevice);
+  Socket::BindToNetDevice (netdevice); // Includes sanity check
+  if (m_endPoint == 0)
+    {
+      if (Bind () == -1)
+       {
+         NS_ASSERT (m_endPoint == 0);
+         return;
+       }
+      NS_ASSERT (m_endPoint != 0);
+    }
+  m_endPoint->BindToNetDevice (netdevice);
+  return;
+}
+
+void 
+UdpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
+                          Ptr<Ipv4Interface> incomingInterface)
+{
+  NS_LOG_FUNCTION (this << packet << header << port);
 
   if (m_shutdownRecv)
     {
       return;
     }
+
+  // Should check via getsockopt ()..
+  if (this->m_recvpktinfo)
+    {
+      Ipv4PacketInfoTag tag;
+      packet->RemovePacketTag (tag);
+      tag.SetRecvIf (incomingInterface->GetDevice ()->GetIfIndex ());
+      packet->AddPacketTag (tag);
+    }
+
   if ((m_rxAvailable + packet->GetSize ()) <= m_rcvBufSize)
     {
-      Address address = InetSocketAddress (ipv4, port);
+      Address address = InetSocketAddress (header.GetSource (), port);
       SocketAddressTag tag;
       tag.SetAddress (address);
       packet->AddPacketTag (tag);
@@ -669,6 +734,19 @@ bool
 UdpSocketImpl::GetMtuDiscover (void) const
 {
   return m_mtuDiscover;
+}
+
+bool
+UdpSocketImpl::SetAllowBroadcast (bool allowBroadcast)
+{
+  m_allowBroadcast = allowBroadcast;
+  return true;
+}
+
+bool
+UdpSocketImpl::GetAllowBroadcast () const
+{
+  return m_allowBroadcast;
 }
 
 

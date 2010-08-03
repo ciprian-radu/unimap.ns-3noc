@@ -25,11 +25,11 @@
 #include "ns3/packet.h"
 #include "ns3/traced-callback.h"
 #include "ns3/mac48-address.h"
-#include "wifi-remote-station-manager.h"
 #include <string>
 
 namespace ns3 {
 
+class WifiRemoteStationManager;
 class WifiChannel;
 class WifiPhy;
 class WifiMac;
@@ -103,6 +103,10 @@ public:
   virtual bool SupportsSendFrom (void) const;
 
 private:
+
+  // This value conforms to the 802.11 specification
+  static const uint16_t MAX_MSDU_SIZE = 2304;
+
   virtual void DoDispose (void);
   virtual void DoStart (void);
   void ForwardUp (Ptr<Packet> packet, Mac48Address from, Mac48Address to);

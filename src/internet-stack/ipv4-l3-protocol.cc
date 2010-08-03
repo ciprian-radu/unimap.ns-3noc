@@ -196,6 +196,7 @@ Ipv4L3Protocol::DoDispose (void)
       *i = 0;
     }
   m_interfaces.clear ();
+  m_sockets.clear ();
   m_node = 0;
   m_routingProtocol = 0;
   Object::DoDispose ();
@@ -441,15 +442,15 @@ Ipv4L3Protocol::Receive( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t pr
         {
           if (ipv4Interface->IsUp ())
             {
-              m_rxTrace (packet, interface);
+              m_rxTrace (packet, m_node->GetObject<Ipv4> (), interface);
               break;
             }
           else
             {
-              NS_LOG_LOGIC ("Dropping received packet-- interface is down");
+              NS_LOG_LOGIC ("Dropping received packet -- interface is down");
               Ipv4Header ipHeader;
               packet->RemoveHeader (ipHeader);
-              m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, interface);
+              m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, m_node->GetObject<Ipv4> (), interface);
               return;
             }
         }
@@ -462,9 +463,16 @@ Ipv4L3Protocol::Receive( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t pr
     }
   packet->RemoveHeader (ipHeader);
 
+  // Trim any residual frame padding from underlying devices
+  if (ipHeader.GetPayloadSize () < packet->GetSize ())
+    {
+      packet->RemoveAtEnd (packet->GetSize () - ipHeader.GetPayloadSize ());
+    }
+
   if (!ipHeader.IsChecksumOk ()) 
     {
-      m_dropTrace (ipHeader, packet, DROP_BAD_CHECKSUM, interface);
+      NS_LOG_LOGIC ("Dropping received packet -- checksum not ok");
+      m_dropTrace (ipHeader, packet, DROP_BAD_CHECKSUM, m_node->GetObject<Ipv4> (), interface);
       return;
     }
 
@@ -472,15 +480,21 @@ Ipv4L3Protocol::Receive( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t pr
     {
       NS_LOG_LOGIC ("Forwarding to raw socket"); 
       Ptr<Ipv4RawSocketImpl> socket = *i;
-      socket->ForwardUp (packet, ipHeader, device);
+      socket->ForwardUp (packet, ipHeader, ipv4Interface);
     }
 
-  m_routingProtocol->RouteInput (packet, ipHeader, device, 
+  NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to process packets");
+  if (! m_routingProtocol->RouteInput (packet, ipHeader, device, 
     MakeCallback (&Ipv4L3Protocol::IpForward, this),
     MakeCallback (&Ipv4L3Protocol::IpMulticastForward, this),
     MakeCallback (&Ipv4L3Protocol::LocalDeliver, this),
     MakeCallback (&Ipv4L3Protocol::RouteInputError, this)
-  );
+  ))
+    {
+      NS_LOG_WARN ("No route found for forwarding packet.  Drop.");
+      m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), interface);
+    }
+
 
 }
 
@@ -502,6 +516,15 @@ bool
 Ipv4L3Protocol::IsUnicast (Ipv4Address ad, Ipv4Mask interfaceMask) const
 {
   return !ad.IsMulticast () && !ad.IsSubnetDirectedBroadcast (interfaceMask);
+}
+
+void 
+Ipv4L3Protocol::Send (Ptr<Packet> packet, 
+                      Ipv4Header ipHeader,
+                      Ptr<Ipv4Route> route)
+{
+  NS_LOG_FUNCTION (this << packet << ipHeader << route);
+  SendRealOut (route, packet, ipHeader);
 }
 
 void 
@@ -530,8 +553,8 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
   // 4) packet is not broadcast, and is passed in with a route entry but route->GetGateway is not set (e.g., on-demand)
   // 5) packet is not broadcast, and route is NULL (e.g., a raw socket call, or ICMP)
   
-  // 1) packet is destined to limited broadcast address
-  if (destination.IsBroadcast ()) 
+  // 1) packet is destined to limited broadcast address or link-local multicast address
+  if (destination.IsBroadcast () || destination.IsLocalMulticast ())
     {
       NS_LOG_LOGIC ("Ipv4L3Protocol::Send case 1:  limited broadcast");
       ipHeader = BuildHeader (source, destination, protocol, packet->GetSize (), ttl, mayFragment);
@@ -546,7 +569,7 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
 
           m_sendOutgoingTrace (ipHeader, packetCopy, ifaceIndex);
           packetCopy->AddHeader (ipHeader);
-          m_txTrace (packetCopy, ifaceIndex);
+          m_txTrace (packetCopy, m_node->GetObject<Ipv4> (), ifaceIndex);
           outInterface->Send (packetCopy, destination);
         }
       return;
@@ -570,7 +593,7 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
               Ptr<Packet> packetCopy = packet->Copy ();
               m_sendOutgoingTrace (ipHeader, packetCopy, ifaceIndex);
               packetCopy->AddHeader (ipHeader);
-              m_txTrace (packetCopy, ifaceIndex);
+              m_txTrace (packetCopy, m_node->GetObject<Ipv4> (), ifaceIndex);
               outInterface->Send (packetCopy, destination);
               return;
             }
@@ -585,34 +608,42 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
       ipHeader = BuildHeader (source, destination, protocol, packet->GetSize (), ttl, mayFragment);
       int32_t interface = GetInterfaceForDevice (route->GetOutputDevice ());
       m_sendOutgoingTrace (ipHeader, packet, interface);
-      SendRealOut (route, packet, ipHeader);
+      SendRealOut (route, packet->Copy (), ipHeader);
       return; 
     } 
   // 4) packet is not broadcast, and is passed in with a route entry but route->GetGateway is not set (e.g., on-demand)
-  if (route && route->GetGateway () != Ipv4Address ())
+  if (route && route->GetGateway () == Ipv4Address ())
     {
       // This could arise because the synchronous RouteOutput() call
       // returned to the transport protocol with a source address but
       // there was no next hop available yet (since a route may need
       // to be queried).  
-      NS_FATAL_ERROR ("This case not yet implemented");
+      NS_FATAL_ERROR ("Ipv4L3Protocol::Send case 4: This case not yet implemented");
     }
   // 5) packet is not broadcast, and route is NULL (e.g., a raw socket call)
-  NS_LOG_LOGIC ("Ipv4L3Protocol::Send case 4:  passed in with no route " << destination);
+  NS_LOG_LOGIC ("Ipv4L3Protocol::Send case 5:  passed in with no route " << destination);
   Socket::SocketErrno errno_; 
-  uint32_t oif = 0; // unused for now
+  Ptr<NetDevice> oif (0); // unused for now
   ipHeader = BuildHeader (source, destination, protocol, packet->GetSize (), ttl, mayFragment);
-  Ptr<Ipv4Route> newRoute = m_routingProtocol->RouteOutput (packet, ipHeader, oif, errno_);
+  Ptr<Ipv4Route> newRoute;
+  if (m_routingProtocol != 0)
+    {
+      newRoute = m_routingProtocol->RouteOutput (packet, ipHeader, oif, errno_);
+    }
+  else
+    {
+      NS_LOG_ERROR ("Ipv4L3Protocol::Send: m_routingProtocol == 0");
+    }
   if (newRoute)
     {
       int32_t interface = GetInterfaceForDevice (newRoute->GetOutputDevice ());
       m_sendOutgoingTrace (ipHeader, packet, interface);
-      SendRealOut (newRoute, packet, ipHeader);
+      SendRealOut (newRoute, packet->Copy (), ipHeader);
     }
   else
     {
       NS_LOG_WARN ("No route to host.  Drop.");
-      m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, 0);
+      m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), 0);
     }
 }
 
@@ -665,7 +696,7 @@ Ipv4L3Protocol::SendRealOut (Ptr<Ipv4Route> route,
   if (route == 0)
     {
       NS_LOG_WARN ("No route to host.  Drop.");
-      m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, 0);
+      m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), 0);
       return;
     }
   packet->AddHeader (ipHeader);
@@ -681,15 +712,15 @@ Ipv4L3Protocol::SendRealOut (Ptr<Ipv4Route> route,
       if (outInterface->IsUp ())
         {
           NS_LOG_LOGIC ("Send to gateway " << route->GetGateway ());
-          m_txTrace (packet, interface);
+          m_txTrace (packet, m_node->GetObject<Ipv4> (), interface);
           outInterface->Send (packet, route->GetGateway ());
         }
       else
         {
-          NS_LOG_LOGIC ("Dropping-- outgoing interface is down: " << route->GetGateway ());
+          NS_LOG_LOGIC ("Dropping -- outgoing interface is down: " << route->GetGateway ());
           Ipv4Header ipHeader;
           packet->RemoveHeader (ipHeader);
-          m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, interface);
+          m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, m_node->GetObject<Ipv4> (), interface);
         }
     } 
   else 
@@ -697,15 +728,15 @@ Ipv4L3Protocol::SendRealOut (Ptr<Ipv4Route> route,
       if (outInterface->IsUp ())
         {
           NS_LOG_LOGIC ("Send to destination " << ipHeader.GetDestination ());
-          m_txTrace (packet, interface);
+          m_txTrace (packet, m_node->GetObject<Ipv4> (), interface);
           outInterface->Send (packet, ipHeader.GetDestination ());
         }
       else
         {
-          NS_LOG_LOGIC ("Dropping-- outgoing interface is down: " << ipHeader.GetDestination ());
+          NS_LOG_LOGIC ("Dropping -- outgoing interface is down: " << ipHeader.GetDestination ());
           Ipv4Header ipHeader;
           packet->RemoveHeader (ipHeader);
-          m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, interface);
+          m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, m_node->GetObject<Ipv4> (), interface);
         }
     }
 }
@@ -728,7 +759,7 @@ Ipv4L3Protocol::IpMulticastForward (Ptr<Ipv4MulticastRoute> mrtentry, Ptr<const 
           if (h.GetTtl () == 0)
             {
               NS_LOG_WARN ("TTL exceeded.  Drop.");
-              m_dropTrace (header, packet, DROP_TTL_EXPIRED, i);
+              m_dropTrace (header, packet, DROP_TTL_EXPIRED, m_node->GetObject<Ipv4> (), i);
               return;
             }
           NS_LOG_LOGIC ("Forward multicast via interface " << i);
@@ -765,7 +796,7 @@ Ipv4L3Protocol::IpForward (Ptr<Ipv4Route> rtentry, Ptr<const Packet> p, const Ip
           icmp->SendTimeExceededTtl (ipHeader, packet);
         }
       NS_LOG_WARN ("TTL exceeded.  Drop.");
-      m_dropTrace (header, packet, DROP_TTL_EXPIRED, interface);
+      m_dropTrace (header, packet, DROP_TTL_EXPIRED, m_node->GetObject<Ipv4> (), interface);
       return;
     }
   m_unicastForwardTrace (ipHeader, packet, interface);
@@ -787,7 +818,7 @@ Ipv4L3Protocol::LocalDeliver (Ptr<const Packet> packet, Ipv4Header const&ip, uin
       // RX_ENDPOINT_UNREACH codepath
       Ptr<Packet> copy = p->Copy ();
       enum Ipv4L4Protocol::RxStatus status = 
-        protocol->Receive (p, ip.GetSource (), ip.GetDestination (), GetInterface (iif));
+        protocol->Receive (p, ip, GetInterface (iif));
       switch (status) {
       case Ipv4L4Protocol::RX_OK:
         // fall through
@@ -1035,8 +1066,7 @@ Ipv4L3Protocol::RouteInputError (Ptr<const Packet> p, const Ipv4Header & ipHeade
 {
   NS_LOG_FUNCTION (this << p << ipHeader << sockErrno);
   NS_LOG_LOGIC ("Route input failure-- dropping packet to " << ipHeader << " with errno " << sockErrno); 
-  m_dropTrace (ipHeader, p, DROP_ROUTE_ERROR, 0);
+  m_dropTrace (ipHeader, p, DROP_ROUTE_ERROR, m_node->GetObject<Ipv4> (), 0);
 }
-
 
 }//namespace ns3

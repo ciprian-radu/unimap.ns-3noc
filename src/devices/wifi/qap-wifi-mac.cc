@@ -24,6 +24,7 @@
 #include "ns3/simulator.h"
 #include "ns3/string.h"
 #include "ns3/pointer.h"
+#include "ns3/boolean.h"
 
 #include "qos-tag.h"
 #include "qap-wifi-mac.h"
@@ -51,7 +52,7 @@ QapWifiMac::GetTypeId (void)
     .SetParent<WifiMac> ()
     .AddConstructor<QapWifiMac> ()
     .AddAttribute ("BeaconInterval", "Delay between two beacons",
-                   TimeValue (Seconds (0.1)),
+                   TimeValue (MicroSeconds (102400)),
                    MakeTimeAccessor (&QapWifiMac::GetBeaconInterval,
                                      &QapWifiMac::SetBeaconInterval),
                    MakeTimeChecker ())
@@ -105,6 +106,9 @@ QapWifiMac::QapWifiMac ()
   m_beaconDca->SetLow (m_low);
   m_beaconDca->SetManager (m_dcfManager);
 
+  // Construct the EDCAFs. The ordering is important - highest
+  // priority (see Table 9-1 in IEEE 802.11-2007) must be created
+  // first.
   SetQueue (AC_VO);
   SetQueue (AC_VI);
   SetQueue (AC_BE);
@@ -198,6 +202,18 @@ QapWifiMac::SetAckTimeout (Time ackTimeout)
 }
 
 void 
+QapWifiMac::SetBasicBlockAckTimeout (Time blockAckTimeout)
+{
+  m_low->SetBasicBlockAckTimeout (blockAckTimeout);
+}
+
+void
+QapWifiMac::SetCompressedBlockAckTimeout (Time blockAckTimeout)
+{
+  m_low->SetCompressedBlockAckTimeout (blockAckTimeout);
+}
+
+void 
 QapWifiMac::SetCtsTimeout (Time ctsTimeout)
 {
   m_low->SetCtsTimeout (ctsTimeout);
@@ -231,6 +247,18 @@ Time
 QapWifiMac::GetAckTimeout (void) const
 {
   return m_low->GetAckTimeout ();
+}
+
+Time 
+QapWifiMac::GetBasicBlockAckTimeout () const
+{
+  return m_low->GetBasicBlockAckTimeout ();
+}
+
+Time 
+QapWifiMac::GetCompressedBlockAckTimeout () const
+{
+  return m_low->GetCompressedBlockAckTimeout ();
 }
 
 Time 
@@ -327,6 +355,10 @@ void
 QapWifiMac::SetBeaconInterval (Time interval)
 {
   NS_LOG_FUNCTION (this << interval);
+  if ((interval.GetMicroSeconds () % 1024) != 0)
+    {
+      NS_LOG_WARN ("beacon interval should be multiple of 1024us, see IEEE Std. 802.11-2007, section 11.1.1.1");
+    }
   m_beaconInterval = interval;
 }
 
@@ -370,7 +402,7 @@ QapWifiMac::ForwardDown (Ptr<const Packet> packet, Mac48Address from, Mac48Addre
   if (tid < 8)
     {
       hdr.SetQosTid (tid);
-      AccessClass ac = QosUtilsMapTidToAc (tid);
+      AcIndex ac = QosUtilsMapTidToAc (tid);
       m_queues[ac]->Queue (packet, hdr);
     }
   else
@@ -406,7 +438,7 @@ QapWifiMac::ForwardDown (Ptr<const Packet> packet, Mac48Address from, Mac48Addre
   hdr.SetDsFrom ();
   hdr.SetDsNotTo ();
 
-  AccessClass ac = QosUtilsMapTidToAc (oldHdr->GetQosTid ());
+  AcIndex ac = QosUtilsMapTidToAc (oldHdr->GetQosTid ());
   m_queues[ac]->Queue (packet, hdr);
 }
 
@@ -414,14 +446,20 @@ void
 QapWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to, Mac48Address from)
 {
   NS_LOG_FUNCTION (this << packet << from << to);
-  ForwardDown (packet, from, to);
+  if (to.IsBroadcast () || m_stationManager->IsAssociated (to))
+    {
+      ForwardDown (packet, from, to);
+    }
 }
 
 void 
 QapWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to)
 {
   NS_LOG_FUNCTION (this << packet << to);
-  ForwardDown (packet, m_low->GetAddress (), to);
+  if (to.IsBroadcast () || m_stationManager->IsAssociated (to))
+    {
+      ForwardDown (packet, m_low->GetAddress (), to);
+    }
 }
 
 bool 
@@ -529,12 +567,11 @@ void
 QapWifiMac::TxOk (const WifiMacHeader &hdr)
 {
   NS_LOG_FUNCTION (this);
-  WifiRemoteStation *station = m_stationManager->Lookup (hdr.GetAddr1 ());
   if (hdr.IsAssocResp () && 
-      station->IsWaitAssocTxOk ()) 
+      m_stationManager->IsWaitAssocTxOk (hdr.GetAddr1 ())) 
     {
       NS_LOG_DEBUG ("associated with sta="<<hdr.GetAddr1 ());
-      station->RecordGotAssocTxOk ();
+      m_stationManager->RecordGotAssocTxOk (hdr.GetAddr1 ());
     }
 }
 
@@ -542,12 +579,11 @@ void
 QapWifiMac::TxFailed (const WifiMacHeader &hdr)
 {
   NS_LOG_FUNCTION (this);
-  WifiRemoteStation *station = m_stationManager->Lookup (hdr.GetAddr1 ());
   if (hdr.IsAssocResp () && 
-      station->IsWaitAssocTxOk ()) 
+      m_stationManager->IsWaitAssocTxOk (hdr.GetAddr1 ())) 
     {
       NS_LOG_DEBUG ("assoc failed with sta="<<hdr.GetAddr1 ());
-      station->RecordGotAssocTxFailed ();
+      m_stationManager->RecordGotAssocTxFailed (hdr.GetAddr1 ());
     }
 }
 
@@ -557,7 +593,6 @@ QapWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
   NS_LOG_FUNCTION (this << packet << hdr);
 
   Mac48Address from = hdr->GetAddr2 ();
-  WifiRemoteStation *fromStation = m_stationManager->Lookup (from);
   
   if (hdr->IsData ())
     {
@@ -565,10 +600,9 @@ QapWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
       if (!hdr->IsFromDs () && 
           hdr->IsToDs () &&
           bssid == GetAddress () &&
-          fromStation->IsAssociated ())
+          m_stationManager->IsAssociated (from))
         {
           Mac48Address to = hdr->GetAddr3 ();
-          WifiRemoteStation *toStation = m_stationManager->Lookup (to);
           
           if (to == GetAddress ())
             {
@@ -592,7 +626,7 @@ QapWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
                 }
             }
           else if (to.IsGroup () ||
-                   toStation->IsAssociated ())
+                   m_stationManager->IsAssociated (to))
             {
               NS_LOG_DEBUG ("forwarding frame from="<<from<<", to="<<to);
               Ptr<Packet> copy = packet->Copy ();
@@ -658,22 +692,59 @@ QapWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
                      WifiMode mode = m_phy->GetMode (j);
                      if (rates.IsSupportedRate (mode.GetDataRate ()))
                        {
-                         fromStation->AddSupportedMode (mode);
+                         m_stationManager->AddSupportedMode (from, mode);
                        }
-                    }
-                  fromStation->RecordWaitAssocTxOk ();
-                  // send assoc response with success status.
-                  SendAssocResp (hdr->GetAddr2 (), true);
-                }
+                   }
+                 m_stationManager->RecordWaitAssocTxOk (from);
+                 // send assoc response with success status.
+                 SendAssocResp (hdr->GetAddr2 (), true);
+               }
             }
           else if (hdr->IsDisassociation ()) 
             {
-              fromStation->RecordDisassociated ();
+              m_stationManager->RecordDisassociated (from);
             } 
           else if (hdr->IsReassocReq ()) 
             {
               /* we don't support reassoc frames for now */
-            } 
+            }
+          else if (hdr->IsAction ())
+            {
+              WifiActionHeader actionHdr;
+              packet->RemoveHeader (actionHdr);
+              if (actionHdr.GetCategory () == WifiActionHeader::BLOCK_ACK &&
+                  actionHdr.GetAction().blockAck == WifiActionHeader::BLOCK_ACK_ADDBA_REQUEST)
+                {
+                  MgtAddBaRequestHeader reqHdr;
+                  packet->RemoveHeader (reqHdr);
+                  SendAddBaResponse (&reqHdr, hdr->GetAddr2 ());
+                }
+              else if (actionHdr.GetCategory () == WifiActionHeader::BLOCK_ACK &&
+                       actionHdr.GetAction().blockAck == WifiActionHeader::BLOCK_ACK_ADDBA_RESPONSE)
+                {
+                  MgtAddBaResponseHeader respHdr;
+                  packet->RemoveHeader (respHdr);
+                  m_queues[QosUtilsMapTidToAc (respHdr.GetTid ())]->GotAddBaResponse (&respHdr, hdr->GetAddr2 ());
+                }
+              else if (actionHdr.GetCategory () == WifiActionHeader::BLOCK_ACK &&
+                       actionHdr.GetAction().blockAck == WifiActionHeader::BLOCK_ACK_DELBA)
+                {
+                  MgtDelBaHeader delBaHdr;
+                  packet->RemoveHeader (delBaHdr);
+                  if (delBaHdr.IsByOriginator ())
+                    {
+                      /* Delba frame was sent by originator, this means that an ingoing established
+                      agreement exists in MacLow */
+                      m_low->DestroyBlockAckAgreement (hdr->GetAddr2 (), delBaHdr.GetTid ());
+                    }
+                  else
+                    {
+                      /* We must notify correct queue tear down of agreement */
+                      AcIndex ac = QosUtilsMapTidToAc (delBaHdr.GetTid ());
+                      m_queues[ac]->GotDelBaFrame (&delBaHdr, hdr->GetAddr2 ());
+                    }
+                }
+            }
           else if (hdr->IsAuthentication () ||
                    hdr->IsDeauthentication ()) 
                  {
@@ -735,7 +806,7 @@ QapWifiMac::GetBKQueue (void) const
 }
 
 void
-QapWifiMac::SetQueue (enum AccessClass ac)
+QapWifiMac::SetQueue (enum AcIndex ac)
 {
   Ptr<EdcaTxopN> edca = CreateObject<EdcaTxopN> ();
   edca->SetLow (m_low);
@@ -744,6 +815,8 @@ QapWifiMac::SetQueue (enum AccessClass ac)
   edca->SetTxMiddle (m_txMiddle);
   edca->SetTxOkCallback (MakeCallback (&QapWifiMac::TxOk, this));
   edca->SetTxFailedCallback (MakeCallback (&QapWifiMac::TxFailed, this));
+  edca->SetAccessCategory (ac);
+  edca->CompleteConfig ();
   m_queues.insert (std::make_pair(ac, edca));
 }
 
@@ -791,12 +864,72 @@ QapWifiMac::FinishConfigureStandard (enum WifiPhyStandard standard)
 void
 QapWifiMac::DoStart (void)
 {
+  m_beaconDca->Start ();
+  for (Queues::iterator i = m_queues.begin (); i != m_queues.end (); ++i)
+    {
+      i->second->Start ();
+    }
   m_beaconEvent.Cancel ();
   if (m_enableBeaconGeneration)
     {
       m_beaconEvent = Simulator::ScheduleNow (&QapWifiMac::SendOneBeacon, this);
     }
   WifiMac::DoStart ();
+}
+
+void
+QapWifiMac::SendAddBaResponse (const MgtAddBaRequestHeader *reqHdr, Mac48Address originator)
+{
+  NS_LOG_FUNCTION (this);
+  WifiMacHeader hdr;
+  hdr.SetAction ();
+  hdr.SetAddr1 (originator);
+  hdr.SetAddr2 (m_low->GetAddress ());
+  hdr.SetAddr3 (m_low->GetAddress ());
+  hdr.SetDsNotFrom ();
+  hdr.SetDsNotTo ();
+
+  MgtAddBaResponseHeader respHdr;
+  StatusCode code;
+  code.SetSuccess ();
+  respHdr.SetStatusCode (code);
+  //Here a control about queues type?
+  respHdr.SetAmsduSupport (reqHdr->IsAmsduSupported ());
+  
+  if (reqHdr->IsImmediateBlockAck ())
+    {
+      respHdr.SetImmediateBlockAck ();
+    }
+  else
+    {
+      respHdr.SetDelayedBlockAck ();
+    }
+  respHdr.SetTid (reqHdr->GetTid ());
+  /* For now there's not no control about limit of reception.
+     We assume that receiver has no limit on reception.
+     However we assume that a receiver sets a bufferSize in order to satisfy
+     next equation:
+     (bufferSize + 1) % 16 = 0
+     So if a recipient is able to buffer a packet, it should be also able to buffer
+     all possible packet's fragments.
+     See section 7.3.1.14 in IEEE802.11e for more details. */
+  respHdr.SetBufferSize (1023);
+  respHdr.SetTimeout (reqHdr->GetTimeout ());
+
+  WifiActionHeader actionHdr;
+  WifiActionHeader::ActionValue action;
+  action.blockAck = WifiActionHeader::BLOCK_ACK_ADDBA_RESPONSE;
+  actionHdr.SetAction (WifiActionHeader::BLOCK_ACK, action);
+
+  Ptr<Packet> packet = Create<Packet> ();
+  packet->AddHeader (respHdr);
+  packet->AddHeader (actionHdr);
+  
+  /* ns3::MacLow have to buffer all correctly received packet for this block ack session */
+  m_low->CreateBlockAckAgreement (&respHdr, originator, reqHdr->GetStartingSequence ());
+
+  //Better a management queue? 
+  m_queues[QosUtilsMapTidToAc (reqHdr->GetTid ())]->PushFront (packet, hdr);
 }
 
 }  //namespace ns3

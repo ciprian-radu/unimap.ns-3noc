@@ -26,6 +26,7 @@
 
 #include "ns3/packet.h"
 #include "ns3/node.h"
+#include "ns3/simulator.h"
 #include "ns3/ipv4-route.h"
 
 #include "tcp-l4-protocol.h"
@@ -157,7 +158,8 @@ TcpStateMachine::TcpStateMachine()
   aT[LAST_ACK][SEQ_RECV]    = SA (LAST_ACK,    NEW_SEQ_RX);
   aT[LAST_ACK][APP_CLOSE]   = SA (CLOSED,      NO_ACT);
   aT[LAST_ACK][TIMEOUT]     = SA (CLOSED,      NO_ACT);
-  aT[LAST_ACK][ACK_RX]      = SA (CLOSED,      APP_CLOSED);
+  aT[LAST_ACK][ACK_RX]      = SA (LAST_ACK,    NO_ACT);
+  aT[LAST_ACK][FIN_ACKED]   = SA (CLOSED,      APP_CLOSED);
   aT[LAST_ACK][SYN_RX]      = SA (CLOSED,      RST_TX);
   aT[LAST_ACK][SYN_ACK_RX]  = SA (CLOSED,      RST_TX);
   aT[LAST_ACK][FIN_RX]      = SA (LAST_ACK,    FIN_ACK_TX);
@@ -172,7 +174,8 @@ TcpStateMachine::TcpStateMachine()
   aT[FIN_WAIT_1][SEQ_RECV]    = SA (FIN_WAIT_1, NEW_SEQ_RX);
   aT[FIN_WAIT_1][APP_CLOSE]   = SA (FIN_WAIT_1, NO_ACT);
   aT[FIN_WAIT_1][TIMEOUT]     = SA (FIN_WAIT_1, NO_ACT);
-  aT[FIN_WAIT_1][ACK_RX]      = SA (FIN_WAIT_2, NEW_ACK);
+  aT[FIN_WAIT_1][ACK_RX]      = SA (FIN_WAIT_1, NEW_ACK);
+  aT[FIN_WAIT_1][FIN_ACKED]   = SA (FIN_WAIT_2, NEW_ACK);
   aT[FIN_WAIT_1][SYN_RX]      = SA (CLOSED,     RST_TX);
   aT[FIN_WAIT_1][SYN_ACK_RX]  = SA (CLOSED,     RST_TX);
   aT[FIN_WAIT_1][FIN_RX]      = SA (CLOSING,    ACK_TX);
@@ -202,7 +205,8 @@ TcpStateMachine::TcpStateMachine()
   aT[CLOSING][SEQ_RECV]    = SA (CLOSED,      RST_TX);
   aT[CLOSING][APP_CLOSE]   = SA (CLOSED,      RST_TX);
   aT[CLOSING][TIMEOUT]     = SA (CLOSING,     NO_ACT);
-  aT[CLOSING][ACK_RX]      = SA (TIMED_WAIT,  NO_ACT);
+  aT[CLOSING][ACK_RX]      = SA (CLOSING,     NO_ACT);
+  aT[CLOSING][FIN_ACKED]   = SA (TIMED_WAIT,  NO_ACT);
   aT[CLOSING][SYN_RX]      = SA (CLOSED,      RST_TX);
   aT[CLOSING][SYN_ACK_RX]  = SA (CLOSED,      RST_TX);
   aT[CLOSING][FIN_RX]      = SA (CLOSED,      ACK_TX);
@@ -310,6 +314,9 @@ static TcpStateMachine tcpStateMachine; //only instance of a TcpStateMachine
 
 //TcpL4Protocol stuff----------------------------------------------------------
 
+#undef NS_LOG_APPEND_CONTEXT
+#define NS_LOG_APPEND_CONTEXT                                   \
+  if (m_node) { std::clog << Simulator::Now ().GetSeconds () << " [node " << m_node->GetId () << "] "; } 
 
 /* see http://www.iana.org/assignments/protocol-numbers */
 const uint8_t TcpL4Protocol::PROT_NUMBER = 6;
@@ -471,17 +478,16 @@ TcpL4Protocol::DeAllocate (Ipv4EndPoint *endPoint)
 
 enum Ipv4L4Protocol::RxStatus
 TcpL4Protocol::Receive (Ptr<Packet> packet,
-             Ipv4Address const &source,
-             Ipv4Address const &destination,
+             Ipv4Header const &ipHeader,
              Ptr<Ipv4Interface> incomingInterface)
 {
-  NS_LOG_FUNCTION (this << packet << source << destination << incomingInterface);
+  NS_LOG_FUNCTION (this << packet << ipHeader << incomingInterface);
 
   TcpHeader tcpHeader;
   if(Node::ChecksumEnabled ())
   {
     tcpHeader.EnableChecksums();
-    tcpHeader.InitializeChecksum (source, destination, PROT_NUMBER);
+    tcpHeader.InitializeChecksum (ipHeader.GetSource (), ipHeader.GetDestination (), PROT_NUMBER);
   }
 
   packet->PeekHeader (tcpHeader);
@@ -500,16 +506,16 @@ TcpL4Protocol::Receive (Ptr<Packet> packet,
 
   NS_LOG_LOGIC ("TcpL4Protocol "<<this<<" received a packet");
   Ipv4EndPointDemux::EndPoints endPoints =
-    m_endPoints->Lookup (destination, tcpHeader.GetDestinationPort (),
-                         source, tcpHeader.GetSourcePort (),incomingInterface);
+    m_endPoints->Lookup (ipHeader.GetDestination (), tcpHeader.GetDestinationPort (),
+                         ipHeader.GetSource (), tcpHeader.GetSourcePort (),incomingInterface);
   if (endPoints.empty ())
   {
     NS_LOG_LOGIC ("  No endpoints matched on TcpL4Protocol "<<this);
     std::ostringstream oss;
     oss<<"  destination IP: ";
-    destination.Print (oss);
+    ipHeader.GetDestination ().Print (oss);
     oss<<" destination port: "<< tcpHeader.GetDestinationPort ()<<" source IP: ";
-    source.Print (oss);
+    ipHeader.GetSource ().Print (oss);
     oss<<" source port: "<<tcpHeader.GetSourcePort ();
     NS_LOG_LOGIC (oss.str ());
 
@@ -527,12 +533,12 @@ TcpL4Protocol::Receive (Ptr<Packet> packet,
         else
           {
             header.SetFlags (TcpHeader::RST | TcpHeader::ACK);
-            header.SetSequenceNumber (SequenceNumber (0));
-            header.SetAckNumber (header.GetSequenceNumber () + SequenceNumber (1));
+            header.SetSequenceNumber (SequenceNumber32 (0));
+            header.SetAckNumber (header.GetSequenceNumber () + SequenceNumber32 (1));
           }
         header.SetSourcePort (tcpHeader.GetDestinationPort ());
         header.SetDestinationPort (tcpHeader.GetSourcePort ());
-        SendPacket (rstPacket, header, destination, source);
+        SendPacket (rstPacket, header, ipHeader.GetDestination (), ipHeader.GetSource ());
         return Ipv4L4Protocol::RX_ENDPOINT_CLOSED;
       }
     else
@@ -542,16 +548,17 @@ TcpL4Protocol::Receive (Ptr<Packet> packet,
   }
   NS_ASSERT_MSG (endPoints.size() == 1 , "Demux returned more than one endpoint");
   NS_LOG_LOGIC ("TcpL4Protocol "<<this<<" forwarding up to endpoint/socket");
-  (*endPoints.begin ())->ForwardUp (packet, source, tcpHeader.GetSourcePort ());
+  (*endPoints.begin ())->ForwardUp (packet, ipHeader, tcpHeader.GetSourcePort (), 
+                                    incomingInterface);
   return Ipv4L4Protocol::RX_OK;
 }
 
 void
 TcpL4Protocol::Send (Ptr<Packet> packet, 
            Ipv4Address saddr, Ipv4Address daddr, 
-           uint16_t sport, uint16_t dport)
+           uint16_t sport, uint16_t dport, Ptr<NetDevice> oif)
 {
-  NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
+  NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << oif);
 
   TcpHeader tcpHeader;
   tcpHeader.SetDestinationPort (dport);
@@ -564,7 +571,7 @@ TcpL4Protocol::Send (Ptr<Packet> packet,
                                daddr,
                                PROT_NUMBER);
   tcpHeader.SetFlags (TcpHeader::ACK);
-  tcpHeader.SetAckNumber (0);
+  tcpHeader.SetAckNumber (SequenceNumber32 (0));
 
   packet->AddHeader (tcpHeader);
 
@@ -579,22 +586,30 @@ TcpL4Protocol::Send (Ptr<Packet> packet,
       header.SetProtocol (PROT_NUMBER);
       Socket::SocketErrno errno_;
       Ptr<Ipv4Route> route;
-      uint32_t oif = 0; //specify non-zero if bound to a source address
-      route = ipv4->GetRoutingProtocol ()->RouteOutput (packet, header, oif, errno_);
+      Ptr<NetDevice> oif (0); //specify non-zero if bound to a source address
+      if (ipv4->GetRoutingProtocol () != 0)
+        {
+          route = ipv4->GetRoutingProtocol ()->RouteOutput (packet, header, oif, errno_);
+        }
+      else
+        {
+          NS_LOG_ERROR ("No IPV4 Routing Protocol");
+          route = 0;
+        }
       ipv4->Send (packet, saddr, daddr, PROT_NUMBER, route);
     }
 }
 
 void
 TcpL4Protocol::SendPacket (Ptr<Packet> packet, const TcpHeader &outgoing,
-                               Ipv4Address saddr, Ipv4Address daddr)
+                               Ipv4Address saddr, Ipv4Address daddr, Ptr<NetDevice> oif)
 {
   NS_LOG_LOGIC("TcpL4Protocol " << this
               << " sending seq " << outgoing.GetSequenceNumber()
               << " ack " << outgoing.GetAckNumber()
               << " flags " << std::hex << (int)outgoing.GetFlags() << std::dec
               << " data size " << packet->GetSize());
-  NS_LOG_FUNCTION (this << packet << saddr << daddr);
+  NS_LOG_FUNCTION (this << packet << saddr << daddr << oif);
   // XXX outgoingHeader cannot be logged
 
   TcpHeader outgoingHeader = outgoing;
@@ -619,8 +634,15 @@ TcpL4Protocol::SendPacket (Ptr<Packet> packet, const TcpHeader &outgoing,
       header.SetProtocol (PROT_NUMBER);
       Socket::SocketErrno errno_;
       Ptr<Ipv4Route> route;
-      uint32_t oif = 0; //specify non-zero if bound to a source address
-      route = ipv4->GetRoutingProtocol ()->RouteOutput (packet, header, oif, errno_);
+      if (ipv4->GetRoutingProtocol () != 0)
+        {
+          route = ipv4->GetRoutingProtocol ()->RouteOutput (packet, header, oif, errno_);
+        }
+      else
+        {
+          NS_LOG_ERROR ("No IPV4 Routing Protocol");
+          route = 0;
+        }
       ipv4->Send (packet, saddr, daddr, PROT_NUMBER, route);
     }
   else

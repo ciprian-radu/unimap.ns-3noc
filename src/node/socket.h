@@ -27,6 +27,7 @@
 #include "ns3/ptr.h"
 #include "ns3/tag.h"
 #include "ns3/object.h"
+#include "ns3/net-device.h"
 #include "address.h"
 #include <stdint.h>
 
@@ -79,6 +80,8 @@ public:
     ERROR_INVAL,
     ERROR_BADF,
     ERROR_NOROUTETOHOST,
+    ERROR_NODEV,
+    ERROR_ADDRNOTAVAIL,
     SOCKET_ERRNO_LAST
   };
 
@@ -511,6 +514,73 @@ public:
    * \returns 0 if success, -1 otherwise
    */
   virtual int GetSockName (Address &address) const = 0; 
+
+  /**
+   * \brief Bind a socket to specific device.
+   *
+   * This method corresponds to using setsockopt() SO_BINDTODEVICE
+   * of real network or BSD sockets.   If set on a socket, this option will
+   * force packets to leave the bound device regardless of the device that
+   * IP routing would naturally choose.  In the receive direction, only
+   * packets received from the bound interface will be delivered.
+   *
+   * This option has no particular relationship to binding sockets to
+   * an address via Socket::Bind ().  It is possible to bind sockets to a 
+   * specific IP address on the bound interface by calling both 
+   * Socket::Bind (address) and Socket::BindToNetDevice (device), but it
+   * is also possible to bind to mismatching device and address, even if
+   * the socket can not receive any packets as a result.
+   *
+   * \param netdevice Pointer to Netdevice of desired interface
+   * \returns nothing
+   */
+  virtual void BindToNetDevice (Ptr<NetDevice> netdevice);
+
+  /**
+   * \brief Returns socket's bound netdevice, if any.
+   *
+   * This method corresponds to using getsockopt() SO_BINDTODEVICE
+   * of real network or BSD sockets.  
+   * 
+   * 
+   * \returns Pointer to interface.
+   */
+  Ptr<NetDevice> GetBoundNetDevice (); 
+
+
+  /**
+   * \brief Configure whether broadcast datagram transmissions are allowed
+   *
+   * This method corresponds to using setsockopt() SO_BROADCAST of
+   * real network or BSD sockets.  If set on a socket, this option
+   * will enable or disable packets to be transmitted to broadcast
+   * destination addresses.
+   *
+   * \param allowBroadcast Whether broadcast is allowed
+   * \return true if operation succeeds
+   */
+  virtual bool SetAllowBroadcast (bool allowBroadcast) = 0;
+
+  /**
+   * \brief Query whether broadcast datagram transmissions are allowed
+   *
+   * This method corresponds to using getsockopt() SO_BROADCAST of
+   * real network or BSD sockets.
+   *
+   * \returns true if broadcast is allowed, false otherwise
+   */
+  virtual bool GetAllowBroadcast () const = 0;
+
+  /**
+   * \brief Enable/Disable receive packet information to socket.
+   *
+   * For IP_PKTINFO/IP6_PKTINFO. This method is only usable for 
+   * Raw socket and Datagram Socket. Not supported for Stream socket.
+   *
+   * \param flag Enable/Disable receive information
+   * \returns nothing
+   */
+  void SetRecvPktInfo (bool flag);
  
 protected:
   void NotifyConnectionSucceeded (void);
@@ -523,6 +593,8 @@ protected:
   void NotifySend (uint32_t spaceAvailable);
   void NotifyDataRecv (void);
   virtual void DoDispose (void);
+  Ptr<NetDevice> m_boundnetdevice;
+  bool m_recvpktinfo;
 private:
   Callback<void, Ptr<Socket> >                   m_connectionSucceeded;
   Callback<void, Ptr<Socket> >                   m_connectionFailed;

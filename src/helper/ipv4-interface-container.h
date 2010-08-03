@@ -32,6 +32,8 @@ namespace ns3 {
 class Ipv4InterfaceContainer
 {
 public:
+  typedef std::vector<std::pair<Ptr<Ipv4>, uint32_t> >::const_iterator Iterator;
+
   /**
    * Create an empty Ipv4InterfaceContainer.
    */
@@ -44,23 +46,83 @@ public:
   void Add (Ipv4InterfaceContainer other);
 
   /**
+   * \brief Get an iterator which refers to the first pair in the 
+   * container.
+   *
+   * Pairs can be retrieved from the container in two ways.  First,
+   * directly by an index into the container, and second, using an iterator.
+   * This method is used in the iterator method and is typically used in a 
+   * for-loop to run through the pairs
+   *
+   * \code
+   *   Ipv4InterfaceContainer::Iterator i;
+   *   for (i = container.Begin (); i != container.End (); ++i)
+   *     {
+   *       std::pair<Ptr<Ipv4>, uint32_t> pair = *i;
+   *       method (pair.first, pair.second);  // use the pair
+   *     }
+   * \endcode
+   *
+   * \returns an iterator which refers to the first pair in the container.
+   */
+  Iterator Begin (void) const;
+
+  /**
+   * \brief Get an iterator which indicates past-the-last Node in the 
+   * container.
+   *
+   * Nodes can be retrieved from the container in two ways.  First,
+   * directly by an index into the container, and second, using an iterator.
+   * This method is used in the iterator method and is typically used in a 
+   * for-loop to run through the Nodes
+   *
+   * \code
+   *   NodeContainer::Iterator i;
+   *   for (i = container.Begin (); i != container.End (); ++i)
+   *     {
+   *       std::pair<Ptr<Ipv4>, uint32_t> pair = *i;
+   *       method (pair.first, pair.second);  // use the pair
+   *     }
+   * \endcode
+   *
+   * \returns an iterator which indicates an ending condition for a loop.
+   */
+  Iterator End (void) const;
+
+  /**
    * \returns the number of Ptr<Ipv4> and interface pairs stored in this 
    * Ipv4InterfaceContainer.
+   *
+   * Pairs can be retrieved from the container in two ways.  First,
+   * directly by an index into the container, and second, using an iterator.
+   * This method is used in the direct method and is typically used to
+   * define an ending condition in a for-loop that runs through the stored
+   * Nodes
+   *
+   * \code
+   *   uint32_t nNodes = container.GetN ();
+   *   for (uint32_t i = 0 i < nNodes; ++i)
+   *     {
+   *       std::pair<Ptr<Ipv4>, uint32_t> pair = container.Get (i);
+   *       method (pair.first, pair.second);  // use the pair
+   *     }
+   * \endcode
+   *
+   * \returns the number of Ptr<Node> stored in this container.
    */
   uint32_t GetN (void) const;
 
   /**
-   * \param i interface index
+   * \param i index of ipInterfacePair in container
    * \param j interface address index (if interface has multiple addresses)
    * \returns the IPv4 address of the j'th address of the interface
    *  corresponding to index i.
    * 
    * If the second parameter is omitted, the zeroth indexed address of 
-   * the interface is returned.  Unless IP aliaising is being used on
+   * the interface is returned.  Unless IP aliasing is being used on
    * the interface, the second parameter may typically be omitted.
    */
   Ipv4Address GetAddress (uint32_t i, uint32_t j = 0) const;
-
 
   void SetMetric (uint32_t i, uint16_t metric);
 

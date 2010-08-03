@@ -5,6 +5,8 @@ def register_types(module):
     
     ## error-model.h: ns3::ErrorUnit [enumeration]
     module.add_enum('ErrorUnit', ['EU_BIT', 'EU_BYTE', 'EU_PKT'])
+    ## spectrum-model.h: ns3::BandInfo [struct]
+    module.add_class('BandInfo')
     ## buffer.h: ns3::Buffer [class]
     module.add_class('Buffer')
     ## buffer.h: ns3::Buffer::Iterator [class]
@@ -39,6 +41,12 @@ def register_types(module):
     module.add_class('TagData', outer_class=root_module['ns3::PacketTagList'])
     ## pcap-file.h: ns3::PcapFile [class]
     module.add_class('PcapFile')
+    ## sequence-number.h: ns3::SequenceNumber<unsigned int, int> [class]
+    module.add_class('SequenceNumber32')
+    ## spectrum-type.h: ns3::SpectrumType [class]
+    module.add_class('SpectrumType')
+    ## spectrum-type.h: ns3::SpectrumTypeFactory [class]
+    module.add_class('SpectrumTypeFactory')
     ## tag.h: ns3::Tag [class]
     module.add_class('Tag', parent=root_module['ns3::ObjectBase'])
     ## tag-buffer.h: ns3::TagBuffer [class]
@@ -47,37 +55,112 @@ def register_types(module):
     module.add_class('Chunk', parent=root_module['ns3::ObjectBase'])
     ## header.h: ns3::Header [class]
     module.add_class('Header', parent=root_module['ns3::Chunk'])
-    ## pcap-writer.h: ns3::PcapWriter [class]
-    module.add_class('PcapWriter', parent=root_module['ns3::Object'])
-    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::AsciiWriter', 'ns3::empty', 'ns3::DefaultDeleter<ns3::AsciiWriter>'], parent=root_module['ns3::empty'])
+    ## packet-burst.h: ns3::PacketBurst [class]
+    module.add_class('PacketBurst', parent=root_module['ns3::Object'])
+    ## pcap-file-wrapper.h: ns3::PcapFileWrapper [class]
+    module.add_class('PcapFileWrapper', parent=root_module['ns3::Object'])
+    ## propagation-delay-model.h: ns3::PropagationDelayModel [class]
+    module.add_class('PropagationDelayModel', parent=root_module['ns3::Object'])
+    ## propagation-loss-model.h: ns3::PropagationLossModel [class]
+    module.add_class('PropagationLossModel', parent=root_module['ns3::Object'])
+    ## propagation-delay-model.h: ns3::RandomPropagationDelayModel [class]
+    module.add_class('RandomPropagationDelayModel', parent=root_module['ns3::PropagationDelayModel'])
+    ## propagation-loss-model.h: ns3::RandomPropagationLossModel [class]
+    module.add_class('RandomPropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## propagation-loss-model.h: ns3::RangePropagationLossModel [class]
+    module.add_class('RangePropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::NixVector, ns3::empty, ns3::DefaultDeleter<ns3::NixVector> > [class]
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::NixVector', 'ns3::empty', 'ns3::DefaultDeleter<ns3::NixVector>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter<ns3::OutputStreamWrapper> > [class]
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::OutputStreamWrapper', 'ns3::empty', 'ns3::DefaultDeleter<ns3::OutputStreamWrapper>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
     ## simple-ref-count.h: ns3::SimpleRefCount<ns3::Packet, ns3::empty, ns3::DefaultDeleter<ns3::Packet> > [class]
-    module.add_class('SimpleRefCount', template_parameters=['ns3::Packet', 'ns3::empty', 'ns3::DefaultDeleter<ns3::Packet>'], parent=root_module['ns3::empty'])
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::Packet', 'ns3::empty', 'ns3::DefaultDeleter<ns3::Packet>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumConverter> > [class]
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::SpectrumConverter', 'ns3::empty', 'ns3::DefaultDeleter<ns3::SpectrumConverter>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumModel> > [class]
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::SpectrumModel', 'ns3::empty', 'ns3::DefaultDeleter<ns3::SpectrumModel>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    ## simple-ref-count.h: ns3::SimpleRefCount<ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumValue> > [class]
+    module.add_class('SimpleRefCount', automatic_type_narrowing=True, template_parameters=['ns3::SpectrumValue', 'ns3::empty', 'ns3::DefaultDeleter<ns3::SpectrumValue>'], parent=root_module['ns3::empty'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    ## spectrum-converter.h: ns3::SpectrumConverter [class]
+    module.add_class('SpectrumConverter', parent=root_module['ns3::SimpleRefCount< ns3::SpectrumConverter, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumConverter> >'])
+    ## spectrum-model.h: ns3::SpectrumModel [class]
+    module.add_class('SpectrumModel', parent=root_module['ns3::SimpleRefCount< ns3::SpectrumModel, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumModel> >'])
+    ## spectrum-propagation-loss-model.h: ns3::SpectrumPropagationLossModel [class]
+    module.add_class('SpectrumPropagationLossModel', parent=root_module['ns3::Object'])
+    ## spectrum-value.h: ns3::SpectrumValue [class]
+    module.add_class('SpectrumValue', parent=root_module['ns3::SimpleRefCount< ns3::SpectrumValue, ns3::empty, ns3::DefaultDeleter<ns3::SpectrumValue> >'])
+    ## propagation-loss-model.h: ns3::ThreeLogDistancePropagationLossModel [class]
+    module.add_class('ThreeLogDistancePropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
     ## trailer.h: ns3::Trailer [class]
     module.add_class('Trailer', parent=root_module['ns3::Chunk'])
-    ## ascii-writer.h: ns3::AsciiWriter [class]
-    module.add_class('AsciiWriter', parent=root_module['ns3::SimpleRefCount< ns3::AsciiWriter, ns3::empty, ns3::DefaultDeleter<ns3::AsciiWriter> >'])
-    ## ascii-writer.h: ns3::AsciiWriter::Type [enumeration]
-    module.add_enum('Type', ['ENQUEUE', 'DEQUEUE', 'DROP', 'TX', 'RX'], outer_class=root_module['ns3::AsciiWriter'])
+    ## propagation-loss-model.h: ns3::TwoRayGroundPropagationLossModel [class]
+    module.add_class('TwoRayGroundPropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## propagation-delay-model.h: ns3::ConstantSpeedPropagationDelayModel [class]
+    module.add_class('ConstantSpeedPropagationDelayModel', parent=root_module['ns3::PropagationDelayModel'])
+    ## cost231-propagation-loss-model.h: ns3::Cost231PropagationLossModel [class]
+    module.add_class('Cost231PropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## cost231-propagation-loss-model.h: ns3::Cost231PropagationLossModel::Environment [enumeration]
+    module.add_enum('Environment', ['SubUrban', 'MediumCity', 'Metropolitan'], outer_class=root_module['ns3::Cost231PropagationLossModel'])
     ## data-rate.h: ns3::DataRateChecker [class]
     module.add_class('DataRateChecker', parent=root_module['ns3::AttributeChecker'])
     ## data-rate.h: ns3::DataRateValue [class]
     module.add_class('DataRateValue', parent=root_module['ns3::AttributeValue'])
     ## error-model.h: ns3::ErrorModel [class]
     module.add_class('ErrorModel', parent=root_module['ns3::Object'])
+    ## propagation-loss-model.h: ns3::FixedRssLossModel [class]
+    module.add_class('FixedRssLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## propagation-loss-model.h: ns3::FriisPropagationLossModel [class]
+    module.add_class('FriisPropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## friis-spectrum-propagation-loss.h: ns3::FriisSpectrumPropagationLossModel [class]
+    module.add_class('FriisSpectrumPropagationLossModel', parent=root_module['ns3::SpectrumPropagationLossModel'])
+    ## jakes-propagation-loss-model.h: ns3::JakesPropagationLossModel [class]
+    module.add_class('JakesPropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
     ## error-model.h: ns3::ListErrorModel [class]
     module.add_class('ListErrorModel', parent=root_module['ns3::ErrorModel'])
+    ## propagation-loss-model.h: ns3::LogDistancePropagationLossModel [class]
+    module.add_class('LogDistancePropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## propagation-loss-model.h: ns3::MatrixPropagationLossModel [class]
+    module.add_class('MatrixPropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
+    ## propagation-loss-model.h: ns3::NakagamiPropagationLossModel [class]
+    module.add_class('NakagamiPropagationLossModel', parent=root_module['ns3::PropagationLossModel'])
     ## nix-vector.h: ns3::NixVector [class]
-    module.add_class('NixVector', parent=root_module['ns3::Object'])
+    module.add_class('NixVector', parent=root_module['ns3::SimpleRefCount< ns3::NixVector, ns3::empty, ns3::DefaultDeleter<ns3::NixVector> >'])
+    ## output-stream-wrapper.h: ns3::OutputStreamWrapper [class]
+    module.add_class('OutputStreamWrapper', parent=root_module['ns3::SimpleRefCount< ns3::OutputStreamWrapper, ns3::empty, ns3::DefaultDeleter<ns3::OutputStreamWrapper> >'])
     ## packet.h: ns3::Packet [class]
-    module.add_class('Packet', parent=root_module['ns3::SimpleRefCount< ns3::Packet, ns3::empty, ns3::DefaultDeleter<ns3::Packet> >'], memory_policy=cppclass.ReferenceCountingMethodsPolicy(incref_method='Ref', decref_method='Unref', peekref_method='GetReferenceCount'))
+    module.add_class('Packet', parent=root_module['ns3::SimpleRefCount< ns3::Packet, ns3::empty, ns3::DefaultDeleter<ns3::Packet> >'])
     ## error-model.h: ns3::RateErrorModel [class]
     module.add_class('RateErrorModel', parent=root_module['ns3::ErrorModel'])
+    ## error-model.h: ns3::ReceiveListErrorModel [class]
+    module.add_class('ReceiveListErrorModel', parent=root_module['ns3::ErrorModel'])
+    module.add_container('ns3::SpectrumConverterMap_t', ('unsigned int', 'ns3::SpectrumConverter'), container_type='map')
+    module.add_container('ns3::Bands', 'ns3::BandInfo', container_type='vector')
+    typehandlers.add_type_alias('ns3::SequenceNumber< short unsigned int, short int >', 'ns3::SequenceNumber16')
+    typehandlers.add_type_alias('ns3::SequenceNumber< short unsigned int, short int >*', 'ns3::SequenceNumber16*')
+    typehandlers.add_type_alias('ns3::SequenceNumber< short unsigned int, short int >&', 'ns3::SequenceNumber16&')
+    typehandlers.add_type_alias('ns3::SequenceNumber< unsigned int, int >', 'ns3::SequenceNumber32')
+    typehandlers.add_type_alias('ns3::SequenceNumber< unsigned int, int >*', 'ns3::SequenceNumber32*')
+    typehandlers.add_type_alias('ns3::SequenceNumber< unsigned int, int >&', 'ns3::SequenceNumber32&')
+    typehandlers.add_type_alias('std::vector< double, std::allocator< double > >', 'ns3::Values')
+    typehandlers.add_type_alias('std::vector< double, std::allocator< double > >*', 'ns3::Values*')
+    typehandlers.add_type_alias('std::vector< double, std::allocator< double > >&', 'ns3::Values&')
+    typehandlers.add_type_alias('uint32_t', 'ns3::SpectrumModelUid_t')
+    typehandlers.add_type_alias('uint32_t*', 'ns3::SpectrumModelUid_t*')
+    typehandlers.add_type_alias('uint32_t&', 'ns3::SpectrumModelUid_t&')
+    typehandlers.add_type_alias('std::vector< ns3::BandInfo, std::allocator< ns3::BandInfo > >', 'ns3::Bands')
+    typehandlers.add_type_alias('std::vector< ns3::BandInfo, std::allocator< ns3::BandInfo > >*', 'ns3::Bands*')
+    typehandlers.add_type_alias('std::vector< ns3::BandInfo, std::allocator< ns3::BandInfo > >&', 'ns3::Bands&')
     
     ## Register a nested module for the namespace Config
     
     nested_module = module.add_cpp_namespace('Config')
     register_types_ns3_Config(nested_module)
+    
+    
+    ## Register a nested module for the namespace FatalImpl
+    
+    nested_module = module.add_cpp_namespace('FatalImpl')
+    register_types_ns3_FatalImpl(nested_module)
     
     
     ## Register a nested module for the namespace TimeStepPrecision
@@ -126,6 +209,10 @@ def register_types_ns3_Config(module):
     root_module = module.get_root()
     
 
+def register_types_ns3_FatalImpl(module):
+    root_module = module.get_root()
+    
+
 def register_types_ns3_TimeStepPrecision(module):
     root_module = module.get_root()
     
@@ -155,6 +242,7 @@ def register_types_ns3_olsr(module):
     
 
 def register_methods(root_module):
+    register_Ns3BandInfo_methods(root_module, root_module['ns3::BandInfo'])
     register_Ns3Buffer_methods(root_module, root_module['ns3::Buffer'])
     register_Ns3BufferIterator_methods(root_module, root_module['ns3::Buffer::Iterator'])
     register_Ns3ByteTagIterator_methods(root_module, root_module['ns3::ByteTagIterator'])
@@ -171,29 +259,69 @@ def register_methods(root_module):
     register_Ns3PacketTagList_methods(root_module, root_module['ns3::PacketTagList'])
     register_Ns3PacketTagListTagData_methods(root_module, root_module['ns3::PacketTagList::TagData'])
     register_Ns3PcapFile_methods(root_module, root_module['ns3::PcapFile'])
+    register_Ns3SequenceNumber32_methods(root_module, root_module['ns3::SequenceNumber32'])
+    register_Ns3SpectrumType_methods(root_module, root_module['ns3::SpectrumType'])
+    register_Ns3SpectrumTypeFactory_methods(root_module, root_module['ns3::SpectrumTypeFactory'])
     register_Ns3Tag_methods(root_module, root_module['ns3::Tag'])
     register_Ns3TagBuffer_methods(root_module, root_module['ns3::TagBuffer'])
     register_Ns3Chunk_methods(root_module, root_module['ns3::Chunk'])
     register_Ns3Header_methods(root_module, root_module['ns3::Header'])
-    register_Ns3PcapWriter_methods(root_module, root_module['ns3::PcapWriter'])
+    register_Ns3PacketBurst_methods(root_module, root_module['ns3::PacketBurst'])
+    register_Ns3PcapFileWrapper_methods(root_module, root_module['ns3::PcapFileWrapper'])
+    register_Ns3PropagationDelayModel_methods(root_module, root_module['ns3::PropagationDelayModel'])
+    register_Ns3PropagationLossModel_methods(root_module, root_module['ns3::PropagationLossModel'])
+    register_Ns3RandomPropagationDelayModel_methods(root_module, root_module['ns3::RandomPropagationDelayModel'])
+    register_Ns3RandomPropagationLossModel_methods(root_module, root_module['ns3::RandomPropagationLossModel'])
+    register_Ns3RangePropagationLossModel_methods(root_module, root_module['ns3::RangePropagationLossModel'])
+    register_Ns3SpectrumConverter_methods(root_module, root_module['ns3::SpectrumConverter'])
+    register_Ns3SpectrumModel_methods(root_module, root_module['ns3::SpectrumModel'])
+    register_Ns3SpectrumPropagationLossModel_methods(root_module, root_module['ns3::SpectrumPropagationLossModel'])
+    register_Ns3SpectrumValue_methods(root_module, root_module['ns3::SpectrumValue'])
+    register_Ns3ThreeLogDistancePropagationLossModel_methods(root_module, root_module['ns3::ThreeLogDistancePropagationLossModel'])
     register_Ns3Trailer_methods(root_module, root_module['ns3::Trailer'])
-    register_Ns3AsciiWriter_methods(root_module, root_module['ns3::AsciiWriter'])
+    register_Ns3TwoRayGroundPropagationLossModel_methods(root_module, root_module['ns3::TwoRayGroundPropagationLossModel'])
+    register_Ns3ConstantSpeedPropagationDelayModel_methods(root_module, root_module['ns3::ConstantSpeedPropagationDelayModel'])
+    register_Ns3Cost231PropagationLossModel_methods(root_module, root_module['ns3::Cost231PropagationLossModel'])
     register_Ns3DataRateChecker_methods(root_module, root_module['ns3::DataRateChecker'])
     register_Ns3DataRateValue_methods(root_module, root_module['ns3::DataRateValue'])
     register_Ns3ErrorModel_methods(root_module, root_module['ns3::ErrorModel'])
+    register_Ns3FixedRssLossModel_methods(root_module, root_module['ns3::FixedRssLossModel'])
+    register_Ns3FriisPropagationLossModel_methods(root_module, root_module['ns3::FriisPropagationLossModel'])
+    register_Ns3FriisSpectrumPropagationLossModel_methods(root_module, root_module['ns3::FriisSpectrumPropagationLossModel'])
+    register_Ns3JakesPropagationLossModel_methods(root_module, root_module['ns3::JakesPropagationLossModel'])
     register_Ns3ListErrorModel_methods(root_module, root_module['ns3::ListErrorModel'])
+    register_Ns3LogDistancePropagationLossModel_methods(root_module, root_module['ns3::LogDistancePropagationLossModel'])
+    register_Ns3MatrixPropagationLossModel_methods(root_module, root_module['ns3::MatrixPropagationLossModel'])
+    register_Ns3NakagamiPropagationLossModel_methods(root_module, root_module['ns3::NakagamiPropagationLossModel'])
     register_Ns3NixVector_methods(root_module, root_module['ns3::NixVector'])
+    register_Ns3OutputStreamWrapper_methods(root_module, root_module['ns3::OutputStreamWrapper'])
     register_Ns3Packet_methods(root_module, root_module['ns3::Packet'])
     register_Ns3RateErrorModel_methods(root_module, root_module['ns3::RateErrorModel'])
+    register_Ns3ReceiveListErrorModel_methods(root_module, root_module['ns3::ReceiveListErrorModel'])
+    return
+
+def register_Ns3BandInfo_methods(root_module, cls):
+    ## spectrum-model.h: ns3::BandInfo::BandInfo() [constructor]
+    cls.add_constructor([])
+    ## spectrum-model.h: ns3::BandInfo::BandInfo(ns3::BandInfo const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::BandInfo const &', 'arg0')])
+    ## spectrum-model.h: ns3::BandInfo::fc [variable]
+    cls.add_instance_attribute('fc', 'double', is_const=False)
+    ## spectrum-model.h: ns3::BandInfo::fh [variable]
+    cls.add_instance_attribute('fh', 'double', is_const=False)
+    ## spectrum-model.h: ns3::BandInfo::fl [variable]
+    cls.add_instance_attribute('fl', 'double', is_const=False)
     return
 
 def register_Ns3Buffer_methods(root_module, cls):
-    ## buffer.h: ns3::Buffer::Buffer(ns3::Buffer const & o) [copy constructor]
-    cls.add_constructor([param('ns3::Buffer const &', 'o')])
     ## buffer.h: ns3::Buffer::Buffer() [constructor]
     cls.add_constructor([])
     ## buffer.h: ns3::Buffer::Buffer(uint32_t dataSize) [constructor]
     cls.add_constructor([param('uint32_t', 'dataSize')])
+    ## buffer.h: ns3::Buffer::Buffer(uint32_t dataSize, bool initialize) [constructor]
+    cls.add_constructor([param('uint32_t', 'dataSize'), param('bool', 'initialize')])
+    ## buffer.h: ns3::Buffer::Buffer(ns3::Buffer const & o) [copy constructor]
+    cls.add_constructor([param('ns3::Buffer const &', 'o')])
     ## buffer.h: bool ns3::Buffer::AddAtEnd(uint32_t end) [member function]
     cls.add_method('AddAtEnd', 
                    'bool', 
@@ -216,6 +344,11 @@ def register_Ns3Buffer_methods(root_module, cls):
                    'void', 
                    [param('std::ostream *', 'os'), param('uint32_t', 'size')], 
                    is_const=True)
+    ## buffer.h: uint32_t ns3::Buffer::CopyData(uint8_t * buffer, uint32_t size) const [member function]
+    cls.add_method('CopyData', 
+                   'uint32_t', 
+                   [param('uint8_t *', 'buffer'), param('uint32_t', 'size')], 
+                   is_const=True)
     ## buffer.h: ns3::Buffer ns3::Buffer::CreateFragment(uint32_t start, uint32_t length) const [member function]
     cls.add_method('CreateFragment', 
                    'ns3::Buffer', 
@@ -226,6 +359,10 @@ def register_Ns3Buffer_methods(root_module, cls):
                    'ns3::Buffer', 
                    [], 
                    is_const=True)
+    ## buffer.h: uint32_t ns3::Buffer::Deserialize(uint8_t const * buffer, uint32_t size) [member function]
+    cls.add_method('Deserialize', 
+                   'uint32_t', 
+                   [param('uint8_t const *', 'buffer'), param('uint32_t', 'size')])
     ## buffer.h: ns3::Buffer::Iterator ns3::Buffer::End() const [member function]
     cls.add_method('End', 
                    'ns3::Buffer::Iterator', 
@@ -239,6 +376,11 @@ def register_Ns3Buffer_methods(root_module, cls):
     ## buffer.h: int32_t ns3::Buffer::GetCurrentStartOffset() const [member function]
     cls.add_method('GetCurrentStartOffset', 
                    'int32_t', 
+                   [], 
+                   is_const=True)
+    ## buffer.h: uint32_t ns3::Buffer::GetSerializedSize() const [member function]
+    cls.add_method('GetSerializedSize', 
+                   'uint32_t', 
                    [], 
                    is_const=True)
     ## buffer.h: uint32_t ns3::Buffer::GetSize() const [member function]
@@ -259,6 +401,11 @@ def register_Ns3Buffer_methods(root_module, cls):
     cls.add_method('RemoveAtStart', 
                    'void', 
                    [param('uint32_t', 'start')])
+    ## buffer.h: uint32_t ns3::Buffer::Serialize(uint8_t * buffer, uint32_t maxSize) const [member function]
+    cls.add_method('Serialize', 
+                   'uint32_t', 
+                   [param('uint8_t *', 'buffer'), param('uint32_t', 'maxSize')], 
+                   is_const=True)
     return
 
 def register_Ns3BufferIterator_methods(root_module, cls):
@@ -544,8 +691,8 @@ def register_Ns3DataRate_methods(root_module, cls):
     return
 
 def register_Ns3PacketMetadata_methods(root_module, cls):
-    ## packet-metadata.h: ns3::PacketMetadata::PacketMetadata(uint32_t uid, uint32_t size) [constructor]
-    cls.add_constructor([param('uint32_t', 'uid'), param('uint32_t', 'size')])
+    ## packet-metadata.h: ns3::PacketMetadata::PacketMetadata(uint64_t uid, uint32_t size) [constructor]
+    cls.add_constructor([param('uint64_t', 'uid'), param('uint32_t', 'size')])
     ## packet-metadata.h: ns3::PacketMetadata::PacketMetadata(ns3::PacketMetadata const & o) [copy constructor]
     cls.add_constructor([param('ns3::PacketMetadata const &', 'o')])
     ## packet-metadata.h: void ns3::PacketMetadata::AddAtEnd(ns3::PacketMetadata const & o) [member function]
@@ -574,10 +721,10 @@ def register_Ns3PacketMetadata_methods(root_module, cls):
                    'ns3::PacketMetadata', 
                    [param('uint32_t', 'start'), param('uint32_t', 'end')], 
                    is_const=True)
-    ## packet-metadata.h: uint32_t ns3::PacketMetadata::Deserialize(ns3::Buffer::Iterator i) [member function]
+    ## packet-metadata.h: uint32_t ns3::PacketMetadata::Deserialize(uint8_t const * buffer, uint32_t size) [member function]
     cls.add_method('Deserialize', 
                    'uint32_t', 
-                   [param('ns3::Buffer::Iterator', 'i')])
+                   [param('uint8_t const *', 'buffer'), param('uint32_t', 'size')])
     ## packet-metadata.h: static void ns3::PacketMetadata::Enable() [member function]
     cls.add_method('Enable', 
                    'void', 
@@ -593,9 +740,9 @@ def register_Ns3PacketMetadata_methods(root_module, cls):
                    'uint32_t', 
                    [], 
                    is_const=True)
-    ## packet-metadata.h: uint32_t ns3::PacketMetadata::GetUid() const [member function]
+    ## packet-metadata.h: uint64_t ns3::PacketMetadata::GetUid() const [member function]
     cls.add_method('GetUid', 
-                   'uint32_t', 
+                   'uint64_t', 
                    [], 
                    is_const=True)
     ## packet-metadata.h: void ns3::PacketMetadata::RemoveAtEnd(uint32_t end) [member function]
@@ -614,10 +761,10 @@ def register_Ns3PacketMetadata_methods(root_module, cls):
     cls.add_method('RemoveTrailer', 
                    'void', 
                    [param('ns3::Trailer const &', 'trailer'), param('uint32_t', 'size')])
-    ## packet-metadata.h: void ns3::PacketMetadata::Serialize(ns3::Buffer::Iterator i, uint32_t size) const [member function]
+    ## packet-metadata.h: uint32_t ns3::PacketMetadata::Serialize(uint8_t * buffer, uint32_t maxSize) const [member function]
     cls.add_method('Serialize', 
-                   'void', 
-                   [param('ns3::Buffer::Iterator', 'i'), param('uint32_t', 'size')], 
+                   'uint32_t', 
+                   [param('uint8_t *', 'buffer'), param('uint32_t', 'maxSize')], 
                    is_const=True)
     return
 
@@ -731,10 +878,12 @@ def register_Ns3PacketTagListTagData_methods(root_module, cls):
     return
 
 def register_Ns3PcapFile_methods(root_module, cls):
-    ## pcap-file.h: ns3::PcapFile::PcapFile(ns3::PcapFile const & arg0) [copy constructor]
-    cls.add_constructor([param('ns3::PcapFile const &', 'arg0')])
     ## pcap-file.h: ns3::PcapFile::PcapFile() [constructor]
     cls.add_constructor([])
+    ## pcap-file.h: void ns3::PcapFile::Clear() [member function]
+    cls.add_method('Clear', 
+                   'void', 
+                   [])
     ## pcap-file.h: void ns3::PcapFile::Close() [member function]
     cls.add_method('Close', 
                    'void', 
@@ -744,6 +893,16 @@ def register_Ns3PcapFile_methods(root_module, cls):
                    'bool', 
                    [param('std::string const &', 'f1'), param('std::string const &', 'f2'), param('uint32_t &', 'sec'), param('uint32_t &', 'usec'), param('uint32_t', 'snapLen', default_value='ns3::PcapFile::SNAPLEN_DEFAULT')], 
                    is_static=True)
+    ## pcap-file.h: bool ns3::PcapFile::Eof() const [member function]
+    cls.add_method('Eof', 
+                   'bool', 
+                   [], 
+                   is_const=True)
+    ## pcap-file.h: bool ns3::PcapFile::Fail() const [member function]
+    cls.add_method('Fail', 
+                   'bool', 
+                   [], 
+                   is_const=True)
     ## pcap-file.h: uint32_t ns3::PcapFile::GetDataLinkType() [member function]
     cls.add_method('GetDataLinkType', 
                    'uint32_t', 
@@ -776,26 +935,94 @@ def register_Ns3PcapFile_methods(root_module, cls):
     cls.add_method('GetVersionMinor', 
                    'uint16_t', 
                    [])
-    ## pcap-file.h: bool ns3::PcapFile::Init(uint32_t dataLinkType, uint32_t snapLen=ns3::PcapFile::SNAPLEN_DEFAULT, int32_t timeZoneCorrection=ns3::PcapFile::ZONE_DEFAULT, bool swapMode=false) [member function]
+    ## pcap-file.h: void ns3::PcapFile::Init(uint32_t dataLinkType, uint32_t snapLen=ns3::PcapFile::SNAPLEN_DEFAULT, int32_t timeZoneCorrection=ns3::PcapFile::ZONE_DEFAULT, bool swapMode=false) [member function]
     cls.add_method('Init', 
-                   'bool', 
+                   'void', 
                    [param('uint32_t', 'dataLinkType'), param('uint32_t', 'snapLen', default_value='ns3::PcapFile::SNAPLEN_DEFAULT'), param('int32_t', 'timeZoneCorrection', default_value='ns3::PcapFile::ZONE_DEFAULT'), param('bool', 'swapMode', default_value='false')])
-    ## pcap-file.h: bool ns3::PcapFile::Open(std::string const & filename, std::string const & mode) [member function]
+    ## pcap-file.h: void ns3::PcapFile::Open(std::string const & filename, std::_Ios_Openmode mode) [member function]
     cls.add_method('Open', 
-                   'bool', 
-                   [param('std::string const &', 'filename'), param('std::string const &', 'mode')])
-    ## pcap-file.h: bool ns3::PcapFile::Read(uint8_t * const data, uint32_t maxBytes, uint32_t & tsSec, uint32_t & tsUsec, uint32_t & inclLen, uint32_t & origLen, uint32_t & readLen) [member function]
+                   'void', 
+                   [param('std::string const &', 'filename'), param('std::_Ios_Openmode', 'mode')])
+    ## pcap-file.h: void ns3::PcapFile::Read(uint8_t * const data, uint32_t maxBytes, uint32_t & tsSec, uint32_t & tsUsec, uint32_t & inclLen, uint32_t & origLen, uint32_t & readLen) [member function]
     cls.add_method('Read', 
-                   'bool', 
+                   'void', 
                    [param('uint8_t * const', 'data'), param('uint32_t', 'maxBytes'), param('uint32_t &', 'tsSec'), param('uint32_t &', 'tsUsec'), param('uint32_t &', 'inclLen'), param('uint32_t &', 'origLen'), param('uint32_t &', 'readLen')])
-    ## pcap-file.h: bool ns3::PcapFile::Write(uint32_t tsSec, uint32_t tsUsec, uint8_t const * const data, uint32_t totalLen) [member function]
+    ## pcap-file.h: void ns3::PcapFile::Write(uint32_t tsSec, uint32_t tsUsec, uint8_t const * const data, uint32_t totalLen) [member function]
     cls.add_method('Write', 
-                   'bool', 
+                   'void', 
                    [param('uint32_t', 'tsSec'), param('uint32_t', 'tsUsec'), param('uint8_t const * const', 'data'), param('uint32_t', 'totalLen')])
+    ## pcap-file.h: void ns3::PcapFile::Write(uint32_t tsSec, uint32_t tsUsec, ns3::Ptr<ns3::Packet const> p) [member function]
+    cls.add_method('Write', 
+                   'void', 
+                   [param('uint32_t', 'tsSec'), param('uint32_t', 'tsUsec'), param('ns3::Ptr< ns3::Packet const >', 'p')])
+    ## pcap-file.h: void ns3::PcapFile::Write(uint32_t tsSec, uint32_t tsUsec, ns3::Header & header, ns3::Ptr<ns3::Packet const> p) [member function]
+    cls.add_method('Write', 
+                   'void', 
+                   [param('uint32_t', 'tsSec'), param('uint32_t', 'tsUsec'), param('ns3::Header &', 'header'), param('ns3::Ptr< ns3::Packet const >', 'p')])
     ## pcap-file.h: ns3::PcapFile::SNAPLEN_DEFAULT [variable]
     cls.add_static_attribute('SNAPLEN_DEFAULT', 'uint32_t const', is_const=True)
     ## pcap-file.h: ns3::PcapFile::ZONE_DEFAULT [variable]
     cls.add_static_attribute('ZONE_DEFAULT', 'int32_t const', is_const=True)
+    return
+
+def register_Ns3SequenceNumber32_methods(root_module, cls):
+    cls.add_binary_comparison_operator('!=')
+    cls.add_binary_numeric_operator('+', root_module['ns3::SequenceNumber32'], root_module['ns3::SequenceNumber32'], param('ns3::SequenceNumber< unsigned int, int > const &', 'right'))
+    cls.add_binary_numeric_operator('+', root_module['ns3::SequenceNumber32'], root_module['ns3::SequenceNumber32'], param('int', 'right'))
+    cls.add_inplace_numeric_operator('+=', param('int', 'right'))
+    cls.add_binary_numeric_operator('-', root_module['ns3::SequenceNumber32'], root_module['ns3::SequenceNumber32'], param('int', 'right'))
+    cls.add_inplace_numeric_operator('-=', param('int', 'right'))
+    cls.add_binary_comparison_operator('<')
+    cls.add_binary_comparison_operator('<=')
+    cls.add_binary_comparison_operator('==')
+    cls.add_binary_comparison_operator('>')
+    cls.add_binary_comparison_operator('>=')
+    ## sequence-number.h: ns3::SequenceNumber<unsigned int, int>::SequenceNumber() [constructor]
+    cls.add_constructor([])
+    ## sequence-number.h: ns3::SequenceNumber<unsigned int, int>::SequenceNumber(unsigned int value) [constructor]
+    cls.add_constructor([param('unsigned int', 'value')])
+    ## sequence-number.h: ns3::SequenceNumber<unsigned int, int>::SequenceNumber(ns3::SequenceNumber<unsigned int, int> const & value) [copy constructor]
+    cls.add_constructor([param('ns3::SequenceNumber< unsigned int, int > const &', 'value')])
+    ## sequence-number.h: unsigned int ns3::SequenceNumber<unsigned int, int>::GetValue() const [member function]
+    cls.add_method('GetValue', 
+                   'unsigned int', 
+                   [], 
+                   is_const=True)
+    return
+
+def register_Ns3SpectrumType_methods(root_module, cls):
+    cls.add_binary_comparison_operator('!=')
+    cls.add_output_stream_operator()
+    cls.add_binary_comparison_operator('==')
+    ## spectrum-type.h: ns3::SpectrumType::SpectrumType(ns3::SpectrumType const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::SpectrumType const &', 'arg0')])
+    ## spectrum-type.h: std::string ns3::SpectrumType::GetName() const [member function]
+    cls.add_method('GetName', 
+                   'std::string', 
+                   [], 
+                   is_const=True)
+    ## spectrum-type.h: uint32_t ns3::SpectrumType::GetUid() const [member function]
+    cls.add_method('GetUid', 
+                   'uint32_t', 
+                   [], 
+                   is_const=True)
+    return
+
+def register_Ns3SpectrumTypeFactory_methods(root_module, cls):
+    ## spectrum-type.h: ns3::SpectrumTypeFactory::SpectrumTypeFactory() [constructor]
+    cls.add_constructor([])
+    ## spectrum-type.h: ns3::SpectrumTypeFactory::SpectrumTypeFactory(ns3::SpectrumTypeFactory const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::SpectrumTypeFactory const &', 'arg0')])
+    ## spectrum-type.h: static ns3::SpectrumType ns3::SpectrumTypeFactory::Create(std::string name) [member function]
+    cls.add_method('Create', 
+                   'ns3::SpectrumType', 
+                   [param('std::string', 'name')], 
+                   is_static=True)
+    ## spectrum-type.h: static std::string ns3::SpectrumTypeFactory::GetNameByUid(uint32_t uid) [member function]
+    cls.add_method('GetNameByUid', 
+                   'std::string', 
+                   [param('uint32_t', 'uid')], 
+                   is_static=True)
     return
 
 def register_Ns3Tag_methods(root_module, cls):
@@ -948,56 +1175,379 @@ def register_Ns3Header_methods(root_module, cls):
                    is_pure_virtual=True, is_const=True, is_virtual=True)
     return
 
-def register_Ns3PcapWriter_methods(root_module, cls):
-    ## pcap-writer.h: ns3::PcapWriter::PcapWriter(ns3::PcapWriter const & arg0) [copy constructor]
-    cls.add_constructor([param('ns3::PcapWriter const &', 'arg0')])
-    ## pcap-writer.h: ns3::PcapWriter::PcapWriter() [constructor]
+def register_Ns3PacketBurst_methods(root_module, cls):
+    ## packet-burst.h: ns3::PacketBurst::PacketBurst(ns3::PacketBurst const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::PacketBurst const &', 'arg0')])
+    ## packet-burst.h: ns3::PacketBurst::PacketBurst() [constructor]
     cls.add_constructor([])
-    ## pcap-writer.h: static ns3::TypeId ns3::PcapWriter::GetTypeId() [member function]
+    ## packet-burst.h: void ns3::PacketBurst::AddPacket(ns3::Ptr<ns3::Packet> packet) [member function]
+    cls.add_method('AddPacket', 
+                   'void', 
+                   [param('ns3::Ptr< ns3::Packet >', 'packet')])
+    ## packet-burst.h: std::_List_const_iterator<ns3::Ptr<ns3::Packet> > ns3::PacketBurst::Begin() const [member function]
+    cls.add_method('Begin', 
+                   'std::_List_const_iterator< ns3::Ptr< ns3::Packet > >', 
+                   [], 
+                   is_const=True)
+    ## packet-burst.h: ns3::Ptr<ns3::PacketBurst> ns3::PacketBurst::Copy() const [member function]
+    cls.add_method('Copy', 
+                   'ns3::Ptr< ns3::PacketBurst >', 
+                   [], 
+                   is_const=True)
+    ## packet-burst.h: std::_List_const_iterator<ns3::Ptr<ns3::Packet> > ns3::PacketBurst::End() const [member function]
+    cls.add_method('End', 
+                   'std::_List_const_iterator< ns3::Ptr< ns3::Packet > >', 
+                   [], 
+                   is_const=True)
+    ## packet-burst.h: uint32_t ns3::PacketBurst::GetNPackets() const [member function]
+    cls.add_method('GetNPackets', 
+                   'uint32_t', 
+                   [], 
+                   is_const=True)
+    ## packet-burst.h: std::list<ns3::Ptr<ns3::Packet>, std::allocator<ns3::Ptr<ns3::Packet> > > ns3::PacketBurst::GetPackets() const [member function]
+    cls.add_method('GetPackets', 
+                   'std::list< ns3::Ptr< ns3::Packet > >', 
+                   [], 
+                   is_const=True)
+    ## packet-burst.h: uint32_t ns3::PacketBurst::GetSize() const [member function]
+    cls.add_method('GetSize', 
+                   'uint32_t', 
+                   [], 
+                   is_const=True)
+    ## packet-burst.h: static ns3::TypeId ns3::PacketBurst::GetTypeId() [member function]
     cls.add_method('GetTypeId', 
                    'ns3::TypeId', 
                    [], 
                    is_static=True)
-    ## pcap-writer.h: void ns3::PcapWriter::Open(std::string const & name) [member function]
+    ## packet-burst.h: void ns3::PacketBurst::DoDispose() [member function]
+    cls.add_method('DoDispose', 
+                   'void', 
+                   [], 
+                   visibility='private', is_virtual=True)
+    return
+
+def register_Ns3PcapFileWrapper_methods(root_module, cls):
+    ## pcap-file-wrapper.h: static ns3::TypeId ns3::PcapFileWrapper::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## pcap-file-wrapper.h: ns3::PcapFileWrapper::PcapFileWrapper() [constructor]
+    cls.add_constructor([])
+    ## pcap-file-wrapper.h: bool ns3::PcapFileWrapper::Fail() const [member function]
+    cls.add_method('Fail', 
+                   'bool', 
+                   [], 
+                   is_const=True)
+    ## pcap-file-wrapper.h: bool ns3::PcapFileWrapper::Eof() const [member function]
+    cls.add_method('Eof', 
+                   'bool', 
+                   [], 
+                   is_const=True)
+    ## pcap-file-wrapper.h: void ns3::PcapFileWrapper::Clear() [member function]
+    cls.add_method('Clear', 
+                   'void', 
+                   [])
+    ## pcap-file-wrapper.h: void ns3::PcapFileWrapper::Open(std::string const & filename, std::_Ios_Openmode mode) [member function]
     cls.add_method('Open', 
                    'void', 
-                   [param('std::string const &', 'name')])
-    ## pcap-writer.h: void ns3::PcapWriter::SetCaptureSize(uint32_t size) [member function]
-    cls.add_method('SetCaptureSize', 
-                   'void', 
-                   [param('uint32_t', 'size')])
-    ## pcap-writer.h: void ns3::PcapWriter::WriteEthernetHeader() [member function]
-    cls.add_method('WriteEthernetHeader', 
+                   [param('std::string const &', 'filename'), param('std::_Ios_Openmode', 'mode')])
+    ## pcap-file-wrapper.h: void ns3::PcapFileWrapper::Close() [member function]
+    cls.add_method('Close', 
                    'void', 
                    [])
-    ## pcap-writer.h: void ns3::PcapWriter::WriteIpHeader() [member function]
-    cls.add_method('WriteIpHeader', 
+    ## pcap-file-wrapper.h: void ns3::PcapFileWrapper::Init(uint32_t dataLinkType, uint32_t snapLen=std::numeric_limits<unsigned int>::max(), int32_t tzCorrection=ns3::PcapFile::ZONE_DEFAULT) [member function]
+    cls.add_method('Init', 
                    'void', 
+                   [param('uint32_t', 'dataLinkType'), param('uint32_t', 'snapLen', default_value='std::numeric_limits<unsigned int>::max()'), param('int32_t', 'tzCorrection', default_value='ns3::PcapFile::ZONE_DEFAULT')])
+    ## pcap-file-wrapper.h: void ns3::PcapFileWrapper::Write(ns3::Time t, ns3::Ptr<ns3::Packet const> p) [member function]
+    cls.add_method('Write', 
+                   'void', 
+                   [param('ns3::Time', 't'), param('ns3::Ptr< ns3::Packet const >', 'p')])
+    ## pcap-file-wrapper.h: void ns3::PcapFileWrapper::Write(ns3::Time t, ns3::Header & header, ns3::Ptr<ns3::Packet const> p) [member function]
+    cls.add_method('Write', 
+                   'void', 
+                   [param('ns3::Time', 't'), param('ns3::Header &', 'header'), param('ns3::Ptr< ns3::Packet const >', 'p')])
+    ## pcap-file-wrapper.h: void ns3::PcapFileWrapper::Write(ns3::Time t, uint8_t const * buffer, uint32_t length) [member function]
+    cls.add_method('Write', 
+                   'void', 
+                   [param('ns3::Time', 't'), param('uint8_t const *', 'buffer'), param('uint32_t', 'length')])
+    ## pcap-file-wrapper.h: uint32_t ns3::PcapFileWrapper::GetMagic() [member function]
+    cls.add_method('GetMagic', 
+                   'uint32_t', 
                    [])
-    ## pcap-writer.h: void ns3::PcapWriter::WritePacket(ns3::Ptr<ns3::Packet const> packet) [member function]
-    cls.add_method('WritePacket', 
-                   'void', 
-                   [param('ns3::Ptr< ns3::Packet const >', 'packet')])
-    ## pcap-writer.h: void ns3::PcapWriter::WritePppHeader() [member function]
-    cls.add_method('WritePppHeader', 
-                   'void', 
+    ## pcap-file-wrapper.h: uint16_t ns3::PcapFileWrapper::GetVersionMajor() [member function]
+    cls.add_method('GetVersionMajor', 
+                   'uint16_t', 
                    [])
-    ## pcap-writer.h: void ns3::PcapWriter::WriteWifiHeader() [member function]
-    cls.add_method('WriteWifiHeader', 
-                   'void', 
+    ## pcap-file-wrapper.h: uint16_t ns3::PcapFileWrapper::GetVersionMinor() [member function]
+    cls.add_method('GetVersionMinor', 
+                   'uint16_t', 
                    [])
-    ## pcap-writer.h: void ns3::PcapWriter::WriteWifiMonitorPacket(ns3::Ptr<ns3::Packet const> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, bool isTx, double signalDbm, double noiseDbm) [member function]
-    cls.add_method('WriteWifiMonitorPacket', 
-                   'void', 
-                   [param('ns3::Ptr< ns3::Packet const >', 'packet'), param('uint16_t', 'channelFreqMhz'), param('uint16_t', 'channelNumber'), param('uint32_t', 'rate'), param('bool', 'isShortPreamble'), param('bool', 'isTx'), param('double', 'signalDbm'), param('double', 'noiseDbm')])
-    ## pcap-writer.h: void ns3::PcapWriter::WriteWifiPrismHeader() [member function]
-    cls.add_method('WriteWifiPrismHeader', 
-                   'void', 
+    ## pcap-file-wrapper.h: int32_t ns3::PcapFileWrapper::GetTimeZoneOffset() [member function]
+    cls.add_method('GetTimeZoneOffset', 
+                   'int32_t', 
                    [])
-    ## pcap-writer.h: void ns3::PcapWriter::WriteWifiRadiotapHeader() [member function]
-    cls.add_method('WriteWifiRadiotapHeader', 
-                   'void', 
+    ## pcap-file-wrapper.h: uint32_t ns3::PcapFileWrapper::GetSigFigs() [member function]
+    cls.add_method('GetSigFigs', 
+                   'uint32_t', 
                    [])
+    ## pcap-file-wrapper.h: uint32_t ns3::PcapFileWrapper::GetSnapLen() [member function]
+    cls.add_method('GetSnapLen', 
+                   'uint32_t', 
+                   [])
+    ## pcap-file-wrapper.h: uint32_t ns3::PcapFileWrapper::GetDataLinkType() [member function]
+    cls.add_method('GetDataLinkType', 
+                   'uint32_t', 
+                   [])
+    return
+
+def register_Ns3PropagationDelayModel_methods(root_module, cls):
+    ## propagation-delay-model.h: ns3::PropagationDelayModel::PropagationDelayModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-delay-model.h: ns3::PropagationDelayModel::PropagationDelayModel(ns3::PropagationDelayModel const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::PropagationDelayModel const &', 'arg0')])
+    ## propagation-delay-model.h: ns3::Time ns3::PropagationDelayModel::GetDelay(ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('GetDelay', 
+                   'ns3::Time', 
+                   [param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_pure_virtual=True, is_const=True, is_virtual=True)
+    ## propagation-delay-model.h: static ns3::TypeId ns3::PropagationDelayModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    return
+
+def register_Ns3PropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::PropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::PropagationLossModel::PropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: void ns3::PropagationLossModel::SetNext(ns3::Ptr<ns3::PropagationLossModel> next) [member function]
+    cls.add_method('SetNext', 
+                   'void', 
+                   [param('ns3::Ptr< ns3::PropagationLossModel >', 'next')])
+    ## propagation-loss-model.h: double ns3::PropagationLossModel::CalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('CalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True)
+    ## propagation-loss-model.h: double ns3::PropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_pure_virtual=True, is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3RandomPropagationDelayModel_methods(root_module, cls):
+    ## propagation-delay-model.h: ns3::RandomPropagationDelayModel::RandomPropagationDelayModel(ns3::RandomPropagationDelayModel const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::RandomPropagationDelayModel const &', 'arg0')])
+    ## propagation-delay-model.h: ns3::RandomPropagationDelayModel::RandomPropagationDelayModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-delay-model.h: ns3::Time ns3::RandomPropagationDelayModel::GetDelay(ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('GetDelay', 
+                   'ns3::Time', 
+                   [param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, is_virtual=True)
+    ## propagation-delay-model.h: static ns3::TypeId ns3::RandomPropagationDelayModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    return
+
+def register_Ns3RandomPropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::RandomPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::RandomPropagationLossModel::RandomPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: double ns3::RandomPropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3RangePropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::RangePropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::RangePropagationLossModel::RangePropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: double ns3::RangePropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3SpectrumConverter_methods(root_module, cls):
+    ## spectrum-converter.h: ns3::SpectrumConverter::SpectrumConverter(ns3::SpectrumConverter const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::SpectrumConverter const &', 'arg0')])
+    ## spectrum-converter.h: ns3::SpectrumConverter::SpectrumConverter(ns3::Ptr<ns3::SpectrumModel const> fromSpectrumModel, ns3::Ptr<ns3::SpectrumModel const> toSpectrumModel) [constructor]
+    cls.add_constructor([param('ns3::Ptr< ns3::SpectrumModel const >', 'fromSpectrumModel'), param('ns3::Ptr< ns3::SpectrumModel const >', 'toSpectrumModel')])
+    ## spectrum-converter.h: ns3::SpectrumConverter::SpectrumConverter() [constructor]
+    cls.add_constructor([])
+    ## spectrum-converter.h: ns3::Ptr<ns3::SpectrumValue> ns3::SpectrumConverter::Convert(ns3::Ptr<ns3::SpectrumValue const> vvf) const [member function]
+    cls.add_method('Convert', 
+                   'ns3::Ptr< ns3::SpectrumValue >', 
+                   [param('ns3::Ptr< ns3::SpectrumValue const >', 'vvf')], 
+                   is_const=True)
+    return
+
+def register_Ns3SpectrumModel_methods(root_module, cls):
+    cls.add_binary_comparison_operator('==')
+    ## spectrum-model.h: ns3::SpectrumModel::SpectrumModel(ns3::SpectrumModel const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::SpectrumModel const &', 'arg0')])
+    ## spectrum-model.h: ns3::SpectrumModel::SpectrumModel(std::vector<double, std::allocator<double> > centerFreqs) [constructor]
+    cls.add_constructor([param('std::vector< double >', 'centerFreqs')])
+    ## spectrum-model.h: ns3::SpectrumModel::SpectrumModel(ns3::Bands bands) [constructor]
+    cls.add_constructor([param('ns3::Bands', 'bands')])
+    ## spectrum-model.h: __gnu_cxx::__normal_iterator<const ns3::BandInfo*,std::vector<ns3::BandInfo, std::allocator<ns3::BandInfo> > > ns3::SpectrumModel::Begin() const [member function]
+    cls.add_method('Begin', 
+                   '__gnu_cxx::__normal_iterator< ns3::BandInfo const *, std::vector< ns3::BandInfo > >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-model.h: __gnu_cxx::__normal_iterator<const ns3::BandInfo*,std::vector<ns3::BandInfo, std::allocator<ns3::BandInfo> > > ns3::SpectrumModel::End() const [member function]
+    cls.add_method('End', 
+                   '__gnu_cxx::__normal_iterator< ns3::BandInfo const *, std::vector< ns3::BandInfo > >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-model.h: size_t ns3::SpectrumModel::GetNumBands() const [member function]
+    cls.add_method('GetNumBands', 
+                   'size_t', 
+                   [], 
+                   is_const=True)
+    ## spectrum-model.h: ns3::SpectrumModelUid_t ns3::SpectrumModel::GetUid() const [member function]
+    cls.add_method('GetUid', 
+                   'ns3::SpectrumModelUid_t', 
+                   [], 
+                   is_const=True)
+    return
+
+def register_Ns3SpectrumPropagationLossModel_methods(root_module, cls):
+    ## spectrum-propagation-loss-model.h: ns3::SpectrumPropagationLossModel::SpectrumPropagationLossModel(ns3::SpectrumPropagationLossModel const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::SpectrumPropagationLossModel const &', 'arg0')])
+    ## spectrum-propagation-loss-model.h: ns3::SpectrumPropagationLossModel::SpectrumPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## spectrum-propagation-loss-model.h: ns3::Ptr<ns3::SpectrumValue> ns3::SpectrumPropagationLossModel::CalcRxPowerSpectralDensity(ns3::Ptr<ns3::SpectrumValue const> txPsd, ns3::Ptr<const ns3::MobilityModel> a, ns3::Ptr<const ns3::MobilityModel> b) const [member function]
+    cls.add_method('CalcRxPowerSpectralDensity', 
+                   'ns3::Ptr< ns3::SpectrumValue >', 
+                   [param('ns3::Ptr< ns3::SpectrumValue const >', 'txPsd'), param('ns3::Ptr< ns3::MobilityModel const >', 'a'), param('ns3::Ptr< ns3::MobilityModel const >', 'b')], 
+                   is_const=True)
+    ## spectrum-propagation-loss-model.h: static ns3::TypeId ns3::SpectrumPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## spectrum-propagation-loss-model.h: void ns3::SpectrumPropagationLossModel::SetNext(ns3::Ptr<ns3::SpectrumPropagationLossModel> next) [member function]
+    cls.add_method('SetNext', 
+                   'void', 
+                   [param('ns3::Ptr< ns3::SpectrumPropagationLossModel >', 'next')])
+    ## spectrum-propagation-loss-model.h: void ns3::SpectrumPropagationLossModel::DoDispose() [member function]
+    cls.add_method('DoDispose', 
+                   'void', 
+                   [], 
+                   visibility='protected', is_virtual=True)
+    ## spectrum-propagation-loss-model.h: ns3::Ptr<ns3::SpectrumValue> ns3::SpectrumPropagationLossModel::DoCalcRxPowerSpectralDensity(ns3::Ptr<ns3::SpectrumValue const> txPsd, ns3::Ptr<const ns3::MobilityModel> a, ns3::Ptr<const ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPowerSpectralDensity', 
+                   'ns3::Ptr< ns3::SpectrumValue >', 
+                   [param('ns3::Ptr< ns3::SpectrumValue const >', 'txPsd'), param('ns3::Ptr< ns3::MobilityModel const >', 'a'), param('ns3::Ptr< ns3::MobilityModel const >', 'b')], 
+                   is_pure_virtual=True, is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3SpectrumValue_methods(root_module, cls):
+    cls.add_binary_numeric_operator('*', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('double', 'right'))
+    cls.add_binary_numeric_operator('*', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('ns3::SpectrumValue const &', 'right'))
+    cls.add_binary_numeric_operator('+', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('double', 'right'))
+    cls.add_binary_numeric_operator('+', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('ns3::SpectrumValue const &', 'right'))
+    cls.add_unary_numeric_operator('-')
+    cls.add_binary_numeric_operator('-', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('double', 'right'))
+    cls.add_binary_numeric_operator('-', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('ns3::SpectrumValue const &', 'right'))
+    cls.add_binary_numeric_operator('/', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('double', 'right'))
+    cls.add_binary_numeric_operator('/', root_module['ns3::SpectrumValue'], root_module['ns3::SpectrumValue'], param('ns3::SpectrumValue const &', 'right'))
+    cls.add_output_stream_operator()
+    cls.add_inplace_numeric_operator('*=', param('ns3::SpectrumValue const &', 'right'))
+    cls.add_inplace_numeric_operator('*=', param('double', 'right'))
+    cls.add_inplace_numeric_operator('+=', param('ns3::SpectrumValue const &', 'right'))
+    cls.add_inplace_numeric_operator('+=', param('double', 'right'))
+    cls.add_inplace_numeric_operator('-=', param('ns3::SpectrumValue const &', 'right'))
+    cls.add_inplace_numeric_operator('-=', param('double', 'right'))
+    cls.add_inplace_numeric_operator('/=', param('ns3::SpectrumValue const &', 'right'))
+    cls.add_inplace_numeric_operator('/=', param('double', 'right'))
+    ## spectrum-value.h: ns3::SpectrumValue::SpectrumValue(ns3::SpectrumValue const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::SpectrumValue const &', 'arg0')])
+    ## spectrum-value.h: ns3::SpectrumValue::SpectrumValue(ns3::Ptr<ns3::SpectrumModel const> sm) [constructor]
+    cls.add_constructor([param('ns3::Ptr< ns3::SpectrumModel const >', 'sm')])
+    ## spectrum-value.h: ns3::SpectrumValue::SpectrumValue() [constructor]
+    cls.add_constructor([])
+    ## spectrum-value.h: __gnu_cxx::__normal_iterator<const ns3::BandInfo*,std::vector<ns3::BandInfo, std::allocator<ns3::BandInfo> > > ns3::SpectrumValue::ConstBandsBegin() const [member function]
+    cls.add_method('ConstBandsBegin', 
+                   '__gnu_cxx::__normal_iterator< ns3::BandInfo const *, std::vector< ns3::BandInfo > >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-value.h: __gnu_cxx::__normal_iterator<const ns3::BandInfo*,std::vector<ns3::BandInfo, std::allocator<ns3::BandInfo> > > ns3::SpectrumValue::ConstBandsEnd() const [member function]
+    cls.add_method('ConstBandsEnd', 
+                   '__gnu_cxx::__normal_iterator< ns3::BandInfo const *, std::vector< ns3::BandInfo > >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-value.h: __gnu_cxx::__normal_iterator<const double*,std::vector<double, std::allocator<double> > > ns3::SpectrumValue::ConstValuesBegin() const [member function]
+    cls.add_method('ConstValuesBegin', 
+                   '__gnu_cxx::__normal_iterator< double const *, std::vector< double > >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-value.h: __gnu_cxx::__normal_iterator<const double*,std::vector<double, std::allocator<double> > > ns3::SpectrumValue::ConstValuesEnd() const [member function]
+    cls.add_method('ConstValuesEnd', 
+                   '__gnu_cxx::__normal_iterator< double const *, std::vector< double > >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-value.h: ns3::Ptr<ns3::SpectrumValue> ns3::SpectrumValue::Copy() const [member function]
+    cls.add_method('Copy', 
+                   'ns3::Ptr< ns3::SpectrumValue >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-value.h: ns3::Ptr<ns3::SpectrumModel const> ns3::SpectrumValue::GetSpectrumModel() const [member function]
+    cls.add_method('GetSpectrumModel', 
+                   'ns3::Ptr< ns3::SpectrumModel const >', 
+                   [], 
+                   is_const=True)
+    ## spectrum-value.h: ns3::SpectrumModelUid_t ns3::SpectrumValue::GetSpectrumModelUid() const [member function]
+    cls.add_method('GetSpectrumModelUid', 
+                   'ns3::SpectrumModelUid_t', 
+                   [], 
+                   is_const=True)
+    ## spectrum-value.h: __gnu_cxx::__normal_iterator<double*,std::vector<double, std::allocator<double> > > ns3::SpectrumValue::ValuesBegin() [member function]
+    cls.add_method('ValuesBegin', 
+                   '__gnu_cxx::__normal_iterator< double *, std::vector< double > >', 
+                   [])
+    ## spectrum-value.h: __gnu_cxx::__normal_iterator<double*,std::vector<double, std::allocator<double> > > ns3::SpectrumValue::ValuesEnd() [member function]
+    cls.add_method('ValuesEnd', 
+                   '__gnu_cxx::__normal_iterator< double *, std::vector< double > >', 
+                   [])
+    return
+
+def register_Ns3ThreeLogDistancePropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::ThreeLogDistancePropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::ThreeLogDistancePropagationLossModel::ThreeLogDistancePropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: double ns3::ThreeLogDistancePropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
     return
 
 def register_Ns3Trailer_methods(root_module, cls):
@@ -1033,18 +1583,157 @@ def register_Ns3Trailer_methods(root_module, cls):
                    is_pure_virtual=True, is_const=True, is_virtual=True)
     return
 
-def register_Ns3AsciiWriter_methods(root_module, cls):
-    ## ascii-writer.h: ns3::AsciiWriter::AsciiWriter(ns3::AsciiWriter const & arg0) [copy constructor]
-    cls.add_constructor([param('ns3::AsciiWriter const &', 'arg0')])
-    ## ascii-writer.h: static ns3::Ptr<ns3::AsciiWriter> ns3::AsciiWriter::Get(std::ostream & os) [member function]
-    cls.add_method('Get', 
-                   'ns3::Ptr< ns3::AsciiWriter >', 
-                   [param('std::ostream &', 'os')], 
+def register_Ns3TwoRayGroundPropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::TwoRayGroundPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
                    is_static=True)
-    ## ascii-writer.h: void ns3::AsciiWriter::WritePacket(ns3::AsciiWriter::Type type, std::string message, ns3::Ptr<ns3::Packet const> p) [member function]
-    cls.add_method('WritePacket', 
+    ## propagation-loss-model.h: ns3::TwoRayGroundPropagationLossModel::TwoRayGroundPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: void ns3::TwoRayGroundPropagationLossModel::SetLambda(double frequency, double speed) [member function]
+    cls.add_method('SetLambda', 
                    'void', 
-                   [param('ns3::AsciiWriter::Type', 'type'), param('std::string', 'message'), param('ns3::Ptr< ns3::Packet const >', 'p')])
+                   [param('double', 'frequency'), param('double', 'speed')])
+    ## propagation-loss-model.h: void ns3::TwoRayGroundPropagationLossModel::SetLambda(double lambda) [member function]
+    cls.add_method('SetLambda', 
+                   'void', 
+                   [param('double', 'lambda')])
+    ## propagation-loss-model.h: void ns3::TwoRayGroundPropagationLossModel::SetSystemLoss(double systemLoss) [member function]
+    cls.add_method('SetSystemLoss', 
+                   'void', 
+                   [param('double', 'systemLoss')])
+    ## propagation-loss-model.h: void ns3::TwoRayGroundPropagationLossModel::SetMinDistance(double minDistance) [member function]
+    cls.add_method('SetMinDistance', 
+                   'void', 
+                   [param('double', 'minDistance')])
+    ## propagation-loss-model.h: double ns3::TwoRayGroundPropagationLossModel::GetMinDistance() const [member function]
+    cls.add_method('GetMinDistance', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-loss-model.h: double ns3::TwoRayGroundPropagationLossModel::GetLambda() const [member function]
+    cls.add_method('GetLambda', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-loss-model.h: double ns3::TwoRayGroundPropagationLossModel::GetSystemLoss() const [member function]
+    cls.add_method('GetSystemLoss', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-loss-model.h: void ns3::TwoRayGroundPropagationLossModel::SetHeightAboveZ(double heightAboveZ) [member function]
+    cls.add_method('SetHeightAboveZ', 
+                   'void', 
+                   [param('double', 'heightAboveZ')])
+    ## propagation-loss-model.h: double ns3::TwoRayGroundPropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3ConstantSpeedPropagationDelayModel_methods(root_module, cls):
+    ## propagation-delay-model.h: ns3::ConstantSpeedPropagationDelayModel::ConstantSpeedPropagationDelayModel(ns3::ConstantSpeedPropagationDelayModel const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::ConstantSpeedPropagationDelayModel const &', 'arg0')])
+    ## propagation-delay-model.h: ns3::ConstantSpeedPropagationDelayModel::ConstantSpeedPropagationDelayModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-delay-model.h: ns3::Time ns3::ConstantSpeedPropagationDelayModel::GetDelay(ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('GetDelay', 
+                   'ns3::Time', 
+                   [param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, is_virtual=True)
+    ## propagation-delay-model.h: double ns3::ConstantSpeedPropagationDelayModel::GetSpeed() const [member function]
+    cls.add_method('GetSpeed', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-delay-model.h: static ns3::TypeId ns3::ConstantSpeedPropagationDelayModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-delay-model.h: void ns3::ConstantSpeedPropagationDelayModel::SetSpeed(double speed) [member function]
+    cls.add_method('SetSpeed', 
+                   'void', 
+                   [param('double', 'speed')])
+    return
+
+def register_Ns3Cost231PropagationLossModel_methods(root_module, cls):
+    ## cost231-propagation-loss-model.h: static ns3::TypeId ns3::Cost231PropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## cost231-propagation-loss-model.h: ns3::Cost231PropagationLossModel::Cost231PropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## cost231-propagation-loss-model.h: double ns3::Cost231PropagationLossModel::GetLoss(ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('GetLoss', 
+                   'double', 
+                   [param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True)
+    ## cost231-propagation-loss-model.h: void ns3::Cost231PropagationLossModel::SetBSAntennaHeight(double height) [member function]
+    cls.add_method('SetBSAntennaHeight', 
+                   'void', 
+                   [param('double', 'height')])
+    ## cost231-propagation-loss-model.h: void ns3::Cost231PropagationLossModel::SetSSAntennaHeight(double height) [member function]
+    cls.add_method('SetSSAntennaHeight', 
+                   'void', 
+                   [param('double', 'height')])
+    ## cost231-propagation-loss-model.h: void ns3::Cost231PropagationLossModel::SetEnvironment(ns3::Cost231PropagationLossModel::Environment env) [member function]
+    cls.add_method('SetEnvironment', 
+                   'void', 
+                   [param('ns3::Cost231PropagationLossModel::Environment', 'env')])
+    ## cost231-propagation-loss-model.h: void ns3::Cost231PropagationLossModel::SetLambda(double lambda) [member function]
+    cls.add_method('SetLambda', 
+                   'void', 
+                   [param('double', 'lambda')])
+    ## cost231-propagation-loss-model.h: void ns3::Cost231PropagationLossModel::SetMinDistance(double minDistance) [member function]
+    cls.add_method('SetMinDistance', 
+                   'void', 
+                   [param('double', 'minDistance')])
+    ## cost231-propagation-loss-model.h: double ns3::Cost231PropagationLossModel::GetBSAntennaHeight() const [member function]
+    cls.add_method('GetBSAntennaHeight', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## cost231-propagation-loss-model.h: double ns3::Cost231PropagationLossModel::GetSSAntennaHeight() const [member function]
+    cls.add_method('GetSSAntennaHeight', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## cost231-propagation-loss-model.h: ns3::Cost231PropagationLossModel::Environment ns3::Cost231PropagationLossModel::GetEnvironment() const [member function]
+    cls.add_method('GetEnvironment', 
+                   'ns3::Cost231PropagationLossModel::Environment', 
+                   [], 
+                   is_const=True)
+    ## cost231-propagation-loss-model.h: double ns3::Cost231PropagationLossModel::GetMinDistance() const [member function]
+    cls.add_method('GetMinDistance', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## cost231-propagation-loss-model.h: double ns3::Cost231PropagationLossModel::GetLambda() const [member function]
+    cls.add_method('GetLambda', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## cost231-propagation-loss-model.h: void ns3::Cost231PropagationLossModel::SetLambda(double frequency, double speed) [member function]
+    cls.add_method('SetLambda', 
+                   'void', 
+                   [param('double', 'frequency'), param('double', 'speed')])
+    ## cost231-propagation-loss-model.h: double ns3::Cost231PropagationLossModel::GetShadowing() [member function]
+    cls.add_method('GetShadowing', 
+                   'double', 
+                   [])
+    ## cost231-propagation-loss-model.h: void ns3::Cost231PropagationLossModel::SetShadowing(double shadowing) [member function]
+    cls.add_method('SetShadowing', 
+                   'void', 
+                   [param('double', 'shadowing')])
+    ## cost231-propagation-loss-model.h: double ns3::Cost231PropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
     return
 
 def register_Ns3DataRateChecker_methods(root_module, cls):
@@ -1130,6 +1819,126 @@ def register_Ns3ErrorModel_methods(root_module, cls):
                    is_pure_virtual=True, visibility='private', is_virtual=True)
     return
 
+def register_Ns3FixedRssLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::FixedRssLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::FixedRssLossModel::FixedRssLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: void ns3::FixedRssLossModel::SetRss(double rss) [member function]
+    cls.add_method('SetRss', 
+                   'void', 
+                   [param('double', 'rss')])
+    ## propagation-loss-model.h: double ns3::FixedRssLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3FriisPropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::FriisPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::FriisPropagationLossModel::FriisPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: void ns3::FriisPropagationLossModel::SetLambda(double frequency, double speed) [member function]
+    cls.add_method('SetLambda', 
+                   'void', 
+                   [param('double', 'frequency'), param('double', 'speed')])
+    ## propagation-loss-model.h: void ns3::FriisPropagationLossModel::SetLambda(double lambda) [member function]
+    cls.add_method('SetLambda', 
+                   'void', 
+                   [param('double', 'lambda')])
+    ## propagation-loss-model.h: void ns3::FriisPropagationLossModel::SetSystemLoss(double systemLoss) [member function]
+    cls.add_method('SetSystemLoss', 
+                   'void', 
+                   [param('double', 'systemLoss')])
+    ## propagation-loss-model.h: void ns3::FriisPropagationLossModel::SetMinDistance(double minDistance) [member function]
+    cls.add_method('SetMinDistance', 
+                   'void', 
+                   [param('double', 'minDistance')])
+    ## propagation-loss-model.h: double ns3::FriisPropagationLossModel::GetMinDistance() const [member function]
+    cls.add_method('GetMinDistance', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-loss-model.h: double ns3::FriisPropagationLossModel::GetLambda() const [member function]
+    cls.add_method('GetLambda', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-loss-model.h: double ns3::FriisPropagationLossModel::GetSystemLoss() const [member function]
+    cls.add_method('GetSystemLoss', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-loss-model.h: double ns3::FriisPropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3FriisSpectrumPropagationLossModel_methods(root_module, cls):
+    ## friis-spectrum-propagation-loss.h: ns3::FriisSpectrumPropagationLossModel::FriisSpectrumPropagationLossModel(ns3::FriisSpectrumPropagationLossModel const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::FriisSpectrumPropagationLossModel const &', 'arg0')])
+    ## friis-spectrum-propagation-loss.h: ns3::FriisSpectrumPropagationLossModel::FriisSpectrumPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## friis-spectrum-propagation-loss.h: double ns3::FriisSpectrumPropagationLossModel::CalculateLoss(double f, double d) const [member function]
+    cls.add_method('CalculateLoss', 
+                   'double', 
+                   [param('double', 'f'), param('double', 'd')], 
+                   is_const=True)
+    ## friis-spectrum-propagation-loss.h: ns3::Ptr<ns3::SpectrumValue> ns3::FriisSpectrumPropagationLossModel::DoCalcRxPowerSpectralDensity(ns3::Ptr<ns3::SpectrumValue const> txPsd, ns3::Ptr<const ns3::MobilityModel> a, ns3::Ptr<const ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPowerSpectralDensity', 
+                   'ns3::Ptr< ns3::SpectrumValue >', 
+                   [param('ns3::Ptr< ns3::SpectrumValue const >', 'txPsd'), param('ns3::Ptr< ns3::MobilityModel const >', 'a'), param('ns3::Ptr< ns3::MobilityModel const >', 'b')], 
+                   is_const=True, is_virtual=True)
+    ## friis-spectrum-propagation-loss.h: static ns3::TypeId ns3::FriisSpectrumPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    return
+
+def register_Ns3JakesPropagationLossModel_methods(root_module, cls):
+    ## jakes-propagation-loss-model.h: ns3::JakesPropagationLossModel::JakesPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## jakes-propagation-loss-model.h: uint8_t ns3::JakesPropagationLossModel::GetNOscillators() const [member function]
+    cls.add_method('GetNOscillators', 
+                   'uint8_t', 
+                   [], 
+                   is_const=True)
+    ## jakes-propagation-loss-model.h: uint8_t ns3::JakesPropagationLossModel::GetNRays() const [member function]
+    cls.add_method('GetNRays', 
+                   'uint8_t', 
+                   [], 
+                   is_const=True)
+    ## jakes-propagation-loss-model.h: static ns3::TypeId ns3::JakesPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## jakes-propagation-loss-model.h: void ns3::JakesPropagationLossModel::SetNOscillators(uint8_t nOscillators) [member function]
+    cls.add_method('SetNOscillators', 
+                   'void', 
+                   [param('uint8_t', 'nOscillators')])
+    ## jakes-propagation-loss-model.h: void ns3::JakesPropagationLossModel::SetNRays(uint8_t nRays) [member function]
+    cls.add_method('SetNRays', 
+                   'void', 
+                   [param('uint8_t', 'nRays')])
+    ## jakes-propagation-loss-model.h: double ns3::JakesPropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
 def register_Ns3ListErrorModel_methods(root_module, cls):
     ## error-model.h: ns3::ListErrorModel::ListErrorModel(ns3::ListErrorModel const & arg0) [copy constructor]
     cls.add_constructor([param('ns3::ListErrorModel const &', 'arg0')])
@@ -1161,6 +1970,72 @@ def register_Ns3ListErrorModel_methods(root_module, cls):
                    visibility='private', is_virtual=True)
     return
 
+def register_Ns3LogDistancePropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::LogDistancePropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::LogDistancePropagationLossModel::LogDistancePropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: void ns3::LogDistancePropagationLossModel::SetPathLossExponent(double n) [member function]
+    cls.add_method('SetPathLossExponent', 
+                   'void', 
+                   [param('double', 'n')])
+    ## propagation-loss-model.h: double ns3::LogDistancePropagationLossModel::GetPathLossExponent() const [member function]
+    cls.add_method('GetPathLossExponent', 
+                   'double', 
+                   [], 
+                   is_const=True)
+    ## propagation-loss-model.h: void ns3::LogDistancePropagationLossModel::SetReference(double referenceDistance, double referenceLoss) [member function]
+    cls.add_method('SetReference', 
+                   'void', 
+                   [param('double', 'referenceDistance'), param('double', 'referenceLoss')])
+    ## propagation-loss-model.h: double ns3::LogDistancePropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3MatrixPropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::MatrixPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::MatrixPropagationLossModel::MatrixPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: void ns3::MatrixPropagationLossModel::SetLoss(ns3::Ptr<ns3::Node> a, ns3::Ptr<ns3::Node> b, double loss, bool symmetric=true) [member function]
+    cls.add_method('SetLoss', 
+                   'void', 
+                   [param('ns3::Ptr< ns3::Node >', 'a'), param('ns3::Ptr< ns3::Node >', 'b'), param('double', 'loss'), param('bool', 'symmetric', default_value='true')])
+    ## propagation-loss-model.h: void ns3::MatrixPropagationLossModel::SetDefaultLoss(double arg0) [member function]
+    cls.add_method('SetDefaultLoss', 
+                   'void', 
+                   [param('double', 'arg0')])
+    ## propagation-loss-model.h: double ns3::MatrixPropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
+def register_Ns3NakagamiPropagationLossModel_methods(root_module, cls):
+    ## propagation-loss-model.h: static ns3::TypeId ns3::NakagamiPropagationLossModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## propagation-loss-model.h: ns3::NakagamiPropagationLossModel::NakagamiPropagationLossModel() [constructor]
+    cls.add_constructor([])
+    ## propagation-loss-model.h: double ns3::NakagamiPropagationLossModel::DoCalcRxPower(double txPowerDbm, ns3::Ptr<ns3::MobilityModel> a, ns3::Ptr<ns3::MobilityModel> b) const [member function]
+    cls.add_method('DoCalcRxPower', 
+                   'double', 
+                   [param('double', 'txPowerDbm'), param('ns3::Ptr< ns3::MobilityModel >', 'a'), param('ns3::Ptr< ns3::MobilityModel >', 'b')], 
+                   is_const=True, visibility='private', is_virtual=True)
+    return
+
 def register_Ns3NixVector_methods(root_module, cls):
     cls.add_output_stream_operator()
     ## nix-vector.h: ns3::NixVector::NixVector() [constructor]
@@ -1181,15 +2056,10 @@ def register_Ns3NixVector_methods(root_module, cls):
                    'ns3::Ptr< ns3::NixVector >', 
                    [], 
                    is_const=True)
-    ## nix-vector.h: uint32_t ns3::NixVector::Deserialize(ns3::Buffer::Iterator i) [member function]
+    ## nix-vector.h: uint32_t ns3::NixVector::Deserialize(uint32_t const * buffer, uint32_t size) [member function]
     cls.add_method('Deserialize', 
                    'uint32_t', 
-                   [param('ns3::Buffer::Iterator', 'i')])
-    ## nix-vector.h: void ns3::NixVector::DumpNixVector(std::ostream & os) const [member function]
-    cls.add_method('DumpNixVector', 
-                   'void', 
-                   [param('std::ostream &', 'os')], 
-                   is_const=True)
+                   [param('uint32_t const *', 'buffer'), param('uint32_t', 'size')])
     ## nix-vector.h: uint32_t ns3::NixVector::ExtractNeighborIndex(uint32_t numberOfBits) [member function]
     cls.add_method('ExtractNeighborIndex', 
                    'uint32_t', 
@@ -1203,16 +2073,22 @@ def register_Ns3NixVector_methods(root_module, cls):
                    'uint32_t', 
                    [], 
                    is_const=True)
-    ## nix-vector.h: static ns3::TypeId ns3::NixVector::GetTypeId() [member function]
-    cls.add_method('GetTypeId', 
-                   'ns3::TypeId', 
-                   [], 
-                   is_static=True)
-    ## nix-vector.h: void ns3::NixVector::Serialize(ns3::Buffer::Iterator i, uint32_t size) const [member function]
+    ## nix-vector.h: uint32_t ns3::NixVector::Serialize(uint32_t * buffer, uint32_t maxSize) const [member function]
     cls.add_method('Serialize', 
-                   'void', 
-                   [param('ns3::Buffer::Iterator', 'i'), param('uint32_t', 'size')], 
+                   'uint32_t', 
+                   [param('uint32_t *', 'buffer'), param('uint32_t', 'maxSize')], 
                    is_const=True)
+    return
+
+def register_Ns3OutputStreamWrapper_methods(root_module, cls):
+    ## output-stream-wrapper.h: ns3::OutputStreamWrapper::OutputStreamWrapper(ns3::OutputStreamWrapper const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::OutputStreamWrapper const &', 'arg0')])
+    ## output-stream-wrapper.h: ns3::OutputStreamWrapper::OutputStreamWrapper(std::string filename, std::_Ios_Openmode filemode) [constructor]
+    cls.add_constructor([param('std::string', 'filename'), param('std::_Ios_Openmode', 'filemode')])
+    ## output-stream-wrapper.h: std::ostream * ns3::OutputStreamWrapper::GetStream() [member function]
+    cls.add_method('GetStream', 
+                   'std::ostream *', 
+                   [])
     return
 
 def register_Ns3Packet_methods(root_module, cls):
@@ -1223,6 +2099,8 @@ def register_Ns3Packet_methods(root_module, cls):
     cls.add_constructor([param('ns3::Packet const &', 'o')])
     ## packet.h: ns3::Packet::Packet(uint32_t size) [constructor]
     cls.add_constructor([param('uint32_t', 'size')])
+    ## packet.h: ns3::Packet::Packet(uint8_t const * buffer, uint32_t size, bool magic) [constructor]
+    cls.add_constructor([param('uint8_t const *', 'buffer'), param('uint32_t', 'size'), param('bool', 'magic')])
     ## packet.h: ns3::Packet::Packet(uint8_t const * buffer, uint32_t size) [constructor]
     cls.add_constructor([param('uint8_t const *', 'buffer'), param('uint32_t', 'size')])
     ## packet.h: void ns3::Packet::AddAtEnd(ns3::Ptr<ns3::Packet const> packet) [member function]
@@ -1276,10 +2154,6 @@ def register_Ns3Packet_methods(root_module, cls):
                    'ns3::Ptr< ns3::Packet >', 
                    [param('uint32_t', 'start'), param('uint32_t', 'length')], 
                    is_const=True)
-    ## packet.h: void ns3::Packet::Deserialize(ns3::Buffer buffer) [member function]
-    cls.add_method('Deserialize', 
-                   'void', 
-                   [param('ns3::Buffer', 'buffer')])
     ## packet.h: static void ns3::Packet::EnableChecking() [member function]
     cls.add_method('EnableChecking', 
                    'void', 
@@ -1310,14 +2184,19 @@ def register_Ns3Packet_methods(root_module, cls):
                    'ns3::PacketTagIterator', 
                    [], 
                    is_const=True)
+    ## packet.h: uint32_t ns3::Packet::GetSerializedSize() const [member function]
+    cls.add_method('GetSerializedSize', 
+                   'uint32_t', 
+                   [], 
+                   is_const=True)
     ## packet.h: uint32_t ns3::Packet::GetSize() const [member function]
     cls.add_method('GetSize', 
                    'uint32_t', 
                    [], 
                    is_const=True)
-    ## packet.h: uint32_t ns3::Packet::GetUid() const [member function]
+    ## packet.h: uint64_t ns3::Packet::GetUid() const [member function]
     cls.add_method('GetUid', 
-                   'uint32_t', 
+                   'uint64_t', 
                    [], 
                    is_const=True)
     ## packet.h: uint8_t const * ns3::Packet::PeekData() const [member function]
@@ -1382,10 +2261,10 @@ def register_Ns3Packet_methods(root_module, cls):
     cls.add_method('RemoveTrailer', 
                    'uint32_t', 
                    [param('ns3::Trailer &', 'trailer')])
-    ## packet.h: ns3::Buffer ns3::Packet::Serialize() const [member function]
+    ## packet.h: uint32_t ns3::Packet::Serialize(uint8_t * buffer, uint32_t maxSize) const [member function]
     cls.add_method('Serialize', 
-                   'ns3::Buffer', 
-                   [], 
+                   'uint32_t', 
+                   [param('uint8_t *', 'buffer'), param('uint32_t', 'maxSize')], 
                    is_const=True)
     ## packet.h: void ns3::Packet::SetNixVector(ns3::Ptr<ns3::NixVector> arg0) [member function]
     cls.add_method('SetNixVector', 
@@ -1452,13 +2331,77 @@ def register_Ns3RateErrorModel_methods(root_module, cls):
                    visibility='private', is_virtual=True)
     return
 
+def register_Ns3ReceiveListErrorModel_methods(root_module, cls):
+    ## error-model.h: ns3::ReceiveListErrorModel::ReceiveListErrorModel(ns3::ReceiveListErrorModel const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::ReceiveListErrorModel const &', 'arg0')])
+    ## error-model.h: ns3::ReceiveListErrorModel::ReceiveListErrorModel() [constructor]
+    cls.add_constructor([])
+    ## error-model.h: std::list<unsigned int, std::allocator<unsigned int> > ns3::ReceiveListErrorModel::GetList() const [member function]
+    cls.add_method('GetList', 
+                   'std::list< unsigned int >', 
+                   [], 
+                   is_const=True)
+    ## error-model.h: static ns3::TypeId ns3::ReceiveListErrorModel::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## error-model.h: void ns3::ReceiveListErrorModel::SetList(std::list<unsigned int, std::allocator<unsigned int> > const & packetlist) [member function]
+    cls.add_method('SetList', 
+                   'void', 
+                   [param('std::list< unsigned int > const &', 'packetlist')])
+    ## error-model.h: bool ns3::ReceiveListErrorModel::DoCorrupt(ns3::Ptr<ns3::Packet> p) [member function]
+    cls.add_method('DoCorrupt', 
+                   'bool', 
+                   [param('ns3::Ptr< ns3::Packet >', 'p')], 
+                   visibility='private', is_virtual=True)
+    ## error-model.h: void ns3::ReceiveListErrorModel::DoReset() [member function]
+    cls.add_method('DoReset', 
+                   'void', 
+                   [], 
+                   visibility='private', is_virtual=True)
+    return
+
 def register_functions(root_module):
     module = root_module
+    ## spectrum-value.h: extern ns3::SpectrumValue ns3::Log(ns3::SpectrumValue const & arg) [free function]
+    module.add_function('Log', 
+                        'ns3::SpectrumValue', 
+                        [param('ns3::SpectrumValue const &', 'arg')])
+    ## spectrum-value.h: extern ns3::SpectrumValue ns3::Log10(ns3::SpectrumValue const & arg) [free function]
+    module.add_function('Log10', 
+                        'ns3::SpectrumValue', 
+                        [param('ns3::SpectrumValue const &', 'arg')])
+    ## spectrum-value.h: extern ns3::SpectrumValue ns3::Log2(ns3::SpectrumValue const & arg) [free function]
+    module.add_function('Log2', 
+                        'ns3::SpectrumValue', 
+                        [param('ns3::SpectrumValue const &', 'arg')])
     ## data-rate.h: extern ns3::Ptr<ns3::AttributeChecker const> ns3::MakeDataRateChecker() [free function]
     module.add_function('MakeDataRateChecker', 
                         'ns3::Ptr< ns3::AttributeChecker const >', 
                         [])
+    ## spectrum-value.h: extern double ns3::Norm(ns3::SpectrumValue const & x) [free function]
+    module.add_function('Norm', 
+                        'double', 
+                        [param('ns3::SpectrumValue const &', 'x')])
+    ## spectrum-value.h: extern ns3::SpectrumValue ns3::Pow(ns3::SpectrumValue const & base, double exp) [free function]
+    module.add_function('Pow', 
+                        'ns3::SpectrumValue', 
+                        [param('ns3::SpectrumValue const &', 'base'), param('double', 'exp')])
+    ## spectrum-value.h: extern ns3::SpectrumValue ns3::Pow(double base, ns3::SpectrumValue const & exp) [free function]
+    module.add_function('Pow', 
+                        'ns3::SpectrumValue', 
+                        [param('double', 'base'), param('ns3::SpectrumValue const &', 'exp')])
+    ## spectrum-value.h: extern double ns3::Prod(ns3::SpectrumValue const & x) [free function]
+    module.add_function('Prod', 
+                        'double', 
+                        [param('ns3::SpectrumValue const &', 'x')])
+    ## spectrum-value.h: extern double ns3::Sum(ns3::SpectrumValue const & x) [free function]
+    module.add_function('Sum', 
+                        'double', 
+                        [param('ns3::SpectrumValue const &', 'x')])
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
+    register_functions_ns3_FatalImpl(module.get_submodule('FatalImpl'), root_module)
     register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
     register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
@@ -1469,6 +2412,9 @@ def register_functions(root_module):
     return
 
 def register_functions_ns3_Config(module, root_module):
+    return
+
+def register_functions_ns3_FatalImpl(module, root_module):
     return
 
 def register_functions_ns3_TimeStepPrecision(module, root_module):

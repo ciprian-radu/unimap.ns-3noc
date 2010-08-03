@@ -12,16 +12,24 @@ sys.path.insert(0, sys.argv[2])
 
 from pybindgen import FileCodeSink, write_preamble
 from pybindgen.module import MultiSectionFactory
+
 import pybindgen.settings
+pybindgen.settings.deprecated_virtuals = False
 
 from ns3modulegen_generated import module_init, register_types, register_methods, register_functions
 import ns3modulegen_core_customizations
 import callbacks_list
+import traceback
 
 this_script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 
 class ErrorHandler(pybindgen.settings.ErrorHandler):
     def handle_error(self, wrapper, exception, traceback_):
+        print >> sys.stderr
+        print >> sys.stderr, "---- location:"
+        traceback.print_stack()
+        print >> sys.stderr, "---- error:"
+        traceback.print_tb(traceback_)
         try:
             stack = wrapper.stack_where_defined
         except AttributeError:
@@ -31,7 +39,7 @@ class ErrorHandler(pybindgen.settings.ErrorHandler):
             stack.reverse()
             for (filename, line_number, function_name, text) in stack:
                 file_dir = os.path.dirname(os.path.abspath(filename))
-                if file_dir == this_script_dir:
+                if file_dir.startswith(this_script_dir):
                     print >> sys.stderr, "%s:%i: %r" % (os.path.join("..", "bindings", "python", os.path.basename(filename)),
                                                         line_number, exception)
                     break
@@ -48,7 +56,7 @@ class MyMultiSectionFactory(MultiSectionFactory):
         self.main_file_name = main_file_name
         self.main_sink = FileCodeSink(open(main_file_name, "wt"))
         self.header_name = "ns3module.h"
-        header_file_name = os.path.join(os.path.dirname(self.main_file_name), self.header_name)
+        header_file_name = os.path.join(os.path.dirname(self.main_file_name), 'pch', self.header_name)
         self.header_sink = FileCodeSink(open(header_file_name, "wt"))
         self.section_sinks = {'__main__': self.main_sink}
 
@@ -89,6 +97,7 @@ def main():
     ns3modulegen_core_customizations.CommandLine_customizations(root_module)
     ns3modulegen_core_customizations.TypeId_customizations(root_module)
     ns3modulegen_core_customizations.add_std_ofstream(root_module)
+    ns3modulegen_core_customizations.add_ipv4_address_tp_hash(root_module)
 
 
     for local_module in LOCAL_MODULES:
@@ -131,7 +140,8 @@ def main():
             pass
 
     if 'Threading' not in enabled_features:
-        for clsname in ['SystemThread', 'SystemMutex', 'SystemCondition', 'CriticalSection', 'SimpleRefCount< ns3::SystemThread, ns3::empty >']:
+        for clsname in ['SystemThread', 'SystemMutex', 'SystemCondition', 'CriticalSection',
+                        'SimpleRefCount< ns3::SystemThread, ns3::empty, ns3::DefaultDeleter<ns3::SystemThread> >']:
             root_module.classes.remove(root_module['ns3::%s' % clsname])
 
     if 'EmuNetDevice' not in enabled_features:

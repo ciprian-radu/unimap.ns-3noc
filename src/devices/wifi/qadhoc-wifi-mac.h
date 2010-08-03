@@ -38,6 +38,7 @@ class WifiPhy;
 class DcfManager;
 class MacLow;
 class MacRxMiddle;
+class MgtAddBaRequestHeader;
 
 class QadhocWifiMac : public WifiMac
 {
@@ -73,38 +74,40 @@ public:
   virtual void SetAddress (Mac48Address address);
   virtual void SetSsid (Ssid ssid);
   virtual Mac48Address GetBssid (void) const;
+  virtual void SetBasicBlockAckTimeout (Time blockAckTimeout);
+  virtual void SetCompressedBlockAckTimeout (Time blockAckTimeout);
+  virtual Time GetBasicBlockAckTimeout (void) const;
+  virtual Time GetCompressedBlockAckTimeout (void) const;
 
 
 private:
   Callback<void, Ptr<Packet>, Mac48Address, Mac48Address> m_forwardUp;
   virtual void DoDispose (void);
+  void DoStart ();
   void Receive (Ptr<Packet> packet, const WifiMacHeader *hdr);
   void ForwardUp (Ptr<Packet> packet, Mac48Address from, Mac48Address to);
   QadhocWifiMac &operator = (const QadhocWifiMac &);
   QadhocWifiMac (const QadhocWifiMac &);
-
+  void SendAddBaResponse (const MgtAddBaRequestHeader *reqHdr, Mac48Address originator);
+  
   /**
   * When an A-MSDU is received, is deaggregated by this method and all extracted packets are
   * forwarded up.
   */
   void DeaggregateAmsduAndForward (Ptr<Packet> aggregatedPacket, const WifiMacHeader *hdr);
 
-  typedef std::map<AccessClass, Ptr<EdcaTxopN> > Queues;
+  typedef std::map<AcIndex, Ptr<EdcaTxopN> > Queues;
   typedef std::list<std::pair<Ptr<Packet>, AmsduSubframeHeader> > DeaggregatedMsdus;
   typedef std::list<std::pair<Ptr<Packet>, AmsduSubframeHeader> >::const_iterator DeaggregatedMsdusCI;
 
   virtual void FinishConfigureStandard (enum WifiPhyStandard standard);
-  void SetQueue (enum AccessClass ac);
+  void SetQueue (enum AcIndex ac);
   Ptr<EdcaTxopN> GetVOQueue (void) const;
   Ptr<EdcaTxopN> GetVIQueue (void) const;
   Ptr<EdcaTxopN> GetBEQueue (void) const;
   Ptr<EdcaTxopN> GetBKQueue (void) const;
 
   Queues m_queues;
-  Ptr<EdcaTxopN> m_voEdca;
-  Ptr<EdcaTxopN> m_viEdca;
-  Ptr<EdcaTxopN> m_beEdca;
-  Ptr<EdcaTxopN> m_bkEdca;
   Ptr<MacLow> m_low;
   Ptr<WifiPhy> m_phy;
   Ptr<WifiRemoteStationManager> m_stationManager;

@@ -32,15 +32,17 @@ namespace ns3
 
 NS_LOG_COMPONENT_DEFINE ("NdiscCache");
 
+NS_OBJECT_ENSURE_REGISTERED (NdiscCache);
+
 TypeId NdiscCache::GetTypeId ()
 {
   static TypeId tid = TypeId ("ns3::NdiscCache")
     .SetParent<Object> ()
     .AddAttribute ("UnresolvedQueueSize",
-        "Size of the queue for packets pending an NA reply.",
-        UintegerValue (DEFAULT_UNRES_QLEN),
-        MakeUintegerAccessor (&NdiscCache::m_unresQlen),
-        MakeUintegerChecker<uint32_t> ())
+                   "Size of the queue for packets pending an NA reply.",
+                   UintegerValue (DEFAULT_UNRES_QLEN),
+                   MakeUintegerAccessor (&NdiscCache::m_unresQlen),
+                   MakeUintegerChecker<uint32_t> ())
     ;
   return tid;
 } 
@@ -89,10 +91,10 @@ NdiscCache::Entry* NdiscCache::Lookup (Ipv6Address dst)
   NS_LOG_FUNCTION (this << dst);
 
   if (m_ndCache.find (dst) != m_ndCache.end ())
-  {
-    NdiscCache::Entry* entry = m_ndCache[dst];
-    return entry;
-  }
+    {
+      NdiscCache::Entry* entry = m_ndCache[dst];
+      return entry;
+    }
   return 0;
 }
 
@@ -110,27 +112,27 @@ NdiscCache::Entry* NdiscCache::Add (Ipv6Address to)
 void NdiscCache::Remove (NdiscCache::Entry* entry)
 {
   NS_LOG_FUNCTION_NOARGS ();
-  
+
   for (CacheI i = m_ndCache.begin () ; i != m_ndCache.end () ; i++)
-  {
-    if ((*i).second == entry)
     {
-      m_ndCache.erase (i);
-      entry->ClearWaitingPacket ();
-      delete entry;
-      return;
+      if ((*i).second == entry)
+        {
+          m_ndCache.erase (i);
+          entry->ClearWaitingPacket ();
+          delete entry;
+          return;
+        }
     }
-  }
 }
 
 void NdiscCache::Flush ()
 {
   NS_LOG_FUNCTION_NOARGS ();
-  
+
   for (CacheI i = m_ndCache.begin () ; i != m_ndCache.end () ; i++)
-  {
-    delete (*i).second; /* delete the pointer NdiscCache::Entry */
-  }
+    {
+      delete (*i).second; /* delete the pointer NdiscCache::Entry */
+    }
 
   m_ndCache.erase (m_ndCache.begin (), m_ndCache.end ());
 }
@@ -151,6 +153,11 @@ NdiscCache::Entry::Entry (NdiscCache* nd)
   : m_ndCache (nd),
   m_waiting (),
   m_router (false),
+  m_reachableTimer (Timer::CANCEL_ON_DESTROY),
+  m_retransTimer(Timer::CANCEL_ON_DESTROY),
+  m_probeTimer(Timer::CANCEL_ON_DESTROY),
+  m_delayTimer(Timer::CANCEL_ON_DESTROY),
+  m_lastReachabilityConfirmation(Timer::CANCEL_ON_DESTROY),
   m_nsRetransmit (0)
 {
   NS_LOG_FUNCTION_NOARGS ();
@@ -173,11 +180,11 @@ void NdiscCache::Entry::AddWaitingPacket (Ptr<Packet> p)
   NS_LOG_FUNCTION (this << p);
 
   if (m_waiting.size () >= m_ndCache->GetUnresQlen ())
-  {
-    /* we store only m_unresQlen packet => first packet in first packet remove */
-    /* XXX report packet as 'dropped' */
-    m_waiting.remove (0);
-  }
+    {
+      /* we store only m_unresQlen packet => first packet in first packet remove */
+      /* XXX report packet as 'dropped' */
+      m_waiting.remove (0);
+    }
   m_waiting.push_back (p);
 }
 
@@ -202,42 +209,42 @@ void NdiscCache::Entry::FunctionRetransmitTimeout ()
 
   /* determine source address */
   if (m_ipv6Address.IsLinkLocal ())
-  {
-    addr = m_ndCache->GetInterface ()->GetLinkLocalAddress ().GetAddress ();;
-  }
-  else if (!m_ipv6Address.IsAny ())
-  {
-    addr = m_ndCache->GetInterface ()->GetAddressMatchingDestination (m_ipv6Address).GetAddress ();
-
-    if (addr.IsAny ()) /* maybe address has expired */
     {
-      /* delete the entry */
-      m_ndCache->Remove (this);
-      return;
+      addr = m_ndCache->GetInterface ()->GetLinkLocalAddress ().GetAddress ();;
     }
-  }
+  else if (!m_ipv6Address.IsAny ())
+    {
+      addr = m_ndCache->GetInterface ()->GetAddressMatchingDestination (m_ipv6Address).GetAddress ();
+
+      if (addr.IsAny ()) /* maybe address has expired */
+        {
+          /* delete the entry */
+          m_ndCache->Remove (this);
+          return;
+        }
+    }
 
   if (GetNSRetransmit () < icmpv6->MAX_MULTICAST_SOLICIT)
-  {
-    IncNSRetransmit ();
-
-    icmpv6->SendNS (addr, Ipv6Address::MakeSolicitedAddress (m_ipv6Address), m_ipv6Address, m_ndCache->GetDevice ()->GetAddress ());
-    /* arm the timer again */
-    StartRetransmitTimer ();
-  }
-  else
-  {
-    Ptr<Packet> malformedPacket = m_waiting.front ();
-    if (malformedPacket == 0)
     {
-      malformedPacket = Create<Packet> ();
-    }
+      IncNSRetransmit ();
 
-    icmpv6->SendErrorDestinationUnreachable (malformedPacket, addr, Icmpv6Header::ICMPV6_ADDR_UNREACHABLE);
-    
-    /* delete the entry */
-    m_ndCache->Remove (this);
-  }
+      icmpv6->SendNS (addr, Ipv6Address::MakeSolicitedAddress (m_ipv6Address), m_ipv6Address, m_ndCache->GetDevice ()->GetAddress ());
+      /* arm the timer again */
+      StartRetransmitTimer ();
+    }
+  else
+    {
+      Ptr<Packet> malformedPacket = m_waiting.front ();
+      if (malformedPacket == 0)
+        {
+          malformedPacket = Create<Packet> ();
+        }
+
+      icmpv6->SendErrorDestinationUnreachable (malformedPacket, addr, Icmpv6Header::ICMPV6_ADDR_UNREACHABLE);
+
+      /* delete the entry */
+      m_ndCache->Remove (this);
+    }
 }
 
 void NdiscCache::Entry::FunctionDelayTimeout ()
@@ -250,24 +257,24 @@ void NdiscCache::Entry::FunctionDelayTimeout ()
   this->MarkProbe ();
 
   if (m_ipv6Address.IsLinkLocal ())
-  {
-    addr = m_ndCache->GetInterface ()->GetLinkLocalAddress ().GetAddress ();
-  }
-  else if (!m_ipv6Address.IsAny ())
-  {
-    addr = m_ndCache->GetInterface ()->GetAddressMatchingDestination (m_ipv6Address).GetAddress ();
-    if (addr.IsAny ()) /* maybe address has expired */
     {
-      /* delete the entry */
-      m_ndCache->Remove (this);
+      addr = m_ndCache->GetInterface ()->GetLinkLocalAddress ().GetAddress ();
+    }
+  else if (!m_ipv6Address.IsAny ())
+    {
+      addr = m_ndCache->GetInterface ()->GetAddressMatchingDestination (m_ipv6Address).GetAddress ();
+      if (addr.IsAny ()) /* maybe address has expired */
+        {
+          /* delete the entry */
+          m_ndCache->Remove (this);
+          return;
+        }
+    }
+  else
+    {
+      /* should not happen */
       return;
     }
-  }
-  else
-  {
-    /* should not happen */
-    return;
-  }
 
   Ptr<Packet> p = icmpv6->ForgeNS (addr, m_ipv6Address, m_ipv6Address, m_ndCache->GetDevice ()->GetAddress ());
   m_ndCache->GetDevice ()->Send (p, this->GetMacAddress (), Ipv6L3Protocol::PROT_NUMBER);
@@ -284,42 +291,42 @@ void NdiscCache::Entry::FunctionProbeTimeout ()
   Ptr<Icmpv6L4Protocol> icmpv6 = ipv6->GetIcmpv6 ();
 
   if (GetNSRetransmit () < icmpv6->MAX_UNICAST_SOLICIT)
-  {
-    Ipv6Address addr;
-
-    if (m_ipv6Address.IsLinkLocal ())
     {
-      addr = m_ndCache->GetInterface ()->GetLinkLocalAddress ().GetAddress ();
-    }
-    else if (!m_ipv6Address.IsAny ())
-    {
-      addr = m_ndCache->GetInterface ()->GetAddressMatchingDestination (m_ipv6Address).GetAddress ();
-      if (addr.IsAny ()) /* maybe address has expired */
-      {
-        /* delete the entry */
-        m_ndCache->Remove (this);
-        return;
-      }
-    }
-    else
-    {
-      /* should not happen */
-      return;
-    }
+      Ipv6Address addr;
 
-    IncNSRetransmit ();
-    /* icmpv6->SendNS (m_ndCache->GetInterface ()->GetLinkLocalAddress (), m_ipv6Address, m_ipv6Address, m_ndCache->GetDevice ()->GetAddress ()); */
-    Ptr<Packet> p = icmpv6->ForgeNS (addr, m_ipv6Address, m_ipv6Address, m_ndCache->GetDevice ()->GetAddress ());
-    m_ndCache->GetDevice ()->Send (p, this->GetMacAddress (), Ipv6L3Protocol::PROT_NUMBER);
+      if (m_ipv6Address.IsLinkLocal ())
+        {
+          addr = m_ndCache->GetInterface ()->GetLinkLocalAddress ().GetAddress ();
+        }
+      else if (!m_ipv6Address.IsAny ())
+        {
+          addr = m_ndCache->GetInterface ()->GetAddressMatchingDestination (m_ipv6Address).GetAddress ();
+          if (addr.IsAny ()) /* maybe address has expired */
+            {
+              /* delete the entry */
+              m_ndCache->Remove (this);
+              return;
+            }
+        }
+      else
+        {
+          /* should not happen */
+          return;
+        }
 
-    /* arm the timer again */
-    StartProbeTimer ();
-  }
+      IncNSRetransmit ();
+      /* icmpv6->SendNS (m_ndCache->GetInterface ()->GetLinkLocalAddress (), m_ipv6Address, m_ipv6Address, m_ndCache->GetDevice ()->GetAddress ()); */
+      Ptr<Packet> p = icmpv6->ForgeNS (addr, m_ipv6Address, m_ipv6Address, m_ndCache->GetDevice ()->GetAddress ());
+      m_ndCache->GetDevice ()->Send (p, this->GetMacAddress (), Ipv6L3Protocol::PROT_NUMBER);
+
+      /* arm the timer again */
+      StartProbeTimer ();
+    }
   else
-  {
-    /* delete the entry */
-    m_ndCache->Remove (this);
-  }
+    {
+      /* delete the entry */
+      m_ndCache->Remove (this);
+    }
 }
 
 void NdiscCache::Entry::SetIpv6Address (Ipv6Address ipv6Address)
@@ -423,9 +430,9 @@ void NdiscCache::Entry::MarkIncomplete (Ptr<Packet> p)
   m_state = INCOMPLETE;
 
   if (p)
-  {
-    m_waiting.push_back (p);
-  }
+    {
+      m_waiting.push_back (p);
+    }
 }
 
 std::list<Ptr<Packet> > NdiscCache::Entry::MarkReachable (Address mac)

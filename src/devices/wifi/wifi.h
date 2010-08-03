@@ -44,7 +44,7 @@
  *     belonging to AC_BE access class. 
  *     How TIDs are mapped to access classes are shown in the table below. 
  *   
- *     TID-AccessClass mapping:
+ *     TID-AcIndex mapping:
  *     
  *      <table border=1>
  *      <tr>
@@ -163,7 +163,7 @@
  * through the "Ssrc" trace source which is fired using the 
  *  ns3::WifiRemoteStation::m_ssrc trace hook.
  * 
- * Finally, we provide access to the per-remote-station SLRC couter that
+ * Finally, we provide access to the per-remote-station SLRC counter that
  * indications the number of retransmissions of data.  Changes to this 
  * counter are traced using the ns3::WifiRemoteStation::m_slrc source.
  *

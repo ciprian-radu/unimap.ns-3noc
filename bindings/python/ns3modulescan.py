@@ -26,28 +26,6 @@ import warnings
 warnings.filterwarnings(category=WrapperWarning, action='ignore')
 
 type_annotations = {
-    '::ns3::RefCountBase': {
-        'incref_method': 'Ref',
-        'decref_method': 'Unref',
-        'peekref_method': 'GetReferenceCount',
-        'automatic_type_narrowing': 'true',
-        },
-    '::ns3::Object': {
-        'incref_method': 'Ref',
-        'decref_method': 'Unref',
-        'peekref_method': 'GetReferenceCount',
-        'automatic_type_narrowing': 'true',
-        },
-    '::ns3::Packet': {
-        'incref_method': 'Ref',
-        'decref_method': 'Unref',
-        'peekref_method': 'GetReferenceCount',
-        },
-    '::ns3::CallbackImplBase': {
-        'incref_method': 'Ref',
-        'decref_method': 'Unref',
-        'peekref_method': 'GetReferenceCount',
-        },
     '::ns3::AttributeChecker': {
         'automatic_type_narrowing': 'true',
         'allow_subclassing': 'false',
@@ -109,6 +87,17 @@ type_annotations = {
     'extern void ns3::PythonCompleteConstruct(ns3::Ptr<ns3::Object> object, ns3::TypeId typeId, ns3::AttributeList const & attributes) [free function]': {
         'ignore': None # used transparently by, should not be wrapped
         },
+
+    'ns3::Ptr<ns3::Ipv4RoutingProtocol> ns3::Ipv4ListRouting::GetRoutingProtocol(uint32_t index, int16_t & priority) const [member function]': {
+        'params': {'priority':{'direction':'out'}}
+        },
+    'ns3::Ipv4RoutingTableEntry * ns3::GlobalRouter::GetInjectedRoute(uint32_t i) [member function]': {
+        'params': {'return': { 'caller_owns_return': 'false',}},
+        },
+    'ns3::Ipv4RoutingTableEntry * ns3::Ipv4GlobalRouting::GetRoute(uint32_t i) [member function]': {
+        'params': {'return': { 'caller_owns_return': 'false',}},
+        },
+    
     }
 
 def get_ns3_relative_path(path):
@@ -172,8 +161,15 @@ def pre_scan_hook(dummy_module_parser,
     ## classes
     if isinstance(pygccxml_definition, class_t):
         # no need for helper classes to allow subclassing in Python, I think...
-        if pygccxml_definition.name.endswith('Helper'):
-            global_annotations['allow_subclassing'] = 'false'
+        #if pygccxml_definition.name.endswith('Helper'):
+        #    global_annotations['allow_subclassing'] = 'false'
+
+        if pygccxml_definition.decl_string.startswith('::ns3::SimpleRefCount<'):
+            global_annotations['incref_method'] = 'Ref'
+            global_annotations['decref_method'] = 'Unref'
+            global_annotations['peekref_method'] = 'GetReferenceCount'
+            global_annotations['automatic_type_narrowing'] = 'true'
+            return
 
         if pygccxml_definition.decl_string.startswith('::ns3::Callback<'):
             # manually handled in ns3modulegen_core_customizations.py
@@ -257,7 +253,7 @@ class MyPygenClassifier(PygenClassifier):
 
 def ns3_module_scan(top_builddir, pygen_file_name, everything_h, cflags):
 
-    ns3_modules = eval(sys.stdin.read())
+    ns3_modules = eval(sys.stdin.readline())
 
     ## do a topological sort on the modules graph
     from topsort import topsort

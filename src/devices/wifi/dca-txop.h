@@ -114,14 +114,13 @@ private:
   class Dcf;
   friend class Dcf;
   friend class TransmissionListener;
-  friend class WifiRemoteStation;
 
   DcaTxop &operator = (const DcaTxop &);
   DcaTxop (const DcaTxop &o);
 
   // Inherited from ns3::Object
   Ptr<MacLow> Low (void);
-
+  void DoStart ();
   /* dcf notifications forwarded here */
   bool NeedsAccess (void) const;
   void NotifyAccessGranted (void);
@@ -141,14 +140,13 @@ private:
 
   void RestartAccessIfNeeded (void);
   void StartAccessIfNeeded (void);
-  bool NeedRts (void);
+  bool NeedRts (Ptr<const Packet> packet, const WifiMacHeader *header);
   bool NeedRtsRetransmission (void);
   bool NeedDataRetransmission (void);
   bool NeedFragmentation (void);
   uint32_t GetNextFragmentSize (void);
   uint32_t GetFragmentSize (void);
   uint32_t GetFragmentOffset (void);
-  WifiRemoteStation *GetStation (Mac48Address to) const;
   bool IsLastFragment (void);
   void NextFragment (void);
   Ptr<Packet> GetFragmentPacket (WifiMacHeader *hdr);
