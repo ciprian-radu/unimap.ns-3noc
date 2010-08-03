@@ -59,13 +59,26 @@ namespace ns3
     m_routingProtocol = 0;
   }
 
-  bool
-  NocRouter::ManagePacket (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-      Ptr<Packet> packet, RouteReplyCallback routeReply)
+  Ptr<Route>
+  NocRouter::ManagePacket (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
   {
     NS_LOG_FUNCTION_NOARGS();
-    GetRoutingProtocol()->RequestRoute (source, destination, packet, routeReply);
-    return true;
+    NS_ASSERT (source != 0);
+    NS_ASSERT (destination != 0);
+
+    uint32_t sourceNodeId = source->GetNode ()->GetId ();
+    uint32_t destinationNodeId = destination->GetId ();
+    Ptr<Route> route = 0;
+    if (sourceNodeId == destinationNodeId)
+      {
+        NS_LOG_WARN ("Trying to route a packet from node " << sourceNodeId
+            << " to node " << destinationNodeId << " (same node)");
+      }
+    else
+      {
+        route = GetRoutingProtocol()->RequestRoute (source, destination, packet);
+      }
+    return route;
   }
 
   Ptr<LoadRouterComponent>
@@ -92,6 +105,50 @@ namespace ns3
   {
     // This method is meant to be overridden by the subclassing routers which work with load information
     return 0;
+  }
+
+  double
+  NocRouter::GetInChannelsOccupancy (Ptr<NocNetDevice> sourceDevice)
+  {
+    double occupancy = 0;
+    uint32_t packets = 0;
+    uint64_t sizes = 0;
+
+    for (uint32_t i = 0; i < GetNDevices (); ++i)
+      {
+        Ptr<NocNetDevice> device = GetDevice (i);
+        packets += device->GetInQueueNPacktes ();
+        sizes += device->GetInQueueSize ();
+      }
+    if (sizes != 0 && packets != 0)
+      {
+        occupancy = packets * 1.0 / sizes;
+      }
+    NS_LOG_LOGIC ("In channels occupancy is " << occupancy);
+
+    return occupancy;
+  }
+
+  double
+  NocRouter::GetOutChannelsOccupancy (Ptr<NocNetDevice> sourceDevice)
+  {
+    double occupancy = 0;
+    uint32_t packets = 0;
+    uint64_t sizes = 0;
+
+    for (uint32_t i = 0; i < GetNDevices (); ++i)
+      {
+        Ptr<NocNetDevice> device = GetDevice (i);
+        packets += device->GetOutQueueNPacktes ();
+        sizes += device->GetOutQueueSize ();
+      }
+    if (sizes != 0 && packets != 0)
+      {
+        occupancy = packets * 1.0 / sizes;
+      }
+    NS_LOG_LOGIC ("Out channels occupancy is " << occupancy);
+
+    return occupancy;
   }
 
   void

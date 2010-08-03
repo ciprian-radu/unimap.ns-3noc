@@ -47,13 +47,18 @@ namespace ns3
      */
     FourWayLoadRouter ();
 
+    /**
+     * Constructor
+     *
+     * \param loadComponent the load router component
+     */
     FourWayLoadRouter (Ptr<LoadRouterComponent> loadComponent);
 
     virtual
     ~FourWayLoadRouter ();
 
     virtual void
-    SetLoadComponent (Ptr<LoadRouterComponent> loadComponent);
+    CreateLoadComponent (TypeId loadComponentTypeId);
 
     /**
      * Adds the load received from a neighbor router (marked by its topological direction)
@@ -88,6 +93,26 @@ namespace ns3
     GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction);
 
   private:
+
+    /**
+     * the load of the neighbor router connected to the North channel
+     */
+    int m_northLoad;
+
+    /**
+     * the load of the neighbor router connected to the East channel
+     */
+    int m_eastLoad;
+
+    /**
+     * the load of the neighbor router connected to the South channel
+     */
+    int m_southLoad;
+
+    /**
+     * the load of the neighbor router connected to the West channel
+     */
+    int m_westLoad;
 
   };
 

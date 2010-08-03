@@ -47,13 +47,30 @@ namespace ns3
     ~IrvineRouter ();
 
     virtual Ptr<NocNetDevice>
-    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
+    GetInjectionNetDevice (Ptr<Packet> packet, Ptr<NocNode> destination);
+
+    virtual std::vector<Ptr<NocNetDevice> >
+    GetInjectionNetDevices ();
+
+    virtual Ptr<NocNetDevice>
+    GetReceiveNetDevice ();
 
     virtual uint32_t
     AddDevice (Ptr<NocNetDevice> device);
 
+    /**
+     * Retrieves all the possible output net devices for a packet sent by the specified net device.
+     * Note that once a packet reaches the column where the destination is (X distance is zero),
+     * East and West outputs will not be returned, because the Irvine router doesn't allow turning
+     * from East to West or vice versa.
+     *
+     * \param packet the packet
+     * \param sender the net device which sent the packet
+     *
+     * \return an array with the output net devices
+     */
     std::vector<Ptr<NocNetDevice> >
-    GetOutputNetDevices (Ptr<NocNetDevice> sender);
+    GetOutputNetDevices (Ptr<Packet> packet, Ptr<NocNetDevice> sender);
 
     /**
      * Determines if the given net device belongs to the left router
@@ -75,6 +92,36 @@ namespace ns3
     bool
     isRightRouter (Ptr<NocNetDevice> sender);
 
+    /**
+     * Computes the occupancy of the in channels of this router, either left or right router component (see below).
+     * The occupancy represents how many packets are in the input channels of this router,
+     * reported to the size of the queue.
+     * Note that if the router has no in channels, the occupancy is zero.
+     *
+     * \param sourceDevice a net device belonging to this router, which determined the occupancy computation
+     *                     (cannot be NULL; this tells if either left or right router channels should be considered)
+     *
+     * \return the occupancy of the in channels
+     */
+    double
+    GetInChannelsOccupancy (Ptr<NocNetDevice> sourceDevice);
+
+    /**
+     * Computes the occupancy of the out channels of this router, either left or right router component (see below).
+     * The occupancy represents how many packets are in the output channels of this router,
+     * reported to the size of the queue.
+     * Note that if the router has no out channels, the occupancy is zero.
+     *
+     * \param sourceDevice a net device belonging to this router, which determined the occupancy computation
+     *                     (cannot be NULL; this tells if either left or right router channels should be considered)
+     *
+     * \return the occupancy of the out channels
+     */
+    double
+    GetOutChannelsOccupancy (Ptr<NocNetDevice> sourceDevice);
+
+    virtual void
+    SetNocNode (Ptr<NocNode> nocNode);
 
   protected:
 
@@ -87,6 +134,18 @@ namespace ns3
     GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection);
 
   private:
+
+    /**
+     * Initialize the router
+     */
+    void
+    Init ();
+
+    Ptr<NocNetDevice> m_internalLeftInputDevice;
+
+    Ptr<NocNetDevice> m_internalRightInputDevice;
+
+    Ptr<NocNetDevice> m_internalOutputDevice;
 
     /**
      * the input net devices associated to the left router (subset of m_devices)

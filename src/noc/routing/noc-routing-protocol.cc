@@ -76,9 +76,9 @@ namespace ns3
    return m_name;
   }
 
-  bool
+  Ptr<Route>
   NocRoutingProtocol::RequestRoute (const Ptr<NocNetDevice> source,
-      const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply)
+      const Ptr<NocNode> destination, Ptr<Packet> packet)
   {
     //    Ptr<NocPacket> nocPacket = DynamicCast<NocPacket> (packet);
     //    if (nocPacket->IsHeadPacket())
@@ -94,7 +94,10 @@ namespace ns3
     if (!header.IsEmpty())
       {
         // head packet
-        NS_LOG_DEBUG ("A route was requested for a head packet (UID is " << packet->GetUid () << ")");
+        NS_LOG_DEBUG ("A route was requested for the head packet " << *packet
+            << " (packet UID " << packet->GetUid () << " ; current net device is "
+            << source->GetAddress ()  << " ; current node is " << source->GetNode ()->GetId ()
+            << " ; destination node is " << destination->GetId () << ")");
 
         // TODO the intention with the asserts is good but we need counters per <source, destination> pairs
 
@@ -105,29 +108,34 @@ namespace ns3
 //        m_dataPacketsRouted = 0;
 //        NS_LOG_DEBUG ("After this head packet is routed, " << m_dataPacketsToBeRouted
 //            << " data packets are still expected to be routed");
-        bool routed = RequestNewRoute(source, destination, packet, routeReply);
+        Ptr<Route> route = RequestNewRoute(source, destination, packet);
+        m_packetSourceNetDevices.erase (packet->GetUid ());
         m_packetSourceNetDevices
           .insert(std::pair<uint32_t, Ptr<NocNetDevice> > (packet->GetUid (), m_sourceNetDevice));
+        NS_ASSERT (m_packetSourceNetDevices[packet->GetUid ()] != 0);
+        m_packetDestinationNetDevices.erase (packet->GetUid ());
         m_packetDestinationNetDevices
           .insert(std::pair<uint32_t, Ptr<NocNetDevice> > (packet->GetUid (), m_destinationNetDevice));
-        return routed;
+        NS_ASSERT (m_packetDestinationNetDevices[packet->GetUid ()] != 0);
+        return route;
       }
     else
       {
         // data (body) packet
         NocPacketTag tag;
         packet->PeekPacketTag(tag);
-        NS_LOG_DEBUG ("A route was requested for a data packet (head packet UID is "
-            << (int) tag.GetPacketHeadUid () << ")");
-        Ptr<NocNetDevice> source = m_packetSourceNetDevices[tag.GetPacketHeadUid ()];
-        Ptr<NocNetDevice> destination = m_packetDestinationNetDevices[tag.GetPacketHeadUid ()];
-        NS_ASSERT (source != 0);
-        NS_ASSERT (destination != 0);
-        routeReply(packet, source, destination);
+        NS_LOG_DEBUG ("A route was requested for the data packet " << *packet << " (head packet UID "
+            << (int) tag.GetPacketHeadUid () << " ; current net device is "
+            << source->GetAddress ()  << " ; current node is " << source->GetNode ()->GetId ()
+            << " ; destination node is " << destination->GetId () << ")");
+        Ptr<NocNetDevice> sourceDevice = m_packetSourceNetDevices[tag.GetPacketHeadUid ()];
+        Ptr<NocNetDevice> destinationDevice = m_packetDestinationNetDevices[tag.GetPacketHeadUid ()];
+        NS_ASSERT (sourceDevice != 0);
+        NS_ASSERT (destinationDevice != 0);
 //        m_dataPacketsRouted++;
 //        NS_LOG_DEBUG (m_dataPacketsRouted << " were routed. Still expecting "
 //            << (m_dataPacketsToBeRouted - m_dataPacketsRouted) << " data packets");
-        return true;
+        return CreateObject<Route> (packet, sourceDevice, destinationDevice);
       }
   }
 

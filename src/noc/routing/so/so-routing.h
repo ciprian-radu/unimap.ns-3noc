@@ -50,9 +50,8 @@ namespace ns3
     virtual
     ~SoRouting ();
 
-    virtual bool
-    RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-        Ptr<Packet> packet, RouteReplyCallback routeReply);
+    virtual Ptr<Route>
+    RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
 
   private:
 
@@ -70,6 +69,12 @@ namespace ns3
      * the router in the chosen direction is loaded
      */
     int m_loadWeight;
+
+    /**
+     * the number of data packets of a routed message is kept in this field because
+     * it is used for data (body) packets as well (these do not have a header)
+     */
+    int m_dataLength;
 
     /**
      * Determines all the possible net devices that could route the packet

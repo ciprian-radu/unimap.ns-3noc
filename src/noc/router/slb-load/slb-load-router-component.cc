@@ -20,6 +20,10 @@
 
 #include "ns3/log.h"
 #include "slb-load-router-component.h"
+#include "ns3/noc-header.h"
+#include "ns3/noc-application.h"
+#include "ns3/integer.h"
+#include "ns3/noc-registry.h"
 
 NS_LOG_COMPONENT_DEFINE ("SlbLoadRouterComponent");
 
@@ -30,7 +34,7 @@ namespace ns3
 
   SlbLoadRouterComponent::SlbLoadRouterComponent() : LoadRouterComponent (__FILE__)
   {
-    ;
+    m_dataLength = -1;
   }
 
   TypeId
@@ -48,25 +52,50 @@ namespace ns3
   }
 
   int
-  SlbLoadRouterComponent::GetLocalLoad ()
+  SlbLoadRouterComponent::GetLocalLoad (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice)
   {
+    // Note that we don't really account for router specific data
+    // (this is a static algorithm)
     int load = 0;
     // load = (int)((router.getNewLoad() / (8.0f * (6.0f * router.getDataFlitSpeedup() + router.getNode().getProcessingElement().getMessageLength()))) * 100.0f);
-    int dataFlitSpeedup = 1; // FIXME data packets are implicitly propagated faster in NS-3 because the size of the packet is considered (NocChannel.Send (...))
-    int messageLength = 8; // FIXME this can the obtained from NocApplication (field m_numberOfPackets)
-    load = (int) ((m_load / (8.0 * (6.0 * dataFlitSpeedup + messageLength))) * 100);
+    IntegerValue speedup;
+    NocRegistry::GetInstance ()->GetAttribute ("DataPacketSpeedup", speedup);
+    int dataFlitSpeedup = speedup.Get ();
 
-    NS_ASSERT (load >= 0 && load <= 100);
+    NS_ASSERT (sourceDevice != 0);
+    NocHeader header;
+    packet->PeekHeader (header);
+    if (!header.IsEmpty ())
+      {
+        m_dataLength = header.GetDataFlitCount ();
+      }
+    NS_LOG_DEBUG ("Message has " << m_dataLength << " data packets");
+    NS_ASSERT (m_dataLength >= 0);
+
+    NS_LOG_DEBUG ("Current load is " << m_load);
+
+    load = (int) ((m_load / (8.0 * (6.0 * dataFlitSpeedup + m_dataLength))) * 100);
+
+    // The above formula does not guarantee that load <= 100
+    // (but that is the formula used by the algorithm...)
+    if (load > 100)
+      {
+        NS_LOG_WARN ("The load is " << load << " It is set to 100 (the maximum allowed value)");
+        load = 100;
+      }
 
     NS_LOG_DEBUG ("Retrieving local load: " << load);
+    NS_ASSERT (load >= 0 && load <= 100);
 
     return load;
   }
 
   int
-  SlbLoadRouterComponent::GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice)
+  SlbLoadRouterComponent::GetLoadForDirection (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice,
+      Ptr<NocNetDevice> selectedDevice)
   {
-    int load = GetLocalLoad ();
+    int load = GetLocalLoad (packet, sourceDevice);
+    m_load = 0;
     double neighbourLoad = 0;
     int counter = 0;
 

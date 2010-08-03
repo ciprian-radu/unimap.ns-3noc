@@ -55,9 +55,8 @@ namespace ns3
     virtual
     ~XyRouting();
 
-    virtual bool
-    RequestNewRoute(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-        Ptr<Packet> packet, RouteReplyCallback routeReply);
+    virtual Ptr<Route>
+    RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
 
     void
     SetRouteXFirst (bool routeXFirst);

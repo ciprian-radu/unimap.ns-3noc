@@ -30,6 +30,7 @@
 #include "ns3/node-container.h"
 #include "ns3/net-device-container.h"
 #include "ns3/noc-packet.h"
+#include "ns3/traffic-pattern.h"
 
 namespace ns3 {
 
@@ -75,7 +76,14 @@ public:
       BIT_REVERSE
     };
 
-  static std::string TrafficPatternToString(TrafficPattern t);
+  static std::string TrafficPatternToString (TrafficPattern t);
+
+  /**
+   * \param a string which names the desired traffic pattern
+   *
+   * \return the traffic pattern (the default traffic pattern is UNIFORM_RANDOM)
+   */
+  static TrafficPattern TrafficPatternFromString (std::string t);
 
   static TypeId GetTypeId (void);
 
@@ -121,11 +129,20 @@ private:
   EventId         m_sendEvent;          // Event id of pending send packet event
   bool            m_sending;            // True if currently in sending state
   TracedCallback<Ptr<const Packet> > m_txTrace;
+  ns3::TrafficPattern    m_trafficPattern;
+  uint32_t           m_uniformDestinationX;     // the X coordinate of the last destination node (generated in an uniform random manner)
+  uint32_t           m_uniformDestinationY;     // the Y coordinate of the last destination node (generated in an uniform random manner)
   
+  /**
+   * Allows tracing injected messages into the network.
+   * A message is identified by its head packet.
+   */
+  TracedCallback<Ptr<const Packet> > m_messageTrace;
+
   /**
    * The traffic pattern which will be used by this application
    */
-  TrafficPattern m_trafficPattern;
+  TrafficPattern m_trafficPatternEnum;
 
   /**
    * The ID of the destination node. Note that this must be used only when the traffic
@@ -141,75 +158,6 @@ private:
 
   void Ignore(Ptr<Socket>);
 
-  /**
-   * \brief Represents a given positive integer number in base 2 and transposes its bits
-   * (the second half part of the bits are put in front of the first half).
-   * The number must be represented on maximum 32 bits.
-   *
-   * \param the number
-   *
-   * \return the number which is obtained by transposing the bits of the given number
-   */
-  static uint32_t MatrixTransposeBits (uint32_t number);
-
-  /**
-   * \brief Represents a given positive integer number in base 2 and transposes its bits
-   * (the second half part of the bits are put in front of the first half).
-   * The number must be represented on maximum 32 bits.
-   * Additionally, you can specify how many bits to use for the binary representation.
-   *
-   * \param number the number
-   *
-   * \param size the size (will be checked to be >= 1 and <= 32)
-   *
-   * \return the number which is obtained by transposing the bits of the given number
-   */
-  static uint32_t MatrixTransposeBits (uint32_t number, uint8_t size);
-
-  /**
-   * \brief Represents a given positive integer number in base 2 and complements its bits
-   * (0 becomes 1 and 1 becomes 0). The number must be represented on maximum 32 bits.
-   *
-   * \param the number
-   *
-   * \return the number which is obtained by complementing the bits of the given number
-   */
-  static uint32_t ComplementBits (uint32_t number);
-
-  /**
-   * \brief Represents a given positive integer number in base 2 and complements its bits
-   * (0 becomes 1 and 1 becomes 0). The number must be represented on maximum 32 bits.
-   * Additionally, you can specify how many bits to use for the binary representation.
-   *
-   * \param number the number
-   *
-   * \param size the size (will be checked to be >= 1 and <= 32)
-   *
-   * \return the number which is obtained by complementing the bits of the given number
-   */
-  static uint32_t ComplementBits (uint32_t number, uint8_t size);
-
-  /**
-   * \brief Represents a given positive integer number in base 2 and reverses its bits
-   * (the last bit becomes the first and so on). The number must be represented on maximum 32 bits.
-   *
-   * \param number the number
-   *
-   * \return the number which is obtained by reversing the bits of the given number
-   */
-  static uint32_t ReverseBits (uint32_t number);
-
-  /**
-   * \brief Represents a given positive integer number in base 2 and reverses its bits
-   * (the last bit becomes the first and so on). The number must be represented on maximum 32 bits.
-   *
-   * \param number the number
-   *
-   * \param size the size (will be checked to be >= 1 and <= 32)
-   *
-   * \return the number which is obtained by reversing the bits of the given number
-   */
-  static uint32_t ReverseBits (uint32_t number, uint8_t size);
 };
 
 } // namespace ns3

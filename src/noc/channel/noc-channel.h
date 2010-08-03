@@ -28,6 +28,7 @@
 #include <vector>
 #include "ns3/noc-packet.h"
 #include "ns3/noc-net-device.h"
+#include <map>
 
 namespace ns3
 {
@@ -53,40 +54,43 @@ namespace ns3
       };
 
     static TypeId
-    GetTypeId(void);
+    GetTypeId ();
 
-    NocChannel();
+    NocChannel ();
 
-    uint32_t
-    Add(Ptr<NocNetDevice> device);
+    virtual uint32_t
+    Add (Ptr<NocNetDevice> device);
 
     // inherited from ns3::Channel
     virtual uint32_t
-    GetNDevices(void) const;
+    GetNDevices () const;
 
     virtual Ptr<NetDevice>
-    GetDevice(uint32_t i) const;
+    GetDevice (uint32_t i) const;
 
     /**
      * Get the assigned data rate of the channel
      *
      * \return the DataRate to be used by net device transmitters.
      */
-    DataRate GetDataRate ();
+    virtual DataRate
+    GetDataRate ();
 
     /**
      * Get the assigned speed-of-light delay of the channel
      *
      * \return the delay used by the channel.
      */
-    Time GetDelay ();
+    virtual Time
+    GetDelay ();
 
     /**
      * \see WireState
      *
      * \return the state of the channel
      */
-    WireState GetState ();
+    virtual WireState
+    GetState ();
 
     /**
      * \brief Indicates if the channel is busy. The channel will only
@@ -94,7 +98,8 @@ namespace ns3
      *
      * \return true if the channel is busy, false if it is free
      */
-    bool IsBusy ();
+    virtual bool
+    IsBusy ();
 
     /**
      * \brief Start transmitting a packet over the channel
@@ -102,6 +107,8 @@ namespace ns3
      * If the srcId belongs to a net device that is connected to the
      * channel, packet transmission begins, and the channel becomes busy
      * until the packet has completely reached all destinations.
+     *
+     * \param originalNetDevice the net device which generated this transmission
      *
      * \param p A reference to the packet that will be transmitted over
      * the channel
@@ -111,7 +118,8 @@ namespace ns3
      *
      * \return True if the channel is not busy
      */
-    bool TransmitStart (Ptr<Packet> p, uint32_t srcId);
+    virtual bool
+    TransmitStart (Ptr<NocNetDevice> originalNetDevice, Ptr<Packet> p, uint32_t srcId);
 
     /**
      * \brief Transmits the packet. Please note that prior to calling this method, TransmitStart method must be called.
@@ -123,8 +131,8 @@ namespace ns3
      * \param from the address from where the packet is sent
      *
      */
-    bool
-    Send(Mac48Address to, Mac48Address from);
+    virtual bool
+    Send (Mac48Address to, Mac48Address from);
 
     /**
      * \brief Ends transmitting a packet over the channel, by actually passing it to the Receive method of the packet
@@ -140,7 +148,8 @@ namespace ns3
      * \param from the address from where the packet is sent
      *
      */
-    void TransmitEnd (Ptr<NocNetDevice> srcNocNetDevice, Mac48Address to,
+    virtual void
+    TransmitEnd (Ptr<NocNetDevice> srcNocNetDevice, Mac48Address to,
         Ptr<NocNetDevice> destNocNetDevice, Mac48Address from);
 
   private:
@@ -170,11 +179,23 @@ namespace ns3
     Ptr<Packet> m_currentPkt;
 
     /**
+     * The net device which tries to send a channel through this channel.
+     * Tipically, a packet stays in a net device and is sent via another
+     * net device of the same node.
+     */
+    std::map<uint32_t, Ptr<NocNetDevice> > m_packetOriginalDevice;
+
+    /**
      * Device Id of the source that is currently transmitting on the
      * channel (or last source to have transmitted a packet on the
      * channel, if the channel is currently not busy)
      */
     uint32_t m_currentSrc;
+
+    /**
+     * The current destination net device
+     */
+    Ptr<NocNetDevice> m_currentDestDevice;
 
   };
 

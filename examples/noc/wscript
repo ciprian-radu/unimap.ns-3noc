@@ -6,3 +6,15 @@ def build(bld):
 
     obj = bld.create_ns3_program('noc-test', ['noc', 'generic'])
     obj.source = 'noc-test.cc'
+    
+    obj = bld.create_ns3_program('noc-sync-test', ['noc', 'generic'])
+    obj.source = 'noc-sync-test.cc'
+    
+    obj = bld.create_ns3_program('noc-faulty-test', ['noc', 'generic'])
+    obj.source = 'noc-faulty-test.cc'
+    
+    obj = bld.create_ns3_program('noc-simulator', ['noc', 'generic'])
+    obj.source = 'noc-simulator.cc'
+    
+    obj = bld.create_ns3_program('noc-sync-simulator', ['noc', 'generic'])
+    obj.source = 'noc-sync-simulator.cc'

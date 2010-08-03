@@ -55,21 +55,26 @@ namespace ns3
     IncreaseLoad ();
 
     /**
+     * \param packet the current packet
+     * \param sourceDevice the net device where the packet currently is in the router
+     *
      * \return the load of the router
      */
     virtual int
-    GetLocalLoad () = 0;
+    GetLocalLoad (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice) = 0;
 
     /**
      * Computes the load that is propagated from this router, in the specified direction.
      *
+     * \param packet the current packet
      * \param sourceDevice the net device where the packet currently is in the router
      * \param selectedDevice the net device chosen for routing the packet forward
      *
      * \return the load for the specified direction
      */
     virtual int
-    GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice) = 0;
+    GetLoadForDirection (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice,
+        Ptr<NocNetDevice> selectedDevice) = 0;
 
     /**
      * \return the name

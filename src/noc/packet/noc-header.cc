@@ -28,7 +28,7 @@ namespace ns3
 
   NS_OBJECT_ENSURE_REGISTERED (NocHeader);
 
-  NocHeader::NocHeader()
+  NocHeader::NocHeader ()
   {
     NocHeader::m_xDistance = 0;
     NocHeader::m_yDistance = 0;
@@ -40,16 +40,12 @@ namespace ns3
     m_load = 0;
   }
 
-  NocHeader::NocHeader(uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
-      uint8_t sourceY, uint16_t dataFlitCount)
+  NocHeader::NocHeader (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX,
+      uint32_t sourceY, uint16_t dataFlitCount)
   {
-    NS_ASSERT_MSG(xDistance <= 16, "xDistance must be only on 4 bits");
     NocHeader::m_xDistance = xDistance;
-    NS_ASSERT_MSG(yDistance <= 16, "yDistance must be only on 4 bits");
     NocHeader::m_yDistance = yDistance;
-    NS_ASSERT_MSG(sourceX <= 16, "sourceX must be only on 4 bits");
     NocHeader::m_sourceX = sourceX;
-    NS_ASSERT_MSG(sourceY <= 16, "sourceY must be only on 4 bits");
     NocHeader::m_sourceY = sourceY;
     NocHeader::m_subdataId = 0;
     NocHeader::m_peGroupAddress = 0;
@@ -57,13 +53,13 @@ namespace ns3
     m_load = 0;
   }
 
-  NocHeader::~NocHeader()
+  NocHeader::~NocHeader ()
   {
     ;
   }
 
   TypeId
-  NocHeader::GetTypeId (void)
+  NocHeader::GetTypeId ()
   {
     static TypeId tid = TypeId ("NocHeader")
       .SetParent<Header> ()
@@ -73,13 +69,13 @@ namespace ns3
   }
 
   TypeId
-  NocHeader::GetInstanceTypeId (void) const
+  NocHeader::GetInstanceTypeId () const
   {
     return GetTypeId ();
   }
 
   uint32_t
-  NocHeader::GetSerializedSize (void) const
+  NocHeader::GetSerializedSize () const
   {
     return HEADER_SIZE; // bytes
   }
@@ -89,11 +85,15 @@ namespace ns3
   {
     // The 1 byte-constant (the first 2 bits are 1 and the rest are 0;
     // the 6 zeroes represent the packet type)
-    start.WriteU8 (0xC0);
+    start.WriteU8 (HEADER_ID);
 
-    start.WriteU8 ((m_xDistance << 4) + m_yDistance);
+    start.WriteU32 (m_xDistance);
 
-    start.WriteU8 ((m_sourceX << 4) + m_sourceY);
+    start.WriteU32 (m_yDistance);
+
+    start.WriteU32 (m_sourceX);
+
+    start.WriteU32 (m_sourceY);
 
     start.WriteU8 (m_subdataId);
 
@@ -113,15 +113,13 @@ namespace ns3
     // if tmp == 0 then we have a data packet
     if (tmp != 0)
       {
-        NS_ASSERT (tmp == 0xC0);
+        NS_ASSERT (tmp == HEADER_ID);
 
-        uint8_t destinationAddress = start.ReadU8 ();
-        m_xDistance = destinationAddress >> 4;
-        m_yDistance = destinationAddress & 0x0F;
+        m_xDistance = start.ReadU32 ();
+        m_yDistance = start.ReadU32 ();
 
-        uint8_t sourceAddress = start.ReadU8 ();
-        m_sourceX = sourceAddress >> 4;
-        m_sourceY = sourceAddress & 0x0F;
+        m_sourceX = start.ReadU32 ();
+        m_sourceY = start.ReadU32 ();
 
         m_subdataId = start.ReadU8 ();
 
@@ -140,8 +138,35 @@ namespace ns3
   void
   NocHeader::Print (std::ostream &os) const
   {
-    os << "xDistance=" << (int) m_xDistance << " yDistance=" << (int) m_yDistance
-        << " sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
+    std::string xDir;
+    std::string yDir;
+
+    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+      {
+        xDir = "W";
+      }
+    else
+      {
+        if (m_xDistance != 0)
+          {
+            xDir = "E";
+          }
+      }
+    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+      {
+        yDir = "N";
+      }
+    else
+      {
+        if (m_yDistance != 0)
+          {
+            yDir = "S";
+          }
+      }
+
+    os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
+        << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
+        << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
         << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
         << (long) m_dataFlitCount << " load=" << (int) m_load;
   }
@@ -163,90 +188,148 @@ namespace ns3
         && (m_dataFlitCount == 0) && (m_load == 0);
   }
 
+//  void
+//  NocHeader::SetXDistance(uint32_t xDistance)
+//  {
+//    m_xDistance = xDistance;
+//  }
+//
+//  uint32_t
+//  const NocHeader::GetXDistance()
+//  {
+//    return m_xDistance;
+//  }
+//
+//  void
+//  NocHeader::SetYDistance(uint32_t yDistance)
+//  {
+//    m_yDistance = yDistance;
+//  }
+//
+//  uint32_t
+//  const NocHeader::GetYDistance()
+//  {
+//    return m_yDistance;
+//  }
+
+  bool
+  NocHeader::HasEastDirection ()
+  {
+    return (m_xDistance & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
+  }
+
+  bool
+  NocHeader::HasWestDirection ()
+  {
+    return !HasEastDirection ();
+  }
+
+  bool
+  NocHeader::HasNorthDirection ()
+  {
+    return !HasSouthDirection ();
+  }
+
+  bool
+  NocHeader::HasSouthDirection ()
+  {
+    return (m_yDistance & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
+  }
+
   void
-  NocHeader::SetXDistance(uint8_t xDistance)
+  NocHeader::SetXOffset (uint32_t xOffset)
   {
-    NS_ASSERT_MSG(xDistance <= 16, "xDistance must be only on 4 bits");
-    m_xDistance = xDistance;
-  }
-
-  uint8_t
-  const NocHeader::GetXDistance()
-  {
-    return m_xDistance;
-  }
-
-  void
-  NocHeader::SetYDistance(uint8_t yDistance)
-  {
-    NS_ASSERT_MSG(yDistance <= 16, "yDistance must be only on 4 bits");
-    m_yDistance = yDistance;
-  }
-
-  uint8_t
-  const NocHeader::GetYDistance()
-  {
-    return m_yDistance;
+    if (HasEastDirection ())
+      {
+        m_xDistance = xOffset;
+      }
+    else
+      {
+        m_xDistance = xOffset | DIRECTION_BIT_MASK;
+      }
   }
 
   void
-  NocHeader::SetSourceX(uint8_t sourceX)
+  NocHeader::SetYOffset (uint32_t yOffset)
   {
-    NS_ASSERT_MSG(sourceX <= 16, "sourceX must be only on 4 bits");
+    if (HasSouthDirection ())
+      {
+        m_yDistance = yOffset;
+      }
+    else
+      {
+        m_yDistance = yOffset | DIRECTION_BIT_MASK;
+      }
+  }
+
+  uint32_t
+  NocHeader::GetXOffset ()
+  {
+    return m_xDistance & OFFSET_BIT_MASK;
+  }
+
+  uint32_t
+  NocHeader::GetYOffset ()
+  {
+    return m_yDistance & OFFSET_BIT_MASK;
+  }
+
+  void
+  NocHeader::SetSourceX (uint32_t sourceX)
+  {
     m_sourceX = sourceX;
   }
 
-  uint8_t
-  const NocHeader::GetSourceX()
+  uint32_t
+  const NocHeader::GetSourceX ()
   {
     return m_sourceX;
   }
 
   void
-  NocHeader::SetSourceY(uint8_t sourceY)
+  NocHeader::SetSourceY (uint32_t sourceY)
   {
-    NS_ASSERT_MSG(sourceY <= 16, "sourceY must be only on 4 bits");
     m_sourceY = sourceY;
   }
 
-  uint8_t
-  const NocHeader::GetSourceY()
+  uint32_t
+  const NocHeader::GetSourceY ()
   {
     return m_sourceY;
   }
 
   void
-  NocHeader::SetSubdataId(uint8_t subdataId)
+  NocHeader::SetSubdataId (uint8_t subdataId)
   {
     m_subdataId = subdataId;
   }
 
   uint8_t
-  const NocHeader::GetSubdataId()
+  const NocHeader::GetSubdataId ()
   {
     return m_subdataId;
   }
 
   void
-  NocHeader::SetPeGroupAddress(uint16_t peGroupAddress)
+  NocHeader::SetPeGroupAddress (uint16_t peGroupAddress)
   {
     m_peGroupAddress = peGroupAddress;
   }
 
   uint16_t
-  const NocHeader::GetPeGroupAddress()
+  const NocHeader::GetPeGroupAddress ()
   {
     return m_peGroupAddress;
   }
 
   void
-  NocHeader::SetDataFlitCount(uint16_t dataFlitCount)
+  NocHeader::SetDataFlitCount (uint16_t dataFlitCount)
   {
     m_dataFlitCount = dataFlitCount;
   }
 
   uint16_t
-  const NocHeader::GetDataFlitCount()
+  const NocHeader::GetDataFlitCount ()
   {
     return m_dataFlitCount;
   }

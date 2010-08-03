@@ -25,6 +25,8 @@
 #include "ns3/noc-packet.h"
 #include "ns3/noc-net-device.h"
 #include "ns3/noc-router.h"
+#include <vector>
+#include <map>
 
 namespace ns3
 {
@@ -32,6 +34,12 @@ namespace ns3
   class NocRouter;
   class NocNetDevice;
 
+  /**
+   *
+   * The default implementation for a Network-on-Chip node.
+   * All NoC node classes should be derived from this class.
+   *
+   */
   class NocNode : public Node
   {
   public:
@@ -49,11 +57,11 @@ namespace ns3
     ///\name Routers
     //\{
     /// Register the router.
-    void
+    virtual void
     SetRouter (Ptr<NocRouter> router);
 
     /// Access current router
-    Ptr<NocRouter>
+    virtual Ptr<NocRouter>
     GetRouter ();
     //\}
 
@@ -63,21 +71,22 @@ namespace ns3
      * \param packet the network packet
      * \param destination the destination node
      */
-    void
+    virtual void
     InjectPacket (Ptr<NocPacket> packet, Ptr<NocNode> destination);
 
     /**
      * Sends a packet through the network, from the specified NoC net device
      *
-     * \param source the source noC net device
      * \param packet the network packet
+     * \param source the source noC net device
+     * \param viaNetDevice the via net device (can be NULL)
      * \param destination the destination node
      */
-    void
+    virtual void
     Send (Ptr<NocNetDevice> source, Ptr<Packet> packet, Ptr<NocNode> destination);
 
-    void
-    DoSend (Ptr<Packet>packet, Ptr<NetDevice> source, Ptr<NetDevice> destination);
+    virtual void
+    DoSend (Ptr<Packet>packet, Ptr<NocNetDevice> source, Ptr<NocNetDevice> viaNetDevice, Ptr<NetDevice> destination);
 
   private:
 

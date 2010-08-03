@@ -36,6 +36,11 @@ namespace ns3
   class NocHeader : public Header
   {
   public:
+
+    static const uint32_t DIRECTION_BIT_MASK = 0x80000000;
+
+    static const uint32_t OFFSET_BIT_MASK = 0x7FFFFFFF;
+
     NocHeader ();
 
     /**
@@ -47,8 +52,8 @@ namespace ns3
      * \param sourceY the Y coordinate of the source node
      * \param dataFlitCount the number of data flits (packets) that the message having this header will have
      */
-    NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
-        uint8_t sourceY, uint16_t dataFlitCount);
+    NocHeader (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX,
+        uint32_t sourceY, uint16_t dataFlitCount);
 
     virtual
     ~NocHeader ();
@@ -85,28 +90,52 @@ namespace ns3
 
     // allow protocol-specific access to the header data.
 
+//    void
+//    SetXDistance (uint8_t xDistance);
+//
+//    uint8_t
+//    const GetXDistance ();
+//
+//    void
+//    SetYDistance (uint8_t yDistance);
+//
+//    uint8_t
+//    const GetYDistance ();
+
+    bool
+    HasEastDirection ();
+
+    bool
+    HasWestDirection ();
+
+    bool
+    HasNorthDirection ();
+
+    bool
+    HasSouthDirection ();
+
     void
-    SetXDistance (uint8_t xDistance);
+    SetXOffset (uint32_t xOffset);
 
-    uint8_t
-    const GetXDistance ();
-
-    void
-    SetYDistance (uint8_t yDistance);
-
-    uint8_t
-    const GetYDistance ();
+    uint32_t
+    GetXOffset ();
 
     void
-    SetSourceX (uint8_t sourceX);
+    SetYOffset (uint32_t yOffset);
 
-    uint8_t
+    uint32_t
+    GetYOffset ();
+
+    void
+    SetSourceX (uint32_t sourceX);
+
+    uint32_t
     const GetSourceX ();
 
     void
-    SetSourceY (uint8_t sourceY);
+    SetSourceY (uint32_t sourceY);
 
-    uint8_t
+    uint32_t
     const GetSourceY ();
 
     void
@@ -139,19 +168,24 @@ namespace ns3
      * the size of this type of header, in bytes
      */
     // Make sure to update this field whenever you modify the structure of the header
-    static const int HEADER_SIZE = 9;
+    static const int HEADER_SIZE = 23;
+
+    /**
+     * the identifier of this kind of header
+     */
+    static const uint8_t HEADER_ID = 0x0C;
 
     // m_xDistance and m_yDistance determine the destination address
 
-    uint8_t m_xDistance; // this field is only 4 bits in size
+    uint32_t m_xDistance;
 
-    uint8_t m_yDistance; // this field is only 4 bits in size
+    uint32_t m_yDistance;
 
     // m_sourceX and m_sourceY for the source address
 
-    uint8_t m_sourceX; // this field is only 4 bits in size
+    uint32_t m_sourceX;
 
-    uint8_t m_sourceY; // this field is only 4 bits in size
+    uint32_t m_sourceY;
 
     /**
      * allows package indexing; this is useful when data has to be split

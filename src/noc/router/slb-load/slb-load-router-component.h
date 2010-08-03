@@ -44,25 +44,36 @@ namespace ns3
     ~SlbLoadRouterComponent ();
 
     /**
+     * \param packet the current packet
+     * \param router the router for which the load is requested
+     *
      * \return the load of the router
      */
     int
-    GetLocalLoad ();
+    GetLocalLoad (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice);
 
     /**
      * Computes the load that is propagated from this router, in the specified direction.
      *
+     * \param packet the current packet
      * \param sourceDevice the net device where the packet currently is in the router
      * \param selectedDevice the net device chosen for routing the packet forward
      *
      * \return the load for the specified direction
      */
     int
-    GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice);
+    GetLoadForDirection (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice,
+        Ptr<NocNetDevice> selectedDevice);
 
   protected:
 
   private:
+
+    /**
+     * the number of data packets of a routed message is kept in this field because
+     * it is used for data (body) packets as well (these do not have a header)
+     */
+    int m_dataLength;
 
   };
 

@@ -5,6 +5,8 @@ def build(bld):
     nocApp.source = [
         'noc-application.cc',
         'noc-application-helper.cc',
+        'noc-sync-application.cc',
+        'noc-sync-application-helper.cc',        
         ]
 
     headers = bld.new_task_gen('ns3header')
@@ -12,5 +14,7 @@ def build(bld):
     headers.source = [
         'noc-application.h',
         'noc-application-helper.h',
+        'noc-sync-application.h',
+        'noc-sync-application-helper.h', 
         ]
 

@@ -44,21 +44,25 @@ namespace ns3
     ~SoLoadRouterComponent ();
 
     /**
+     * \param packet the current packet
+     * \param sourceDevice the net device where the packet currently is in the router
+     *
      * \return the load of the router
      */
     int
-    GetLocalLoad ();
+    GetLocalLoad (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice);
 
     /**
      * Computes the load that is propagated from this router, in the specified direction.
      *
+     * \param packet the current packet
      * \param sourceDevice the net device where the packet currently is in the router
      * \param selectedDevice the net device chosen for routing the packet forward
      *
      * \return the load for the specified direction
      */
     int
-    GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice);
+    GetLoadForDirection (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice);
 
   protected:
 

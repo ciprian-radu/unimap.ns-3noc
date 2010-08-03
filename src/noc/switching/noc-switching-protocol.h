@@ -31,7 +31,6 @@
 namespace ns3
 {
 
-  class NocNode;
   class NocNetDevice;
 
   /**

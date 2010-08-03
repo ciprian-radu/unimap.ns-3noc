@@ -22,6 +22,11 @@
 #include "ns3/log.h"
 #include "ns3/noc-header.h"
 #include "ns3/xy-routing.h"
+#include "limits.h"
+#include "ns3/queue.h"
+#include "ns3/drop-tail-queue.h"
+#include "ns3/uinteger.h"
+#include "ns3/noc-packet-tag.h"
 
 NS_LOG_COMPONENT_DEFINE ("IrvineRouter");
 
@@ -42,16 +47,26 @@ namespace ns3
   // we could easily name the router "Irvine router", but using __FILE__ should be more useful for debugging
   IrvineRouter::IrvineRouter () : NocRouter (__FILE__)
   {
-    m_north1DeviceAdded = false;
-    m_north2DeviceAdded = false;
-    m_eastDeviceAdded = false;
-    m_south1DeviceAdded = false;
-    m_south2DeviceAdded = false;
-    m_westDeviceAdded = false;
+    Init ();
   }
 
   IrvineRouter::IrvineRouter (std::string name) : NocRouter (name)
   {
+    Init ();
+  }
+
+  void
+  IrvineRouter::Init ()
+  {
+    m_internalLeftInputDevice = CreateObject<NocNetDevice> ();
+    m_internalLeftInputDevice->SetAddress (Mac48Address::Allocate ());
+
+    m_internalRightInputDevice = CreateObject<NocNetDevice> ();
+    m_internalRightInputDevice->SetAddress (Mac48Address::Allocate ());
+
+    m_internalOutputDevice = CreateObject<NocNetDevice> ();
+    m_internalOutputDevice->SetAddress (Mac48Address::Allocate ());
+
     m_north1DeviceAdded = false;
     m_north2DeviceAdded = false;
     m_eastDeviceAdded = false;
@@ -62,34 +77,89 @@ namespace ns3
 
   IrvineRouter::~IrvineRouter ()
   {
+    ;
+  }
 
+  void
+  IrvineRouter::SetNocNode (Ptr<NocNode> nocNode)
+  {
+    NocRouter::SetNocNode (nocNode);
+
+    m_internalLeftInputDevice->SetNode (m_nocNode);
+    Ptr<Queue> leftInQueue = CreateObject<DropTailQueue> ();
+    leftInQueue->SetAttribute ("MaxPackets", UintegerValue (UINT_MAX));
+    m_internalLeftInputDevice->SetInQueue (leftInQueue);
+    GetNocNode ()->AddDevice (m_internalLeftInputDevice);
+
+    m_internalRightInputDevice->SetNode (m_nocNode);
+    Ptr<Queue> rightInQueue = CreateObject<DropTailQueue> ();
+    rightInQueue->SetAttribute ("MaxPackets", UintegerValue (UINT_MAX));
+    m_internalRightInputDevice->SetInQueue (rightInQueue);
+    GetNocNode ()->AddDevice (m_internalRightInputDevice);
+
+    m_internalOutputDevice->SetNode (m_nocNode);
+    Ptr<Queue> outQueue = CreateObject<DropTailQueue> ();
+    outQueue->SetAttribute ("MaxPackets", UintegerValue (UINT_MAX));
+    m_internalOutputDevice->SetInQueue (outQueue);
+//    m_internalOutputDevice->SetReceiveCallback (MakeCallback (&Node::NonPromiscReceiveFromDevice, this));
+    GetNocNode ()->AddDevice (m_internalOutputDevice);
   }
 
   Ptr<NocNetDevice>
-  IrvineRouter::GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination)
+  IrvineRouter::GetInjectionNetDevice (Ptr<Packet> packet, Ptr<NocNode> destination)
   {
     NS_LOG_FUNCTION_NOARGS();
-    Ptr<NocNetDevice> netDevice;
+    Ptr<NocNetDevice> netDevice = 0;
 
     NocHeader nocHeader;
     packet->PeekHeader (nocHeader);
 
-    // we don't really determine the correct input net device
-    // but rather we determine the correct router (right or left)
-    // based on whether the destination is at West or at East
-    // from the source
-
-    uint8_t xDistance = nocHeader.GetXDistance ();
-    bool isEast = (xDistance & 0x08) != 0x08;
-    if (!isEast)
+    if (!nocHeader.IsEmpty ())
       {
-        netDevice = m_leftRouterInputDevices[0];
+        bool isEast = nocHeader.HasEastDirection ();
+        if (!isEast)
+          {
+            netDevice = m_internalLeftInputDevice;
+          }
+        else
+          {
+            netDevice = m_internalRightInputDevice;
+          }
+        m_headPacketsInjectionNetDevice[packet->GetUid ()] = netDevice;
       }
     else
       {
-        netDevice = m_rightRouterInputDevices[0];
+        NocPacketTag tag;
+        packet->PeekPacketTag (tag);
+        uint32_t headUid = tag.GetPacketHeadUid ();
+        netDevice = m_headPacketsInjectionNetDevice[headUid];
       }
+    NS_ASSERT (netDevice != 0);
     NS_LOG_DEBUG ("Chosen injection net device is " << netDevice->GetAddress ());
+
+    return netDevice;
+  }
+
+  std::vector<Ptr<NocNetDevice> >
+  IrvineRouter::GetInjectionNetDevices ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    std::vector<Ptr<NocNetDevice> > devices;
+    devices.insert (devices.begin (), m_internalRightInputDevice);
+    devices.insert (devices.begin (), m_internalLeftInputDevice);
+
+    return devices;
+  }
+
+  Ptr<NocNetDevice>
+  IrvineRouter::GetReceiveNetDevice ()
+  {
+    NS_LOG_FUNCTION_NOARGS();
+    Ptr<NocNetDevice> netDevice;
+
+    netDevice = m_internalOutputDevice;
+    NS_LOG_DEBUG ("The output net device of node is " << netDevice->GetAddress ());
 
     return netDevice;
   }
@@ -301,7 +371,7 @@ namespace ns3
   }
 
   std::vector<Ptr<NocNetDevice> >
-  IrvineRouter::GetOutputNetDevices (Ptr<NocNetDevice> sender)
+  IrvineRouter::GetOutputNetDevices (Ptr<Packet> packet, Ptr<NocNetDevice> sender)
   {
     NS_LOG_FUNCTION (sender->GetAddress ());
 
@@ -314,13 +384,29 @@ namespace ns3
     NS_ASSERT_MSG (!isRightIrvineRouter || !isLeftIrvineRouter, "The packet came through net device "
         << sender->GetAddress () << " This is from both right and left routers.");
 
+    NocHeader header;
+    packet->PeekHeader (header);
+    NS_ASSERT (!header.IsEmpty ());
+
     if (isRightIrvineRouter)
       {
         NS_LOG_DEBUG ("The packet came through the right router");
         for (unsigned int i = 0; i < m_rightRouterOutputDevices.size(); ++i)
           {
             Ptr<NocNetDevice> tmpNetDevice = m_rightRouterOutputDevices[i]->GetObject<NocNetDevice> ();
-            outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+            if (header.GetXOffset () == 0)
+              {
+                if (tmpNetDevice->GetRoutingDirection () != NocRoutingProtocol::EAST)
+                  {
+                    // we do not allow routing left once we are on the same column with the source
+                    // because an Irvine router doesn't allow a packet to turn from West to East
+                    outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+                  }
+              }
+            else
+              {
+                outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+              }
           }
       }
     else
@@ -329,7 +415,19 @@ namespace ns3
         for (unsigned int i = 0; i < m_leftRouterOutputDevices.size(); ++i)
           {
             Ptr<NocNetDevice> tmpNetDevice = m_leftRouterOutputDevices[i]->GetObject<NocNetDevice> ();
-            outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+            if (header.GetXOffset () == 0)
+              {
+                if (tmpNetDevice->GetRoutingDirection () != NocRoutingProtocol::EAST)
+                  {
+                    // we do not allow routing left once we are on the same column with the source
+                    // because an Irvine router doesn't allow a packet to turn from East to West
+                    outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+                  }
+              }
+            else
+              {
+                outputDevices.insert (outputDevices.begin(), tmpNetDevice);
+              }
           }
       }
 
@@ -340,15 +438,22 @@ namespace ns3
   IrvineRouter::isRightRouter (Ptr<NocNetDevice> sender)
   {
     bool isRightRouter = false;
-    Ptr<IrvineRouter> router = sender->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetObject<IrvineRouter> ();
-    for (unsigned int i = 0; i < router->m_rightRouterInputDevices.size(); ++i)
+    if (sender == m_internalRightInputDevice)
       {
-        NS_LOG_DEBUG ("Comparing " << router->m_rightRouterInputDevices[i]->GetAddress ()
-            << " with " << sender->GetAddress ());
-        if (router->m_rightRouterInputDevices[i] == sender)
+        isRightRouter = true;
+      }
+    else
+      {
+        Ptr<IrvineRouter> router = sender->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetObject<IrvineRouter> ();
+        for (unsigned int i = 0; i < router->m_rightRouterInputDevices.size(); ++i)
           {
-            isRightRouter = true;
-            break;
+            NS_LOG_DEBUG ("Comparing " << router->m_rightRouterInputDevices[i]->GetAddress ()
+                << " with " << sender->GetAddress ());
+            if (router->m_rightRouterInputDevices[i] == sender)
+              {
+                isRightRouter = true;
+                break;
+              }
           }
       }
     NS_LOG_DEBUG ("Comparison result: " << isRightRouter);
@@ -359,19 +464,114 @@ namespace ns3
   IrvineRouter::isLeftRouter (Ptr<NocNetDevice> sender)
   {
     bool isLeftRouter = false;
-    Ptr<IrvineRouter> router = sender->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetObject<IrvineRouter> ();
-    for (unsigned int i = 0; i < router->m_leftRouterInputDevices.size(); ++i)
+    if (sender == m_internalLeftInputDevice)
       {
-      NS_LOG_DEBUG ("Comparing " << router->m_leftRouterInputDevices[i]->GetAddress ()
-          << " with " << sender->GetAddress ());
-        if (router->m_leftRouterInputDevices[i] == sender)
+        isLeftRouter = true;
+      }
+    else
+      {
+        Ptr<IrvineRouter> router = sender->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetObject<IrvineRouter> ();
+        for (unsigned int i = 0; i < router->m_leftRouterInputDevices.size(); ++i)
           {
-            isLeftRouter = true;
-            break;
+          NS_LOG_DEBUG ("Comparing " << router->m_leftRouterInputDevices[i]->GetAddress ()
+              << " with " << sender->GetAddress ());
+            if (router->m_leftRouterInputDevices[i] == sender)
+              {
+                isLeftRouter = true;
+                break;
+              }
           }
       }
     NS_LOG_DEBUG ("Comparison result: " << isLeftRouter);
     return isLeftRouter;
+  }
+
+  double
+  IrvineRouter::GetInChannelsOccupancy (Ptr<NocNetDevice> sourceDevice)
+  {
+    NS_ASSERT (sourceDevice != 0);
+
+    double occupancy = 0;
+    uint32_t packets = 0;
+    uint64_t sizes = 0;
+
+    if (isLeftRouter (sourceDevice))
+      {
+        for (unsigned int i = 0; i < m_leftRouterInputDevices.size (); ++i)
+          {
+            Ptr<NocNetDevice> device = m_leftRouterInputDevices[i];
+            packets += device->GetInQueueNPacktes ();
+            sizes += device->GetInQueueSize ();
+          }
+      }
+    else
+      {
+        if (isRightRouter (sourceDevice))
+          {
+            for (unsigned int i = 0; i < m_rightRouterInputDevices.size (); ++i)
+              {
+                Ptr<NocNetDevice> device = m_rightRouterInputDevices[i];
+                packets += device->GetInQueueNPacktes ();
+                sizes += device->GetInQueueSize ();
+              }
+          }
+        else
+          {
+            NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                << " is not an input net device of this router!");
+          }
+      }
+    if (sizes != 0 && packets != 0)
+      {
+        occupancy = packets * 1.0 / sizes;
+      }
+    NS_LOG_LOGIC ("In channels occupancy is " << occupancy);
+
+    return occupancy;
+  }
+
+  double
+  IrvineRouter::GetOutChannelsOccupancy (Ptr<NocNetDevice> sourceDevice)
+  {
+    NS_ASSERT (sourceDevice != 0);
+
+    double occupancy = 0;
+    uint32_t packets = 0;
+    uint64_t sizes = 0;
+
+    if (isLeftRouter (sourceDevice))
+      {
+        for (unsigned int i = 0; i < m_leftRouterOutputDevices.size (); ++i)
+          {
+            Ptr<NocNetDevice> device = m_leftRouterOutputDevices[i];
+            packets += device->GetOutQueueNPacktes ();
+            sizes += device->GetOutQueueSize ();
+          }
+      }
+    else
+      {
+        if (isRightRouter (sourceDevice))
+          {
+            for (unsigned int i = 0; i < m_rightRouterOutputDevices.size (); ++i)
+              {
+                Ptr<NocNetDevice> device = m_rightRouterOutputDevices[i];
+                packets += device->GetOutQueueNPacktes ();
+                sizes += device->GetOutQueueSize ();
+              }
+          }
+        else
+          {
+            NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                << " is not an output net device of this router!");
+          }
+      }
+    if (sizes != 0 && packets != 0)
+      {
+        occupancy = packets * 1.0 / sizes;
+      }
+    NS_LOG_LOGIC ("Out channels occupancy is " << occupancy);
+
+    return occupancy;
   }
 
 } // namespace ns3

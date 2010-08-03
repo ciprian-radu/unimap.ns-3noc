@@ -42,22 +42,49 @@ namespace ns3
     ~FourWayRouter();
 
     virtual Ptr<NocNetDevice>
-    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination);
+    GetInjectionNetDevice (Ptr<Packet> packet, Ptr<NocNode> destination);
 
+    virtual std::vector<Ptr<NocNetDevice> >
+    GetInjectionNetDevices ();
+
+    virtual Ptr<NocNetDevice>
+    GetReceiveNetDevice ();
+
+    /**
+     * Retrieves all the possible output net devices for a packet sent by the specified net device.
+     *
+     * \param packet the packet
+     * \param sender the net device which sent the packet
+     *
+     * \return an array with the output net devices
+     */
     std::vector<Ptr<NocNetDevice> >
-    GetOutputNetDevices (Ptr<NocNetDevice> sender);
+    GetOutputNetDevices (Ptr<Packet> packet, Ptr<NocNetDevice> sender);
+
+    virtual void
+    SetNocNode (Ptr<NocNode> nocNode);
 
   protected:
 
     FourWayRouter (std::string name);
-
-  private:
 
     Ptr<NocNetDevice>
     GetInputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
 
     Ptr<NocNetDevice>
     GetOutputNetDevice(Ptr<NocNetDevice> sender, const int routingDirection);
+
+  private:
+
+    /**
+     * Initialize the router
+     */
+    void
+    Init ();
+
+    Ptr<NocNetDevice> m_internalInputDevice;
+
+    Ptr<NocNetDevice> m_internalOutputDevice;
 
   };
 
