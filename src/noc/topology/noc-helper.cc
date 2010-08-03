@@ -75,37 +75,38 @@ namespace ns3
   }
 
   void
-  NocHelper::EnableAscii(std::ostream &os, uint32_t nodeid, uint32_t deviceid)
+  NocHelper::EnableAscii(Ptr<OutputStreamWrapper> stream, uint32_t nodeid, uint32_t deviceid)
   {
-    Ptr<AsciiWriter> writer = AsciiWriter::Get(os);
+    AsciiTraceHelper asciiTraceHelper;
+
     Packet::EnablePrinting();
     std::ostringstream oss;
 
     oss << "/NodeList/" << nodeid << "/DeviceList/" << deviceid << "/$ns3::NocNetDevice/Send";
-    Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiTxEvent, writer));
+    Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiTxEvent, stream));
     oss.str ("");
 
     oss << "/NodeList/" << nodeid << "/DeviceList/" << deviceid << "/$ns3::NocNetDevice/Receive";
-    Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiRxEvent, writer));
+    Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiRxEvent, stream));
     oss.str ("");
 
     oss << "/NodeList/" << nodeid << "/DeviceList/" << deviceid << "/$ns3::NocNetDevice/Drop";
-    Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiDropEvent, writer));
+    Config::Connect(oss.str(), MakeBoundCallback(&NocHelper::AsciiDropEvent, stream));
     oss.str ("");
   }
 
   void
-  NocHelper::EnableAscii(std::ostream &os, NetDeviceContainer d)
+  NocHelper::EnableAscii(Ptr<OutputStreamWrapper> stream, NetDeviceContainer d)
   {
     for (NetDeviceContainer::Iterator i = d.Begin(); i != d.End(); ++i)
       {
         Ptr<NetDevice> dev = *i;
-        EnableAscii(os, dev->GetNode()->GetId(), dev->GetIfIndex());
+        EnableAscii(stream, dev->GetNode()->GetId(), dev->GetIfIndex());
       }
   }
 
   void
-  NocHelper::EnableAscii(std::ostream &os, NodeContainer n)
+  NocHelper::EnableAscii(Ptr<OutputStreamWrapper> stream, NodeContainer n)
   {
     NetDeviceContainer devs;
     for (NodeContainer::Iterator i = n.Begin(); i != n.End(); ++i)
@@ -116,13 +117,13 @@ namespace ns3
             devs.Add(node->GetDevice(j));
           }
       }
-    EnableAscii(os, devs);
+    EnableAscii(stream, devs);
   }
 
   void
-  NocHelper::EnableAsciiAll(std::ostream &os)
+  NocHelper::EnableAsciiAll(Ptr<OutputStreamWrapper> stream)
   {
-    EnableAscii(os, NodeContainer::GetGlobal());
+    EnableAscii(stream, NodeContainer::GetGlobal());
   }
 
   NetDeviceContainer
@@ -430,33 +431,33 @@ namespace ns3
   }
 
   void
-  NocHelper::AsciiTxEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
+  NocHelper::AsciiTxEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket (AsciiWriter::TX, path, packet);
+    *stream->GetStream () << "t " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
   }
 
   void
-  NocHelper::AsciiRxEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
+  NocHelper::AsciiRxEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket (AsciiWriter::RX, path, packet);
+    *stream->GetStream () << "r " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
   }
 
   void
-  NocHelper::AsciiEnqueueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
+  NocHelper::AsciiEnqueueEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket (AsciiWriter::ENQUEUE, path, packet);
+    *stream->GetStream () << "+ " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
   }
 
   void
-  NocHelper::AsciiDequeueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
+  NocHelper::AsciiDequeueEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket (AsciiWriter::DEQUEUE, path, packet);
+    *stream->GetStream () << "- " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
   }
 
   void
-  NocHelper::AsciiDropEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<const Packet> packet)
+  NocHelper::AsciiDropEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    writer->WritePacket (AsciiWriter::DROP, path, packet);
+    *stream->GetStream () << "d " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
   }
 
 } // namespace ns3

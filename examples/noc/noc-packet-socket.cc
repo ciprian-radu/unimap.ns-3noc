@@ -36,6 +36,7 @@
 #include "ns3/noc-onoff-helper.h"
 #include "ns3/noc-channel.h"
 #include "ns3/mobility-helper.h"
+#include "ns3/output-stream-wrapper.h"
 
 using namespace ns3;
 
@@ -114,9 +115,8 @@ main (int argc, char *argv[])
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-packet-socket.tr file
   NS_LOG_INFO ("Configure Tracing.");
-  std::ofstream os;
-  os.open ("noc-packet-socket.tr", std::ios_base::binary | std::ios_base::out);
-  noc.EnableAsciiAll (os);
+  Ptr<OutputStreamWrapper> stream = Create<OutputStreamWrapper> ("noc-test.tr", std::ios_base::binary | std::ios_base::out);
+  noc.EnableAsciiAll (stream);
 
   // Setup mobility - static grid topology
   MobilityHelper mobility;
@@ -136,7 +136,6 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Done.");
 
   g_os.close ();
-  os.close();
 
   return 0;
 }

@@ -24,7 +24,7 @@
 #include "ns3/noc-channel.h"
 #include "ns3/net-device-container.h"
 #include "ns3/node-container.h"
-#include "ns3/ascii-writer.h"
+#include "ns3/trace-helper.h"
 #include "ns3/object-factory.h"
 
 namespace ns3
@@ -84,7 +84,7 @@ namespace ns3
                      std::string n4 = "", const AttributeValue &v4 = EmptyAttributeValue ());
 
     /**
-     * \param os output stream
+     * \param stream output stream wrapper
      * \param nodeid the id of the node to generate ascii output for.
      * \param deviceid the id of the device to generate ascii output for.
      *
@@ -93,10 +93,10 @@ namespace ns3
      * that to the specified stdc++ output stream.
      */
     static void
-    EnableAscii (std::ostream &os, uint32_t nodeid, uint32_t deviceid);
+    EnableAscii (Ptr<OutputStreamWrapper> stream, uint32_t nodeid, uint32_t deviceid);
 
     /**
-     * \param os output stream
+     * \param stream output stream wrapper
      * \param d device container
      *
      * Enable ascii output on each device which is of the
@@ -105,10 +105,10 @@ namespace ns3
      * stdc++ output stream.
      */
     static void
-    EnableAscii (std::ostream &os, NetDeviceContainer d);
+    EnableAscii (Ptr<OutputStreamWrapper> stream, NetDeviceContainer d);
 
     /**
-     * \param os output stream
+     * \param stream output stream wrapper
      * \param n node container
      *
      * Enable ascii output on each device which is of the
@@ -117,17 +117,17 @@ namespace ns3
      * stdc++ output stream.
      */
     static void
-    EnableAscii (std::ostream &os, NodeContainer n);
+    EnableAscii (Ptr<OutputStreamWrapper> stream, NodeContainer n);
 
     /**
-     * \param os output stream
+     * \param stream output stream wrapper
      *
      * Enable ascii output on each device which is of the
      * ns3::NocNetDevice type and dump that to the specified
      * stdc++ output stream.
      */
     static void
-    EnableAsciiAll (std::ostream &os);
+    EnableAsciiAll (Ptr<OutputStreamWrapper> stream);
 
     NetDeviceContainer
     Install (NodeContainer nodes, Ptr<NocChannel> channel);
@@ -175,32 +175,32 @@ namespace ns3
   private:
 
     static void
-    AsciiTxEvent (Ptr<AsciiWriter> writer, std::string path,
+    AsciiTxEvent (Ptr<OutputStreamWrapper> stream, std::string path,
         Ptr<const Packet> packet);
 
     static void
-    AsciiRxEvent (Ptr<AsciiWriter> writer, std::string path,
+    AsciiRxEvent (Ptr<OutputStreamWrapper> stream, std::string path,
         Ptr<const Packet> packet);
 
     /*
      * \internal
      */
     static void
-    AsciiEnqueueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<
+    AsciiEnqueueEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<
         const Packet> packet);
 
     /*
      * \internal
      */
     static void
-    AsciiDequeueEvent (Ptr<AsciiWriter> writer, std::string path, Ptr<
+    AsciiDequeueEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<
         const Packet> packet);
 
     /*
      * \internal
      */
     static void
-    AsciiDropEvent (Ptr<AsciiWriter> writer, std::string path,
+    AsciiDropEvent (Ptr<OutputStreamWrapper> stream, std::string path,
         Ptr<const Packet> packet);
 
     NetDeviceContainer m_devices;
