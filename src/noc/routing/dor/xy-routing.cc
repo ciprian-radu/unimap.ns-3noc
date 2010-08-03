@@ -76,9 +76,8 @@ namespace ns3
     return m_routeXFirst;
   }
 
-  bool
-  XyRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-      Ptr<Packet> packet, RouteReplyCallback routeReply)
+  Ptr<Route>
+  XyRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
   {
     NS_LOG_FUNCTION_NOARGS();
     std::stringstream ss;
@@ -90,20 +89,16 @@ namespace ns3
     NocHeader nocHeader;
     packet->RemoveHeader (nocHeader);
 
-    uint8_t xDistance = nocHeader.GetXDistance ();
-    bool isEast = (xDistance & 0x08) != 0x08;
-    int xOffset = xDistance & 0x07;
+    bool isEast = nocHeader.HasEastDirection ();
+    int xOffset = nocHeader.GetXOffset ();
 
-    uint8_t yDistance = nocHeader.GetYDistance ();
-    bool isSouth = (yDistance & 0x08) != 0x08;
-    int yOffset = yDistance & 0x07;
+    bool isSouth = nocHeader.HasSouthDirection ();
+    int yOffset = nocHeader.GetYOffset ();
 
     Direction2DMesh xDirection = NocRoutingProtocol::NONE;
     Direction2DMesh yDirection = NocRoutingProtocol::NONE;
-    NS_LOG_DEBUG("xDistance " << (int) xDistance);
-    NS_LOG_DEBUG("yDistance " << (int) yDistance);
-    NS_LOG_DEBUG("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
-    NS_LOG_DEBUG("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
+    NS_LOG_DEBUG ("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
+    NS_LOG_DEBUG ("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
 
     if (m_routeXFirst)
       {
@@ -120,7 +115,7 @@ namespace ns3
                 NS_ASSERT_MSG(xOffset >= 0, "A packet going to West will have the offset < 0");
                 xDirection = NocRoutingProtocol::WEST;
               }
-            nocHeader.SetXDistance(isEast ? xOffset : xOffset | 0x08);
+            nocHeader.SetXOffset (xOffset);
           }
         else
           {
@@ -137,7 +132,7 @@ namespace ns3
                     NS_ASSERT_MSG(yOffset >= 0, "A packet going to North will have the offset < 0");
                     yDirection = NocRoutingProtocol::NORTH;
                   }
-                nocHeader.SetYDistance(isSouth ? yOffset : yOffset | 0x08);
+                nocHeader.SetYOffset (yOffset);
               }
           }
       }
@@ -156,7 +151,7 @@ namespace ns3
                 NS_ASSERT_MSG(yOffset >= 0, "A packet going to North will have the offset < 0");
                 yDirection = NocRoutingProtocol::NORTH;
               }
-            nocHeader.SetYDistance(isSouth ? yOffset : yOffset | 0x08);
+            nocHeader.SetYOffset (yOffset);
           }
         else
           {
@@ -173,12 +168,12 @@ namespace ns3
                     NS_ASSERT_MSG(xOffset >= 0, "A packet going to West will have the offset < 0");
                     xDirection = NocRoutingProtocol::WEST;
                   }
-                nocHeader.SetXDistance(isEast ? xOffset : xOffset | 0x08);
+                nocHeader.SetXOffset (xOffset);
               }
           }
       }
-    NS_LOG_DEBUG("new xDistance " << (int) nocHeader.GetXDistance());
-    NS_LOG_DEBUG("new yDistance " << (int) nocHeader.GetYDistance());
+    NS_LOG_DEBUG("new X offset " << (int) nocHeader.GetXOffset ());
+    NS_LOG_DEBUG("new Y offset " << (int) nocHeader.GetYOffset ());
 
     packet->AddHeader (nocHeader);
 
@@ -187,22 +182,24 @@ namespace ns3
         << ", packet " << ss.str ());
     ss.str("");
 
+    Ptr<Route> route = 0;
+
     bool routeX = true;
-    bool routeY = false;
+    bool routeY = true;
     switch (xDirection) {
       case NocRoutingProtocol::EAST:
         m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, EAST);
         NS_ASSERT(m_sourceNetDevice != 0);
         m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, WEST);
         NS_ASSERT(m_destinationNetDevice != 0);
-        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
+        route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case NocRoutingProtocol::WEST:
         m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, WEST);
         NS_ASSERT(m_sourceNetDevice != 0);
         m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, EAST);
         NS_ASSERT(m_destinationNetDevice != 0);
-        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
+        route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case NocRoutingProtocol::NORTH:
         NS_LOG_ERROR("A NORTH direction is not allowed as a horizontal direction");
@@ -215,7 +212,7 @@ namespace ns3
       case NocRoutingProtocol::NONE:
         routeX = false;
       default:
-        routeY = false;
+        routeX = false;
         break;
     }
 
@@ -225,14 +222,14 @@ namespace ns3
         NS_ASSERT(m_sourceNetDevice != 0);
         m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, NocRoutingProtocol::SOUTH);
         NS_ASSERT(m_destinationNetDevice != 0);
-        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
+        route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case NocRoutingProtocol::SOUTH:
         m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice(source, NocRoutingProtocol::SOUTH);
         NS_ASSERT(m_sourceNetDevice != 0);
         m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice(m_sourceNetDevice, NocRoutingProtocol::NORTH);
         NS_ASSERT(m_destinationNetDevice != 0);
-        routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
+        route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
         break;
       case NocRoutingProtocol::EAST:
         NS_LOG_ERROR("A EAST direction is not allowed as a vertical direction");
@@ -254,7 +251,7 @@ namespace ns3
         NS_LOG_WARN ("No routing needs to be performed!");
       }
 
-    return true;
+    return route;
   }
 
 } // namespace ns3

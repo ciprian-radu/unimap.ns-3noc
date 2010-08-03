@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    util = bld.create_ns3_module('util', ['core', 'simulator'])
+    util.source = [
+        'noc-registry.cc',              
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'util'
+    headers.source = [
+        'noc-registry.h',              
+        ]
+

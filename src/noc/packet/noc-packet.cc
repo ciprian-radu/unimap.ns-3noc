@@ -29,56 +29,36 @@ NS_LOG_COMPONENT_DEFINE ("NocPacket");
 namespace ns3
 {
 
-  NocPacket::NocPacket (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
-      uint8_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize) :
+  NocPacket::NocPacket (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX,
+      uint32_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize) :
     Packet (dataPacketSize)
   {
     NocHeader nocHeader (xDistance, yDistance, sourceX, sourceY, dataFlitCount);
     AddHeader (nocHeader);
-    m_isHeadPacket = true;
-  }
-
-  /**
-   * Constructor - creates a data packet
-   *
-   * \param dataPacketSize the size of the data packet
-   */
-  NocPacket::NocPacket (uint32_t headPacketUid, uint32_t dataPacketSize) :
-    Packet(dataPacketSize)
-  {
-    m_isHeadPacket = false;
     NocPacketTag tag;
+    tag.SetPacketType (HEAD);
+    AddPacketTag (tag);
+  }
+
+  NocPacket::NocPacket (uint32_t headPacketUid, uint32_t dataPacketSize, bool isTailPacket) :
+    Packet (dataPacketSize)
+  {
+    NocPacketTag tag;
+    if (isTailPacket)
+      {
+        tag.SetPacketType (TAIL);
+      }
+    else
+      {
+        tag.SetPacketType (DATA);
+      }
     tag.SetPacketHeadUid (headPacketUid);
-    AddPacketTag(tag);
+    AddPacketTag (tag);
   }
 
-  NocPacket::~NocPacket()
+  NocPacket::~NocPacket ()
   {
-
-  }
-
-  bool
-  NocPacket::IsHeadPacket ()
-  {
-    return m_isHeadPacket;
-  }
-
-  bool
-  NocPacket::IsDataPacket ()
-  {
-    return !IsHeadPacket();
-  }
-
-  std::ostream& operator<< (std::ostream& os, NocPacket &packet)
-  {
-    packet.Print (os);
-    return os;
-  }
-
-  std::ostream& operator<< (std::ostream& os, Ptr<NocPacket> packet)
-  {
-    packet->Print (os);
-    return os;
+    ;
   }
 
 } // namespace ns3

@@ -20,14 +20,15 @@
 
 #include "noc-net-device.h"
 #include "ns3/noc-channel.h"
-#include "ns3/node.h"
+#include "ns3/noc-node.h"
 #include "ns3/noc-packet.h"
 #include "ns3/trace-source-accessor.h"
 #include "ns3/log.h"
 #include "ns3/pointer.h"
 #include "ns3/simulator.h"
-#include "ns3/noc-header.h"
 #include "ns3/noc-packet-tag.h"
+#include "ns3/integer.h"
+#include "ns3/noc-registry.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocNetDevice");
 
@@ -65,6 +66,7 @@ namespace ns3
   NocNetDevice::NocNetDevice() :
     m_channel(0), m_node(0), m_mtu(0xffff), m_ifIndex(0), m_nocHelper(0), m_routingDirection(0)
   {
+    m_lastScheduledEvent = Seconds (0);
   }
 
   NocNetDevice::~NocNetDevice()
@@ -77,8 +79,8 @@ namespace ns3
   NocNetDevice::Receive(Ptr<Packet> packet, Mac48Address to, Mac48Address from)
   {
     int protocol = 0; // TODO we use no more than one protocol for now
-    NS_LOG_DEBUG("NoC net device with address " << m_address << " received a packet from " << from
-        << " to send it to " << to);
+    NS_LOG_DEBUG ("NoC net device with address " << m_address << " received the packet with UID "
+        << (int) packet->GetUid () << " from " << from << " to send it to " << to);
 
     NetDevice::PacketType packetType;
     if (to == m_address)
@@ -105,8 +107,30 @@ namespace ns3
 
     if (packetType != NetDevice::PACKET_OTHERHOST)
       {
-        NS_LOG_DEBUG ("The packet reached it's destination.");
-        m_receiveTrace(packet);
+        Ptr<NocNetDevice> receiveDevice = GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetReceiveNetDevice ();
+        if (receiveDevice != 0)
+          {
+            if (this == receiveDevice)
+              {
+                NS_LOG_DEBUG ("The packet reached its destination.");
+                NocPacketTag packetTag;
+                packet->RemovePacketTag (packetTag);
+                packetTag.SetReceiveTime (Simulator::Now ());
+                packet->AddPacketTag (packetTag);
+                NS_LOG_DEBUG ("Packet receive time is " << Simulator::Now ());
+                m_receiveTrace (packet);
+              }
+            else
+              {
+                NS_LOG_DEBUG ("The packet reached its destination node. Forwarding it to the processing element.");
+                receiveDevice->Receive (packet, Mac48Address::ConvertFrom(receiveDevice->GetAddress ()), to);
+              }
+          }
+        else
+          {
+            NS_LOG_DEBUG ("The packet reached its destination.");
+            m_receiveTrace (packet);
+          }
       }
     else
       {
@@ -147,11 +171,134 @@ namespace ns3
     return m_inQueue;
   }
 
+  Ptr<const Packet>
+  NocNetDevice::DequeuePacketFromInQueue ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    Ptr<const Packet> dequeuedPacket = 0;
+    if (m_inQueue != 0)
+      {
+        if (!m_inQueue->IsEmpty ())
+          {
+            dequeuedPacket = m_inQueue->Dequeue ();
+            if (dequeuedPacket != 0)
+              {
+                m_pktSrcDestMap.erase (dequeuedPacket);
+                NS_LOG_LOGIC ("Dequeued packet " << *dequeuedPacket << " (UID "
+                    << dequeuedPacket->GetUid () << ")"
+                    << " from the input queue of NoC net device with address "
+                    << GetAddress () << " (queue now has " << m_inQueue->GetNPackets ()
+                    << " packets)");
+              }
+            else
+              {
+                NS_LOG_LOGIC ("No packet to dequeue from the net device " << GetAddress ());
+              }
+          }
+        else
+          {
+            NS_LOG_WARN ("The in queue is empty for the net device " << GetAddress ());
+          }
+      }
+    else
+      {
+        NS_LOG_WARN ("No in queue is defined for the net device " << GetAddress ());
+      }
+
+    return dequeuedPacket;
+  }
+
   Ptr<Queue>
   NocNetDevice::GetOutQueue() const
   {
     NS_LOG_FUNCTION_NOARGS ();
     return m_outQueue;
+  }
+
+  bool
+  NocNetDevice::BufferPacketInInQueue (Ptr<Packet> packet)
+  {
+    bool enqueued = false;
+    if (m_inQueue != 0)
+      {
+        enqueued = m_inQueue->Enqueue (packet);
+      }
+    else
+      {
+        NS_LOG_WARN ("No in queue is set for net device " << GetAddress ());
+      }
+    if (enqueued)
+      {
+        NS_LOG_DEBUG ("Buffered the packet with UID " << packet->GetUid ()
+            << " in the in queue of net device " << GetAddress ());
+      }
+    else
+      {
+        NS_LOG_DEBUG ("Couldn't buffer the packet with UID " << packet->GetUid ()
+            << " in the in queue of net device " << GetAddress ());
+      }
+    return enqueued;
+  }
+
+  uint32_t
+  NocNetDevice::GetInQueueNPacktes ()
+  {
+    uint32_t n = 0;
+
+    if (m_inQueue != 0)
+      {
+        n = m_inQueue->GetNPackets ();
+      }
+    NS_LOG_DEBUG ("In queue contains " << n << " packets");
+
+    return n;
+  }
+
+  uint64_t
+  NocNetDevice::GetInQueueSize ()
+  {
+    uint64_t n = 0;
+
+    if (m_inQueue != 0)
+      {
+        UintegerValue size;
+        m_inQueue->GetAttribute ("MaxPackets", size);
+        n = size.Get ();
+      }
+    NS_LOG_DEBUG ("In queue has size " << n);
+
+    return n;
+  }
+
+  uint32_t
+  NocNetDevice::GetOutQueueNPacktes ()
+  {
+    uint32_t n = 0;
+
+    if (m_outQueue != 0)
+      {
+        n = m_outQueue->GetNPackets ();
+      }
+    NS_LOG_DEBUG ("Out queue contains " << n << " packets");
+
+    return n;
+  }
+
+  uint64_t
+  NocNetDevice::GetOutQueueSize ()
+  {
+    uint64_t n = 0;
+
+    if (m_outQueue != 0)
+      {
+        UintegerValue size;
+        m_outQueue->GetAttribute ("MaxPackets", size);
+        n = size.Get ();
+      }
+    NS_LOG_DEBUG ("Out queue has size " << n);
+
+    return n;
   }
 
   void
@@ -242,7 +389,7 @@ namespace ns3
   }
 
   bool
-  NocNetDevice::Send(Ptr<Packet> packet, const Address& dest, uint16_t protocolNumber)
+  NocNetDevice::Send (Ptr<Packet> packet, const Address& dest, uint16_t protocolNumber)
   {
     bool result;
 
@@ -252,13 +399,27 @@ namespace ns3
   }
 
   bool
-  NocNetDevice::SendFrom(Ptr<Packet> packet, const Address& source,
+  NocNetDevice::SendFrom (Ptr<Packet> packet, const Address& source,
       const Address& dest, uint16_t protocolNumber)
   {
+    // Note that the packet comes with two headers!!!
+    // The first header is the original header (before routing)
+    // The second header is the routed header
+    NocHeader originalHeader;
+    packet->RemoveHeader (originalHeader);
+
     bool result;
 
-    Mac48Address to = Mac48Address::ConvertFrom(dest);
-    Mac48Address from = Mac48Address::ConvertFrom(source);
+    Mac48Address to = Mac48Address::ConvertFrom (dest);
+    Mac48Address from;
+    if (m_viaNetDevice != 0)
+      {
+        from = Mac48Address::ConvertFrom (m_viaNetDevice->GetAddress ());
+      }
+    else
+      {
+        from = Mac48Address::ConvertFrom (source);
+      }
 
     Ptr<Packet> packetToSend;
     if (m_inQueue != 0)
@@ -272,45 +433,65 @@ namespace ns3
         bool enqueued = m_inQueue->Enqueue (packet);
         if (!enqueued)
           {
-            NS_LOG_LOGIC ("Cannot buffer packet " << packet
+            NS_LOG_LOGIC ("Cannot buffer packet " << packet << " (UID " << packet->GetUid () << ")"
                 << " in the channel input buffer of the NoC net device with address " << GetAddress ());
             Drop (packet);
           }
         else
           {
-            NS_LOG_DEBUG ("Enqueued packet " << packet << " (as packet " << m_inQueue->Peek () << ")"
+            NS_LOG_DEBUG ("Enqueued packet " << *packet << " (UID " << packet->GetUid () << ") "
                 << " in the input queue of NoC net device with address "
                 << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
-            m_pktSrcDestMap.insert(std::pair<Ptr<const Packet>,SrcDest> (packet, SrcDest (from, to)));
+            m_pktSrcDestMap.insert(std::pair<Ptr<const Packet>,SrcDest> (packet, SrcDest (from, to, m_viaNetDevice)));
           }
-        ProcessBufferedPackets (packet);
+        ProcessBufferedPackets (originalHeader, packet);
       }
     else
       {
         packetToSend = packet;
-        m_sendTrace (packetToSend);
+        Ptr<Packet> tracedPacket = packetToSend->Copy ();
+        NocHeader removedHeader;
+        tracedPacket->RemoveHeader (removedHeader);
+        if (!originalHeader.IsEmpty ())
+          {
+            tracedPacket->AddHeader (originalHeader);
+          }
+        m_sendTrace (tracedPacket);
 
         bool canDoRouting = GetNode ()->GetObject<NocNode> ()->GetRouter ()->
             GetSwitchingProtocol ()->ApplyFlowControl (packetToSend, m_inQueue);
         if (canDoRouting)
           {
-            bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
+            Ptr<NocChannel> channel = m_channel;
+            if (m_viaNetDevice != 0)
+              {
+                channel = m_viaNetDevice->GetChannel ()->GetObject<NocChannel> ();
+              }
+            NS_ASSERT (channel != 0);
+            uint32_t deviceId = m_deviceId;
+            if (m_viaNetDevice != 0)
+              {
+                deviceId = m_viaNetDevice->m_deviceId;
+              }
+            bool canSend = channel->TransmitStart (this, packetToSend, deviceId);
             if (canSend)
               {
-                result = m_channel->Send (to, from);
-                NS_LOG_LOGIC("Packet " << packetToSend << " was sent to the NoC net device with address " << to);
+                result = channel->Send (to, from);
+                NS_LOG_LOGIC ("Packet " << packetToSend << " (UID " << packet->GetUid () << ")"
+                    << " was sent to the NoC net device with address " << to);
               }
             else
               {
                 Drop (packet);
-                NS_LOG_LOGIC("Cannot send packet " << packetToSend << " because the channel is busy");
+                NS_LOG_LOGIC ("Cannot send packet " << packetToSend << " (UID " << packet->GetUid () << ")"
+                    << " because the channel is busy");
                 result = false;
               }
           }
         else
           {
             Drop (packet);
-            NS_LOG_LOGIC ("The switching protocol does not allow the packet "
+            NS_LOG_LOGIC ("The switching protocol does not allow the packet with UID "
                 << packet->GetUid () << " to be sent");
             result = false;
           }
@@ -320,8 +501,9 @@ namespace ns3
   }
 
   void
-  NocNetDevice::ProcessBufferedPackets (Ptr<Packet> packet)
+  NocNetDevice::ProcessBufferedPackets (NocHeader originalHeader, Ptr<Packet> packet)
   {
+    NS_LOG_FUNCTION ("net device" << GetAddress ());
     if (m_inQueue != 0)
       {
         if (!m_inQueue->IsEmpty ())
@@ -332,79 +514,213 @@ namespace ns3
             // a copy of the packet from the in queue is required
             // (because we cannot alter the contents of the queue and we need to change the packet's header)
             packetToSend = m_inQueue->Peek ()->Copy ();
-            if (packet != 0)
-              {
-                m_sendTrace (packet);
-              }
-            else
-              {
-              // This doesn't have to be sent!
-
-//                NS_LOG_DEBUG ("Packet is NULL");
-//                m_sendTrace (packetToSend);
-              }
-            NS_LOG_DEBUG("Packet " << packetToSend << " is a copy of packet " << m_inQueue->Peek ());
+//            if (packet != 0)
+//              {
+//                Ptr<Packet> tracedPacket = packet->Copy ();
+//                NocHeader removedHeader;
+//                tracedPacket->RemoveHeader (removedHeader);
+//                if (!originalHeader.IsEmpty ())
+//                  {
+//                    tracedPacket->AddHeader (originalHeader);
+//                  }
+//                m_sendTrace (tracedPacket);
+//              }
 
             SrcDest srcDest = m_pktSrcDestMap[m_inQueue->Peek ()];
             Mac48Address from = srcDest.GetSrc();
             Mac48Address to = srcDest.GetDest();
+            m_viaNetDevice = srcDest.GetViaNetDevice ();
 
             bool canDoRouting = true;
+            Ptr<NocChannel> channel = m_channel;
+            if (m_viaNetDevice != 0)
+              {
+                channel = m_viaNetDevice->GetChannel ()->GetObject<NocChannel> ();
+              }
+            NS_ASSERT (channel != 0);
             if (packet != 0)
               {
-                if (m_channel->IsBusy ())
+                if (channel->IsBusy ())
                   {
-                    markHeadPacketAsBlocked (packet);
+                    MarkHeadPacketAsBlocked (packet);
                   }
                 canDoRouting = GetNode ()->GetObject<NocNode> ()->GetRouter ()->
                     GetSwitchingProtocol ()->ApplyFlowControl (packet, m_inQueue);
               }
             if (canDoRouting)
               {
-                bool canSend = m_channel->TransmitStart (packetToSend, m_deviceId);
+                uint32_t deviceId = m_deviceId;
+                if (m_viaNetDevice != 0)
+                  {
+                    deviceId = m_viaNetDevice->m_deviceId;
+                  }
+                bool canSend = true;
+//                TimeValue timeValue;
+//                NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+//                Time globalClock = timeValue.Get ();
+//                if (!globalClock.IsZero ())
+//                  {
+//                    Scalar integerPart (HighPrecision (
+//                        (Simulator::Now () / globalClock).GetHighPrecision ().GetInteger (), true));
+//                    Time realPart (HighPrecision (Simulator::Now ().GetHighPrecision ().GetDouble ()
+//                        - (integerPart * globalClock).GetHighPrecision ().GetDouble ()));
+//                    NS_LOG_DEBUG ("integer part " << integerPart.GetHighPrecision ().GetDouble ());
+//                    NS_LOG_DEBUG ("real part " << realPart);
+//                    if (!realPart.IsZero ())
+//                      {
+//                        canSend = false;
+//                        NS_LOG_DEBUG ("The packet with UID " << packetToSend->GetUid ()
+//                            << " cannot be sent at time " << Simulator::Now ()
+//                            << " because a clock cycle did not occur yet (clock cycle = "
+//                            << globalClock << ")");
+//                      }
+//                  }
                 if (canSend)
                   {
-                    result = m_channel->Send (to, from);
+                    canSend = channel->TransmitStart (this, packetToSend, deviceId);
+                  }
+                if (canSend)
+                  {
+                    result = channel->Send (to, from);
                     if (result)
                       {
-                        NS_LOG_LOGIC("Packet " << packetToSend << " was sent to the NoC net device with address " << to);
-                        Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
-                        if (dequeuedPacket != 0)
+                        Ptr<Packet> tracedPacket = packetToSend->Copy ();
+                        NocHeader removedHeader;
+                        tracedPacket->RemoveHeader (removedHeader);
+                        if (!originalHeader.IsEmpty ())
                           {
-                            m_pktSrcDestMap.erase(dequeuedPacket);
+                            tracedPacket->AddHeader (originalHeader);
                           }
-                        NS_LOG_DEBUG ("Dequeued packet " << packetToSend << " from the input queue of NoC net device with address "
-                            << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
+                        NS_LOG_DEBUG ("Tracing packet with UID " << tracedPacket->GetUid ()
+                            << " as being sent at time " << Simulator::Now ());
+                        m_sendTrace (tracedPacket);
+
+                        NS_LOG_LOGIC ("Packet " << *packetToSend << " (UID " << packetToSend->GetUid () << ")"
+                            << " was sent to the NoC net device with address " << to);
+//                        Ptr<const Packet> dequeuedPacket = m_inQueue->Dequeue ();
+//                        if (dequeuedPacket != 0)
+//                          {
+//                            m_pktSrcDestMap.erase(dequeuedPacket);
+//                          }
+//                        NS_LOG_DEBUG ("Dequeued packet " << *packetToSend << " (UID " << packetToSend->GetUid () << ")"
+//                            << " from the input queue of NoC net device with address "
+//                            << GetAddress () << " (queue now has " << m_inQueue->GetNPackets () << " packets)");
                       }
                     else
                       {
-                        NS_LOG_LOGIC("Packet " << packetToSend << " was NOT sent to the NoC net device with address " << to);
+                        NS_LOG_LOGIC ("Packet " << *packetToSend << " (UID " << packetToSend->GetUid () << ")"
+                            << " was NOT sent to the NoC net device with address " << to);
                         result = false;
                       }
                   }
                 else
                   {
-                    NS_LOG_LOGIC("Cannot send packet " << packetToSend << " because the channel is busy");
+                    NS_LOG_LOGIC ("Cannot send packet " << *packetToSend << " (UID " << packetToSend->GetUid () << ")"
+                        << " because the channel is busy");
                     result = false;
                   }
               }
             else
               {
-                NS_LOG_LOGIC ("The switching protocol does not allow the packet "
+                NS_LOG_LOGIC ("The switching protocol does not allow the packet with UID "
                     << m_inQueue->Peek ()->GetUid () << " to be sent");
                 result = false;
               }
-            if (!m_inQueue->IsEmpty () && result) // FIXME is the result condition required here?
+            if (!m_inQueue->IsEmpty ())
               {
-                Time tEvent = Seconds (m_channel->GetDataRate ().CalculateTxTime (m_inQueue->Peek ()->GetSize ()));
-                // FIXME the next packet cannot be sent at exactly the "channel time"
-                // At exactly that time, the channel is busy and the packet will get delayed
-                // Is it correct to add a small delay here to avoid the delay created by the busy channel?
-                // Could we call this small time "switching time"?
-                Time time = tEvent + m_channel->GetDelay () + Seconds (0.00001);
-                NS_LOG_DEBUG ("Schedule event (net device process buffered packets) to occur at time "
-                    << (Simulator::Now() + time).GetSeconds () << " seconds");
-                Simulator::Schedule(time, &NocNetDevice::ProcessBufferedPackets, this, (Ptr<Packet>) 0);
+                TimeValue timeValue;
+                NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+                Time globalClock = timeValue.Get ();
+                if (globalClock.IsZero ())
+                  {
+                    Time tEvent = Seconds (channel->GetDataRate ().CalculateTxTime (m_inQueue->Peek ()->GetSize ()));
+                    Time time = tEvent + channel->GetDelay ();
+                    if (m_lastScheduledEvent != Simulator::Now () + time)
+                      {
+                        NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
+                            << (Simulator::Now () + time).GetSeconds ()
+                            << " seconds (net device " << GetAddress ()<< ", last scheduled event was at time "
+                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                        Simulator::Schedule (time, &NocNetDevice::ProcessBufferedPackets,
+                            this, originalHeader, (Ptr<Packet>) 0);
+                      }
+                    else
+                      {
+                        NS_LOG_DEBUG ("An event was already scheduled at time "
+                            << (Simulator::Now () + time).GetSeconds ()
+                            << " seconds (net device " << GetAddress () << ", last scheduled event was at time "
+                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                      }
+                  }
+                else
+                  {
+                    int speedup = 1;
+                    NocHeader header;
+                    packetToSend->PeekHeader (header);
+                    if (header.IsEmpty ())
+                      {
+                        // a data packet will be sent
+                        IntegerValue dataFlitSpeedup;
+                        Ptr<NocRegistry> nocRegistry = NocRegistry::GetInstance ();
+                        nocRegistry->GetAttribute ("DataPacketSpeedup", dataFlitSpeedup);
+                        speedup = dataFlitSpeedup.Get ();
+                      }
+                    NS_LOG_DEBUG ("Data flit speedup is " << speedup);
+                    NS_LOG_DEBUG ("Packet has UID " << packetToSend->GetUid ());
+//                    NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
+//                        << (Simulator::Now () + globalClock / Scalar (speedup)).GetSeconds ()
+//                        << " seconds (net device " << GetAddress () << ")");
+//                    Simulator::Schedule (globalClock / Scalar (speedup), &NocNetDevice::ProcessBufferedPackets,
+//                        this, originalHeader, (Ptr<Packet>) 0);
+
+                    if (m_lastScheduledEvent != Simulator::Now () + globalClock / Scalar (speedup))
+                      {
+                        NS_LOG_DEBUG ("Packet has UID " << packetToSend->GetUid ());
+                        NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
+                            << (Simulator::Now () + globalClock / Scalar (speedup)).GetSeconds ()
+                            << " seconds (net device " << GetAddress ()<< ", last scheduled event was at time "
+                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                        m_lastScheduledEvent = Simulator::Now () + globalClock / Scalar (speedup);
+                        Simulator::Schedule (globalClock / Scalar (speedup), &NocNetDevice::ProcessBufferedPackets,
+                            this, originalHeader, (Ptr<Packet>) 0);
+                      }
+                    else
+                      {
+                        NS_LOG_DEBUG ("An event was already scheduled at time "
+                            << (Simulator::Now () + globalClock / Scalar (speedup)).GetSeconds ()
+                            << " seconds (net device " << GetAddress () << ", last scheduled event was at time "
+                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                      }
+
+//                    // FIXME is this line needed?
+//                    globalClock = globalClock / Scalar (speedup);
+//
+//                    Scalar integerPart (HighPrecision (
+//                        (Simulator::Now () / globalClock).GetHighPrecision ().GetInteger (), true));
+//                    Time realPart (HighPrecision (Simulator::Now ().GetHighPrecision ().GetDouble ()
+//                        - (integerPart * globalClock).GetHighPrecision ().GetDouble ()));
+//                    NS_LOG_DEBUG ("integer part " << integerPart.GetHighPrecision ().GetDouble ());
+//                    NS_LOG_DEBUG ("real part " << realPart);
+//                    NS_ASSERT (Simulator::Now () + globalClock >= realPart);
+//                    if (m_lastScheduledEvent != Simulator::Now () + globalClock - realPart)
+//                      {
+//                        NS_LOG_DEBUG ("Packet has UID " << packetToSend->GetUid ());
+//                        NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
+//                            << (Simulator::Now () + globalClock - realPart).GetSeconds ()
+//                            << " seconds (net device " << GetAddress ()<< ", last scheduled event was at time "
+//                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+//                        m_lastScheduledEvent = Simulator::Now () + globalClock - realPart;
+//                        Simulator::Schedule (globalClock - realPart, &NocNetDevice::ProcessBufferedPackets,
+//                            this, originalHeader, (Ptr<Packet>) 0);
+//                      }
+//                    else
+//                      {
+//                        NS_LOG_DEBUG ("An event was already scheduled at time "
+//                            << (Simulator::Now () + globalClock - realPart).GetSeconds ()
+//                            << " seconds (net device " << GetAddress () << ", last scheduled event was at time "
+//                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+//                      }
+                  }
               }
           }
       }
@@ -414,11 +730,12 @@ namespace ns3
   NocNetDevice::Drop (Ptr<Packet> packet)
   {
     NS_LOG_FUNCTION (packet);
+    NS_LOG_LOGIC ("Dropping packet with UID " << packet->GetUid () << " " << *packet);
     // For now we just use this method to trace dropped packets
   }
 
   void
-  NocNetDevice::markHeadPacketAsBlocked (Ptr<Packet> packet)
+  NocNetDevice::MarkHeadPacketAsBlocked (Ptr<Packet> packet)
   {
     NocHeader header;
     packet->PeekHeader (header);
@@ -437,7 +754,7 @@ namespace ns3
   }
 
   void
-  NocNetDevice::markHeadPacketAsUnblocked (Ptr<Packet> packet)
+  NocNetDevice::MarkHeadPacketAsUnblocked (Ptr<Packet> packet)
   {
     NocHeader header;
     packet->PeekHeader (header);
@@ -455,13 +772,35 @@ namespace ns3
       }
   }
 
+  void
+  NocNetDevice::SetViaNetDevice (Ptr<NocNetDevice> viaNetDevice)
+  {
+    if (viaNetDevice == 0)
+      {
+        NS_LOG_FUNCTION ("no via net device");
+      }
+    else
+      {
+        NS_LOG_FUNCTION (viaNetDevice->GetAddress ());
+      }
+    m_viaNetDevice = viaNetDevice;
+  }
+
+  Ptr<NocNetDevice>
+  NocNetDevice::GetViaNetDevice () const
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    return m_viaNetDevice;
+  }
+
   Ptr<Node>
-  NocNetDevice::GetNode(void) const
+  NocNetDevice::GetNode () const
   {
     return m_node;
   }
+
   void
-  NocNetDevice::SetNode(Ptr<Node> node)
+  NocNetDevice::SetNode (Ptr<Node> node)
   {
     m_node = node;
   }
@@ -491,18 +830,18 @@ namespace ns3
   }
 
   bool
-  NocNetDevice::NeedsArp(void) const
+  NocNetDevice::NeedsArp () const
   {
     return false;
   }
   void
-  NocNetDevice::SetReceiveCallback(NetDevice::ReceiveCallback cb)
+  NocNetDevice::SetReceiveCallback (NetDevice::ReceiveCallback cb)
   {
     m_rxCallback = cb;
   }
 
   void
-  NocNetDevice::DoDispose(void)
+  NocNetDevice::DoDispose ()
   {
     m_channel = 0;
     m_node = 0;
@@ -510,13 +849,13 @@ namespace ns3
   }
 
   void
-  NocNetDevice::SetPromiscReceiveCallback(PromiscReceiveCallback cb)
+  NocNetDevice::SetPromiscReceiveCallback (PromiscReceiveCallback cb)
   {
     m_promiscCallback = cb;
   }
 
   bool
-  NocNetDevice::SupportsSendFrom(void) const
+  NocNetDevice::SupportsSendFrom () const
   {
     return true;
   }

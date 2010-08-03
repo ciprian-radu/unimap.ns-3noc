@@ -31,6 +31,7 @@
 #include "ns3/noc-helper.h"
 #include "ns3/queue.h"
 #include <map>
+#include "ns3/noc-header.h"
 
 namespace ns3
 {
@@ -47,6 +48,7 @@ namespace ns3
   class NocNetDevice : public NetDevice
   {
   public:
+
     static TypeId
     GetTypeId(void);
 
@@ -55,10 +57,10 @@ namespace ns3
     virtual
     ~NocNetDevice();
 
-    void
+    virtual void
     Receive(Ptr<Packet> packet, Mac48Address to, Mac48Address from);
 
-    void
+    virtual void
     SetChannel(Ptr<NocChannel> channel);
 
     /**
@@ -72,7 +74,8 @@ namespace ns3
      * \see DropTailQueue
      * \param queue a Ptr to the queue for being assigned to the device.
      */
-    void SetInQueue (Ptr<Queue> inQueue);
+    virtual void
+    SetInQueue (Ptr<Queue> inQueue);
 
     /**
      * Attach an output queue to this NoC net device.
@@ -85,14 +88,49 @@ namespace ns3
      * \see DropTailQueue
      * \param queue a Ptr to the queue for being assigned to the device.
      */
-    void SetOutQueue (Ptr<Queue> outQueue);
+    virtual void
+    SetOutQueue (Ptr<Queue> outQueue);
+
+    /**
+     * Buffers the specified packet in the in queue of this net device
+     *
+     * \param packet the packet to be buffered
+     *
+     * \return whether or not could be buffered
+     */
+    bool
+    BufferPacketInInQueue (Ptr<Packet> packet);
+
+    /**
+     * \return how many packets the in queue contains
+     */
+    uint32_t
+    GetInQueueNPacktes ();
+
+    /**
+     * \return the maximum number of packets the in queue might contain
+     */
+    uint64_t
+    GetInQueueSize ();
+
+    /**
+     * \return how many packets the out queue contains
+     */
+    uint32_t
+    GetOutQueueNPacktes ();
+
+    /**
+     * \return the maximum number of packets the out queue might contain
+     */
+    uint64_t
+    GetOutQueueSize ();
 
     /**
      * This method should be invoked whenever a packet is dropped by the net device
      *
      * \param packet the dropped packet
      */
-    void
+    virtual void
     Drop (Ptr<Packet> packet);
 
     // inherited from NetDevice base class.
@@ -181,11 +219,6 @@ namespace ns3
     virtual bool
     SupportsSendFrom(void) const;
 
-  protected:
-
-    virtual void
-    DoDispose(void);
-
     /**
      * Get the attached input queue.
      *
@@ -194,7 +227,40 @@ namespace ns3
      *
      * \return a pointer to the queue.
      */
-    Ptr<Queue> GetInQueue () const;
+    Ptr<Queue>
+    GetInQueue () const;
+
+    /**
+     * Dequeus a packet from the in queue.
+     * The method does nothing if no in queue is defined or the in queue is empty.
+     *
+     * \return the dequeued packet
+     */
+    Ptr<const Packet>
+    DequeuePacketFromInQueue ();
+
+    /**
+     * Sets the net device used as an output port for sending a message from this
+     * net device. If a via net device is set, its channel will be used for
+     * sending the current packet of this net device. Otherwise, this net
+     * device will use its channel to make the send.
+     *
+     * \param viaNetDevice the via net device
+     */
+    void
+    SetViaNetDevice (Ptr<NocNetDevice> viaNetDevice);
+
+    /**
+     * \see SetViaNetDevice (Ptr<NocNetDevice> viaNetDevice)
+     * \return the vie net device
+     */
+    Ptr<NocNetDevice>
+    GetViaNetDevice () const;
+
+  protected:
+
+    virtual void
+    DoDispose ();
 
     /**
      * Get the attached output queue.
@@ -204,16 +270,18 @@ namespace ns3
      *
      * \return a pointer to the queue.
      */
-    Ptr<Queue> GetOutQueue () const;
+    Ptr<Queue>
+    GetOutQueue () const;
 
     /**
      * Event for processing the packet from the head of the input queue.
      * This event will reschedule itself if the queue still contains packets.
      *
+     * \param originalHeader the header of the packet before routing
      * \param packet the last packet received (will be put in the queue's tail)
      */
     virtual void
-    ProcessBufferedPackets (Ptr<Packet> packet);
+    ProcessBufferedPackets (NocHeader originalHeader, Ptr<Packet> packet);
 
   private:
 
@@ -239,30 +307,40 @@ namespace ns3
 
       Mac48Address m_dest;
 
+      Ptr<NocNetDevice> m_viaNetDevice;
+
     public:
 
       SrcDest ()
       {
         m_src = 0;
         m_dest = 0;
+        m_viaNetDevice = 0;
       }
 
-      SrcDest (Mac48Address src, Mac48Address dest)
+      SrcDest (Mac48Address src, Mac48Address dest, Ptr<NocNetDevice> viaNetDevice)
       {
         m_src = src;
         m_dest = dest;
+        m_viaNetDevice = viaNetDevice;
       }
 
       Mac48Address
-      GetSrc() const
+      GetSrc () const
       {
         return m_src;
       }
 
       Mac48Address
-      GetDest() const
+      GetDest () const
       {
         return m_dest;
+      }
+
+      Ptr<NocNetDevice>
+      GetViaNetDevice () const
+      {
+        return m_viaNetDevice;
       }
 
     };
@@ -284,7 +362,7 @@ namespace ns3
      * \param packet the head packet
      */
     void
-    markHeadPacketAsBlocked (Ptr<Packet> packet);
+    MarkHeadPacketAsBlocked (Ptr<Packet> packet);
 
     /**
      * Marks the head packet as unblocked (at this net device).
@@ -293,7 +371,7 @@ namespace ns3
      * \param packet the head packet
      */
     void
-    markHeadPacketAsUnblocked (Ptr<Packet> packet);
+    MarkHeadPacketAsUnblocked (Ptr<Packet> packet);
 
     NetDevice::ReceiveCallback m_rxCallback;
 
@@ -334,6 +412,20 @@ namespace ns3
      * \see class CallBackTraceSource
      */
     TracedCallback<Ptr<const Packet> > m_receiveTrace;
+
+    /**
+     * The net device used as an output port for sending a message from this
+     * net device. If a via net device is set, its channel will be used for
+     * sending the current packet of this net device. Otherwise, this net
+     * device will use its channel to make the send.
+     */
+    Ptr<NocNetDevice> m_viaNetDevice;
+
+    /**
+     * at what time was the last event scheduled (this prevents scheduling
+     * an event more than once, at the same time)
+     */
+    Time m_lastScheduledEvent;
   };
 
 } // namespace ns3

@@ -29,6 +29,7 @@
 #include "ns3/noc-routing-protocol.h"
 #include "ns3/noc-switching-protocol.h"
 #include "ns3/load-router-component.h"
+#include "ns3/route.h"
 #include <vector>
 
 namespace ns3
@@ -65,7 +66,7 @@ namespace ns3
     /**
      * \return the load router component, or NULL if no load component is used
      */
-    Ptr<LoadRouterComponent>
+    virtual Ptr<LoadRouterComponent>
     GetLoadRouterComponent () const;
 
     /**
@@ -101,57 +102,62 @@ namespace ns3
     GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction);
 
     /**
+     * Computes the occupancy of all the in channels of this router.
+     * The occupancy represents how many packets are in the input channels of this router,
+     * reported to the size of the queue.
+     * Note that if the router has no in channels, the occupancy is zero.
+     *
+     * \param sourceDevice a net device belonging to this router, which determined the occupancy computation
+     *                     (this parameter is optional, i.e. can be NULL)
+     *
+     * \return the occupancy of the in channels
+     */
+    virtual double
+    GetInChannelsOccupancy (Ptr<NocNetDevice> sourceDevice);
+
+    /**
+     * Computes the occupancy of all the out channels of this router.
+     * The occupancy represents how many packets are in the output channels of this router,
+     * reported to the size of the queue.
+     * Note that if the router has no out channels, the occupancy is zero.
+     *
+     * \param sourceDevice a net device belonging to this router, which determined the occupancy computation
+     *                     (this parameter is optional, i.e. can be NULL)
+     *
+     * \return the occupancy of the out channels
+     */
+    virtual double
+    GetOutChannelsOccupancy (Ptr<NocNetDevice> sourceDevice);
+
+    /**
      * Register the routing protocol.
      */
-    void
+    virtual void
     SetRoutingProtocol (Ptr<NocRoutingProtocol> routingProtocol);
 
     /**
      * Access current routing protocol
      */
-    Ptr<NocRoutingProtocol>
+    virtual Ptr<NocRoutingProtocol>
     GetRoutingProtocol ();
 
     /**
      * Register the switching protocol.
      */
-    void
+    virtual void
     SetSwitchingProtocol (Ptr<NocSwitchingProtocol> switchingProtocol);
 
     /**
      * Access current switching protocol
      */
-    Ptr<NocSwitchingProtocol>
+    virtual Ptr<NocSwitchingProtocol>
     GetSwitchingProtocol ();
-
-    /**
-     * Callback to be invoked when the route discovery procedure is completed.
-     *
-     * \param flag        indicating whether a route was actually found and all needed information is
-     *                    added to the packet successfully
-     *
-     * \param packet      the NoC packet for which the route was resolved
-     *
-     * \param src         source address of the packet
-     *
-     * \param dst         destination address of the packet
-     *
-     * \param protocol    ethernet 'Protocol' field, needed to form a proper MAC-layer header
-     *
-     */
-    typedef Callback<void,/* return type */
-    Ptr<Packet> , /* packet */
-    Ptr<NetDevice>,/* src */
-    Ptr<NetDevice>/* dst */
-    > RouteReplyCallback;
 
     /**
      * Allows the router to manage the packet. Package management means switching and routing.
      *
      * For requesting routing information, all packets must go through this request.
      *
-     * Note that route discovery works async. -- RequestRoute returns immediately, while
-     * reply callback will be called when routing information will be available.
      *
      * \param source        source NoC net device
      * \param destination   destination address
@@ -159,17 +165,31 @@ namespace ns3
      *                      routing information is added as tags or headers). The packet
      *                      will be returned to reply callback.
      * \param protocolType  protocol ID, needed to form a proper MAC-layer header
-     * \param routeReply    callback to be invoked after route discovery procedure, supposed
-     *                      to really send packet using routing information.
      *
-     * \return true if a valid route is already known
+     * \return the route, if a valid route is already known, NULL otherwise
      */
-    virtual bool
-    ManagePacket(const Ptr<NocNetDevice> source,
-        const Ptr<NocNode> destination, Ptr<Packet> packet, RouteReplyCallback routeReply);
+    virtual Ptr<Route>
+    ManagePacket (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
 
+    /**
+     * \param packet the packet to be sent
+     * \param destination the destination node of this packet
+     *
+     * \return the net device which can be used to inject the packet into the network
+     */
     virtual Ptr<NocNetDevice>
-    GetInjectionNetDevice (Ptr<NocPacket> packet, Ptr<NocNode> destination) = 0;
+    GetInjectionNetDevice (Ptr<Packet> packet, Ptr<NocNode> destination) = 0;
+
+    virtual std::vector<Ptr<NocNetDevice> >
+    GetInjectionNetDevices () = 0;
+
+    /**
+     *
+     * \return the net device which can be used to receive the packet,
+     *         from the network, for the processing element (NoC application)
+     */
+    virtual Ptr<NocNetDevice>
+    GetReceiveNetDevice () = 0;
 
     /**
      * Searches for the NoC net device which must be used by the destination node to receive the packet.
@@ -200,12 +220,13 @@ namespace ns3
     /**
      * Retrieves all the possible output net devices for a packet sent by the specified net device
      *
+     * \param packet the packet
      * \param sender the net device which sent the packet
      *
      * \return an array with the output net devices
      */
     virtual std::vector<Ptr<NocNetDevice> >
-    GetOutputNetDevices (Ptr<NocNetDevice> sender) = 0;
+    GetOutputNetDevices (Ptr<Packet> packet, Ptr<NocNetDevice> sender) = 0;
 
     /**
      * Associate this device to this router.
@@ -240,19 +261,19 @@ namespace ns3
     /**
      * set the NoC node to which this routing protocol is assigned to
      */
-    void
+    virtual void
     SetNocNode (Ptr<NocNode> nocNode);
 
     /**
      * \return the NoC node to which this routing protocol is assigned to
      */
-    Ptr<NocNode>
+    virtual Ptr<NocNode>
     GetNocNode () const;
 
     /**
      * \return the name of this routing protocol
      */
-    std::string
+    virtual std::string
     GetName () const;
 
   protected:
@@ -278,6 +299,11 @@ namespace ns3
      * the load router component
      */
     Ptr<LoadRouterComponent> m_loadComponent;
+
+    /**
+     * stores the injection net device for each head packet encountered
+     */
+    std::map<uint32_t, Ptr<NocNetDevice> > m_headPacketsInjectionNetDevice;
 
   private:
 

@@ -20,6 +20,7 @@
 
 #include "noc-packet-tag.h"
 #include "ns3/log.h"
+#include "ns3/enum.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocPacketTag");
 
@@ -36,6 +37,11 @@ namespace ns3 {
     static TypeId tid = TypeId ("ns3::NocPacketTag")
       .SetParent<Tag> ()
       .AddConstructor<NocPacketTag> ()
+      .AddAttribute ("Type",
+                     "the type of the packet",
+                     EnumValue (NocPacket::UNKNOWN),
+                     MakeEnumAccessor(&NocPacketTag::m_type),
+                     MakeEnumChecker (NocPacket::HEAD, "Head", NocPacket::DATA, "Data", NocPacket::TAIL, "Tail"))
       .AddAttribute ("HeadPacketUid",
                      "Head packet UID",
                      EmptyAttributeValue (),
@@ -46,6 +52,16 @@ namespace ns3 {
                      BooleanValue (false),
                      MakeBooleanAccessor (&NocPacketTag::GetPacketBlocked),
                      MakeBooleanChecker ())
+      .AddAttribute ("InjectionTime",
+                     "the time of injection of the packet into the network",
+                     TimeValue (),
+                     MakeTimeAccessor (&NocPacketTag::m_injectionTime),
+                     MakeTimeChecker ())
+      .AddAttribute ("ReceiveTime",
+                     "the time when the packet is received by the destination node",
+                     TimeValue (),
+                     MakeTimeAccessor (&NocPacketTag::m_receiveTime),
+                     MakeTimeChecker ())
       ;
     return tid;
   }
@@ -59,27 +75,65 @@ namespace ns3 {
   uint32_t
   NocPacketTag::GetSerializedSize () const
   {
-    return 5;
+    return 22; // 1 + 4 + 1 + 8 + 8
   }
 
   void
   NocPacketTag::Serialize (TagBuffer i) const
   {
+    i.WriteU8 (m_type);
     i.WriteU32 (m_headPacketUid);
     i.WriteU8 (m_packetBlocked);
+    i.WriteU64 (m_injectionTime.GetNanoSeconds ());
+    i.WriteU64 (m_receiveTime.GetNanoSeconds ());
   }
 
   void
   NocPacketTag::Deserialize (TagBuffer i)
   {
+    int type = i.ReadU8 ();
+    switch (type)
+    {
+      case 0:
+        m_type = NocPacket::HEAD;
+        break;
+      case 1:
+        m_type = NocPacket::DATA;
+        break;
+      case 2:
+        m_type = NocPacket::TAIL;
+        break;
+      case 3:
+      default:
+        m_type = NocPacket::UNKNOWN;
+        break;
+    }
     m_headPacketUid = i.ReadU32 ();
     m_packetBlocked = i.ReadU8 ();
+    m_injectionTime = NanoSeconds (i.ReadU64 ());
+    m_receiveTime = NanoSeconds (i.ReadU64 ());
   }
 
   void
   NocPacketTag::Print (std::ostream &os) const
   {
-    os << "v=" << (uint32_t) m_headPacketUid;
+    os << "type=" << m_type
+        << "headPacketUid=" << m_headPacketUid
+        << "packetBlocked=" << m_packetBlocked
+        << "injectionTime=" << m_injectionTime
+        << "receiveTime=" << m_receiveTime;
+  }
+
+  void
+  NocPacketTag::SetPacketType (NocPacket::Type type)
+  {
+    m_type = type;
+  }
+
+  NocPacket::Type
+  NocPacketTag::GetPacketType () const
+  {
+    return m_type;
   }
 
   void
@@ -104,6 +158,30 @@ namespace ns3 {
   NocPacketTag::GetPacketBlocked () const
   {
     return m_packetBlocked;
+  }
+
+  void
+  NocPacketTag::SetInjectionTime (Time injectionTime)
+  {
+    m_injectionTime = injectionTime;
+  }
+
+  Time
+  NocPacketTag::GetInjectionTime () const
+  {
+    return m_injectionTime;
+  }
+
+  void
+  NocPacketTag::SetReceiveTime (Time receiveTime)
+  {
+    m_receiveTime = receiveTime;
+  }
+
+  Time
+  NocPacketTag::GetReceiveTime () const
+  {
+    return m_receiveTime;
   }
 
 }  // namespace ns3

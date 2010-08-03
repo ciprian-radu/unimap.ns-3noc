@@ -4,11 +4,13 @@ def build(bld):
     nocChannel = bld.create_ns3_module('channel', ['core', 'simulator'])
     nocChannel.source = [
         'noc-channel.cc',
+        'noc-faulty-channel.cc',
         ]
 
     headers = bld.new_task_gen('ns3header')
     headers.module = 'channel'
     headers.source = [
         'noc-channel.h',
+        'noc-faulty-channel.h',
         ]
 

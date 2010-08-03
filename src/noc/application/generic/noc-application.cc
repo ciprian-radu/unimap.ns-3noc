@@ -30,6 +30,8 @@
 #include "ns3/noc-packet.h"
 #include "ns3/noc-net-device.h"
 #include "ns3/uinteger.h"
+#include "ns3/integer.h"
+#include "ns3/noc-registry.h"
 #include "ns3/trace-source-accessor.h"
 #include "ns3/enum.h"
 #include <cstdlib>
@@ -71,6 +73,34 @@ namespace ns3
       }
   }
 
+  NocApplication::TrafficPattern
+  NocApplication::TrafficPatternFromString (std::string t)
+  {
+    if (t == "DestinationSpecified")
+      {
+        return DESTINATION_SPECIFIED;
+      }
+    if (t == "UniformRandom")
+      {
+        return UNIFORM_RANDOM;
+      }
+    if (t == "BitMatrixTranspose")
+      {
+        return BIT_MATRIX_TRANSPOSE;
+      }
+    if (t == "BitComplement")
+      {
+        return BIT_COMPLEMENT;
+      }
+    if (t == "BitReverse")
+      {
+        return BIT_REVERSE;
+      }
+    NS_LOG_WARN ("The traffic pattern called '" << t << "' is unknown! "
+        "Using the default traffic pattern (Uniform random)");
+    return UNIFORM_RANDOM;
+  }
+
   TypeId
   NocApplication::GetTypeId(void)
   {
@@ -99,9 +129,11 @@ namespace ns3
                 MakeUintegerChecker<uint32_t> ())
             .AddTraceSource("Tx", "A new packet is created and is sent",
                 MakeTraceSourceAccessor(&NocApplication::m_txTrace))
+            .AddTraceSource("MessageInjected", "A new message was injected into the network",
+                MakeTraceSourceAccessor(&NocApplication::m_messageTrace))                
             .AddAttribute("TrafficPattern",
                 "The traffic pattern which will be used by this application",
-                EnumValue (BIT_COMPLEMENT), MakeEnumAccessor (&NocApplication::m_trafficPattern),
+                EnumValue (BIT_COMPLEMENT), MakeEnumAccessor (&NocApplication::m_trafficPatternEnum),
                 MakeEnumChecker (DESTINATION_SPECIFIED, TrafficPatternToString(DESTINATION_SPECIFIED),
                                  UNIFORM_RANDOM, TrafficPatternToString(UNIFORM_RANDOM),
                                  BIT_MATRIX_TRANSPOSE, TrafficPatternToString(BIT_MATRIX_TRANSPOSE),
@@ -122,7 +154,7 @@ namespace ns3
     m_residualBits = 0;
     m_lastStartTime = Seconds(0);
     m_totBytes = 0;
-    m_trafficPattern = BIT_COMPLEMENT;
+    m_trafficPatternEnum = BIT_COMPLEMENT;
     m_currentPacketIndex = 0;
   }
 
@@ -163,7 +195,7 @@ namespace ns3
   NocApplication::StartApplication() // Called at time specified by Start
   {
     NS_LOG_FUNCTION_NOARGS ();
-    NS_LOG_DEBUG ("Using the " << TrafficPatternToString(m_trafficPattern) << " traffic pattern");
+    NS_LOG_DEBUG ("Using the " << TrafficPatternToString (m_trafficPatternEnum) << " traffic pattern");
 
     // Ensure no pending event
     CancelEvents();
@@ -228,7 +260,18 @@ namespace ns3
         uint32_t bits = m_pktSize * 8 - m_residualBits;
         // FIXME note that the size of the head packets is bigger (add the header size)
         NS_LOG_LOGIC ("bits = " << bits);
-        Time nextTime(Seconds(bits / static_cast<double> (m_dataRate.GetBitRate()))); // Time till next packet
+
+        int speedup = 1;
+        if (m_currentPacketIndex != 0)
+          {
+            // a data packet will be sent
+            IntegerValue dataFlitSpeedup;
+            Ptr<NocRegistry> nocRegistry = NocRegistry::GetInstance ();
+            nocRegistry->GetAttribute ("DataPacketSpeedup", dataFlitSpeedup);
+            speedup = dataFlitSpeedup.Get ();
+          }
+        NS_LOG_DEBUG ("Data flit speedup is " << speedup);
+        Time nextTime(Seconds(bits / static_cast<double> (m_dataRate.GetBitRate()) / speedup)); // Time till next packet
         NS_LOG_LOGIC ("nextTime = " << nextTime << " (packet size = " << bits << " data rate = " << m_dataRate.GetBitRate() << ")");
         NS_LOG_DEBUG ("Schedule event (packet injection) to occur at time "
             << (Simulator::Now () + nextTime).GetSeconds () << " seconds");
@@ -257,9 +300,10 @@ namespace ns3
 
     Ptr<NocNode> sourceNode = GetNode ()->GetObject<NocNode> ();
     uint32_t sourceNodeId = sourceNode->GetId ();
-    NS_ASSERT_MSG (sourceNodeId < 64, "max. 64 nodes (8x8 2D mesh) are allowed by this packet format");
-    uint32_t sourceX = sourceNodeId / m_hSize;
-    uint32_t sourceY = sourceNodeId % m_hSize;
+    uint32_t sourceX = sourceNodeId % m_hSize;
+    uint32_t sourceY = sourceNodeId / m_hSize;
+    NS_LOG_DEBUG ("source X = " << sourceX);
+    NS_LOG_DEBUG ("source Y = " << sourceY);
 
     uint32_t destinationX;
     uint32_t destinationY;
@@ -278,55 +322,59 @@ namespace ns3
       }
     uint8_t sizeY = floor(log);
 
-    switch (m_trafficPattern)
+    switch (m_trafficPatternEnum)
       {
         case DESTINATION_SPECIFIED:
-          destinationX = m_destinationNodeId / m_hSize;
+          destinationX = m_destinationNodeId % m_hSize;
           NS_LOG_DEBUG ("specified destination x = " << destinationX);
           NS_ASSERT (destinationX < m_hSize);
-          destinationY = m_destinationNodeId % m_hSize;
+          destinationY = m_destinationNodeId / m_hSize;
           NS_LOG_DEBUG ("specified destination y = " << destinationY);
           NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;
 
         case UNIFORM_RANDOM:
-          {
-            UniformVariable uniformVariable;
-            destinationX = uniformVariable.GetInteger(0, m_hSize - 1);
-            NS_LOG_DEBUG("random destination x = " << destinationX);
-            NS_ASSERT(destinationX < m_hSize);
-            destinationY = uniformVariable.GetInteger(0, m_nodes.GetN() / m_hSize - 1);
-            NS_LOG_DEBUG("random destination y = " << destinationY);
-            NS_ASSERT(destinationY < m_nodes.GetN() / m_hSize);
-          }
+          if (m_currentPacketIndex == 0)
+            {
+              m_uniformDestinationX = m_trafficPattern.GetUniformRandomNumber (0, m_hSize - 1);
+              m_uniformDestinationY = m_trafficPattern.GetUniformRandomNumber (0, m_nodes.GetN() / m_hSize - 1);
+//              m_uniformDestinationX = rand () % m_hSize;
+//              m_uniformDestinationY = rand () % (m_nodes.GetN() / m_hSize);
+            }
+          destinationX = m_uniformDestinationX;
+          NS_LOG_DEBUG("random destination x = " << destinationX);
+          NS_ASSERT (destinationX < m_hSize);
+          destinationY = m_uniformDestinationY;
+          NS_LOG_DEBUG("random destination y = " << destinationY);
+          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;
 
         case BIT_MATRIX_TRANSPOSE:
-          destinationX = MatrixTransposeBits(sourceX, sizeX);
-          NS_ASSERT(destinationX < m_hSize);
-          destinationY = MatrixTransposeBits(sourceY, sizeY);
-          NS_ASSERT(destinationY < m_nodes.GetN() / m_hSize);
+          destinationX = ns3::TrafficPattern::MatrixTransposeBits (sourceX, sizeX);
+          NS_ASSERT (destinationX < m_hSize);
+          destinationY = ns3::TrafficPattern::MatrixTransposeBits (sourceY, sizeY);
+          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;
 
         case BIT_COMPLEMENT:
-          destinationX = ComplementBits(sourceX, sizeX);
-          NS_ASSERT(destinationX < m_hSize);
-          destinationY = ComplementBits(sourceY, sizeY);
-          NS_ASSERT(destinationY < m_nodes.GetN() / m_hSize);
+          destinationX = ns3::TrafficPattern::ComplementBits (sourceX, sizeX);
+          NS_ASSERT (destinationX < m_hSize);
+          destinationY = ns3::TrafficPattern::ComplementBits (sourceY, sizeY);
+          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;
 
         case BIT_REVERSE:
-          destinationX = ReverseBits(sourceX, sizeX);
-          NS_ASSERT(destinationX < m_hSize);
-          destinationY = ReverseBits(sourceY, sizeY);
-          NS_ASSERT(destinationY < m_nodes.GetN() / m_hSize);
+          destinationX = ns3::TrafficPattern::ReverseBits (sourceX, sizeX);
+          NS_ASSERT (destinationX < m_hSize);
+          destinationY = ns3::TrafficPattern::ReverseBits (sourceY, sizeY);
+          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;
 
         default:
           break;
       }
 
-    uint32_t destinationNodeId = destinationX * m_hSize + destinationY;
+    uint32_t destinationNodeId = destinationY * m_hSize + destinationX;
     Ptr<NocNode> destinationNode;
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i
         != m_devices.End(); ++i)
@@ -338,160 +386,66 @@ namespace ns3
             break;
           }
       }
-    NS_LOG_DEBUG ("A packet is sent from node " << sourceNodeId << " to node " << destinationNodeId);
-
-    uint32_t relativeX = 0;
-    uint32_t relativeY = 0;
-    if (destinationY < sourceY)
+    if (sourceNodeId == destinationNodeId)
       {
-        // 0 = East; 1 = West
-        relativeX = 8; // 1000 (in binary)
-      }
-    if (destinationX < sourceX)
-      {
-        // 0 = South; 1 = North
-        relativeY = 8; // 1000 (in binary)
-      }
-    relativeX = relativeX | std::abs((int) (destinationY - sourceY));
-    relativeY = relativeY | std::abs((int) (destinationX - sourceX));
-    // end traffic pattern
-
-    NS_ASSERT_MSG (m_numberOfPackets >= 1,
-        "The number of packets must be at least 1 (the head packet) but it is " << m_numberOfPackets);
-    if (m_currentPacketIndex == 0)
-      {
-        m_currentHeadPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
-            sourceY, m_numberOfPackets, m_pktSize);
-        m_txTrace (m_currentHeadPacket);
-        sourceNode->InjectPacket (m_currentHeadPacket, destinationNode);
+        NS_LOG_LOGIC ("Trying to send a message from node " << sourceNodeId << " to node "
+            << destinationNodeId << ". Aborting because source and destination nodes are the same.");
+        if (m_trafficPatternEnum == UNIFORM_RANDOM)
+          {
+            ScheduleNextTx();
+          }
       }
     else
       {
-        Ptr<NocPacket> dataPacket = Create<NocPacket> (m_currentHeadPacket->GetUid (), m_pktSize);
-        m_txTrace (dataPacket);
-        sourceNode->InjectPacket (dataPacket, destinationNode);
+        NS_LOG_LOGIC ("A packet is sent from node " << sourceNodeId << " to node " << destinationNodeId);
+
+        uint32_t relativeX = 0;
+        uint32_t relativeY = 0;
+        if (destinationX < sourceX)
+          {
+            // 0 = East; 1 = West
+            relativeX = 8; // 1000 (in binary)
+          }
+        if (destinationY < sourceY)
+          {
+            // 0 = South; 1 = North
+            relativeY = 8; // 1000 (in binary)
+          }
+        relativeX = relativeX | std::abs((int) (destinationX - sourceX));
+        relativeY = relativeY | std::abs((int) (destinationY - sourceY));
+        // end traffic pattern
+
+        NS_ASSERT_MSG (m_numberOfPackets >= 1,
+            "The number of packets must be at least 1 (the head packet) but it is " << m_numberOfPackets);
+        if (m_currentPacketIndex == 0)
+          {
+            m_currentHeadPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
+                sourceY, m_numberOfPackets - 1, m_pktSize);
+            m_txTrace (m_currentHeadPacket);
+            sourceNode->InjectPacket (m_currentHeadPacket, destinationNode);
+          }
+        else
+          {
+            bool isTail = false;
+            if (m_currentPacketIndex + 1 == m_numberOfPackets)
+              {
+                isTail = true;
+              }
+            Ptr<NocPacket> dataPacket = Create<NocPacket> (m_currentHeadPacket->GetUid (), m_pktSize, isTail);
+            m_txTrace (dataPacket);
+            sourceNode->InjectPacket (dataPacket, destinationNode);
+          }
+        m_currentPacketIndex++;
+        if (m_currentPacketIndex == m_numberOfPackets)
+          {
+            m_currentPacketIndex = 0;
+          }
+
+        m_totBytes += m_pktSize;
+        m_lastStartTime = Simulator::Now();
+        m_residualBits = 0;
+        ScheduleNextTx();
       }
-    m_currentPacketIndex++;
-    if (m_currentPacketIndex == m_numberOfPackets)
-      {
-        m_currentPacketIndex = 0;
-      }
-
-    m_totBytes += m_pktSize;
-    m_lastStartTime = Simulator::Now();
-    m_residualBits = 0;
-    ScheduleNextTx();
-  }
-
-  uint32_t
-  NocApplication::MatrixTransposeBits (uint32_t number)
-  {
-    NS_LOG_FUNCTION (number);
-
-    std::bitset<32> b(number);
-    double log = 0;
-    if (number > 0)
-      {
-        log = log2(number);
-      }
-
-    return MatrixTransposeBits(number, floor (log + 1));
-  }
-
-  uint32_t
-  NocApplication::MatrixTransposeBits (uint32_t number, uint8_t size)
-  {
-    NS_LOG_FUNCTION (number << (int) size);
-    NS_ASSERT_MSG(size >= 1 && size <= 32, "The size must be <= 1 and <= 32");
-
-    std::bitset<32> b(number);
-    std::string binary(b.to_string().substr(32 - size));
-    std::bitset<32> bits(binary);
-    for (unsigned int i = 0; i < binary.size() / 2; ++i)
-      {
-      bool leftBit = bits.test (i);
-      bool rightBit = bits.test (binary.size () / 2 + i);
-      bits.set (i, rightBit);
-      bits.set (binary.size () / 2 + i, leftBit);
-      }
-    uint32_t transposedNumber = bits.to_ulong();
-    NS_LOG_DEBUG(number << " " << b.to_string().substr(32 - size) << " "
-        << transposedNumber << " " << bits.to_string());
-
-    return transposedNumber;
-  }
-
-  uint32_t
-  NocApplication::ComplementBits (uint32_t number)
-  {
-    NS_LOG_FUNCTION (number);
-
-    std::bitset<32> b(number);
-    double log = 0;
-    if (number > 0)
-      {
-        log = log2(number);
-      }
-
-    return ComplementBits(number, floor (log + 1));
-  }
-
-  uint32_t
-  NocApplication::ComplementBits (uint32_t number, uint8_t size)
-  {
-    NS_LOG_FUNCTION (number << (int) size);
-    NS_ASSERT_MSG(size >= 1 && size <= 32, "The size must be <= 1 and <= 32");
-
-    std::bitset<32> b(number);
-    std::string binary(b.to_string().substr(32 - size));
-    std::bitset<32> bits(binary);
-    for (unsigned int i = 0; i < binary.size(); ++i)
-      {
-        bits.flip(i);
-      }
-    uint32_t reversedNumber = bits.to_ulong();
-    NS_LOG_DEBUG(number << " " << b.to_string().substr(32 - size) << " "
-        << reversedNumber << " " << bits.to_string());
-
-    return reversedNumber;
-  }
-
-  uint32_t
-  NocApplication::ReverseBits (uint32_t number)
-  {
-    NS_LOG_FUNCTION (number);
-
-    std::bitset<32> b(number);
-    double log = 0;
-    if (number > 0)
-      {
-        log = log2(number);
-      }
-
-    return ReverseBits (number, floor (log + 1));
-  }
-
-  uint32_t
-  NocApplication::ReverseBits (uint32_t number, uint8_t size)
-  {
-    NS_LOG_FUNCTION (number << (int) size);
-    NS_ASSERT_MSG(size >= 1 && size <= 32, "The size must be <= 1 and <= 32");
-
-    std::bitset<32> b(number);
-    std::string binary(b.to_string().substr(32 - size));
-    std::bitset<32> bits(binary);
-    for (unsigned int i = 0; i < binary.size() / 2; ++i)
-      {
-        bool leftBit = bits.test (i);
-        bool rightBit = bits.test (binary.size () - i - 1);
-        bits.set (i, rightBit);
-        bits.set (binary.size () - i - 1, leftBit);
-      }
-    uint32_t reversedNumber = bits.to_ulong();
-    NS_LOG_DEBUG(number << " " << b.to_string().substr(32 - size) << " "
-        << reversedNumber << " " << bits.to_string());
-
-    return reversedNumber;
   }
 
 } // Namespace ns3

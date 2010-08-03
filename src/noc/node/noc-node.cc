@@ -20,6 +20,10 @@
 
 #include "noc-node.h"
 #include "ns3/log.h"
+#include "ns3/noc-packet-tag.h"
+#include "ns3/simulator.h"
+#include "ns3/noc-registry.h"
+#include "ns3/integer.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocNode");
 
@@ -73,6 +77,14 @@ namespace ns3
   void
   NocNode::InjectPacket (Ptr<NocPacket> packet, Ptr<NocNode> destination)
   {
+    NS_LOG_LOGIC ("Node " << GetId () << " is injecting the packet " << *packet
+        << " (packet UID " << packet->GetUid () << " ; destination is "
+        << destination->GetId () << ")");
+
+    NocPacketTag packetTag;
+    packet->RemovePacketTag (packetTag);
+    packetTag.SetInjectionTime (Simulator::Now ());
+    packet->AddPacketTag (packetTag);
     Ptr<NocNetDevice> netDevice = GetRouter ()->GetInjectionNetDevice (packet, destination);
     Send (netDevice, packet, destination);
   }
@@ -80,15 +92,32 @@ namespace ns3
   void
   NocNode::Send (Ptr<NocNetDevice> source, Ptr<Packet> packet, Ptr<NocNode> destination)
   {
-    GetRouter ()->ManagePacket (source, destination, packet, MakeCallback(&NocNode::DoSend, this));
+    NS_LOG_DEBUG ("source " << source->GetAddress () << ", packet UID " << packet->GetUid () << ", destination " << destination->GetId ());
+
+    NocHeader header;
+    packet->PeekHeader (header);
+    Ptr<Route> route = GetRouter ()->ManagePacket (source, destination, packet);
+    NS_LOG_DEBUG ("The route for packet with UID " << packet->GetUid ()
+        << " is from " << route->GetSourceDevice ()->GetAddress ()
+        << " to " << route->GetDestinationDevice ()->GetAddress ());
+    // note the packet returned by the route has its header updated!
+    // => packet->PeekHeader (...) <> route->GetPacket ()->PeekHeader (...)
+    Ptr<Packet> routedPacket = route->GetRoutedPacket ();
+    // add the original header as well
+    if (!header.IsEmpty ())
+      {
+        routedPacket->AddHeader (header);
+      }
+    DoSend (routedPacket, source, route->GetSourceDevice (), route->GetDestinationDevice ());
   }
 
   void
-  NocNode::DoSend (Ptr<Packet> packet, Ptr<NetDevice> source, Ptr<NetDevice> destination)
+  NocNode::DoSend (Ptr<Packet> packet, Ptr<NocNetDevice> source, Ptr<NocNetDevice> viaNetDevice, Ptr<NetDevice> destination)
   {
     NS_LOG_DEBUG ("Node " << GetId() << " requests net device " << source->GetAddress ()
-        << " to send a packet to net device " << destination->GetAddress ()
-        << " (node " << destination->GetNode ()->GetId () << ")");
+        << " to send the packet with UID " << packet->GetUid () << " to net device "
+        << destination->GetAddress () << " (node " << destination->GetNode ()->GetId () << ")");
+    source->SetViaNetDevice (viaNetDevice);
     source->Send (packet, destination->GetAddress (), 0);
   }
 

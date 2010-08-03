@@ -40,6 +40,24 @@ namespace ns3
     static TypeId tid = TypeId ("ns3::SoRouting")
         .SetParent<NocRoutingProtocol> ()
         .AddConstructor<SoRouting> ()
+        .AddAttribute (
+            "ProgressiveWeight",
+            "the weight used for a progressive direction (i.e. that leads to destination)",
+            IntegerValue (1),
+            MakeIntegerAccessor (&SoRouting::m_progressiveWeight),
+            MakeIntegerChecker<int> ())
+        .AddAttribute (
+            "RemainingWeight",
+            "the weight used for a direction which is to loaded",
+            IntegerValue (1),
+            MakeIntegerAccessor (&SoRouting::m_remainingWeight),
+            MakeIntegerChecker<int> ())
+        .AddAttribute (
+            "LoadWeight",
+            "the weight used for a direction where the channel is busy",
+            IntegerValue (1),
+            MakeIntegerAccessor (&SoRouting::m_loadWeight),
+            MakeIntegerChecker<int> ())
         ;
     return tid;
   }
@@ -47,11 +65,7 @@ namespace ns3
   // we could easily name the protocol "Self Optimized", but using __FILE__ should be more useful for debugging
   SoRouting::SoRouting () : NocRoutingProtocol (__FILE__)
   {
-    // TODO provide setters and getters for those fields
-    // the user should be able to set those fields
-    m_progressiveWeight = 1;
-    m_remainingWeight = 1;
-    m_loadWeight = 1;
+    m_dataLength = -1;
   }
 
   SoRouting::~SoRouting ()
@@ -59,11 +73,14 @@ namespace ns3
     ;
   }
 
-  bool
-  SoRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-      Ptr<Packet> packet, RouteReplyCallback routeReply)
+  Ptr<Route>
+  SoRouting::RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
   {
     NS_LOG_FUNCTION_NOARGS ();
+
+    NocHeader nocHeader;
+    packet->PeekHeader (nocHeader);
+    NS_ASSERT (!nocHeader.IsEmpty ());
 
     std::vector<Ptr<NocNetDevice> > devices = DoRoutingFunction (source, destination, packet);
     Ptr<NocNetDevice> selectedDevice = DoSelectionFunction(devices, source, destination, packet);
@@ -76,7 +93,7 @@ namespace ns3
         GetInputNetDevice(m_sourceNetDevice,
             NocRoutingProtocol::GetOpositeDirection2DMesh (selectedDevice->GetRoutingDirection ()));
 
-    // TODO
+    // ensure that we find the opposite net device at the destination node
     if (m_destinationNetDevice == 0)
       {
         m_destinationNetDevice = destination->GetRouter ()->
@@ -103,9 +120,14 @@ namespace ns3
       }
 
     NS_ASSERT(m_destinationNetDevice != 0);
-    routeReply (packet, m_sourceNetDevice, m_destinationNetDevice);
+    NS_LOG_DEBUG ("Found source net device " << m_sourceNetDevice->GetAddress ()
+        << " (packet UID " << packet->GetUid () << ")");
+    NS_LOG_DEBUG ("Found destination net device " << m_destinationNetDevice->GetAddress ()
+        << " (packet UID " << packet->GetUid () << ")");
 
-    return true;
+    Ptr<Route> route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
+
+    return route;
   }
 
   std::vector<Ptr<NocNetDevice> >
@@ -115,27 +137,64 @@ namespace ns3
     std::vector<Ptr<NocNetDevice> > validDevices;
 
     std::vector<Ptr<NocNetDevice> > devices = source->GetNode ()->GetObject<NocNode> ()->
-        GetRouter ()->GetOutputNetDevices (source);
+        GetRouter ()->GetOutputNetDevices (packet, source);
 
-    for (unsigned int i = 0; i < devices.size (); ++i) {
-      if (devices[i]->GetRoutingDirection() != source->GetRoutingDirection ())
-        {
-          validDevices.insert (validDevices.begin(), devices[i]);
-        }
-    }
+    for (unsigned int i = 0; i < devices.size (); ++i)
+      {
+        // eliminate the direction from which the packet came (AKA same direction)
+        if (devices[i]->GetRoutingDirection() != source->GetRoutingDirection ())
+          {
+            NocHeader header;
+            packet->PeekHeader (header);
+            if ((header.GetXOffset ()) == 0)
+              {
+                // eliminate the East and West directions
+                if (devices[i]->GetRoutingDirection () == NocRoutingProtocol::NORTH ||
+                    devices[i]->GetRoutingDirection () == NocRoutingProtocol::SOUTH)
+                  {
+                    // include only the progressive direction
+                    if (IsProgressiveDirection (packet, devices[i]))
+                      {
+                        validDevices.insert (validDevices.begin (), devices[i]);
+                      }
+                  }
+              }
+            else
+              {
+                if ((header.GetYOffset ()) == 0)
+                  {
+                    // eliminate the North and South directions
+                    if (devices[i]->GetRoutingDirection () == NocRoutingProtocol::EAST ||
+                        devices[i]->GetRoutingDirection () == NocRoutingProtocol::WEST)
+                      {
+                        // include only the progressive direction
+                        if (IsProgressiveDirection (packet, devices[i]))
+                          {
+                            validDevices.insert (validDevices.begin (), devices[i]);
+                          }
+                      }
+                  }
+                else
+                  {
+                    validDevices.insert (validDevices.begin(), devices[i]);
+                  }
+              }
+          }
+      }
 
     if (validDevices.size() == 0)
       {
         NS_LOG_DEBUG ("No output net devices can be used for routing the packet "
-            << packet << " (which came from " << source->GetAddress () << ")");
+            << *packet << " (which came from " << source->GetAddress () << ")");
       }
     else
       {
         NS_LOG_DEBUG ("The following output net devices can be used for routing the packet "
-            << packet << " (which came from " << source->GetAddress () << ")");
-        for (unsigned int i = 0; i < validDevices.size (); ++i) {
-          NS_LOG_DEBUG (validDevices[i]->GetAddress ());
-        }
+            << *packet << " (which came from " << source->GetAddress () << ")");
+        for (unsigned int i = 0; i < validDevices.size (); ++i)
+          {
+            NS_LOG_DEBUG (validDevices[i]->GetAddress ());
+          }
       }
 
     return validDevices;
@@ -171,8 +230,27 @@ namespace ns3
         NS_LOG_DEBUG ("Net device " << selectedDevices[i]->GetAddress () << " is among the selected devices");
       }
 
+    std::vector<Ptr<NocNetDevice> > progressiveDevices;
+    if (selectedDevices.size () > 1)
+      {
+        for (unsigned int i = 0; i < selectedDevices.size (); ++i)
+          {
+            if (IsProgressiveDirection (packet, selectedDevices[i]))
+              {
+                progressiveDevices.insert (progressiveDevices.begin (), selectedDevices[i]);
+              }
+          }
+      }
+
     UniformVariable randomVariable;
-    device = selectedDevices[randomVariable.GetValue (0, selectedDevices.size ())];
+    if (progressiveDevices.size () > 0)
+      {
+        device = progressiveDevices[randomVariable.GetValue (0, progressiveDevices.size ())];
+      }
+    else
+      {
+        device = selectedDevices[randomVariable.GetValue (0, selectedDevices.size ())];
+      }
 
     NS_LOG_DEBUG ("The net device " << device->GetAddress () << " was selected for routing");
 
@@ -196,12 +274,28 @@ namespace ns3
     Ptr<NocChannel> channel = device->GetChannel()->GetObject<NocChannel> ();
     if (channel->IsBusy ())
       {
-        int messageLength = 8; // FIXME this can the obtained from NocApplication (field m_numberOfPackets)
-        int addValue = m_remainingWeight * (100 - /* FIXME router.getInChannelConnectedToDirection(dir).getRemainingFlits() */0 * 100 / (messageLength + 1));
+        NocHeader header;
+        packet->PeekHeader (header);
+        if (!header.IsEmpty ())
+          {
+            m_dataLength = header.GetDataFlitCount ();
+          }
+        NS_LOG_DEBUG ("Message has " << m_dataLength << " data packets");
+        NS_ASSERT (m_dataLength >= 0);
+
+        // FIXME return from the in queue the number of the packets belonging to this message
+        int inQueueNPackets = device->GetInQueueNPacktes ();
+        if (inQueueNPackets > m_dataLength + 1)
+          {
+            inQueueNPackets = m_dataLength + 1;
+          }
+
+        int addValue = m_remainingWeight * (100 - inQueueNPackets * 100 / (m_dataLength + 1));
         value += addValue;
 
         NS_LOG_DEBUG ("Net device " << device->GetAddress ()
-            << " can be reached through a busy channel (adding " << m_remainingWeight << ")");
+            << " can be reached through a busy channel (adding " << addValue << "). Channel has "
+            << device->GetInQueueNPacktes () << " packets in its in queue");
       }
 
     if (value != 0)
@@ -225,31 +319,33 @@ namespace ns3
     packet->PeekHeader (header);
     NS_ASSERT (!header.IsEmpty());
 
-    NS_LOG_DEBUG ("Head packet X distance is " << (int) header.GetXDistance());
-    NS_LOG_DEBUG ("Head packet Y distance is " << (int) header.GetYDistance());
+    NS_LOG_DEBUG ("xOffset " << header.GetXOffset () << " direction "
+        << (header.HasEastDirection () ? "east" : "west"));
+    NS_LOG_DEBUG ("yOffset " << header.GetYOffset () << " direction "
+        << (header.HasSouthDirection () ? "south" : "north"));
 
-    if (((header.GetXDistance() & 8) == 0) && header.GetXDistance() > 0
+    if (((header.HasEastDirection ()) && (header.GetXOffset ()) > 0)
         && device->GetRoutingDirection () == NocRoutingProtocol::EAST)
       {
         isProgressive = true;
       }
     else
       {
-        if (((header.GetXDistance() & 8) == 8) && header.GetXDistance() > 0
+        if (((header.HasWestDirection ()) && (header.GetXOffset ()) > 0)
             && device->GetRoutingDirection () == NocRoutingProtocol::WEST)
           {
             isProgressive = true;
           }
         else
           {
-            if (((header.GetYDistance() & 8) == 8)  && header.GetYDistance() > 0
+            if (((header.HasNorthDirection ())  && (header.GetYOffset ()) > 0)
                 && device->GetRoutingDirection () == NocRoutingProtocol::NORTH)
               {
                 isProgressive = true;
               }
             else
               {
-                if (((header.GetYDistance() & 8) == 0)  && header.GetYDistance() > 0
+                if (((header.HasSouthDirection ())  && (header.GetYOffset ()) > 0)
                     && device->GetRoutingDirection () == NocRoutingProtocol::SOUTH)
                   {
                     isProgressive = true;
@@ -280,48 +376,45 @@ namespace ns3
     packet->RemoveHeader (nocHeader);
     NS_ASSERT (!nocHeader.IsEmpty ());
 
-    uint8_t xDistance = nocHeader.GetXDistance ();
-//    bool isEast = (xDistance & 0x08) != 0x08;
-    int xOffset = xDistance & 0x07;
-
-    uint8_t yDistance = nocHeader.GetYDistance ();
-//    bool isSouth = (yDistance & 0x08) != 0x08;
-    int yOffset = yDistance & 0x07;
+    int xOffset = nocHeader.GetXOffset ();
+    int yOffset = nocHeader.GetYOffset ();
 
     switch (device->GetRoutingDirection ()) {
       case NORTH:
         yOffset--;
-        nocHeader.SetYDistance (0x08 | yOffset);
+        nocHeader.SetYOffset (yOffset);
         break;
       case EAST:
         xOffset--;
-        nocHeader.SetXDistance (0x07 & xOffset);
+        nocHeader.SetXOffset (xOffset);
         break;
       case SOUTH:
         yOffset--;
-        nocHeader.SetYDistance (0x07 & yOffset);
+        nocHeader.SetYOffset (yOffset);
         break;
       case WEST:
         xOffset--;
-        nocHeader.SetXDistance (0x08 | xOffset);
+        nocHeader.SetXOffset (xOffset);
         break;
       case NONE:
       default:
         NS_LOG_ERROR ("Unknown routing direction");
         break;
     }
+    // we need the packet to have its header for calling GetLoadForDirection (...)
+    packet->AddHeader (nocHeader);
 
     Ptr<NocRouter> router = source->GetNode ()->GetObject<NocNode> ()->GetRouter ();
     Ptr<LoadRouterComponent> loadComponent = router->GetLoadRouterComponent ();
     if (loadComponent != 0)
       {
-        int load = loadComponent->GetLoadForDirection (source, device);
+        int load = loadComponent->GetLoadForDirection (packet, source, device);
         NS_ASSERT_MSG (load >= 0 && load <= 100, "The load of a router must be a percentage number ("
             << load << " is not)");
         NS_LOG_DEBUG ("Packet " << packet << " will propagate load " << load);
         nocHeader.SetLoad (load);
       }
-
+    packet->RemoveHeader (nocHeader);
     packet->AddHeader (nocHeader);
   }
 

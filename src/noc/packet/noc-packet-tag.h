@@ -21,10 +21,11 @@
 #ifndef NOCPACKETTAG_H_
 #define NOCPACKETTAG_H_
 
-#include "ns3/packet.h"
+#include "ns3/noc-packet.h"
 #include "ns3/tag.h"
 #include "ns3/uinteger.h"
 #include "ns3/boolean.h"
+#include "ns3/nstime.h"
 #include <iostream>
 
 namespace ns3
@@ -55,6 +56,18 @@ namespace ns3
     Print (std::ostream &os) const;
 
     /**
+     * \param type the type of the packet
+     */
+    void
+    SetPacketType (NocPacket::Type type);
+
+    /**
+     * \return the type of the packet
+     */
+    NocPacket::Type
+    GetPacketType () const;
+
+    /**
      * \param uid the UID of the head packet
      */
     void
@@ -67,7 +80,7 @@ namespace ns3
     GetPacketHeadUid () const;
 
     /**
-     * \param whether or not this packet is blocked
+     * \param isBlocked whether or not this packet is blocked
      */
     void
     SetPacketBlocked (bool isBlocked);
@@ -78,11 +91,57 @@ namespace ns3
     bool
     GetPacketBlocked () const;
 
+    /**
+     * \param injectionTime the time of injection
+     */
+    void
+    SetInjectionTime (Time injectionTime);
+
+    /**
+     * \return the injection time
+     */
+    Time
+    GetInjectionTime () const;
+
+    /**
+     * \param receiveTime the time when the packet was received
+     */
+    void
+    SetReceiveTime (Time receiveTime);
+
+    /**
+     * \return the receive time
+     */
+    Time
+    GetReceiveTime () const;
+
   private:
 
+    /**
+     * the type of the packet
+     */
+    NocPacket::Type m_type;
+
+    /**
+     * the unique identifier of the head packet
+     * (this is useful for data packets)
+     */
     uint32_t m_headPacketUid;
 
+    /**
+     * whether or not a head packet is blocked in the network
+     */
     bool m_packetBlocked;
+
+    /**
+     * at what (simulation) time the packet was injected into the network
+     */
+    Time m_injectionTime;
+
+    /**
+     * at what (simulation) time the packet was received by the destination node
+     */
+    Time m_receiveTime;
   };
 
 } // namespace ns3

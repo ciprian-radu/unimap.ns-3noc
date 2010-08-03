@@ -10,6 +10,8 @@ def build(bld):
                                         'topology',
                                         'routing',
                                         'router',
+                                        'fault-tolerance',
+                                        'util',
                                         ])
     noc.source = [
         ]

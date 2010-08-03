@@ -50,9 +50,8 @@ namespace ns3
     virtual
     ~SlbRouting ();
 
-    virtual bool
-    RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination,
-        Ptr<Packet> packet, RouteReplyCallback routeReply);
+    virtual Ptr<Route>
+    RequestNewRoute (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
 
     int
     GetLoadThreshold () const;

@@ -48,34 +48,14 @@ namespace ns3
   }
 
   int
-  SoLoadRouterComponent::GetLocalLoad ()
+  SoLoadRouterComponent::GetLocalLoad (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice)
   {
+    NS_ASSERT (sourceDevice != 0);
     int load = 0;
-    
-//    int count = 1;
-//        int load = router.getInjectionChannel().getFlitsInBufferCount();
-//        if(load > StatisticsController.getInstance().getBufferSize()) {
-//                load = StatisticsController.getInstance().getBufferSize();
-//        }
-//        if(router.getNorthInChannel() != null) {
-//                count++;
-//                load += router.getNorthInChannel().getFlitsInBufferCount();
-//        }
-//        if(router.getSouthInChannel() != null) {
-//                count++;
-//                load += router.getSouthInChannel().getFlitsInBufferCount();
-//        }
-//        if(router.getEastInChannel() != null) {
-//                count++;
-//                load += router.getEastInChannel().getFlitsInBufferCount();
-//        }
-//        if(router.getWestInChannel() != null) {
-//                count++;
-//                load += router.getWestInChannel().getFlitsInBufferCount();
-//        }
-//        load = (int)(load / (float)(count * StatisticsController.getInstance().getBufferSize()) * 100);
 
-    // FIXME
+    Ptr<NocRouter> router = sourceDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ();
+    load += (int) router->GetInChannelsOccupancy (sourceDevice);
+    load = load * 100;
 
     NS_ASSERT (load >= 0 && load <= 100);
 
@@ -85,13 +65,15 @@ namespace ns3
   }
 
   int
-  SoLoadRouterComponent::GetLoadForDirection (Ptr<NocNetDevice> sourceDevice, Ptr<NocNetDevice> selectedDevice)
+  SoLoadRouterComponent::GetLoadForDirection (Ptr<Packet> packet, Ptr<NocNetDevice> sourceDevice,
+      Ptr<NocNetDevice> selectedDevice)
   {
-    int load = GetLocalLoad ();
+    Ptr<NocRouter> router = sourceDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ();
+    int load = GetLocalLoad (packet, sourceDevice);
+    m_load = 0;
     double neighbourLoad = 0;
     int counter = 0;
 
-    Ptr<NocRouter> router = sourceDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ();
     NS_ASSERT (router);
     if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::NORTH)
       {

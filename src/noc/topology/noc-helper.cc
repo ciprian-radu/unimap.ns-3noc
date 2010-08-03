@@ -77,8 +77,6 @@ namespace ns3
   void
   NocHelper::EnableAscii(Ptr<OutputStreamWrapper> stream, uint32_t nodeid, uint32_t deviceid)
   {
-    AsciiTraceHelper asciiTraceHelper;
-
     Packet::EnablePrinting();
     std::ostringstream oss;
 

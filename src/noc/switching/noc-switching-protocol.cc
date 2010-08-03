@@ -20,7 +20,6 @@
 
 #include "ns3/log.h"
 #include "noc-switching-protocol.h"
-#include "ns3/noc-node.h"
 #include "ns3/noc-header.h"
 #include "ns3/noc-packet-tag.h"
 
