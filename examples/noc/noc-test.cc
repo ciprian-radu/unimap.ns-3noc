@@ -40,6 +40,7 @@
 #include "ns3/mobility-helper.h"
 //#include "ns3/gtk-config-store.h"
 #include "ns3/slb-load-router-component.h"
+#include "ns3/output-stream-wrapper.h"
 
 using namespace ns3;
 
@@ -121,9 +122,8 @@ main (int argc, char *argv[])
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-test.tr file
   NS_LOG_INFO ("Configure Tracing.");
-  std::ofstream os;
-  os.open ("noc-test.tr", std::ios_base::binary | std::ios_base::out);
-  noc->EnableAsciiAll (os);
+  Ptr<OutputStreamWrapper> stream = Create<OutputStreamWrapper> ("noc-test.tr", std::ios_base::binary | std::ios_base::out);
+  noc->EnableAsciiAll (stream);
 
 //  GtkConfigStore configstore;
 //  configstore.ConfigureAttributes();
@@ -136,8 +136,6 @@ main (int argc, char *argv[])
   // The buffers should be emptied at the end of the simulation.
   // Note that the simulation is kept in motion by the injection of packets in the Noc
   // (done by the applications)
-
-  os.close();
 
   return 0;
 }
