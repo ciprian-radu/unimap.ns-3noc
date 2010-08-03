@@ -10,7 +10,7 @@ using namespace ns3;
 static void
 GenerateTraffic (Ptr<Socket> socket, uint32_t size)
 {
-  std::cout << "at=" << Simulator::Now ().GetSeconds () << "s, tx bytes=" << size << std::endl;
+  std::cout << "sent at=" << Simulator::Now ().GetSeconds () << "s, tx bytes=" << size << std::endl;
   socket->Send (Create<Packet> (size));
   if (size > 0)
     {
@@ -28,7 +28,7 @@ SocketPrinter (Ptr<Socket> socket)
   Ptr<Packet> packet;
   while (packet = socket->Recv ())
     { 
-      std::cout << "at=" << Simulator::Now ().GetSeconds () << "s, rx bytes=" << packet->GetSize () << std::endl;
+      std::cout << "received at=" << Simulator::Now ().GetSeconds () << "s, rx bytes=" << packet->GetSize () << std::endl;
     }
 }
 

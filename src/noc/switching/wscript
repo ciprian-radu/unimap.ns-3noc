@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    switching = bld.create_ns3_module('switching', ['core', 'simulator'])
+    switching.source = [
+        'noc-switching-protocol.cc',              
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'switching'
+    headers.source = [
+        'noc-switching-protocol.h',              
+        ]
+

@@ -14,7 +14,7 @@ def build(bld):
     obj.source = 'csma-broadcast.cc'
 
     obj = bld.create_ns3_program('csma-packet-socket', ['csma', 'internet-stack'])
-    obj.source = 'csma-packet-socket.cc'
+    obj.source = 'csma-packet-socket.cc'   
 
     obj = bld.create_ns3_program('csma-multicast', ['csma', 'internet-stack'])
     obj.source = 'csma-multicast.cc'
