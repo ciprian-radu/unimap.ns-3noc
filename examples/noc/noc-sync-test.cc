@@ -38,7 +38,7 @@
 #include "ns3/noc-sync-application-helper.h"
 #include "ns3/noc-node.h"
 #include "ns3/mobility-helper.h"
-#include "ns3/gtk-config-store.h"
+//#include "ns3/gtk-config-store.h"
 #include "ns3/slb-load-router-component.h"
 #include "ns3/so-load-router-component.h"
 #include "ns3/noc-registry.h"
