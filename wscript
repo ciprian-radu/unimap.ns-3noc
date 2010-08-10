@@ -378,6 +378,12 @@ def configure(conf):
 
     conf.find_program('valgrind', var='VALGRIND')
 
+    # we need xsd for the application mapping module of ns-3 NoC
+    conf.find_program('xsd', var='XSD')
+    
+    # Xerces-C++ is required by XSD
+    have_xerces_c = conf.pkg_check_modules('Xerces-C++', 'xerces-c', mandatory=True)
+
     env['ENABLE_STATIC_NS3'] = False
     if Options.options.enable_static:
         if env['PLATFORM'].startswith('linux') and \
