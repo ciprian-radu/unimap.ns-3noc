@@ -86,9 +86,6 @@ main(int argc, char* argv[])
           "Mapping XML says the APCG ID is " << theMappingType->apcg()
           << " but, APCG XML says the APCG ID is " << theApcgType->id() << "!");
 
-      cerr << "APCG ID: " << theApcgType->id() << " CTG ID: "
-          << theApcgType->ctg() << endl;
-
       //      for (apcgType::core_const_iterator i(theApcgType->core().begin()); i
       //          != theApcgType->core().end(); i++)
       //        {
@@ -118,7 +115,7 @@ main(int argc, char* argv[])
           << " but, CTG XML says the CTG ID is " << theCtgType->id() << "!");
 
       cerr << "CTG ID: " << theCtgType->id() << " CTG period: "
-          << theCtgType->period() << endl;
+          << theCtgType->period() << " (ms)" << endl;
 
       // extract all required information from all XMLs
 
@@ -142,9 +139,10 @@ main(int argc, char* argv[])
           NS_ASSERT_MSG (theMapType.core() == theCoreType->ID(), "APCG XML says the core ID is " << theMapType.core()
               << " but, core XML says the ID is " << theCoreType->ID() << "!");
           cerr << " (name: " << theCoreType->name() << " frequency: "
-              << theCoreType->frequency() << " height: "
-              << theCoreType->height() << " width: " << theCoreType->width()
-              << " idle power: " << theCoreType->idlePower() << ")" << endl;
+              << theCoreType->frequency() << " (Hz) height: "
+              << theCoreType->height() << " (mm) width: "
+              << theCoreType->width() << " (mm) idle power: "
+              << theCoreType->idlePower() << " (W) )" << endl;
 
           // Note that I am dereferencing theApcgType. If I am working with the (auto) pointer,
           // at the second iteration theApcgType becomes NULL and I don't know why...
@@ -175,8 +173,9 @@ main(int argc, char* argv[])
                   core::coreType::task_type theCoreTaskType = *i;
                   if (theTaskType->type() == theCoreTaskType.type())
                     {
-                      cerr << "execution time: " << theCoreTaskType.execTime() << " "
-                          << "power:" << theCoreTaskType.power() << ")" << endl;
+                      cerr << "execution time: " << theCoreTaskType.execTime()
+                          << " (s) " << "power:" << theCoreTaskType.power()
+                          << " (W) )" << endl;
                       break;
                     }
                 }
@@ -200,7 +199,7 @@ main(int argc, char* argv[])
             {
               ctg::communicatingTaskType::deadline_type deadline = *i;
               cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline
-                  << endl;
+                  << " (ms)" << endl;
             }
 
           cerr << "\tdestination task: "
@@ -211,11 +210,11 @@ main(int argc, char* argv[])
             {
               ctg::communicatingTaskType::deadline_type deadline = *i;
               cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline
-                  << endl;
+                  << " (ms)" << endl;
             }
 
           cerr << "\tcommunication volume: " << theCommunicationType.volume()
-              << endl;
+              << " (bits)" << endl;
 
           cerr << endl;
         }
