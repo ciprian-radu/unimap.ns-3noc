@@ -157,19 +157,31 @@ main(int argc, char* argv[])
               != theApcgCoreType.task().end(); i++)
             {
               apcgType::core_type::task_type theApcgTaskType = *i;
-              cerr << "\t\t task: " << theApcgTaskType;
+              cerr << "\t\t task: " << theApcgTaskType.id();
 
               string taskXmlFilePath = tasksFilePath + FILE_SEPARATOR + "task-"
-                  + theApcgTaskType + ".xml";
+                  + theApcgTaskType.id() + ".xml";
 
               auto_ptr<task::taskType> theTaskType(task::task(taskXmlFilePath,
                   flags::dont_validate));
-              NS_ASSERT_MSG (theApcgTaskType == theTaskType->ID(), "APCG XML says the task ID is " << theApcgTaskType
-                  << " but, task XML says the ID is " << theTaskType->ID() << "!");
-              cerr << " (name: " << theTaskType->name() << ")" << endl;
+              NS_ASSERT_MSG (theApcgTaskType.id() == theTaskType->ID(), "APCG XML says the task ID is "
+                  << theApcgTaskType.id() << " but, task XML says the ID is " << theTaskType->ID() << "!");
+              cerr << " (name: " << theTaskType->name() << " type: "
+                  << theTaskType->type() << " ";
 
-              cerr << endl;
+              for (core::coreType::task_const_iterator i(
+                  theCoreType->task().begin()); i != theCoreType->task().end(); i++)
+                {
+                  core::coreType::task_type theCoreTaskType = *i;
+                  if (theTaskType->type() == theCoreTaskType.type())
+                    {
+                      cerr << "execution time: " << theCoreTaskType.execTime() << " "
+                          << "power:" << theCoreTaskType.power() << ")" << endl;
+                      break;
+                    }
+                }
             }
+          cerr << endl;
         }
 
       cerr << "Communications:" << endl;
@@ -180,13 +192,15 @@ main(int argc, char* argv[])
         {
           ctgType::communication_type theCommunicationType = *i;
 
-          cerr << "\tsource task: " << theCommunicationType.source().id() << endl;
+          cerr << "\tsource task: " << theCommunicationType.source().id()
+              << endl;
           for (ctg::communicatingTaskType::deadline_const_iterator i(
               theCommunicationType.source().deadline().begin()); i
               != theCommunicationType.source().deadline().end(); i++)
             {
               ctg::communicatingTaskType::deadline_type deadline = *i;
-              cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline << endl;
+              cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline
+                  << endl;
             }
 
           cerr << "\tdestination task: "
@@ -196,7 +210,8 @@ main(int argc, char* argv[])
               != theCommunicationType.destination().deadline().end(); i++)
             {
               ctg::communicatingTaskType::deadline_type deadline = *i;
-              cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline << endl;
+              cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline
+                  << endl;
             }
 
           cerr << "\tcommunication volume: " << theCommunicationType.volume()
