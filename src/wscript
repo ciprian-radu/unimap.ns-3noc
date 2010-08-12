@@ -59,6 +59,7 @@ all_modules = (
     'noc/switching/virtual-cut-through',   
     'noc/application',   
     'noc/application/generic',
+    'noc/application/mapping',
     'noc/application/onoff',
     'noc/traffic-pattern',
     'noc/fault-tolerance',

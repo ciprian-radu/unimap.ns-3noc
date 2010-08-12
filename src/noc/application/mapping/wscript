@@ -1,0 +1,16 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    nocApp = bld.create_ns3_module('mapping', ['core', 'simulator', 'noc'])
+    nocApp.source = [
+        'noc-ctg-application.cc',
+        'noc-ctg-application-helper.cc',        
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'mapping'
+    headers.source = [
+        'noc-ctg-application.h',
+        'noc-ctg-application-helper.h', 
+        ]
+
