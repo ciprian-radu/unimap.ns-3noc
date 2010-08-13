@@ -30,7 +30,8 @@
 #include "ns3/node-container.h"
 #include "ns3/net-device-container.h"
 #include "ns3/noc-packet.h"
-#include "ns3/traffic-pattern.h"
+
+using namespace std;
 
 namespace ns3 {
 
@@ -49,78 +50,160 @@ class NocCtgApplication : public Application
 {
 public:
 
-  enum TrafficPattern
-    {
-      /**
-       * Dummy traffic pattern (the destination must be specified by the user)
-       */
-      DESTINATION_SPECIFIED,
-
-      /**
-       * Uses a NS-3 uniform random algorithm to determine the destination
-       */
-      UNIFORM_RANDOM,
-
-      /**
-       * Transposes the bits of the source to determine the destination
-       * (the second half part of the bits are put in front of the first half).
-       */
-      BIT_MATRIX_TRANSPOSE,
-
-      /**
-       * Complements the bits of the source to determine the destination
-       * (0 becomes 1 and 1 becomes 0).
-       */
-      BIT_COMPLEMENT,
-
-      /**
-       * Reverses the bits of the source to determine the destination
-       * (the last bit becomes the first and so on).
-       */
-      BIT_REVERSE
-    };
-
-  static std::string TrafficPatternToString (TrafficPattern t);
-
   /**
-   * \param a string which names the desired traffic pattern
-   *
-   * \return the traffic pattern (the default traffic pattern is UNIFORM_RANDOM)
-   */
-  static TrafficPattern TrafficPatternFromString (std::string t);
+    * Simple data structure for keeping information about the tasks assigned
+    * to this ns-3 application (and implicitly IP core and NoC node).
+    */
+   class TaskData {
 
-  static TypeId GetTypeId (void);
+   private:
+
+     /** the ID of the task */
+     string m_id;
+
+     /**
+      * the execution time of the task (considering that the task is
+      * assigned to the IP core which was mapped to the NoC node that
+      * has this ns-3 application). It is measured in seconds.
+      **/
+     double m_execTime;
+
+   public:
+
+     /**
+      * Constructor
+      *
+      * \param   id the ID of the task
+      *
+      * \param   the execution time of the task (considering that the task is
+      *          assigned to the IP core which was mapped to the NoC node that
+      *          has this ns-3 application)
+      *
+      */
+     TaskData (string id, double execTime);
+
+     /**
+      * \return the ID of the task
+      */
+     string
+     GetId ();
+
+     /**
+      * \return the execution time of the task (measured in seconds)
+      */
+     double
+     GetExecTime ();
+
+   };
+
+   /**
+    * Simple data structure for modeling a data dependency between
+    * two tasks, belonging to different NoC nodes.
+    */
+   class DependentTaskData {
+
+   private:
+
+     /** the ID of a remote task (which sends data to a task belonging to this NoC node) */
+     string m_id;
+
+     /** the amount of communicated data (communication volume), expressed in bits */
+     double m_data;
+
+     /** the ID of a task belonging to this NoC node (which receives the amount of data) */
+     string m_targetTaskId;
+
+   public:
+
+     DependentTaskData (string id, double data, string targetTaskId);
+
+     /**
+      * \return the ID of a remote task (which sends data to a task belonging to this NoC node)
+      */
+     string
+     GetId ();
+
+     /**
+      * \return the amount of communicated data, expressed in bits
+      */
+     double
+     GetData ();
+
+     /**
+      * \return the ID of a local task (which receives the amount of data)
+      */
+     string
+     GetTargetTaskId ();
+
+   };
+
+  static TypeId
+  GetTypeId ();
 
   NocCtgApplication ();
 
-  virtual ~NocCtgApplication();
+  virtual ~NocCtgApplication ();
 
-  void SetMaxBytes(uint32_t maxBytes);
+  void
+  SetMaxBytes (uint32_t maxBytes);
 
-  void SetNetDeviceContainer(NetDeviceContainer devices);
+  void
+  SetNetDeviceContainer (NetDeviceContainer devices);
 
-  void SetNodeContainer(NodeContainer nodes);
+  void
+  SetNodeContainer (NodeContainer nodes);
+
+  /**
+   * Sets the task list. This method should be called right after instantiating
+   * this NocCtgApplication.
+   *
+   * \param taskList keeps all the tasks that are assigned to the IP core
+   *        associated with this ns-3 application
+   */
+  void
+  SetTaskList (list<TaskData> taskList);
+
+  /**
+   * Sets the task sender list. This method should be called right after instantiating
+   * this NocCtgApplication.
+   *
+   * \param keeps all the remote tasks that send data to this NoC node
+   */
+  void
+  SetTaskSenderList (list<DependentTaskData> taskSenderList);
 
 protected:
-  virtual void DoDispose (void);
+
+  virtual void
+  DoDispose ();
+
 private:
+
   // inherited from Application base class.
-  virtual void StartApplication (void);    // Called at time specified by Start
-  virtual void StopApplication (void);     // Called at time specified by Stop
+  virtual void
+  StartApplication ();    // Called at time specified by Start
+
+  virtual void
+  StopApplication ();     // Called at time specified by Stop
 
   //helpers
-  void CancelEvents ();
+  void
+  CancelEvents ();
 
   // Event handlers
-  void StartSending();
-  void StopSending();
-  void SendPacket();
+  void
+  StartSending ();
+
+  void
+  StopSending ();
+
+  void
+  SendPacket ();
 
   bool               m_connected;               // True if connected
   uint32_t           m_hSize;                   // The horizontal size of a 2D mesh (how many nodes can be put on a line). The vertical size of the 2D mesh is given by number of nodes
   NetDeviceContainer m_devices;                 // the net devices from the NoC network
   NodeContainer      m_nodes;                   // the nodes from the NoC network
-  double             m_injectionProbability;    // The injection probability
   uint32_t           m_pktSize;                 // Size of data packets (head packets have the same size + the size of the header)
   uint16_t           m_numberOfPackets;         // How many packets a message will have
   uint16_t           m_currentPacketIndex;      // the index of the packet to be injected ( [0, m_numberOfPackets - 1] )
@@ -135,10 +218,13 @@ private:
   EventId            m_sendEvent;               // Event id of pending send packet event
   bool               m_sending;                 // True if currently in sending state
   TracedCallback<Ptr<const Packet> > m_txTrace;
-  ns3::TrafficPattern    m_trafficPattern;
-  uint32_t           m_uniformDestinationX;     // the X coordinate of the last destination node (generated in an uniform random manner)
-  uint32_t           m_uniformDestinationY;     // the Y coordinate of the last destination node (generated in an uniform random manner)
   
+  /** keeps all the tasks that are assigned to the IP core associated with this ns-3 application */
+  list<TaskData> m_taskList;
+
+  /** keeps all the remote tasks that send data to this NoC node */
+  list<DependentTaskData> m_taskSenderList;
+
   /**
    * Allows tracing injected messages into the network.
    * A message is identified by its head packet.
@@ -150,34 +236,20 @@ private:
    */
   TracedCallback<Ptr<const Packet> > m_packetReceivedTrace;
 
-  /**
-   * The traffic pattern which will be used by this application
-   */
-  TrafficPattern m_trafficPatternEnum;
-
-  /**
-   * The ID of the destination node. Note that this must be used only when the traffic
-   * pattern is DESTINATION_SPECIFIED
-   */
-  uint32_t m_destinationNodeId;
-
-private:
-
   Time
   GetGlobalClock () const;
 
   void
   PacketReceivedCallback (std::string path, Ptr<const Packet> packet);
 
-  void ScheduleNextTx();
+  void
+  ScheduleNextTx ();
 
-  void ScheduleStartEvent();
-
-  void Ignore(Ptr<Socket>);
+  void
+  ScheduleStartEvent ();
 
 };
 
 } // namespace ns3
 
 #endif
-

@@ -50,132 +50,63 @@ namespace ns3
 
   NS_OBJECT_ENSURE_REGISTERED (NocCtgApplication);
 
-  std::string
-  NocCtgApplication::TrafficPatternToString (TrafficPattern t)
-  {
-    switch (t)
-      {
-        case DESTINATION_SPECIFIED:
-          return "DestinationSpecified";
-
-        case UNIFORM_RANDOM:
-          return "UniformRandom";
-
-        case BIT_MATRIX_TRANSPOSE:
-          return "BitMatrixTranspose";
-
-        case BIT_COMPLEMENT:
-          return "BitComplement";
-
-        case BIT_REVERSE:
-          return "BitReverse";
-
-        default:
-          return "InvalidTrafficPattern";
-      }
-  }
-
-  NocCtgApplication::TrafficPattern
-  NocCtgApplication::TrafficPatternFromString (std::string t)
-  {
-    if (t == "DestinationSpecified")
-      {
-        return DESTINATION_SPECIFIED;
-      }
-    if (t == "UniformRandom")
-      {
-        return UNIFORM_RANDOM;
-      }
-    if (t == "BitMatrixTranspose")
-      {
-        return BIT_MATRIX_TRANSPOSE;
-      }
-    if (t == "BitComplement")
-      {
-        return BIT_COMPLEMENT;
-      }
-    if (t == "BitReverse")
-      {
-        return BIT_REVERSE;
-      }
-    NS_LOG_WARN ("The traffic pattern called '" << t << "' is unknown! "
-        "Using the default traffic pattern (Uniform random)");
-    return UNIFORM_RANDOM;
-  }
-
   TypeId
-  NocCtgApplication::GetTypeId(void)
+  NocCtgApplication::GetTypeId ()
   {
     static TypeId
-        tid = TypeId("ns3::NocCtgApplication")
+        tid = TypeId ("ns3::NocCtgApplication")
             .SetParent<Application> ()
             .AddConstructor<NocCtgApplication> ()
-            .AddAttribute ("InjectionProbability", "The injection probability",
-                DoubleValue (0.5), MakeDoubleAccessor (&NocCtgApplication::m_injectionProbability),
-                MakeDoubleChecker<double> (0, 1))
-            .AddAttribute("HSize", "The horizontal size of a 2D mesh (how many nodes can be put on a line)."
-                " The vertical size of the 2D mesh is given by number of nodes", UintegerValue(4),
-                MakeUintegerAccessor(&NocCtgApplication::m_hSize),
+            .AddAttribute ("HSize", "The horizontal size of a 2D mesh (how many nodes can be put on a line)."
+                " The vertical size of the 2D mesh is given by number of nodes", UintegerValue (4),
+                MakeUintegerAccessor (&NocCtgApplication::m_hSize),
                 MakeUintegerChecker<uint32_t> (2))
             .AddAttribute("PacketSize", "The size of data packets sent (in Bytes). "
-                "For head packets, the size of the header is not included.", UintegerValue(512),
+                "For head packets, the size of the header is not included.", UintegerValue (512),
                 MakeUintegerAccessor(&NocCtgApplication::m_pktSize),
                 MakeUintegerChecker<uint32_t> (1))
-            .AddAttribute("NumberOfPackets", "How many packets a message will have.", UintegerValue(3),
-                MakeUintegerAccessor(&NocCtgApplication::m_numberOfPackets),
+            .AddAttribute ("NumberOfPackets", "How many packets a message will have.", UintegerValue (3),
+                MakeUintegerAccessor (&NocCtgApplication::m_numberOfPackets),
                 MakeUintegerChecker<uint32_t> (1))
-            .AddAttribute("MaxBytes",
+            .AddAttribute ("MaxBytes",
                 "The total number of bytes to send. Once these bytes are sent, "
                 "no packet is sent again. The value zero means that there is no limit. "
                 "Note that if you also set MaxPackets, both constraints must be met for the application to stop.",
-                UintegerValue(0), MakeUintegerAccessor(&NocCtgApplication::m_maxBytes),
+                UintegerValue (0), MakeUintegerAccessor (&NocCtgApplication::m_maxBytes),
                 MakeUintegerChecker<uint32_t> ())
-            .AddAttribute("MaxPackets",
+            .AddAttribute ("MaxPackets",
                 "The maximum number of packets (head and data) that could be injected. "
                 "We say 'could' because the injection probability is considered. "
                 "The value zero means that there is no limit. "
                 "Note that if you also set MaxBytes, both constraints must be met for the application to stop.",
-                UintegerValue(0), MakeUintegerAccessor(&NocCtgApplication::m_maxPackets),
+                UintegerValue (0), MakeUintegerAccessor (&NocCtgApplication::m_maxPackets),
                 MakeUintegerChecker<uint32_t> ())
-            .AddAttribute("WarmupCycles",
+            .AddAttribute ("WarmupCycles",
                 "How many warmup cycles are considered. During warmup cycles, no statistics are collected",
-                UintegerValue(0), MakeUintegerAccessor(&NocCtgApplication::m_warmupCycles),
+                UintegerValue (0), MakeUintegerAccessor (&NocCtgApplication::m_warmupCycles),
                 MakeUintegerChecker<uint32_t> ())
-            .AddTraceSource("Tx", "A new packet is created and sent",
-                MakeTraceSourceAccessor(&NocCtgApplication::m_txTrace))
-            .AddTraceSource("MessageInjected", "A new message was injected into the network",
-                MakeTraceSourceAccessor(&NocCtgApplication::m_messageTrace))
-            .AddTraceSource("PacketReceived", "A packet reached its destination",
-                MakeTraceSourceAccessor(&NocCtgApplication::m_packetReceivedTrace))
-            .AddAttribute("TrafficPattern",
-                "The traffic pattern which will be used by this application",
-                EnumValue (BIT_COMPLEMENT), MakeEnumAccessor (&NocCtgApplication::m_trafficPatternEnum),
-                MakeEnumChecker (DESTINATION_SPECIFIED, TrafficPatternToString(DESTINATION_SPECIFIED),
-                                 UNIFORM_RANDOM, TrafficPatternToString(UNIFORM_RANDOM),
-                                 BIT_MATRIX_TRANSPOSE, TrafficPatternToString(BIT_MATRIX_TRANSPOSE),
-                                 BIT_COMPLEMENT, TrafficPatternToString(BIT_COMPLEMENT),
-                                 BIT_REVERSE, TrafficPatternToString(BIT_REVERSE)))
-            .AddAttribute("Destination", "The ID of the destination node "
-                "(must be specified for a destination specified traffic pattern)", UintegerValue(0),
-                MakeUintegerAccessor(&NocCtgApplication::m_destinationNodeId),
-                MakeUintegerChecker<uint32_t> (0))
+            .AddTraceSource ("Tx", "A new packet is created and sent",
+                MakeTraceSourceAccessor (&NocCtgApplication::m_txTrace))
+            .AddTraceSource ("MessageInjected", "A new message was injected into the network",
+                MakeTraceSourceAccessor (&NocCtgApplication::m_messageTrace))
+            .AddTraceSource ("PacketReceived", "A packet reached its destination",
+                MakeTraceSourceAccessor (&NocCtgApplication::m_packetReceivedTrace))
             ;
     return tid;
   }
 
-  NocCtgApplication::NocCtgApplication()
+  NocCtgApplication::NocCtgApplication ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
     m_connected = false;
-    m_lastStartTime = Seconds(0);
+    m_lastStartTime = Seconds (0);
     m_totBytes = 0;
     m_totPackets = 0;
-    m_trafficPatternEnum = BIT_COMPLEMENT;
     m_currentPacketIndex = 0;
   }
 
-  NocCtgApplication::~NocCtgApplication()
+  NocCtgApplication::~NocCtgApplication ()
   {
     NS_LOG_FUNCTION_NOARGS ();
   }
@@ -184,6 +115,7 @@ namespace ns3
   NocCtgApplication::PacketReceivedCallback (std::string path, Ptr<const Packet> packet)
   {
     NS_LOG_FUNCTION ("path" << path << "packet UID" << packet->GetUid ());
+
     if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
       {
         NS_LOG_DEBUG ("Tracing the packet");
@@ -196,26 +128,47 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::SetMaxBytes(uint32_t maxBytes)
+  NocCtgApplication::SetMaxBytes (uint32_t maxBytes)
   {
     NS_LOG_FUNCTION (this << maxBytes);
+
     m_maxBytes = maxBytes;
   }
 
-  void NocCtgApplication::SetNetDeviceContainer(NetDeviceContainer devices)
+  void
+  NocCtgApplication::SetNetDeviceContainer (NetDeviceContainer devices)
   {
-    NS_LOG_FUNCTION_NOARGS();
+    NS_LOG_FUNCTION_NOARGS ();
+
     m_devices = devices;
   }
 
-  void NocCtgApplication::SetNodeContainer(NodeContainer nodes)
+  void
+  NocCtgApplication::SetNodeContainer (NodeContainer nodes)
   {
-    NS_LOG_FUNCTION_NOARGS();
+    NS_LOG_FUNCTION_NOARGS ();
+
     m_nodes = nodes;
   }
 
   void
-  NocCtgApplication::DoDispose(void)
+  NocCtgApplication::SetTaskList (list<TaskData> taskList)
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    m_taskList = taskList;
+  }
+
+  void
+  NocCtgApplication::SetTaskSenderList (list<DependentTaskData> taskSenderList)
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    m_taskSenderList = taskSenderList;
+  }
+
+  void
+  NocCtgApplication::DoDispose ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -224,7 +177,7 @@ namespace ns3
 
   // Application Methods
   void
-  NocCtgApplication::StartApplication() // Called at time specified by Start
+  NocCtgApplication::StartApplication () // Called at time specified by Start
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -235,8 +188,6 @@ namespace ns3
     std::stringstream ss;
     ss << "/NodeList/" << nodeId << "/DeviceList/*/$ns3::NocNetDevice/Receive";
     Config::Connect (ss.str (), MakeCallback (&NocCtgApplication::PacketReceivedCallback, this));
-
-    NS_LOG_DEBUG ("Using the " << TrafficPatternToString(m_trafficPatternEnum) << " traffic pattern");
 
     // Ensure no pending event
     CancelEvents();
@@ -249,7 +200,7 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::StopApplication() // Called at time specified by Stop
+  NocCtgApplication::StopApplication () // Called at time specified by Stop
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -257,7 +208,7 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::CancelEvents()
+  NocCtgApplication::CancelEvents ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -267,15 +218,15 @@ namespace ns3
 
   // Event handlers
   void
-  NocCtgApplication::StartSending()
+  NocCtgApplication::StartSending ()
   {
     NS_LOG_FUNCTION_NOARGS ();
-    m_lastStartTime = Simulator::Now();
+    m_lastStartTime = Simulator::Now ();
     ScheduleNextTx(); // Schedule the send packet event
   }
 
   void
-  NocCtgApplication::StopSending()
+  NocCtgApplication::StopSending ()
   {
     NS_LOG_FUNCTION_NOARGS ();
     CancelEvents();
@@ -296,7 +247,7 @@ namespace ns3
 
   // Private helpers
   void
-  NocCtgApplication::ScheduleNextTx()
+  NocCtgApplication::ScheduleNextTx ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -340,7 +291,7 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::ScheduleStartEvent()
+  NocCtgApplication::ScheduleStartEvent ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -348,7 +299,7 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::SendPacket()
+  NocCtgApplication::SendPacket ()
   {
     NS_LOG_FUNCTION_NOARGS ();
     NS_LOG_LOGIC ("sending packet at " << Simulator::Now ());
@@ -361,76 +312,28 @@ namespace ns3
     NS_LOG_DEBUG ("source X = " << sourceX);
     NS_LOG_DEBUG ("source Y = " << sourceY);
 
-    uint32_t destinationX;
-    uint32_t destinationY;
+    // FIXME
+    uint32_t destinationX = 0;
+    uint32_t destinationY = 0;
 
     double log = 0;
     if (m_hSize > 0)
       {
         log = log2(m_hSize);
       }
-    uint8_t sizeX = floor(log);
+//    uint8_t sizeX = floor(log);
 
     log = 0;
     if (m_nodes.GetN() / m_hSize > 0)
       {
         log = log2(m_nodes.GetN() / m_hSize);
       }
-    uint8_t sizeY = floor(log);
+//    uint8_t sizeY = floor(log);
 
-    switch (m_trafficPatternEnum)
-      {
-        case DESTINATION_SPECIFIED:
-          destinationX = m_destinationNodeId % m_hSize;
-          NS_LOG_DEBUG ("specified destination x = " << destinationX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = m_destinationNodeId / m_hSize;
-          NS_LOG_DEBUG ("specified destination y = " << destinationY);
-          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
-          break;
 
-        case UNIFORM_RANDOM:
-          if (m_currentPacketIndex == 0)
-            {
-              m_uniformDestinationX = m_trafficPattern.GetUniformRandomNumber (0, m_hSize - 1);
-              m_uniformDestinationY = m_trafficPattern.GetUniformRandomNumber (0, m_nodes.GetN() / m_hSize - 1);
-//              m_uniformDestinationX = rand () % m_hSize;
-//              m_uniformDestinationY = rand () % (m_nodes.GetN() / m_hSize);
-            }
-          destinationX = m_uniformDestinationX;
-          NS_LOG_DEBUG("random destination x = " << destinationX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = m_uniformDestinationY;
-          NS_LOG_DEBUG("random destination y = " << destinationY);
-          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
-          break;
-
-        case BIT_MATRIX_TRANSPOSE:
-          destinationX = ns3::TrafficPattern::MatrixTransposeBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = ns3::TrafficPattern::MatrixTransposeBits (sourceY, sizeY);
-          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
-          break;
-
-        case BIT_COMPLEMENT:
-          destinationX = ns3::TrafficPattern::ComplementBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = ns3::TrafficPattern::ComplementBits (sourceY, sizeY);
-          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
-          break;
-
-        case BIT_REVERSE:
-          destinationX = ns3::TrafficPattern::ReverseBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = ns3::TrafficPattern::ReverseBits (sourceY, sizeY);
-          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
-          break;
-
-        default:
-          break;
-      }
-
-    uint32_t destinationNodeId = destinationY * m_hSize + destinationX;
+    // FIXME
+    uint32_t destinationNodeId = 0;
+//    uint32_t destinationNodeId = destinationY * m_hSize + destinationX;
     Ptr<NocNode> destinationNode;
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i
         != m_devices.End(); ++i)
@@ -446,10 +349,6 @@ namespace ns3
       {
         NS_LOG_LOGIC ("Trying to send a message from node " << sourceNodeId << " to node "
             << destinationNodeId << ". Aborting because source and destination nodes are the same.");
-        if (m_trafficPatternEnum == UNIFORM_RANDOM)
-          {
-            ScheduleNextTx();
-          }
       }
     else
       {
@@ -475,28 +374,15 @@ namespace ns3
             "The number of packets must be at least 1 (the head packet) but it is " << m_numberOfPackets);
         if (m_currentPacketIndex == 0)
           {
-            int randomValue = rand ();
-            randomValue = randomValue % 100 + 1; // 1 .. 100
-            if (randomValue <= m_injectionProbability * 100)
+            m_currentHeadPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
+                sourceY, m_numberOfPackets - 1, m_pktSize);
+            NS_LOG_LOGIC ("Preparing to inject packet " << *m_currentHeadPacket);
+            if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
-                NS_LOG_LOGIC ("A new message is injected into the network (injection probability is "
-                    << m_injectionProbability << ")");
-
-                m_currentHeadPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
-                    sourceY, m_numberOfPackets - 1, m_pktSize);
-                NS_LOG_LOGIC ("Preparing to inject packet " << *m_currentHeadPacket);
-                if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
-                  {
-                    m_txTrace (m_currentHeadPacket);
-                  }
-                sourceNode->InjectPacket (m_currentHeadPacket, destinationNode);
-                m_currentPacketIndex++;
+                m_txTrace (m_currentHeadPacket);
               }
-            else
-              {
-                NS_LOG_LOGIC ("A new message is not injected into the network (injection probability is "
-                    << m_injectionProbability << ")");
-              }
+            sourceNode->InjectPacket (m_currentHeadPacket, destinationNode);
+            m_currentPacketIndex++;
           }
         else
           {
@@ -532,6 +418,50 @@ namespace ns3
         m_lastStartTime = Simulator::Now ();
         ScheduleNextTx();
       }
+  }
+
+  NocCtgApplication::TaskData::TaskData(string id, double execTime)
+  {
+    m_id = id;
+    m_execTime = execTime;
+  }
+
+  string
+  NocCtgApplication::TaskData::GetId()
+  {
+    return m_id;
+  }
+
+  double
+  NocCtgApplication::TaskData::GetExecTime()
+  {
+    return m_execTime;
+  }
+
+  NocCtgApplication::DependentTaskData::DependentTaskData(string id, double data,
+      string targetTaskId)
+  {
+    m_id = id;
+    m_data = data;
+    m_targetTaskId = targetTaskId;
+  }
+
+  string
+  NocCtgApplication::DependentTaskData::GetId()
+  {
+    return m_id;
+  }
+
+  double
+  NocCtgApplication::DependentTaskData::GetData()
+  {
+    return m_data;
+  }
+
+  string
+  NocCtgApplication::DependentTaskData::GetTargetTaskId()
+  {
+    return m_targetTaskId;
   }
 
 } // Namespace ns3
