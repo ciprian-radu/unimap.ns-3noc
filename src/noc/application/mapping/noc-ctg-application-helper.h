@@ -29,6 +29,9 @@
 #include "ns3/net-device-container.h"
 #include "ns3/node-container.h"
 #include "ns3/application-container.h"
+#include "noc-ctg-application.h"
+
+using namespace std;
 
 namespace ns3
 {
@@ -40,6 +43,7 @@ namespace ns3
   class NocCtgApplicationHelper
   {
   public:
+
     /**
      * Create a NocCtgApplicationHelper to make it easier to work with NoC applications
      *
@@ -49,8 +53,14 @@ namespace ns3
      *
      * \param hSize the horizontal size of the 2D mesh
      *
+     * \param taskList keeps all the tasks that are assigned to the IP core associated with this ns-3 application
+     *
+     * \param taskSenderList keeps all the remote tasks that send data to this NoC node
+     *
      */
-    NocCtgApplicationHelper(NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize);
+    NocCtgApplicationHelper(NodeContainer nodes, NetDeviceContainer devices,
+        uint32_t hSize, list<NocCtgApplication::TaskData> taskList,
+        list<NocCtgApplication::DependentTaskData> taskSenderList);
 
     /**
      * Helper function used to set the underlying application attributes.
@@ -93,6 +103,7 @@ namespace ns3
     Install(std::string nodeName) const;
 
   private:
+
     /**
      * \internal
      * Install an application on the node configured with all the
@@ -103,11 +114,24 @@ namespace ns3
      */
     Ptr<Application>
     InstallPriv(Ptr<Node> node) const;
-    std::string m_protocol;
-    Address m_remote;
+
     ObjectFactory m_factory;
+
     NetDeviceContainer m_devices;
+
     NodeContainer m_nodes;
+
+    /**
+     * keeps all the tasks that are assigned to the IP core associated with this ns-3 application
+     * (this is passed to NocCtgApplication)
+     **/
+    list<NocCtgApplication::TaskData> m_taskList;
+
+    /**
+     * keeps all the remote tasks that send data to this NoC node
+     * (this is passed to NocCtgApplication)
+     **/
+    list<NocCtgApplication::DependentTaskData> m_taskSenderList;
   };
 
 } // namespace ns3
