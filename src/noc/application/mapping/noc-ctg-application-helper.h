@@ -57,10 +57,13 @@ namespace ns3
      *
      * \param taskSenderList keeps all the remote tasks that send data to this NoC node
      *
+     * \param taskDestinationList keeps all the local tasks that send data to tasks from remote NoC nodes
+     *
      */
     NocCtgApplicationHelper(NodeContainer nodes, NetDeviceContainer devices,
         uint32_t hSize, list<NocCtgApplication::TaskData> taskList,
-        list<NocCtgApplication::DependentTaskData> taskSenderList);
+        list<NocCtgApplication::DependentTaskData> taskSenderList,
+        list<NocCtgApplication::DependentTaskData> taskDestinationList);
 
     /**
      * Helper function used to set the underlying application attributes.
@@ -132,6 +135,13 @@ namespace ns3
      * (this is passed to NocCtgApplication)
      **/
     list<NocCtgApplication::DependentTaskData> m_taskSenderList;
+
+    /**
+     * keeps all the local tasks that send data to tasks from remote NoC nodes
+     * (this is passed to NocCtgApplication)
+     **/
+    list<NocCtgApplication::DependentTaskData> m_taskDestinationList;
+
   };
 
 } // namespace ns3
