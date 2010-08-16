@@ -23,7 +23,6 @@
 #include "ns3/address.h"
 #include "ns3/node.h"
 #include "ns3/noc-node.h"
-#include "ns3/nstime.h"
 #include "ns3/data-rate.h"
 #include "ns3/simulator.h"
 #include "ns3/socket-factory.h"
@@ -81,6 +80,7 @@ namespace ns3
                 "Note that if you also set MaxBytes, both constraints must be met for the application to stop.",
                 UintegerValue (0), MakeUintegerAccessor (&NocCtgApplication::m_maxPackets),
                 MakeUintegerChecker<uint32_t> ())
+                // FIXME is warmup cycles required?
             .AddAttribute ("WarmupCycles",
                 "How many warmup cycles are considered. During warmup cycles, no statistics are collected",
                 UintegerValue (0), MakeUintegerAccessor (&NocCtgApplication::m_warmupCycles),
@@ -104,6 +104,11 @@ namespace ns3
     m_totBytes = 0;
     m_totPackets = 0;
     m_currentPacketIndex = 0;
+    m_totalExecTime = Seconds (0);
+    m_totalData = 0;
+    m_receivedData = 0;
+    m_currentDestinationIndex = 0;
+    m_totalTaskBytes = 0;
   }
 
   NocCtgApplication::~NocCtgApplication ()
@@ -125,6 +130,21 @@ namespace ns3
       {
         NS_LOG_DEBUG ("Not tracing the packet");
       }
+
+    // FIXME packet->GetSize () includes header's size as well?
+    m_receivedData += packet->GetSize ();
+
+    NS_ASSERT_MSG (m_receivedData <= m_totalData, "Received data " << m_receivedData
+    		<< " exceeds the total amount data (" << m_totalData
+    		<< " ), which should be received by node " << GetNode ()->GetId ());
+
+    if (m_receivedData == m_totalData)
+    {
+    	NS_LOG_INFO ("Received " << m_totalData
+    			<< " bits of data. Since this is the amount of data expected, this node can start injecting packets.");
+
+    	ScheduleStartEvent();
+    }
   }
 
   void
@@ -157,6 +177,58 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
 
     m_taskList = taskList;
+
+    m_totalExecTime = Seconds (0);
+
+    list<TaskData>::iterator it;
+    for (it = m_taskList.begin (); it != m_taskList.end (); it++)
+    {
+    	m_totalExecTime += it->GetExecTime ();
+	}
+
+    NS_LOG_INFO ("Computed a total execution time of " << m_totalExecTime
+    		<< " seconds for the tasks from node " << GetNode ()->GetId ());
+  }
+
+  bool
+  NocCtgApplication::TaskListContainsTask (string taskId)
+  {
+	NS_LOG_FUNCTION_NOARGS ();
+
+	bool found = false;
+
+	list<TaskData>::iterator it;
+	for (it = m_taskList.begin (); it != m_taskList.end (); it++) {
+		if (taskId == it->GetId ())
+		{
+			found = true;
+			break;
+		}
+	}
+
+	return found;
+  }
+
+  NocCtgApplication::DependentTaskData
+  NocCtgApplication::GetDestinationDependentTaskData (uint32_t index)
+  {
+	NS_LOG_FUNCTION_NOARGS ();
+
+	NS_ASSERT (index < m_taskDestinationList.size ());
+
+	uint32_t idx = 0;
+	DependentTaskData dtd = *(m_taskDestinationList.begin ());
+	list<DependentTaskData>::iterator it;
+	for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++)
+	{
+		if (index == idx)
+		{
+			dtd = *it;
+		}
+		idx++;
+	}
+
+	return dtd;
   }
 
   void
@@ -165,6 +237,46 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
 
     m_taskSenderList = taskSenderList;
+
+	list<DependentTaskData>::iterator it;
+	for (it = m_taskSenderList.begin (); it != m_taskSenderList.end (); it++) {
+		if (!TaskListContainsTask (it->GetReceivingTaskId ()))
+		{
+			NS_LOG_ERROR ("Task " << it->GetSenderTaskId () << " has " << it->GetData ()
+					<< " bytes of data to send to task " << it->GetReceivingTaskId ()
+					<< ". However, this task is not in the task list!");
+		}
+		else
+		{
+			m_totalData += it->GetData ();
+		}
+	}
+
+	NS_LOG_INFO ("The total amount of data to be received by this node is " << m_totalData << " bits.");
+  }
+
+  void
+  NocCtgApplication::SetTaskDestinationList (list<DependentTaskData> taskDestinationList)
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    m_taskDestinationList = taskDestinationList;
+
+	list<DependentTaskData>::iterator it;
+	for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++) {
+		if (!TaskListContainsTask (it->GetReceivingTaskId ()))
+		{
+			NS_LOG_ERROR ("Task " << it->GetSenderTaskId () << " has " << it->GetData ()
+					<< " bytes of data to send to task " << it->GetReceivingTaskId ()
+					<< ". However, this task is not in the task list!");
+		}
+		else
+		{
+			m_totalData += it->GetData ();
+		}
+	}
+
+	NS_LOG_INFO ("The total amount of data to be received by this node is " << m_totalData << " bits.");
   }
 
   void
@@ -221,8 +333,9 @@ namespace ns3
   NocCtgApplication::StartSending ()
   {
     NS_LOG_FUNCTION_NOARGS ();
+
     m_lastStartTime = Simulator::Now ();
-    ScheduleNextTx(); // Schedule the send packet event
+    ScheduleNextTx (); // Schedule the send packet event
   }
 
   void
@@ -231,7 +344,7 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
     CancelEvents();
 
-    ScheduleStartEvent();
+//    ScheduleStartEvent();
   }
 
   Time
@@ -286,6 +399,7 @@ namespace ns3
         NS_LOG_DEBUG ("Stopping the application");
         NS_LOG_DEBUG ("maxBytes = " << m_maxBytes << " totBytes = " << m_totBytes);
         NS_LOG_DEBUG ("maxPackets = " << m_maxPackets << " totPackets = " << m_totPackets);
+
         StopApplication();
       }
   }
@@ -295,7 +409,17 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    m_startEvent = Simulator::Schedule(Simulator::Now(), &NocCtgApplication::StartSending, this);
+    if (m_totalData > 0 && m_receivedData == m_totalData && m_taskDestinationList.size() > 0)
+    {
+		NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting packets after a time of "
+				<< m_totalExecTime.GetSeconds() << " seconds.");
+
+		m_startEvent = Simulator::Schedule(Simulator::Now() + m_totalExecTime, &NocCtgApplication::StartSending, this);
+    }
+    else
+    {
+    	NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting packets after a time of ");
+    }
   }
 
   void
@@ -312,28 +436,13 @@ namespace ns3
     NS_LOG_DEBUG ("source X = " << sourceX);
     NS_LOG_DEBUG ("source Y = " << sourceY);
 
-    // FIXME
-    uint32_t destinationX = 0;
-    uint32_t destinationY = 0;
+    DependentTaskData dtd = GetDestinationDependentTaskData (m_currentDestinationIndex);
+    uint32_t destinationNodeId = dtd.GetReceivingNodeId ();
+    uint32_t destinationX = destinationNodeId % m_hSize;
+    uint32_t destinationY = destinationNodeId / m_hSize;
+    NS_LOG_DEBUG ("destination X = " << destinationX);
+    NS_LOG_DEBUG ("destination Y = " << destinationY);
 
-    double log = 0;
-    if (m_hSize > 0)
-      {
-        log = log2(m_hSize);
-      }
-//    uint8_t sizeX = floor(log);
-
-    log = 0;
-    if (m_nodes.GetN() / m_hSize > 0)
-      {
-        log = log2(m_nodes.GetN() / m_hSize);
-      }
-//    uint8_t sizeY = floor(log);
-
-
-    // FIXME
-    uint32_t destinationNodeId = 0;
-//    uint32_t destinationNodeId = destinationY * m_hSize + destinationX;
     Ptr<NocNode> destinationNode;
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i
         != m_devices.End(); ++i)
@@ -349,6 +458,12 @@ namespace ns3
       {
         NS_LOG_LOGIC ("Trying to send a message from node " << sourceNodeId << " to node "
             << destinationNodeId << ". Aborting because source and destination nodes are the same.");
+
+        if (m_currentDestinationIndex < m_taskDestinationList.size () - 1)
+        {
+        	m_currentDestinationIndex++;
+        	ScheduleNextTx();
+        }
       }
     else
       {
@@ -416,52 +531,77 @@ namespace ns3
         m_totBytes += m_pktSize;
         m_totPackets ++;
         m_lastStartTime = Simulator::Now ();
-        ScheduleNextTx();
+        m_totalTaskBytes += m_pktSize;
+
+        if (m_totalTaskBytes * 8 >= dtd.GetData())
+        {
+           	m_currentDestinationIndex++;
+           	m_totalTaskBytes = 0;
+        }
+        if (m_currentDestinationIndex < m_taskDestinationList.size ())
+        {
+        	ScheduleNextTx();
+        }
       }
   }
 
-  NocCtgApplication::TaskData::TaskData(string id, double execTime)
+  NocCtgApplication::TaskData::TaskData (string id, Time execTime)
   {
     m_id = id;
     m_execTime = execTime;
   }
 
   string
-  NocCtgApplication::TaskData::GetId()
+  NocCtgApplication::TaskData::GetId ()
   {
     return m_id;
   }
 
-  double
-  NocCtgApplication::TaskData::GetExecTime()
+  Time
+  NocCtgApplication::TaskData::GetExecTime ()
   {
     return m_execTime;
   }
 
-  NocCtgApplication::DependentTaskData::DependentTaskData(string id, double data,
-      string targetTaskId)
+  NocCtgApplication::DependentTaskData::DependentTaskData (string senderTaskId,
+		uint32_t senderNodeId, double data, string receivingTaskId,
+		uint32_t receivingNodeId)
   {
-    m_id = id;
-    m_data = data;
-    m_targetTaskId = targetTaskId;
+	m_senderTaskId = senderTaskId;
+	m_senderNodeId = senderNodeId;
+	m_data = data;
+	m_receivingTaskId = receivingTaskId;
+	m_receivingNodeId = receivingNodeId;
   }
 
   string
-  NocCtgApplication::DependentTaskData::GetId()
+  NocCtgApplication::DependentTaskData::GetSenderTaskId ()
   {
-    return m_id;
+    return m_senderTaskId;
+  }
+
+  uint32_t
+  NocCtgApplication::DependentTaskData::GetSenderNodeId ()
+  {
+    return m_senderNodeId;
   }
 
   double
-  NocCtgApplication::DependentTaskData::GetData()
+  NocCtgApplication::DependentTaskData::GetData ()
   {
     return m_data;
   }
 
   string
-  NocCtgApplication::DependentTaskData::GetTargetTaskId()
+  NocCtgApplication::DependentTaskData::GetReceivingTaskId ()
   {
-    return m_targetTaskId;
+    return m_receivingTaskId;
+  }
+
+  uint32_t
+  NocCtgApplication::DependentTaskData::GetReceivingNodeId ()
+  {
+    return m_receivingNodeId;
   }
 
 } // Namespace ns3

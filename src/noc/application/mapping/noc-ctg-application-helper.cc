@@ -31,7 +31,8 @@ namespace ns3
 
   NocCtgApplicationHelper::NocCtgApplicationHelper(NodeContainer nodes,
       NetDeviceContainer devices, uint32_t hSize, list<NocCtgApplication::TaskData> taskList,
-      list<NocCtgApplication::DependentTaskData> taskSenderList)
+      list<NocCtgApplication::DependentTaskData> taskSenderList,
+      list<NocCtgApplication::DependentTaskData> taskDestinationList)
   {
     m_nodes = nodes;
     m_devices = devices;
@@ -39,6 +40,7 @@ namespace ns3
     m_factory.Set ("HSize", UintegerValue (hSize));
     m_taskList = taskList;
     m_taskSenderList = taskSenderList;
+    m_taskDestinationList = taskDestinationList;
   }
 
   void
@@ -80,6 +82,7 @@ namespace ns3
     app->SetNodeContainer (m_nodes);
     app->SetTaskList (m_taskList);
     app->SetTaskSenderList (m_taskSenderList);
+    app->SetTaskDestinationList (m_taskDestinationList);
     node->AddApplication (app);
 
     return app;

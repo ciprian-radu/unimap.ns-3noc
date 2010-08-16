@@ -30,6 +30,7 @@
 #include "ns3/node-container.h"
 #include "ns3/net-device-container.h"
 #include "ns3/noc-packet.h"
+#include "ns3/nstime.h"
 
 using namespace std;
 
@@ -66,7 +67,7 @@ public:
       * assigned to the IP core which was mapped to the NoC node that
       * has this ns-3 application). It is measured in seconds.
       **/
-     double m_execTime;
+     Time m_execTime;
 
    public:
 
@@ -80,7 +81,7 @@ public:
       *          has this ns-3 application)
       *
       */
-     TaskData (string id, double execTime);
+     TaskData (string id, Time execTime);
 
      /**
       * \return the ID of the task
@@ -91,7 +92,7 @@ public:
      /**
       * \return the execution time of the task (measured in seconds)
       */
-     double
+     Time
      GetExecTime ();
 
    };
@@ -104,24 +105,37 @@ public:
 
    private:
 
-     /** the ID of a remote task (which sends data to a task belonging to this NoC node) */
-     string m_id;
+     /** the ID of the sender task */
+     string m_senderTaskId;
+
+     /** the ID of the node to which the sender task is associated to */
+     uint32_t m_senderNodeId;
 
      /** the amount of communicated data (communication volume), expressed in bits */
      double m_data;
 
-     /** the ID of a task belonging to this NoC node (which receives the amount of data) */
-     string m_targetTaskId;
+     /** the ID of receiving task */
+     string m_receivingTaskId;
+
+     /** the ID of the node to which the receiving task is associated to */
+     uint32_t m_receivingNodeId;
 
    public:
 
-     DependentTaskData (string id, double data, string targetTaskId);
+     DependentTaskData (string senderTaskId, uint32_t senderNodeId,
+				double data, string receivingTaskId, uint32_t receivingNodeId);
 
      /**
-      * \return the ID of a remote task (which sends data to a task belonging to this NoC node)
+      * \return the ID of the sender task
       */
      string
-     GetId ();
+     GetSenderTaskId ();
+
+     /**
+      * \return the ID of the sender node
+      */
+     uint32_t
+     GetSenderNodeId ();
 
      /**
       * \return the amount of communicated data, expressed in bits
@@ -130,10 +144,16 @@ public:
      GetData ();
 
      /**
-      * \return the ID of a local task (which receives the amount of data)
+      * \return the ID of the receiving task
       */
      string
-     GetTargetTaskId ();
+     GetReceivingTaskId ();
+
+     /**
+      * \return the ID of the receiving node
+      */
+     uint32_t
+     GetReceivingNodeId ();
 
    };
 
@@ -154,8 +174,8 @@ public:
   SetNodeContainer (NodeContainer nodes);
 
   /**
-   * Sets the task list. This method should be called right after instantiating
-   * this NocCtgApplication.
+   * Sets the task list and computes the total execution time of these tasks (as the sum of the execution times of each task).
+   * This method should be called right after instantiating this NocCtgApplication.
    *
    * \param taskList keeps all the tasks that are assigned to the IP core
    *        associated with this ns-3 application
@@ -171,6 +191,15 @@ public:
    */
   void
   SetTaskSenderList (list<DependentTaskData> taskSenderList);
+
+  /**
+   * Sets the task destination list. This method should be called right after instantiating
+   * this NocCtgApplication.
+   *
+   * \param keeps all the local tasks that send data to tasks from remote NoC nodes
+   */
+  void
+  SetTaskDestinationList (list<DependentTaskData> taskDestinationList);
 
 protected:
 
@@ -222,8 +251,45 @@ private:
   /** keeps all the tasks that are assigned to the IP core associated with this ns-3 application */
   list<TaskData> m_taskList;
 
+  /**
+   * Checks if the task list contains the specified task
+   *
+   * \param taskId the ID of the task to be searched
+   *
+   * \return true if the task was found, false otherwise
+   *
+   **/
+  bool TaskListContainsTask (string taskId);
+
+  /** the execution time of all tasks from the task list. This is computed when the task list is set */
+  Time m_totalExecTime;
+
   /** keeps all the remote tasks that send data to this NoC node */
   list<DependentTaskData> m_taskSenderList;
+
+  /** the total amount of data to be received at this node (in bits) */
+  double m_totalData;
+
+  /** keeps the amount of data currently received by this node (in bits). It obviously cannot exceed m_totalData */
+  double m_receivedData;
+
+  /** keeps all the local tasks that send data to tasks from remote NoC nodes */
+  list<DependentTaskData> m_taskDestinationList;
+
+  /** marks the element from the m_taskDestinationList list that is currently active for packet injection */
+  uint32_t m_currentDestinationIndex;
+
+  /**
+   * Retrieves the item from the task destination list, located at the specified index
+   *
+   * \param the list index (must be >= 0 and < the size of the list)
+   *
+   * \return the DependentTaskData from the list
+   */
+  DependentTaskData GetDestinationDependentTaskData (uint32_t index);
+
+  /** the total number of bytes sent to the current destination task */
+  uint32_t m_totalTaskBytes;
 
   /**
    * Allows tracing injected messages into the network.
