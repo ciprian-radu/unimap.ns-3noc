@@ -35,5 +35,18 @@ def build(bld):
                  ]
     obj.uselib = 'Xerces-C++'
     
-    obj = bld.create_ns3_program('noc-mapping-simulator', ['noc', 'generic'])
-    obj.source = 'noc-mapping-simulator.cc'   
+    obj = bld.create_ns3_program('noc-mapping-simulator', ['noc', 'generic'])   
+    obj.includes = ['../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/mapping/mapping.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/apcg/apcg.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/ctg/ctg.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/core/core.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/task/task.hxx',
+                   ]
+    obj.source = ['noc-mapping-simulator.cc',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/mapping/mapping.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/apcg/apcg.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/ctg/ctg.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/core/core.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/task/task.cxx',
+                 ]
+    obj.uselib = 'Xerces-C++'    
