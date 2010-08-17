@@ -80,10 +80,14 @@ namespace ns3
     Ptr<NocCtgApplication> app = m_factory.Create<NocCtgApplication> ();
     app->SetNetDeviceContainer (m_devices);
     app->SetNodeContainer (m_nodes);
+
+    node->AddApplication (app);
+
+    // it is better to set the task lists after the application is
+    // added to the node because the methods below use the node
     app->SetTaskList (m_taskList);
     app->SetTaskSenderList (m_taskSenderList);
     app->SetTaskDestinationList (m_taskDestinationList);
-    node->AddApplication (app);
 
     return app;
   }

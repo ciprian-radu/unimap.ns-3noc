@@ -131,15 +131,22 @@ namespace ns3
         NS_LOG_DEBUG ("Not tracing the packet");
       }
 
-    // FIXME packet->GetSize () includes header's size as well?
-    m_receivedData += packet->GetSize ();
+    uint32_t dataSize = packet->GetSize ();
+    NocHeader header;
+    packet->PeekHeader (header);
+    if (!header.IsEmpty ())
+      {
+        dataSize -= header.GetSerializedSize ();
+      }
 
-    NS_ASSERT_MSG (m_receivedData <= m_totalData, "Received data " << m_receivedData
-    		<< " exceeds the total amount data (" << m_totalData
-    		<< " ), which should be received by node " << GetNode ()->GetId ());
+    m_receivedData += dataSize * 8;
 
-    if (m_receivedData == m_totalData)
+    NS_LOG_DEBUG ("Current received data is " << m_receivedData << ". Total data to be received is " << m_totalData);
+
+    if (m_receivedData >= m_totalData)
     {
+        m_receivedData = m_totalData;
+
     	NS_LOG_INFO ("Received " << m_totalData
     			<< " bits of data. Since this is the amount of data expected, this node can start injecting packets.");
 
@@ -186,7 +193,7 @@ namespace ns3
     	m_totalExecTime += it->GetExecTime ();
 	}
 
-    NS_LOG_INFO ("Computed a total execution time of " << m_totalExecTime
+    NS_LOG_INFO ("Computed a total execution time of " << m_totalExecTime.GetSeconds ()
     		<< " seconds for the tasks from node " << GetNode ()->GetId ());
   }
 
@@ -264,19 +271,13 @@ namespace ns3
 
 	list<DependentTaskData>::iterator it;
 	for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++) {
-		if (!TaskListContainsTask (it->GetReceivingTaskId ()))
+		if (!TaskListContainsTask (it->GetSenderTaskId ()))
 		{
 			NS_LOG_ERROR ("Task " << it->GetSenderTaskId () << " has " << it->GetData ()
 					<< " bytes of data to send to task " << it->GetReceivingTaskId ()
 					<< ". However, this task is not in the task list!");
 		}
-		else
-		{
-			m_totalData += it->GetData ();
-		}
 	}
-
-	NS_LOG_INFO ("The total amount of data to be received by this node is " << m_totalData << " bits.");
   }
 
   void
@@ -409,16 +410,27 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    if (m_totalData > 0 && m_receivedData == m_totalData && m_taskDestinationList.size() > 0)
+    if (m_receivedData == m_totalData && m_taskDestinationList.size() > 0)
     {
-		NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting packets after a time of "
-				<< m_totalExecTime.GetSeconds() << " seconds.");
+        NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting packets after a time of "
+            << m_totalExecTime.GetSeconds() << " seconds.");
 
-		m_startEvent = Simulator::Schedule(Simulator::Now() + m_totalExecTime, &NocCtgApplication::StartSending, this);
+        m_startEvent = Simulator::Schedule(Simulator::Now() + m_totalExecTime, &NocCtgApplication::StartSending, this);
     }
     else
     {
-    	NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting packets after a time of ");
+        if (m_totalData == 0)
+          {
+            NS_LOG_INFO ("Node " << GetNode ()->GetId () << " doesn't have any data to receive!");
+          }
+        if (m_receivedData < m_totalData)
+          {
+            NS_LOG_INFO ("Node " << GetNode ()->GetId () << " still has to receive data before being able to inject its data into the NoC!");
+          }
+        if (m_taskDestinationList.size() == 0)
+          {
+            NS_LOG_INFO ("Node " << GetNode ()->GetId () << " doesn't have any tasks to send data to (task destination list is empty)!");
+          }
     }
   }
 
@@ -442,6 +454,16 @@ namespace ns3
     uint32_t destinationY = destinationNodeId / m_hSize;
     NS_LOG_DEBUG ("destination X = " << destinationX);
     NS_LOG_DEBUG ("destination Y = " << destinationY);
+
+    uint16_t upperValue = ceil((dtd.GetData() / 8) / m_pktSize);
+
+    NS_LOG_DEBUG (dtd.GetData () / 8 << " bytes to send. Packet size is " << m_pktSize
+        << ". Therefore, the maximum number of packets is " << upperValue);
+
+    if (m_numberOfPackets > upperValue)
+      {
+        m_numberOfPackets = upperValue;
+      }
 
     Ptr<NocNode> destinationNode;
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i
