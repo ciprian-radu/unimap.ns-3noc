@@ -57,11 +57,11 @@
 
 using namespace ns3;
 
-using namespace mapping;
-using namespace apcg;
-using namespace ctg;
-using namespace core;
-using namespace task;
+using namespace research::noc::application_mapping::unified_framework::schema::mapping;
+using namespace research::noc::application_mapping::unified_framework::schema::apcg;
+using namespace research::noc::application_mapping::unified_framework::schema::ctg;
+using namespace research::noc::application_mapping::unified_framework::schema::core;
+using namespace research::noc::application_mapping::unified_framework::schema::task;
 
 using xml_schema::flags;
 
@@ -233,7 +233,7 @@ findNodeIdForTask(apcgType theApcgType, mappingType theMappingType, string taskI
                 {
                   mapType theMapType = *k;
 
-                  if (theMapType.core() == theCoreType.id ())
+                  if (theMapType.core().get() == theCoreType.id ())
                     {
                       nodeId = theMapType.node ();
                       goto done;
@@ -351,8 +351,10 @@ main (int argc, char *argv[])
   try
     {
       // parse the mapping XML
-      auto_ptr<mappingType> theMappingType(mapping::mapping(mappingXmlFilePath,
-          flags::dont_validate));
+      auto_ptr<mappingType>
+          theMappingType(
+              research::noc::application_mapping::unified_framework::schema::mapping::mapping(
+                  mappingXmlFilePath, flags::dont_validate));
 
       string ctgFilePath = mappingXmlFilePath.substr(0,
           mappingXmlFilePath.find_last_of(FILE_SEPARATOR));
@@ -361,8 +363,10 @@ main (int argc, char *argv[])
           + theMappingType->apcg() + ".xml";
 
       // parse the APCG XML
-      auto_ptr<apcgType> theApcgType(apcg::apcg(apcgXmlFilePath,
-          flags::dont_validate));
+      auto_ptr<apcgType>
+          theApcgType(
+              research::noc::application_mapping::unified_framework::schema::apcg::apcg(
+                  apcgXmlFilePath, flags::dont_validate));
 
       NS_ASSERT_MSG (theMappingType->apcg() == theApcgType->id(),
           "Mapping XML says the APCG ID is " << theMappingType->apcg()
@@ -372,8 +376,10 @@ main (int argc, char *argv[])
           + theApcgType->ctg() + ".xml";
 
       // parse the CTG XML
-      auto_ptr<ctgType> theCtgType(ctg::ctg(ctgXmlFilePath,
-          flags::dont_validate));
+      auto_ptr<ctgType>
+          theCtgType(
+              research::noc::application_mapping::unified_framework::schema::ctg::ctg(
+                  ctgXmlFilePath, flags::dont_validate));
 
       NS_ASSERT_MSG (theApcgType->ctg() == theCtgType->id(),
           "APCG XML says the CTG ID is " << theApcgType->ctg()
@@ -393,11 +399,14 @@ main (int argc, char *argv[])
           NS_LOG_INFO ("\t core: " << theMapType.core());
 
           string coreXmlFilePath = coresFilePath + FILE_SEPARATOR + "core-"
-              + theMapType.core() + ".xml";
+              + theMapType.core().get() + ".xml";
 
-          auto_ptr<core::coreType> theCoreType(core::core(coreXmlFilePath,
-              flags::dont_validate));
-          NS_ASSERT_MSG (theMapType.core() == theCoreType->ID(), "APCG XML says the core ID is " << theMapType.core()
+          auto_ptr<
+              research::noc::application_mapping::unified_framework::schema::core::coreType>
+              theCoreType(
+                  research::noc::application_mapping::unified_framework::schema::core::core(
+                      coreXmlFilePath, flags::dont_validate));
+          NS_ASSERT_MSG (theMapType.core().get() == theCoreType->ID(), "APCG XML says the core ID is " << theMapType.core()
               << " but, core XML says the ID is " << theCoreType->ID() << "!");
           NS_LOG_INFO ("\t (name: " << theCoreType->name() << " frequency: "
               << theCoreType->frequency() << " (Hz) height: "
@@ -408,7 +417,7 @@ main (int argc, char *argv[])
           // Note that I am dereferencing theApcgType. If I am working with the (auto) pointer,
           // at the second iteration theApcgType becomes NULL and I don't know why...
           apcgType::core_type theApcgCoreType = findCoreInApcg(*theApcgType,
-              theMapType.core());
+              theMapType.core().get());
           NS_ASSERT_MSG (theApcgCoreType.id() != "",
               "Error: couldn't find core with ID " << theMapType.core() << " in the APCG XML!");
 
@@ -428,17 +437,22 @@ main (int argc, char *argv[])
               string taskXmlFilePath = tasksFilePath + FILE_SEPARATOR + "task-"
                   + theApcgTaskType.id() + ".xml";
 
-              auto_ptr<task::taskType> theTaskType(task::task(taskXmlFilePath,
-                  flags::dont_validate));
+              auto_ptr<
+                  research::noc::application_mapping::unified_framework::schema::task::taskType>
+                  theTaskType(
+                      research::noc::application_mapping::unified_framework::schema::task::task(
+                          taskXmlFilePath, flags::dont_validate));
               NS_ASSERT_MSG (theApcgTaskType.id() == theTaskType->ID(), "APCG XML says the task ID is "
                   << theApcgTaskType.id() << " but, task XML says the ID is " << theTaskType->ID() << "!");
               NS_LOG_INFO ("\t\t (name: " << theTaskType->name() << " type: "
                   << theTaskType->type());
 
-              for (core::coreType::task_const_iterator i(
-                  theCoreType->task().begin()); i != theCoreType->task().end(); i++)
+              for (research::noc::application_mapping::unified_framework::schema::core::coreType::task_const_iterator
+                  i(theCoreType->task().begin()); i
+                  != theCoreType->task().end(); i++)
                 {
-                  core::coreType::task_type theCoreTaskType = *i;
+                  research::noc::application_mapping::unified_framework::schema::core::coreType::task_type
+                      theCoreTaskType = *i;
                   if (theTaskType->type() == theCoreTaskType.type())
                     {
                       NS_LOG_INFO ("\t\t execution time: " << theCoreTaskType.execTime()
@@ -463,22 +477,26 @@ main (int argc, char *argv[])
                       theCommunicationType.destination ().id () == taskData->GetId ())
                     {
                       NS_LOG_INFO ("\tsource task: " << theCommunicationType.source ().id ());
-                      for (ctg::communicatingTaskType::deadline_const_iterator i(
+                      for (research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_const_iterator
+                          i(
                           theCommunicationType.source().deadline().begin()); i
                           != theCommunicationType.source().deadline().end(); i++)
                         {
-                          ctg::communicatingTaskType::deadline_type deadline = *i;
+                          research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_type
+                              deadline = *i;
                           NS_LOG_INFO ("\t\tdeadline: " << deadline.type () << " at " << deadline
                               << " (ms)");
                         }
                       NS_LOG_INFO ("\tdestination task: "
                           << theCommunicationType.destination ().id ());
 
-                      for (ctg::communicatingTaskType::deadline_const_iterator i(
+                      for (research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_const_iterator
+                          i(
                           theCommunicationType.destination ().deadline ().begin ()); i
                           != theCommunicationType.destination ().deadline ().end (); i++)
                         {
-                          ctg::communicatingTaskType::deadline_type deadline = *i;
+                          research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_type
+                              deadline = *i;
                           NS_LOG_INFO ("\t\tdeadline: " << deadline.type () << " at " << deadline
                               << " (ms)");
                         }
