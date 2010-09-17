@@ -1,0 +1,23 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):    
+    noc = bld.create_ns3_module('noc', ['core', 
+                                        'simulator', 
+                                        'packet', 
+                                        'noc-node', 
+                                        'channel', 
+                                        'netdevice', 
+                                        'topology',
+                                        'routing',
+                                        'router',
+                                        'fault-tolerance',
+                                        'util',
+                                        ])
+    noc.source = [
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'noc'
+    headers.source = [
+        ]
+

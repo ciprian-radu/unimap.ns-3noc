@@ -1,0 +1,16 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    nocNode = bld.create_ns3_module('noc-node', ['core', 'simulator'])
+    nocNode.source = [
+        'noc-node.cc',
+        'noc-faulty-node.cc',
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'noc-node'
+    headers.source = [
+        'noc-node.h',
+        'noc-faulty-node.h',
+        ]
+

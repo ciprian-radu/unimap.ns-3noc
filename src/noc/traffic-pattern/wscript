@@ -1,0 +1,14 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    trafficPattern = bld.create_ns3_module('traffic-pattern', ['core', 'simulator', 'noc'])
+    trafficPattern.source = [
+        'traffic-pattern.cc',      
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'traffic-pattern'
+    headers.source = [
+        'traffic-pattern.h',
+        ]
+

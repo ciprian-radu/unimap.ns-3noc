@@ -270,9 +270,13 @@ bool
 Node::ReceiveFromDevice (Ptr<NetDevice> device, Ptr<const Packet> packet, uint16_t protocol,
                          const Address &from, const Address &to, NetDevice::PacketType packetType, bool promiscuous)
 {
-  NS_ASSERT_MSG (Simulator::GetContext () == GetId (), "Received packet with erroneous context ; " <<
-                 "make sure the channels in use are correctly updating events context " <<
-                 "when transfering events from one node to another.");
+// cipi: The following assertion is probably incorrect
+//       see http://www.nsnam.org/bugzilla/show_bug.cgi?id=749
+//       the patch provided at that URL doesn't appy properly
+//
+//  NS_ASSERT_MSG (Simulator::GetContext () == GetId (), "Received packet with erroneous context ; " <<
+//                 "make sure the channels in use are correctly updating events context " <<
+//                 "when transfering events from one node to another.");
   NS_LOG_DEBUG("Node " << GetId () << " ReceiveFromDevice:  dev "
                << device->GetIfIndex () << " (type=" << device->GetInstanceTypeId ().GetName ()
                << ") Packet UID " << packet->GetUid ());
