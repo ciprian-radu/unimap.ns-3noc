@@ -21,6 +21,7 @@
 #define HIGH_PRECISION_DOUBLE_H
 
 #include <math.h>
+#include "ns3/fatal-error.h"
 
 namespace ns3 {
 
@@ -35,8 +36,8 @@ class HighPrecision
 {
 public:
   inline HighPrecision ();
-  inline HighPrecision (int64_t value, bool dummy);
-  inline HighPrecision (double value);
+  explicit inline HighPrecision (int64_t value, bool dummy);
+  explicit inline HighPrecision (double value);
 
   inline int64_t GetInteger (void) const;
   inline double GetDouble (void) const;
@@ -44,12 +45,20 @@ public:
   inline void Sub (HighPrecision const &o);
   inline void Mul (HighPrecision const &o);
   inline void Div (HighPrecision const &o);
+  inline void MulByInvert (const HighPrecision &o);
+  inline static HighPrecision Invert (uint64_t v);
 
   inline int Compare (HighPrecision const &o) const;
   inline static HighPrecision Zero (void);
+  inline int64_t GetHigh (void) const;
+  inline uint64_t GetLow (void) const;
+
 private:
   double m_value;
 };
+
+inline std::ostream &operator << (std::ostream &os, const HighPrecision &hp);
+inline std::istream &operator >> (std::istream &is, HighPrecision &hp);
 
 } // namespace ns3
 
@@ -101,16 +110,53 @@ HighPrecision::Div (HighPrecision const &o)
 {
   m_value /= o.m_value;
 }
+void 
+HighPrecision::MulByInvert (const HighPrecision &o)
+{
+  m_value *= o.m_value;
+}
+HighPrecision 
+HighPrecision::Invert (uint64_t v)
+{
+  return HighPrecision (1.0 / v);
+}
+
 int
 HighPrecision::Compare (HighPrecision const &o) const
 {
-  return m_value < o.m_value;
+  return (m_value < o.m_value)?-1:(m_value == o.m_value)?0:1;
 }
 HighPrecision
 HighPrecision::Zero (void)
 {
   return HighPrecision (0,0);
 }
+
+int64_t 
+HighPrecision::GetHigh (void) const
+{
+  return GetInteger ();
+}
+
+uint64_t 
+HighPrecision::GetLow (void) const
+{
+  NS_FATAL_ERROR ("XXX this function unavailable for high-precision-as-double; patch requested");
+  return 0;
+}
+
+std::ostream &operator << (std::ostream &os, const HighPrecision &hp)
+{
+  // XXX stubbed out
+  return os;
+}
+
+std::istream &operator >> (std::istream &is, HighPrecision &hp)
+{
+  // XXX stubbed out
+  return is;
+}
+
 
 } // namespace ns3
 

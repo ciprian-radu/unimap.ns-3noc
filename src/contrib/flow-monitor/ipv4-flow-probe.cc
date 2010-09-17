@@ -234,9 +234,7 @@ Ipv4FlowProbe::ForwardUpLogger (const Ipv4Header &ipHeader, Ptr<const Packet> ip
       Ipv4FlowProbeTag fTag;
 
       // ConstCast: see http://www.nsnam.org/bugzilla/show_bug.cgi?id=904
-      bool tagFound;
-      tagFound = ConstCast<Packet> (ipPayload)->RemovePacketTag (fTag);
-      NS_ASSERT_MSG (tagFound, "Ipv4FlowProbeTag is missing");
+      ConstCast<Packet> (ipPayload)->RemovePacketTag (fTag);
 
       uint32_t size = (ipPayload->GetSize () + ipHeader.GetSerializedSize ());
       NS_LOG_DEBUG ("ReportLastRx ("<<this<<", "<<flowId<<", "<<packetId<<", "<<size<<");");
@@ -275,9 +273,7 @@ Ipv4FlowProbe::DropLogger (const Ipv4Header &ipHeader, Ptr<const Packet> ipPaylo
       Ipv4FlowProbeTag fTag;
 
       // ConstCast: see http://www.nsnam.org/bugzilla/show_bug.cgi?id=904
-      bool tagFound;
-      tagFound = ConstCast<Packet> (ipPayload)->RemovePacketTag (fTag);
-      NS_ASSERT_MSG (tagFound, "Ipv4FlowProbeTag is missing");
+      ConstCast<Packet> (ipPayload)->RemovePacketTag (fTag);
 
       uint32_t size = (ipPayload->GetSize () + ipHeader.GetSerializedSize ());
       NS_LOG_DEBUG ("Drop ("<<this<<", "<<flowId<<", "<<packetId<<", "<<size<<", " << reason 
@@ -301,6 +297,15 @@ Ipv4FlowProbe::DropLogger (const Ipv4Header &ipHeader, Ptr<const Packet> ipPaylo
           myReason = DROP_BAD_CHECKSUM;
           NS_LOG_DEBUG ("DROP_BAD_CHECKSUM");
           break;
+        case Ipv4L3Protocol::DROP_INTERFACE_DOWN:
+          myReason = DROP_INTERFACE_DOWN;
+          NS_LOG_DEBUG ("DROP_INTERFACE_DOWN");
+          break;
+        case Ipv4L3Protocol::DROP_ROUTE_ERROR:
+          myReason = DROP_ROUTE_ERROR;
+          NS_LOG_DEBUG ("DROP_ROUTE_ERROR");
+          break;
+
         default:
           myReason = DROP_INVALID_REASON;
           NS_FATAL_ERROR ("Unexpected drop reason code " << reason);

@@ -18,12 +18,6 @@ def register_types(module):
     register_types_ns3_FatalImpl(nested_module)
     
     
-    ## Register a nested module for the namespace TimeStepPrecision
-    
-    nested_module = module.add_cpp_namespace('TimeStepPrecision')
-    register_types_ns3_TimeStepPrecision(nested_module)
-    
-    
     ## Register a nested module for the namespace addressUtils
     
     nested_module = module.add_cpp_namespace('addressUtils')
@@ -68,10 +62,6 @@ def register_types_ns3_FatalImpl(module):
     root_module = module.get_root()
     
 
-def register_types_ns3_TimeStepPrecision(module):
-    root_module = module.get_root()
-    
-
 def register_types_ns3_addressUtils(module):
     root_module = module.get_root()
     
@@ -83,18 +73,18 @@ def register_types_ns3_aodv(module):
 def register_types_ns3_dot11s(module):
     root_module = module.get_root()
     
-    ## ie-dot11s-configuration.h: ns3::dot11s::dot11sSynchronizationProtocolIdentifier [enumeration]
-    module.add_enum('dot11sSynchronizationProtocolIdentifier', ['SYNC_NEIGHBOUR_OFFSET', 'SYNC_NULL'])
     ## ie-dot11s-configuration.h: ns3::dot11s::dot11sCongestionControlMode [enumeration]
     module.add_enum('dot11sCongestionControlMode', ['CONGESTION_SIGNALING', 'CONGESTION_NULL'])
-    ## ie-dot11s-configuration.h: ns3::dot11s::dot11sPathSelectionMetric [enumeration]
-    module.add_enum('dot11sPathSelectionMetric', ['METRIC_AIRTIME'])
-    ## ie-dot11s-peer-management.h: ns3::dot11s::PmpReasonCode [enumeration]
-    module.add_enum('PmpReasonCode', ['REASON11S_PEERING_CANCELLED', 'REASON11S_MESH_MAX_PEERS', 'REASON11S_MESH_CAPABILITY_POLICY_VIOLATION', 'REASON11S_MESH_CLOSE_RCVD', 'REASON11S_MESH_MAX_RETRIES', 'REASON11S_MESH_CONFIRM_TIMEOUT', 'REASON11S_MESH_INVALID_GTK', 'REASON11S_MESH_INCONSISTENT_PARAMETERS', 'REASON11S_MESH_INVALID_SECURITY_CAPABILITY', 'REASON11S_RESERVED'])
     ## ie-dot11s-configuration.h: ns3::dot11s::dot11sPathSelectionProtocol [enumeration]
     module.add_enum('dot11sPathSelectionProtocol', ['PROTOCOL_HWMP'])
     ## ie-dot11s-configuration.h: ns3::dot11s::dot11sAuthenticationProtocol [enumeration]
     module.add_enum('dot11sAuthenticationProtocol', ['AUTH_NULL', 'AUTH_SAE'])
+    ## ie-dot11s-configuration.h: ns3::dot11s::dot11sSynchronizationProtocolIdentifier [enumeration]
+    module.add_enum('dot11sSynchronizationProtocolIdentifier', ['SYNC_NEIGHBOUR_OFFSET', 'SYNC_NULL'])
+    ## ie-dot11s-peer-management.h: ns3::dot11s::PmpReasonCode [enumeration]
+    module.add_enum('PmpReasonCode', ['REASON11S_PEERING_CANCELLED', 'REASON11S_MESH_MAX_PEERS', 'REASON11S_MESH_CAPABILITY_POLICY_VIOLATION', 'REASON11S_MESH_CLOSE_RCVD', 'REASON11S_MESH_MAX_RETRIES', 'REASON11S_MESH_CONFIRM_TIMEOUT', 'REASON11S_MESH_INVALID_GTK', 'REASON11S_MESH_INCONSISTENT_PARAMETERS', 'REASON11S_MESH_INVALID_SECURITY_CAPABILITY', 'REASON11S_RESERVED'])
+    ## ie-dot11s-configuration.h: ns3::dot11s::dot11sPathSelectionMetric [enumeration]
+    module.add_enum('dot11sPathSelectionMetric', ['METRIC_AIRTIME'])
     ## ie-dot11s-configuration.h: ns3::dot11s::Dot11sMeshCapability [class]
     module.add_class('Dot11sMeshCapability')
     ## hwmp-protocol.h: ns3::dot11s::HwmpProtocol [class]
@@ -794,7 +784,6 @@ def register_functions(root_module):
     module = root_module
     register_functions_ns3_Config(module.get_submodule('Config'), root_module)
     register_functions_ns3_FatalImpl(module.get_submodule('FatalImpl'), root_module)
-    register_functions_ns3_TimeStepPrecision(module.get_submodule('TimeStepPrecision'), root_module)
     register_functions_ns3_addressUtils(module.get_submodule('addressUtils'), root_module)
     register_functions_ns3_aodv(module.get_submodule('aodv'), root_module)
     register_functions_ns3_dot11s(module.get_submodule('dot11s'), root_module)
@@ -807,9 +796,6 @@ def register_functions_ns3_Config(module, root_module):
     return
 
 def register_functions_ns3_FatalImpl(module, root_module):
-    return
-
-def register_functions_ns3_TimeStepPrecision(module, root_module):
     return
 
 def register_functions_ns3_addressUtils(module, root_module):

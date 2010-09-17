@@ -61,6 +61,7 @@ MgtProbeRequestHeader::GetSerializedSize (void) const
   uint32_t size = 0;
   size += m_ssid.GetSerializedSize ();
   size += m_rates.GetSerializedSize ();
+  size += m_rates.extended.GetSerializedSize ();
   return size;
 }
 TypeId 
@@ -89,6 +90,7 @@ MgtProbeRequestHeader::Serialize (Buffer::Iterator start) const
   Buffer::Iterator i = start;
   i = m_ssid.Serialize (i);
   i = m_rates.Serialize (i);
+  i = m_rates.extended.Serialize (i);
 }
 uint32_t
 MgtProbeRequestHeader::Deserialize (Buffer::Iterator start)
@@ -96,6 +98,7 @@ MgtProbeRequestHeader::Deserialize (Buffer::Iterator start)
   Buffer::Iterator i = start;
   i = m_ssid.Deserialize (i);
   i = m_rates.Deserialize (i);
+  i = m_rates.extended.DeserializeIfPresent (i);
   return i.GetDistanceFrom (start);
 }
 
@@ -170,6 +173,7 @@ MgtProbeResponseHeader::GetSerializedSize (void) const
   size += m_ssid.GetSerializedSize ();
   size += m_rates.GetSerializedSize ();
   //size += 3; // ds parameter set
+  size += m_rates.extended.GetSerializedSize ();
   // xxx
   return size;
 }
@@ -193,24 +197,26 @@ MgtProbeResponseHeader::Serialize (Buffer::Iterator start) const
   // ibss parameter set
   //XXX
   Buffer::Iterator i = start;
-  i.WriteHtonU64 (Simulator::Now ().GetMicroSeconds ());
-  i.WriteHtonU16 (m_beaconInterval / 1024);
+  i.WriteHtolsbU64 (Simulator::Now ().GetMicroSeconds ());
+  i.WriteHtolsbU16 (m_beaconInterval / 1024);
   i = m_capability.Serialize (i);
   i = m_ssid.Serialize (i);
   i = m_rates.Serialize (i);
   //i.WriteU8 (0, 3); // ds parameter set.
+  i = m_rates.extended.Serialize (i);
 }
 uint32_t
 MgtProbeResponseHeader::Deserialize (Buffer::Iterator start)
 {
   Buffer::Iterator i = start;
-  m_timestamp = i.ReadNtohU64();
-  m_beaconInterval = i.ReadNtohU16 ();
+  m_timestamp = i.ReadLsbtohU64();
+  m_beaconInterval = i.ReadLsbtohU16 ();
   m_beaconInterval *= 1024;
   i = m_capability.Deserialize (i);
   i = m_ssid.Deserialize (i);
   i = m_rates.Deserialize (i);
   //i.Next (3); // ds parameter set
+  i = m_rates.extended.DeserializeIfPresent (i);
   return i.GetDistanceFrom (start);
 }
 
@@ -279,6 +285,7 @@ MgtAssocRequestHeader::GetSerializedSize (void) const
   size += 2;
   size += m_ssid.GetSerializedSize ();
   size += m_rates.GetSerializedSize ();
+  size += m_rates.extended.GetSerializedSize ();
   return size;
 }
 void 
@@ -292,18 +299,20 @@ MgtAssocRequestHeader::Serialize (Buffer::Iterator start) const
 {
   Buffer::Iterator i = start;
   i = m_capability.Serialize (i);
-  i.WriteHtonU16 (m_listenInterval);
+  i.WriteHtolsbU16 (m_listenInterval);
   i = m_ssid.Serialize (i);
   i = m_rates.Serialize (i);
+  i = m_rates.extended.Serialize (i);
 }
 uint32_t
 MgtAssocRequestHeader::Deserialize (Buffer::Iterator start)
 {
   Buffer::Iterator i = start;
   i = m_capability.Deserialize (i);
-  m_listenInterval = i.ReadNtohU16 ();
+  m_listenInterval = i.ReadLsbtohU16 ();
   i = m_ssid.Deserialize (i);
   i = m_rates.Deserialize (i);
+  i = m_rates.extended.DeserializeIfPresent (i);
   return i.GetDistanceFrom (start);
 }
 
@@ -362,6 +371,7 @@ MgtAssocResponseHeader::GetSerializedSize (void) const
   size += m_code.GetSerializedSize ();
   size += 2; // aid
   size += m_rates.GetSerializedSize ();
+  size += m_rates.extended.GetSerializedSize ();
   return size;
 }
 
@@ -377,8 +387,9 @@ MgtAssocResponseHeader::Serialize (Buffer::Iterator start) const
   Buffer::Iterator i = start;
   i = m_capability.Serialize (i);
   i = m_code.Serialize (i);
-  i.WriteHtonU16 (m_aid);
+  i.WriteHtolsbU16 (m_aid);
   i = m_rates.Serialize (i);
+  i = m_rates.extended.Serialize (i);
 }
 uint32_t
 MgtAssocResponseHeader::Deserialize (Buffer::Iterator start)
@@ -386,8 +397,9 @@ MgtAssocResponseHeader::Deserialize (Buffer::Iterator start)
   Buffer::Iterator i = start;
   i = m_capability.Deserialize (i);
   i = m_code.Deserialize (i);
-  m_aid = i.ReadNtohU16 ();
+  m_aid = i.ReadLsbtohU16 ();
   i = m_rates.Deserialize (i);
+  i = m_rates.extended.DeserializeIfPresent (i);
   return i.GetDistanceFrom (start);
 }
 /**********************************************************

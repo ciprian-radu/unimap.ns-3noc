@@ -388,7 +388,7 @@ QadhocWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
               SendAddBaResponse (&reqHdr, hdr->GetAddr2 ());
             }
           else if (actionHdr.GetCategory () == WifiActionHeader::BLOCK_ACK &&
-                   actionHdr.GetAction().blockAck == WifiActionHeader::BLOCK_ACK_ADDBA_REQUEST)
+                   actionHdr.GetAction().blockAck == WifiActionHeader::BLOCK_ACK_ADDBA_RESPONSE)
             {
               MgtAddBaResponseHeader respHdr;
               packet->RemoveHeader (respHdr);
@@ -493,6 +493,8 @@ QadhocWifiMac::FinishConfigureStandard (enum WifiPhyStandard standard)
     case WIFI_PHY_STANDARD_holland:
       // fall through
     case WIFI_PHY_STANDARD_80211a:
+      // fall through
+    case WIFI_PHY_STANDARD_80211g:
       // fall through
     case WIFI_PHY_STANDARD_80211_10Mhz:
       // fall through

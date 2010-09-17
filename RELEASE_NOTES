@@ -9,7 +9,7 @@ http://www.nsnam.org including tutorials: http://www.nsnam.org/tutorials.html
 Consult the file CHANGES.html for more detailed information about changed
 API and behavior across ns-3 releases.
 
-Release 3.9
+Release 3.10
 ===========
 
 Availability
@@ -18,7 +18,48 @@ This release is not yet available.
 
 Supported platforms
 -------------------
+ns-3.10 has been tested on the following platforms: (TBD)
+
+New user-visible features
+-------------------------
+
+   - Support for IEEE 802.11g (specifically, rates with Modulation
+     Class ERP-OFDM) has been added to the wifi module. The new
+     WifiModes have names of the form ErpOfdmRatexxMbps, where xx is
+     the rate in Mbps (one of 6, 9, 12, 18, 24, 36, 48, 54), and a
+     WifiPhyStandard enumeration WIFI_PHY_STANDARD_80211g has been
+     added to allow configuration of a Wi-Fi STA supporting ERP-OFDM,
+     HR/DSSS, and DSSS rates (which some call an "802.11b/g" station).
+
+Bugs fixed
+----------
+The following lists many of the bugs fixed or small feature additions
+since ns-3.9, in many cases referencing the Bugzilla bug number
+
+   - bug 852 - Add support for 802.11g devices
+   - bug 979 - Multi-octet fields in Wi-Fi headers have wrong endianness
+
+Known issues
+------------
+
+Release 3.9
+===========
+
+Availability
+------------
+This release is immediately available from:
+http://www.nsnam.org/releases/ns-allinone-3.9.tar.bz2
+
+Supported platforms
+-------------------
 ns-3.9 has been tested on the following platforms:
+- Ubuntu 10.04 LTS 32/64-bit gcc-4.4.3
+- Fedora Core 12 64-bit gcc-4.4.3
+- Ubuntu 9.10 32-bit gcc-4.4.1
+- Ubuntu 8.04 LTS 64-bit gcc-4.2.4
+- Fedora Core 5 32-bit gcc-4.1.1
+- Mac OS X Leopard powerpc gcc-4.0.1
+- Windows Cygwin 1.7.5
 
 Not all ns-3 options are available on all platforms; consult the
 wiki for more information:
@@ -43,36 +84,113 @@ New user-visible features
      from YansErrorRateModel for OFDM modes (802.11a/g).  The default
      YansWifiPhyHelper has been changed to use this model.
 
-   - A brand new NS-2 mobility trace reader supports BonnMotion, SUMO, TraNS, 
+   - A new NS-2 mobility trace reader supports BonnMotion, SUMO, TraNS, 
      etc. traces.
 
    - An energy model for nodes and devices, including an energy source
      model and device energy models allowing energy-aware devices
      to notify the energy source about energy consumption.  
 
+   - Rocketfuel topology dataset support for existing topology reader
+     Rocketfuel project: 
+     http://www.cs.washington.edu/research/networking/rocketfuel/
+
+   - Underwater Acoustic Network (UAN) model, split in to three parts, the 
+     channel, PHY, and MAC models to enable researchers to model a variety 
+     of underwater network scenarios.
+
 Bugs fixed
 ----------
-The following lists many of the bugs that were fixed since ns-3.7, in
-many cases referencing the Bugzilla bug number
+The following lists many of the bugs fixed or small feature additions 
+since ns-3.8, in many cases referencing the Bugzilla bug number
 
    - IPv4 global routing code; stub networks were assumed to be /24
      and added as /24 networks even if the mask is actually different
-   - bug 842 - ns-3-dev crashes using block acks
    - OLSR was generating messages on non-OLSR interfaces
+   - ICMPv4 objects not properly registered; affected serialization code
+   - bug 231 - SocketAddressTag needs to be removed from a packet before 
+               forwarding the packet to the user
+   - bug 385 - Add a generic "sequence number" class
+   - bug 473 - [PATCH] Alternative ns-2 trace reader
+   - bug 665 - Need Tutorial Sectino on Config Path and Tracing Use
+   - bug 671 - add packet-info-tag.cc for IP_PKTINFO/IPV6_PKTINFO
+   - bug 702 - Global routing doesn't respond to interface events
+   - bug 799 - Interference helper is too slow
+   - bug 800 - Erroneous packet sender while using aloha or cw mac in uan module
+   - bug 802 - Minstrel algorithm causes segmentation fault
+   - bug 826 - Using uint64_t instead of Time in DcfManager
+   - bug 828 - PacketSocket::Close does not unregister protocol handler
+   - bug 842 - ns-3-dev crashes using block acks
+   - bug 843 - Most wifi examples change BeaconInterval to unrealistic values
+   - bug 844 - YansWifiPhy::GetPowerDbm off-by-one problem when calculating Tx 
+               power
+   - bug 846 - packet.cc triggers deprecated warning
+   - bug 853 - Rates for Wi-Fi control responses are incorrectly selected
+   - bug 854 - Support DROP_QUEUE reason-code in Ipv4FlowProbe
+   - bug 858 - support MSG_PEEK in IPv4/IPv6 raw socket
    - bug 861 - Forwarding drops (due to no route found) were not being logged 
                in IPv4 or IPv6 ascii traces
-   - ICMPv4 objects not properly registered; affected serialization code
-   - bug 875 - Set FCS included flag in Radiotap header
-   - bug 702 - Global routing doesn't respond to interface events
-   - bug 906 - NSC TCP socket fork did not copy txbuffersize over
-   - bug 828: PacketSocket::Close does not unregister protocol handler
-   - bug 900:  RawTextConfigLoad::Default does not load configurations
-   - bug 858 - support MSG_PEEK in IPv4/IPv6 raw socket
-   - bug 932 - Support IP_HDRINCL option for Ipv4RawSocket
+   - bug 869 - suggested test framework enhancements
    - bug 871 - naming for WifiPhyStandard
-   - bug 946 - Rocketfuel topology dataset support for topology reader
+   - bug 873 - Queue occupancy counter not decremented in WifiMacQueue::Remove()
+   - bug 874 - wrong modulation type is selected in the forwardBurst method
+   - bug 875 - "frame includes FCS" flag should be set in Radiotap frame header
+   - bug 879 - source address selection for AODV using DeferredRouteRequest
    - bug 881 - Reorganise to allow wider use of WifiInformationElement
-   - bug 671 - add packet-info-tag.cc for IP_PKTINFO/IPV6_PKTINFO
+   - bug 890 - several rate adaptation algorithms not tested by test.py
+   - bug 900:  RawTextConfigLoad::Default does not load configurations
+   - bug 901 - Optimize Mac48Address < != and ==
+   - bug 902 - TCP: handle out-of-order packets during connection shutdown
+   - bug 905 - WimaxNetDevice loses packet uid, tags, and memory optimization
+   - bug 906 - NSC TCP socket fork did not copy txbuffersize over
+   - bug 908 - test.py should exit if waf dies
+   - bug 910 - Change Wi-Fi "AccessClass" to something closer to the standard
+   - bug 911 - IPv4/v6 multicast forwarding not going to all output interfaces
+   - bug 913 - Queue Enqueue/Drop trace sources behavior unintuitive
+   - bug 916 - EnableAsciiAll ("prefix") does not work for YansWifiPhyHelper
+   - bug 918 - samples/main-packet-header.cc is broken
+   - bug 919 - minstrel does not pass valgrind tests
+   - bug 921 - Inconsistent declaration of class/struct Object in object.h
+   - bug 922 - Inconsistent declaration of class/struct in 
+               wifi-remote-station-manager.h
+   - bug 923 - Inconsistent declaration of class/struct in mac-low.h
+   - bug 924 - Inconsistent declaration of class/struct in <xxx>-wifi-managers 
+   - bug 925 - Various IPv6 cc files trigger deprecated warning
+   - bug 926 - olsr handling of multicast packets 
+   - bug 927 - SimpleOfdmWimaxChannel RxPower computation
+   - bug 930 - examples/topology-read/topology-example-sim.cc uses variable 
+               length array
+   - bug 931 - Abnormal exit reports SIGSEGV on failure
+   - bug 932 - Support IP_HDRINCL option for Ipv4RawSocket
+   - bug 933 - Flushing ostream and files on abnormal program exit 
+               (ASSERT, ABORT and FATAL_ERROR)
+   - bug 936 - Waf build error for python bindings on "AccessClass"
+   - bug 937 - bugs in ns-3 wimax
+   - bug 939 - EmuNetDevice uses too much memory when reading packet bursts
+   - bug 940 - AODV fails to set up a correct path
+   - bug 941 - Wifi Dcf attributes not reachable through configuration namespace
+   - bug 943 - Add a SO_BROADCAST socket option
+   - bug 944 - change default ErrorRateModel from YansErrorRateModel to 
+               NistErrorRateModel
+   - bug 946 - Rocketfuel topology dataset support for topology reader
+   - bug 949 - Node::NonPromiscReceiveFromDevice reports a meaningless 
+               destination address to user callbacks 
+   - bug 950 - PointToPointNetDevice says promisc support is not implemented 
+               but it is
+   - bug 955 - Install NSC for NS3 in a Itanium Architecture (ia64) with Linux 2.6.16.6
+   - bug 956 - Bindings failure in core (traced-value) with older gcc
+   - bug 958 - WiFi uses wrong default values for MTU, FragmentationThreshold 
+               and RtsCtsThreshold
+   - bug 959 - Simulation never finishes when using RealtimeSimulatorImpl
+   - bug 960 - V4Ping does not generate checksum
+   - bug 961 - Problem with MPI activation 
+   - bug 964 - AODV does not work with host addressed interfaces
+   - bug 965 - Problem building /src/core/callback.cc
+   - bug 966 - AODV originates new RREQ on each packet, when doesn't have 
+               valid route
+   - bug 969 - No SocketList is present in UdpL4Protocol class
+   - bug 971 - fix AODV header Print functions 
+   - bug 972 - [flow monitor] assertion fails in pv4-flow-probe.cc
 
 Known issues
 ------------

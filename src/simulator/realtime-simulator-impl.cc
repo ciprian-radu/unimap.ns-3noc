@@ -45,7 +45,7 @@ TypeId
 RealtimeSimulatorImpl::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::RealtimeSimulatorImpl")
-    .SetParent<Object> ()
+    .SetParent<SimulatorImpl> ()
     .AddConstructor<RealtimeSimulatorImpl> ()
     .AddAttribute ("SynchronizationMode", 
                    "What to do if the simulation cannot keep up with real time.",
@@ -518,7 +518,7 @@ RealtimeSimulatorImpl::RunOneEvent (void)
     NS_LOG_LOGIC ("handle " << next.key.m_ts);
     m_currentTs = next.key.m_ts;
     m_currentContext = next.key.m_context;
-    m_currentUid = next.key.m_ts;
+    m_currentUid = next.key.m_uid;
     event = next.impl;
   }
   event->Invoke ();
