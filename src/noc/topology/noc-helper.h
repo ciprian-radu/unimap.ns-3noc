@@ -149,8 +149,8 @@ namespace ns3
      *
      */
     NetDeviceContainer
-    Install2DMesh (NodeContainer nodes, uint32_t hSize, ObjectFactory routingProtocolFactory,
-        ObjectFactory switchingProtocolFactory);
+    Install2DMesh (NodeContainer nodes, uint32_t hSize, ObjectFactory routerFactory,
+        ObjectFactory routingProtocolFactory, ObjectFactory switchingProtocolFactory);
 
     /**
      * Creates a 2-dimensional mesh network topology Irvine architecture.

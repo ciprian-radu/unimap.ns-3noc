@@ -179,8 +179,8 @@ namespace ns3
     Ptr<Packet> m_currentPkt;
 
     /**
-     * The net device which tries to send a channel through this channel.
-     * Tipically, a packet stays in a net device and is sent via another
+     * The net device which tries to send a packet through this channel.
+     * Typically, a packet stays in a net device and is sent via another
      * net device of the same node.
      */
     std::map<uint32_t, Ptr<NocNetDevice> > m_packetOriginalDevice;

@@ -405,6 +405,9 @@ namespace ns3
     // Note that the packet comes with two headers!!!
     // The first header is the original header (before routing)
     // The second header is the routed header
+    // We use this approach only for tracing purposes
+    // Tracing as sent (in the .tr file) is an event that occurs after the packet was routed but,
+    // we want to put in the trace file the original header of the packet (as it was before routing)
     NocHeader originalHeader;
     packet->RemoveHeader (originalHeader);
 
@@ -452,7 +455,7 @@ namespace ns3
         Ptr<Packet> tracedPacket = packetToSend->Copy ();
         NocHeader removedHeader;
         tracedPacket->RemoveHeader (removedHeader);
-        if (!originalHeader.IsEmpty ())
+        if (!removedHeader.IsEmpty() && !originalHeader.IsEmpty ())
           {
             tracedPacket->AddHeader (originalHeader);
           }
@@ -587,7 +590,7 @@ namespace ns3
                         Ptr<Packet> tracedPacket = packetToSend->Copy ();
                         NocHeader removedHeader;
                         tracedPacket->RemoveHeader (removedHeader);
-                        if (!originalHeader.IsEmpty ())
+                        if (!removedHeader.IsEmpty() && !originalHeader.IsEmpty ())
                           {
                             tracedPacket->AddHeader (originalHeader);
                           }

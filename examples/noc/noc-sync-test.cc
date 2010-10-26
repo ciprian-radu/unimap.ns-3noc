@@ -52,8 +52,8 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("NocSyncTest");
 
-uint32_t numberOfNodes = 1024;
-uint32_t hSize = 32;
+uint32_t numberOfNodes = 16;
+uint32_t hSize = 4;
 
 int
 main (int argc, char *argv[])
@@ -64,7 +64,7 @@ main (int argc, char *argv[])
       << hSize << ")");
 
   double injectionProbability (1);
-  int dataPacketSpeedup (4);
+  int dataPacketSpeedup (1);
 
   // Set up command line parameters used to control the experiment.
   CommandLine cmd;
@@ -99,7 +99,7 @@ main (int argc, char *argv[])
   // install the topology
   ObjectFactory routerFactory;
 //  routerFactory.SetTypeId ("ns3::IrvineLoadRouter");
-  routerFactory.SetTypeId ("ns3::IrvineRouter");
+  routerFactory.SetTypeId ("ns3::FourWayRouter");
   // WARNING setting properties for objects in this manner means that all the created objects
   // will refer to the *same* object
   //
@@ -125,7 +125,7 @@ main (int argc, char *argv[])
 //  switchingProtocolFactory.SetTypeId ("ns3::SafSwitching");
 //  switchingProtocolFactory.SetTypeId ("ns3::VctSwitching");
 
-  NetDeviceContainer devs = noc->Install2DMeshIrvine (nodes, hSize,
+  NetDeviceContainer devs = noc->Install2DMesh (nodes, hSize,
       routerFactory,
       routingProtocolFactory,
       switchingProtocolFactory);
@@ -135,20 +135,20 @@ main (int argc, char *argv[])
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (15)); // destination
-//  nocSyncAppHelper1.SetAttribute ("MaxPackets", UintegerValue (10));
+  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (1)); // destination
+  nocSyncAppHelper1.SetAttribute ("MaxPackets", UintegerValue (3));
   ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (0)); // source
-  apps1.Start (Seconds (0.0));
-  apps1.Stop (Seconds (10.0));
+//  apps1.Start (Seconds (0.0));
+//  apps1.Stop (Seconds (10.0));
 
   NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
   nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (0)); // destination
-//  nocSyncAppHelper2.SetAttribute ("MaxPackets", UintegerValue (10));
-  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (3)); // source
-  apps2.Start (Seconds (0.0));
-  apps2.Stop (Seconds (10.0));
+  nocSyncAppHelper2.SetAttribute ("MaxPackets", UintegerValue (3));
+  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (1)); // source
+//  apps2.Start (Seconds (0.0));
+//  apps2.Stop (Seconds (10.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-sync-test.tr file
