@@ -313,14 +313,14 @@ namespace ns3
       {
         log = log2(m_hSize);
       }
-    uint8_t sizeX = floor(log);
+    uint8_t sizeX = (uint8_t)floor(log);
 
     log = 0;
     if (m_nodes.GetN() / m_hSize > 0)
       {
         log = log2(m_nodes.GetN() / m_hSize);
       }
-    uint8_t sizeY = floor(log);
+    uint8_t sizeY = (uint8_t)floor(log);
 
     switch (m_trafficPatternEnum)
       {
