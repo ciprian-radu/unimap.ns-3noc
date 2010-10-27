@@ -245,11 +245,11 @@ namespace ns3
     UniformVariable randomVariable;
     if (progressiveDevices.size () > 0)
       {
-        device = progressiveDevices[randomVariable.GetValue (0, progressiveDevices.size ())];
+        device = progressiveDevices[(int)randomVariable.GetValue (0, progressiveDevices.size ())];
       }
     else
       {
-        device = selectedDevices[randomVariable.GetValue (0, selectedDevices.size ())];
+        device = selectedDevices[(int)randomVariable.GetValue (0, selectedDevices.size ())];
       }
 
     NS_LOG_DEBUG ("The net device " << device->GetAddress () << " was selected for routing");
