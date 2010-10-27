@@ -64,7 +64,7 @@ namespace ns3
      * \return the state of the channel
      */
     virtual WireState
-    GetState ();
+    GetState (Ptr<NocNetDevice> device);
 
     /**
      * \brief Indicates if the channel is busy. The channel will only
@@ -73,7 +73,7 @@ namespace ns3
      * \return true if the channel is busy, false if it is free
      */
     virtual bool
-    IsBusy ();
+    IsBusy (Ptr<NocNetDevice> device);
 
     /**
      * \brief Start transmitting a packet over the channel

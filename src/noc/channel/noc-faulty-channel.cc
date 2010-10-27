@@ -184,7 +184,7 @@ namespace ns3
   }
 
   bool
-  NocFaultyChannel::IsBusy ()
+  NocFaultyChannel::IsBusy (Ptr<NocNetDevice> device)
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -192,7 +192,7 @@ namespace ns3
 
     if (!m_faulty)
       {
-        busy = NocChannel::IsBusy ();
+        busy = NocChannel::IsBusy (device);
       }
     else
       {
@@ -206,7 +206,7 @@ namespace ns3
   }
 
   NocChannel::WireState
-  NocFaultyChannel::GetState ()
+  NocFaultyChannel::GetState (Ptr<NocNetDevice> device)
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -214,7 +214,7 @@ namespace ns3
 
     if (!m_faulty)
       {
-      wireState = NocChannel::GetState ();
+      wireState = NocChannel::GetState (device);
       }
     else
       {

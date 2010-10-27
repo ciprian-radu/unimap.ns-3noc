@@ -272,7 +272,7 @@ namespace ns3
       }
 
     Ptr<NocChannel> channel = device->GetChannel()->GetObject<NocChannel> ();
-    if (channel->IsBusy ())
+    if (channel->IsBusy (device))
       {
         NocHeader header;
         packet->PeekHeader (header);

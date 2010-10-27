@@ -543,7 +543,7 @@ namespace ns3
             NS_ASSERT (channel != 0);
             if (packet != 0)
               {
-                if (channel->IsBusy ())
+                if (channel->IsBusy (m_viaNetDevice))
                   {
                     MarkHeadPacketAsBlocked (packet);
                   }

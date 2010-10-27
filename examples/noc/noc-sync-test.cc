@@ -43,6 +43,7 @@
 #include "ns3/so-load-router-component.h"
 #include "ns3/noc-registry.h"
 #include "ns3/integer.h"
+#include "ns3/boolean.h"
 #include "ns3/stats-module.h"
 #include "ns3/noc-packet-tag.h"
 #include "ns3/nstime.h"
@@ -89,9 +90,11 @@ main (int argc, char *argv[])
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocHelper> noc = CreateObject<NocHelper> ();
-  // Note that the channel attributes are not considered with a NocSyncApplication!
+  // Note that the next two channel attributes are not considered with a NocSyncApplication!
 //  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
 //  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
+
+//  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
   noc->SetInQueue ("ns3::DropTailQueue",
       "Mode", EnumValue (DropTailQueue::PACKETS),
       "MaxPackets", UintegerValue (1)); // the in queue must have at least 1 packet
