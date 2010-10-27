@@ -124,7 +124,7 @@ namespace ns3
     if (counter != 0)
       {
         neighbourLoad /= counter;
-        load = (2 * load + neighbourLoad) / 3;
+        load = (2 * load + (int)neighbourLoad) / 3;
       }
 
     NS_LOG_DEBUG ("The router given by net device " << sourceDevice->GetAddress ()
