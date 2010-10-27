@@ -66,7 +66,7 @@ namespace ns3
         log = log2(number);
       }
 
-    return MatrixTransposeBits(number, floor (log + 1));
+    return MatrixTransposeBits(number, (uint8_t)floor (log + 1));
   }
 
   uint32_t
@@ -104,7 +104,7 @@ namespace ns3
         log = log2(number);
       }
 
-    return ComplementBits(number, floor (log + 1));
+    return ComplementBits(number, (uint8_t)floor (log + 1));
   }
 
   uint32_t
@@ -139,7 +139,7 @@ namespace ns3
         log = log2(number);
       }
 
-    return ReverseBits (number, floor (log + 1));
+    return ReverseBits (number, (uint8_t)floor (log + 1));
   }
 
   uint32_t

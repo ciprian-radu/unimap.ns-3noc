@@ -455,7 +455,7 @@ namespace ns3
     NS_LOG_DEBUG ("destination X = " << destinationX);
     NS_LOG_DEBUG ("destination Y = " << destinationY);
 
-    uint16_t upperValue = ceil((dtd.GetData() / 8) / m_pktSize);
+    uint16_t upperValue = (uint16_t)ceil((dtd.GetData() / 8) / m_pktSize);
 
     NS_LOG_DEBUG (dtd.GetData () / 8 << " bytes to send. Packet size is " << m_pktSize
         << ". Therefore, the maximum number of packets is " << upperValue);
