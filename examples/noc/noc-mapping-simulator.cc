@@ -189,8 +189,8 @@ void ComputeLatenciesOfMessages (Ptr<TimeMinMaxAvgTotalCalculator > calc)
               << lt.m_startTime << " " << lt.m_endTime);
           TimeValue globalClock;
           NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", globalClock);
-          calc->Update (NanoSeconds ((lt.m_endTime.GetNanoSeconds () - lt.m_startTime.GetNanoSeconds ()) * 1.0
-              / globalClock.Get ().GetNanoSeconds ()));
+          calc->Update (NanoSeconds ((uint64_t)((lt.m_endTime.GetNanoSeconds () - lt.m_startTime.GetNanoSeconds ()) * 1.0
+              / globalClock.Get ().GetNanoSeconds ())));
         }
     }
 }
