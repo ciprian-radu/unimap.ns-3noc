@@ -247,7 +247,7 @@ namespace ns3
 
     // currently busy directions are also bad
     Ptr<NocChannel> channel = device->GetChannel()->GetObject<NocChannel> ();
-    if (channel->IsBusy ())
+    if (channel->IsBusy (device))
       {
         value += m_remainingWeight;
         NS_LOG_DEBUG ("Net device " << device->GetAddress ()

@@ -38,6 +38,10 @@ namespace ns3
   /**
    * \ingroup channel
    * \brief A channel for a Network on Chip (NoC)
+   * \detail The NocChannel connects exactly two NocNetDevices.
+   *         It is bidirectional and it allows the two net devices to
+   *         communicate in half-duplex ("walkie-talkie" style) or full-duplex (telephone style) mode.
+   *         By default the full-duplex mode is used.
    */
   class NocChannel : public Channel
   {
@@ -87,19 +91,23 @@ namespace ns3
     /**
      * \see WireState
      *
+     * \param device the net device from the side of the channel where the state is checked (relevant only in full-duplex mode)
+     *
      * \return the state of the channel
      */
     virtual WireState
-    GetState ();
+    GetState (Ptr<NocNetDevice> device);
 
     /**
      * \brief Indicates if the channel is busy. The channel will only
      * accept new packets for transmission if it is not busy.
      *
+     * \param device the net device from the side of the channel where the state is checked (relevant only in full-duplex mode)
+     *
      * \return true if the channel is busy, false if it is free
      */
     virtual bool
-    IsBusy ();
+    IsBusy (Ptr<NocNetDevice> device);
 
     /**
      * \brief Start transmitting a packet over the channel
@@ -154,6 +162,14 @@ namespace ns3
 
   private:
 
+    /**
+     * By default this field is true. If it is false, than the channel will work in half-duplex mode.
+     */
+    bool m_fullDuplex;
+
+    /**
+     * The two net devices connected at this channel.
+     */
     std::vector<Ptr<NocNetDevice> > m_devices;
 
     /**
@@ -167,35 +183,31 @@ namespace ns3
     Time m_delay;
 
     /**
-     * Current state of the channel
+     * Current state of each physical link of the channel.
+     * There are 2 physical links in full-duplex mode and only one in half-duplex.
      */
-    WireState m_state;
+    std::vector<WireState> m_state;
 
     /**
      * The Packet that is currently being transmitted on the channel (or the last
      * packet to have been transmitted on the channel if the channel is
-     * free)
+     * free). Note that each physical link of the channel may transmit a packet.
      */
-    Ptr<Packet> m_currentPkt;
+    std::vector<Ptr<Packet> > m_currentPkt;
 
     /**
      * The net device which tries to send a packet through this channel.
      * Typically, a packet stays in a net device and is sent via another
-     * net device of the same node.
+     * net device of the same node. Note that each physical link of the channel
+     * has a net device which can send a packet (in full-duplex mode, both net
+     * devices may send a packet at the same moment of time).
      */
-    std::map<uint32_t, Ptr<NocNetDevice> > m_packetOriginalDevice;
+    std::vector<std::map<uint32_t, Ptr<NocNetDevice> > > m_packetOriginalDevice;
 
     /**
-     * Device Id of the source that is currently transmitting on the
-     * channel (or last source to have transmitted a packet on the
-     * channel, if the channel is currently not busy)
+     * The current destination net device (one for each physical channel)
      */
-    uint32_t m_currentSrc;
-
-    /**
-     * The current destination net device
-     */
-    Ptr<NocNetDevice> m_currentDestDevice;
+    std::vector<Ptr<NocNetDevice> > m_currentDestDevice;
 
   };
 
