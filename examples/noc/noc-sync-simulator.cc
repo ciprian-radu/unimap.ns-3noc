@@ -303,7 +303,7 @@ main (int argc, char *argv[])
 
   std::string strategy ("noc-default");
 
-  std::string context ("whole-network_10000-cycles_1000-warmup-cycles_message-length-8_buffers-size-9_xy-routing_wormhole-switching");
+  std::string context ("whole-network_10000-cycles_1000-warmup-cycles_message-length-8_xy-routing_wormhole-switching");
 
   // injection_probability-data_packet_speedup-traffic_pattern
   std::stringstream sstr;
