@@ -2,6 +2,7 @@
 
 INJECTION_PROBABILITY="0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1"
 DATA_PACKET_SPEEDUP="1 2 4"
+BUFFER_SIZE="9"
 TRAFFIC_PATTERN="UniformRandom BitMatrixTranspose BitComplement BitReverse"
 
 echo "NoC sync simulator (generate chart only)"
@@ -31,7 +32,7 @@ for data_packet_speedup in $DATA_PACKET_SPEEDUP
 do
 	for traffic_pattern in $TRAFFIC_PATTERN
 	do
-		INPUT="-${data_packet_speedup}-${traffic_pattern}"
+		INPUT="-${data_packet_speedup}-${BUFFER_SIZE}-${traffic_pattern}"
 		CMD=" \
 		SELECT E.INPUT, S1.VALUE AS 'LATENCY' \
 		FROM SINGLETONS S1, EXPERIMENTS E \
@@ -54,16 +55,17 @@ done
 for traffic_pattern in $TRAFFIC_PATTERN
 do
 	echo "set terminal png" > temp.tmp
-	echo "set out \"noc-sync-simulator-${traffic_pattern}(scaled).png\"" >> temp.tmp
-	echo "set title \"${traffic_pattern} traffic in 4x4 mesh\"" >> temp.tmp
-	echo "set xlabel \"Traffic (packets/node/cycle)\"" >> temp.tmp
+	#echo "set out \"noc-sync-simulator-${traffic_pattern}(scaled).png\"" >> temp.tmp
+	echo "set out \"noc-sync-simulator-${traffic_pattern}.png\"" >> temp.tmp
+	echo "set title \"${traffic_pattern} traffic in a 8x8 2D mesh\"" >> temp.tmp
+	echo "set xlabel \"Packet injection probability\"" >> temp.tmp
 	echo "set xrange [0:1]" >> temp.tmp
-	echo "set ylabel \"Average latency (cycles)\"" >> temp.tmp
-	echo "set yrange [0:200]" >> temp.tmp
+	echo "set ylabel \"Average packet latency (cycles)\"" >> temp.tmp
+	#echo "set yrange [0:200]" >> temp.tmp
 	
-	echo "plot \"noc-sync-simulator-1-${traffic_pattern}.data\" with lines title \"data packet speedup = 1\", \\
-		 \"noc-sync-simulator-2-${traffic_pattern}.data\" with lines title \"data packet speedup = 2\", \\
-		 \"noc-sync-simulator-4-${traffic_pattern}.data\" with lines title \"data packet speedup = 4\"" >> temp.tmp
+	echo "plot \"noc-sync-simulator-1-${BUFFER_SIZE}-${traffic_pattern}.data\" with lines title \"original\", \\
+		 \"noc-sync-simulator-2-${BUFFER_SIZE}-${traffic_pattern}.data\" with lines title \"2x\", \\
+		 \"noc-sync-simulator-4-${BUFFER_SIZE}-${traffic_pattern}.data\" with lines title \"4x\"" >> temp.tmp
 	
 	gnuplot temp.tmp
 done

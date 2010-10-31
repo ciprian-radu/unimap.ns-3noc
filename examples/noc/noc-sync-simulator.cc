@@ -53,8 +53,8 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("NocSyncSimulator");
 
-uint32_t numberOfNodes = 16;
-uint32_t hSize = 4;
+uint32_t numberOfNodes = 64;
+uint32_t hSize = 8;
 
 // parameters path and packet are required by the Trace Source Accesor
 void MessageInjectedCallback (Ptr<CounterCalculator<> > calc, std::string path, Ptr<const Packet> packet)
@@ -269,7 +269,7 @@ main (int argc, char *argv[])
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
     {
       NocSyncApplicationHelper nocSyncAppHelper (nodes, devs, hSize);
-      nocSyncAppHelper.SetAttribute ("NumberOfPackets", UintegerValue (2));
+      nocSyncAppHelper.SetAttribute ("NumberOfPackets", UintegerValue (9));
       nocSyncAppHelper.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
       nocSyncAppHelper.SetAttribute ("TrafficPattern", EnumValue (
           NocSyncApplication::TrafficPatternFromString (trafficPattern)));
@@ -303,7 +303,7 @@ main (int argc, char *argv[])
 
   std::string strategy ("noc-default");
 
-  std::string context ("whole-network_10000-cycles_1000-warmup-cycles_message-length-8_xy-routing_wormhole-switching");
+  std::string context ("whole-network_10000-cycles_1000-warmup-cycles_message-length-9_xy-routing_wormhole-switching");
 
   // injection_probability-data_packet_speedup-traffic_pattern
   std::stringstream sstr;
