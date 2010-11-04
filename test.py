@@ -42,13 +42,13 @@ import re
 interesting_config_items = [
     "NS3_BUILDDIR",
     "NS3_MODULE_PATH",
-    "ENABLE_NSC",
+    "NSC_ENABLED",
     "ENABLE_REAL_TIME",
     "ENABLE_EXAMPLES",
     "ENABLE_PYTHON_BINDINGS",
 ]
 
-ENABLE_NSC = False
+NSC_ENABLED = False
 ENABLE_REAL_TIME = False
 ENABLE_EXAMPLES = True
 
@@ -68,6 +68,16 @@ core_valgrind_skip_tests = [
     "ns3-tcp-interoperability",
 ]
 
+# 
+# There are some special cases for test suites that fail when NSC is
+# missing.
+#
+core_nsc_missing_skip_tests = [
+    "ns3-tcp-cwnd",
+    "nsc-tcp-loss",
+    "ns3-tcp-interoperability",
+]
+
 #
 # A list of examples to run as smoke tests just to ensure that they remain 
 # buildable and runnable over time.  Also a condition under which to run
@@ -79,95 +89,95 @@ core_valgrind_skip_tests = [
 # hardcoded.
 #
 example_tests = [
-    ("csma/csma-bridge", "True", "True"),
-    ("csma/csma-bridge-one-hop", "True", "True"),
-    ("csma/csma-broadcast", "True", "True"),
-    ("csma/csma-multicast", "True", "True"),
-    ("csma/csma-one-subnet", "True", "True"),
-    ("csma/csma-packet-socket", "True", "True"),
-    ("csma/csma-ping", "True", "True"),
-    ("csma/csma-raw-ip-socket", "True", "True"),
-    ("csma/csma-star", "True", "True"),
+    ("src/devices/bridge/examples/csma-bridge", "True", "True"),
+    ("src/devices/bridge/examples/csma-bridge-one-hop", "True", "True"),
+    ("examples/csma/csma-broadcast", "True", "True"),
+    ("examples/csma/csma-multicast", "True", "True"),
+    ("examples/csma/csma-one-subnet", "True", "True"),
+    ("examples/csma/csma-packet-socket", "True", "True"),
+    ("examples/csma/csma-ping", "True", "True"),
+    ("examples/csma/csma-raw-ip-socket", "True", "True"),
+    ("examples/csma/csma-star", "True", "True"),
 
-    ("emulation/emu-ping", "False", "True"),
-    ("emulation/emu-udp-echo", "False", "True"),
+    ("examples/emulation/emu-ping", "False", "True"),
+    ("examples/emulation/emu-udp-echo", "False", "True"),
 
-    ("error-model/simple-error-model", "True", "True"),
+    ("examples/error-model/simple-error-model", "True", "True"),
 
-    ("ipv6/icmpv6-redirect", "True", "True"),
-    ("ipv6/ping6", "True", "True"),
-    ("ipv6/radvd", "True", "True"),
-    ("ipv6/radvd-two-prefix", "True", "True"),    
-    ("ipv6/test-ipv6", "True", "True"),
+    ("examples/ipv6/icmpv6-redirect", "True", "True"),
+    ("examples/ipv6/ping6", "True", "True"),
+    ("examples/ipv6/radvd", "True", "True"),
+    ("examples/ipv6/radvd-two-prefix", "True", "True"),    
+    ("examples/ipv6/test-ipv6", "True", "True"),
 
-    ("mesh/mesh", "True", "True"),
+    ("examples/mesh/mesh", "True", "True"),
 
-    ("naming/object-names", "True", "True"),
+    ("examples/naming/object-names", "True", "True"),
 
-    ("realtime/realtime-udp-echo", "ENABLE_REAL_TIME == True", "True"),
+    ("examples/realtime/realtime-udp-echo", "ENABLE_REAL_TIME == True", "True"),
 
-    ("routing/dynamic-global-routing", "True", "True"),
-    ("routing/global-injection-slash32", "True", "True"),
-    ("routing/global-routing-slash32", "True", "True"),
-    ("routing/mixed-global-routing", "True", "True"),
-    ("routing/nix-simple", "True", "True"),
-    ("routing/nms-p2p-nix", "False", "True"), # Takes too long to run
-    ("routing/simple-alternate-routing", "True", "True"),
-    ("routing/simple-global-routing", "True", "True"),
-    ("routing/simple-point-to-point-olsr", "True", "True"),
-    ("routing/simple-routing-ping6", "True", "True"),
-    ("routing/static-routing-slash32", "True", "True"),
-    ("routing/aodv", "True", "True"),
+    ("examples/routing/dynamic-global-routing", "True", "True"),
+    ("examples/routing/global-injection-slash32", "True", "True"),
+    ("examples/routing/global-routing-slash32", "True", "True"),
+    ("examples/routing/mixed-global-routing", "True", "True"),
+    ("examples/routing/nix-simple", "True", "True"),
+    ("examples/routing/nms-p2p-nix", "False", "True"), # Takes too long to run
+    ("examples/routing/simple-alternate-routing", "True", "True"),
+    ("examples/routing/simple-global-routing", "True", "True"),
+    ("src/routing/olsr/examples/simple-point-to-point-olsr", "True", "True"),
+    ("examples/routing/simple-routing-ping6", "True", "True"),
+    ("examples/routing/static-routing-slash32", "True", "True"),
+    ("examples/routing/aodv", "True", "True"),
 
-    ("spectrum/adhoc-aloha-ideal-phy", "True", "True"),
-    ("spectrum/adhoc-aloha-ideal-phy-with-microwave-oven", "True", "True"),
+    ("examples/spectrum/adhoc-aloha-ideal-phy", "True", "True"),
+    ("examples/spectrum/adhoc-aloha-ideal-phy-with-microwave-oven", "True", "True"),
 
-    ("stats/wifi-example-sim", "True", "True"),
+    ("examples/stats/wifi-example-sim", "True", "True"),
 
-    ("tap/tap-wifi-dumbbell", "False", "True"), # Requires manual configuration
+    ("examples/tap/tap-wifi-dumbbell", "False", "True"), # Requires manual configuration
 
-    ("tcp/star", "True", "True"),
-    ("tcp/tcp-large-transfer", "True", "True"),
-    ("tcp/tcp-nsc-lfn", "ENABLE_NSC == True", "True"),
-    ("tcp/tcp-nsc-zoo", "ENABLE_NSC == True", "True"),
-    ("tcp/tcp-star-server", "True", "True"),
+    ("examples/tcp/star", "True", "True"),
+    ("examples/tcp/tcp-large-transfer", "True", "True"),
+    ("examples/tcp/tcp-nsc-lfn", "NSC_ENABLED == True", "False"),
+    ("examples/tcp/tcp-nsc-zoo", "NSC_ENABLED == True", "False"),
+    ("examples/tcp/tcp-star-server", "True", "True"),
 
-    ("topology-read/topology-read --input=../../examples/topology-read/Inet_small_toposample.txt", "True", "True"),
-    ("topology-read/topology-read --format=Rocketfuel --input=../../examples/topology-read/RocketFuel_toposample_1239_weights.txt", "True", "True"),
+    ("examples/topology-read/topology-read --input=../../examples/topology-read/Inet_small_toposample.txt", "True", "True"),
+    ("examples/topology-read/topology-read --format=Rocketfuel --input=../../examples/topology-read/RocketFuel_toposample_1239_weights.txt", "True", "True"),
 
-    ("tunneling/virtual-net-device", "True", "True"),
+    ("src/devices/virtual-net-device/examples/virtual-net-device", "True", "True"),
 
-    ("tutorial/first", "True", "True"),
-    ("tutorial/hello-simulator", "True", "True"),
-    ("tutorial/second", "True", "True"),
-    ("tutorial/third", "True", "True"),
-    ("tutorial/fourth", "True", "True"),
-    ("tutorial/fifth", "True", "True"),
-    ("tutorial/sixth", "True", "True"),
+    ("examples/tutorial/first", "True", "True"),
+    ("examples/tutorial/hello-simulator", "True", "True"),
+    ("examples/tutorial/second", "True", "True"),
+    ("examples/tutorial/third", "True", "True"),
+    ("examples/tutorial/fourth", "True", "True"),
+    ("examples/tutorial/fifth", "True", "True"),
+    ("examples/tutorial/sixth", "True", "True"),
 
-    ("udp/udp-echo", "True", "True"),
+    ("examples/udp/udp-echo", "True", "True"),
 
-    ("wireless/mixed-wireless", "True", "True"),
-    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::AarfcdWifiManager", "True", "True"), 
-    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::AmrrWifiManager", "True", "True"), 
-    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::CaraWifiManager", "True", "True"), 
-    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::IdealWifiManager", "True", "True"), 
-    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::MinstrelWifiManager", "True", "True"), 
-    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::OnoeWifiManager", "True", "True"), 
-    ("wireless/multirate --totalTime=0.3s --rateManager=ns3::RraaWifiManager", "True", "True"), 
-    ("wireless/simple-wifi-frame-aggregation", "True", "True"),
-    ("wireless/wifi-adhoc", "False", "True"), # Takes too long to run
-    ("wireless/wifi-ap --verbose=0", "True", "True"), # Don't let it spew to stdout
-    ("wireless/wifi-clear-channel-cmu", "False", "True"), # Requires specific hardware
-    ("wireless/wifi-simple-adhoc", "True", "True"),
-    ("wireless/wifi-simple-adhoc-grid", "True", "True"),
-    ("wireless/wifi-simple-infra", "True", "True"),
-    ("wireless/wifi-simple-interference", "True", "True"),
-    ("wireless/wifi-wired-bridging", "True", "True"),
+    ("examples/wireless/mixed-wireless", "True", "True"),
+    ("examples/wireless/multirate --totalTime=0.3s --rateManager=ns3::AarfcdWifiManager", "True", "True"), 
+    ("examples/wireless/multirate --totalTime=0.3s --rateManager=ns3::AmrrWifiManager", "True", "True"), 
+    ("examples/wireless/multirate --totalTime=0.3s --rateManager=ns3::CaraWifiManager", "True", "True"), 
+    ("examples/wireless/multirate --totalTime=0.3s --rateManager=ns3::IdealWifiManager", "True", "True"), 
+    ("examples/wireless/multirate --totalTime=0.3s --rateManager=ns3::MinstrelWifiManager", "True", "True"), 
+    ("examples/wireless/multirate --totalTime=0.3s --rateManager=ns3::OnoeWifiManager", "True", "True"), 
+    ("examples/wireless/multirate --totalTime=0.3s --rateManager=ns3::RraaWifiManager", "True", "True"), 
+    ("examples/wireless/simple-wifi-frame-aggregation", "True", "True"),
+    ("examples/wireless/wifi-adhoc", "False", "True"), # Takes too long to run
+    ("examples/wireless/wifi-ap --verbose=0", "True", "True"), # Don't let it spew to stdout
+    ("examples/wireless/wifi-clear-channel-cmu", "False", "True"), # Requires specific hardware
+    ("examples/wireless/wifi-simple-adhoc", "True", "True"),
+    ("examples/wireless/wifi-simple-adhoc-grid", "True", "True"),
+    ("examples/wireless/wifi-simple-infra", "True", "True"),
+    ("examples/wireless/wifi-simple-interference", "True", "True"),
+    ("examples/wireless/wifi-wired-bridging", "True", "True"),
 
-    ("wimax/wimax-simple", "True", "True"),
-    ("wimax/wimax-ipv4", "True", "True"),
-    ("wimax/wimax-multicast", "True", "True"),
+    ("examples/wimax/wimax-simple", "True", "True"),
+    ("examples/wimax/wimax-ipv4", "True", "True"),
+    ("examples/wimax/wimax-multicast", "True", "True"),
 ]
 
 #
@@ -179,19 +189,19 @@ example_tests = [
 # hardcoded.
 #
 python_tests = [
-    ("csma/csma-bridge.py", "True"),
+    ("src/devices/bridge/examples/csma-bridge.py", "True"),
 
-    ("flowmon/wifi-olsr-flowmon.py", "True"),
+    ("src/contrib/flow-monitor/examples/wifi-olsr-flowmon.py", "True"),
 
-    ("routing/simple-routing-ping6.py", "True"),
+    ("examples/routing/simple-routing-ping6.py", "True"),
 
-    ("tap/tap-csma-virtual-machine.py", "False"), # requires enable-sudo
-    ("tap/tap-wifi-virtual-machine.py", "False"), # requires enable-sudo
+    ("examples/tap/tap-csma-virtual-machine.py", "False"), # requires enable-sudo
+    ("examples/tap/tap-wifi-virtual-machine.py", "False"), # requires enable-sudo
 
-    ("tutorial/first.py", "True"),
+    ("examples/tutorial/first.py", "True"),
 
-    ("wireless/wifi-ap.py", "True"),
-    ("wireless/mixed-wireless.py", "True"),
+    ("examples/wireless/wifi-ap.py", "True"),
+    ("examples/wireless/mixed-wireless.py", "True"),
 ]
 
 #
@@ -1210,6 +1220,10 @@ def run_tests():
             if options.valgrind and test in core_valgrind_skip_tests:
                 job.set_is_skip(True)
 
+            # Skip tests that will fail if NSC is missing.
+            if not NSC_ENABLED and test in core_nsc_missing_skip_tests:
+                job.set_is_skip(True)
+
             if options.verbose:
                 print "Queue %s" % test
 
@@ -1227,10 +1241,10 @@ def run_tests():
     # on NSC being configured by waf, that example should have a condition
     # that evaluates to true if NSC is enabled.  For example,
     #
-    #      ("tcp-nsc-zoo", "ENABLE_NSC == True"),
+    #      ("tcp-nsc-zoo", "NSC_ENABLED == True"),
     #
     # In this case, the example "tcp-nsc-zoo" will only be run if we find the
-    # waf configuration variable "ENABLE_NSC" to be True.
+    # waf configuration variable "NSC_ENABLED" to be True.
     #
     # We don't care at all how the trace files come out, so we just write them 
     # to a single temporary directory.
@@ -1271,7 +1285,7 @@ def run_tests():
                         job.set_cwd(testpy_output_dir)
                         job.set_basedir(os.getcwd())
                         job.set_tempdir(testpy_output_dir)
-                        job.set_shell_command("examples/%s" % test)
+                        job.set_shell_command(test)
 
                         if options.valgrind and not eval(do_valgrind_run):
                             job.set_is_skip (True)
@@ -1338,7 +1352,7 @@ def run_tests():
                         job.set_cwd(testpy_output_dir)
                         job.set_basedir(os.getcwd())
                         job.set_tempdir(testpy_output_dir)
-                        job.set_shell_command("examples/%s" % test)
+                        job.set_shell_command(test)
 
                         #
                         # Python programs and valgrind do not work and play
@@ -1650,7 +1664,7 @@ def main(argv):
     global options
     options = parser.parse_args()[0]
     signal.signal(signal.SIGINT, sigint_hook)
-    
+
     return run_tests()
 
 if __name__ == '__main__':

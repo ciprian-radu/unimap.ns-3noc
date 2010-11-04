@@ -43,7 +43,6 @@ cflags.default_profile = 'debug'
 
 # local modules
 import wutils
-import regression
 
 Configure.autoconfig = 1
 
@@ -53,14 +52,6 @@ APPNAME = 'ns'
 
 wutils.VERSION = VERSION
 wutils.APPNAME = APPNAME
-
-#
-# The last part of the path name to use to find the regression traces.  The
-# path will be APPNAME + '-' + VERSION + REGRESSION_SUFFIX, e.g.,
-# ns-3-dev-ref-traces
-#
-REGRESSION_SUFFIX = "-ref-traces"
-
 
 # these variables are mandatory ('/' are converted automatically)
 srcdir = '.'
@@ -96,22 +87,6 @@ def dist_hook():
     shutil.rmtree("doc/html", True)
     shutil.rmtree("doc/latex", True)
     shutil.rmtree("nsc", True)
-
-    ## build the name of the traces subdirectory.  Will be something like
-    ## ns-3-dev-ref-traces
-    traces_name = APPNAME + '-' + VERSION + REGRESSION_SUFFIX
-    ## Create a tar.bz2 file with the traces
-    env = load_env()
-    regression_dir = env['REGRESSION_TRACES']
-    if not os.path.isdir(regression_dir):
-        Logs.warn("Not creating traces archive: the %s directory does not exist" % regression_dir)
-    else:
-        traceball = traces_name + wutils.TRACEBALL_SUFFIX
-        tar = tarfile.open(os.path.join("..", traceball), 'w:bz2')
-        files = get_files(regression_dir)
-        for fullfilename,relfilename in files:
-            tar.add(fullfilename,arcname=relfilename)
-        tar.close()
 
 def set_options(opt):
     # options provided by the modules
@@ -177,23 +152,9 @@ def set_options(opt):
     opt.add_option('--disable-examples',
                    help=('Do not build the ns-3 examples and samples.'),
                    dest='enable_examples', action='store_false')
-    opt.add_option('--regression',
-                   help=("Enable regression testing; only used for the 'check' target"),
-                   default=False, dest='regression', action="store_true")
     opt.add_option('--check',
                    help=('DEPRECATED (run ./test.py)'),
                    default=False, dest='check', action="store_true")
-    opt.add_option('--regression-generate',
-                   help=("Generate new regression test traces."),
-                   default=False, dest='regression_generate', action="store_true")
-    opt.add_option('--regression-tests',
-                   help=('For regression testing, only run/generate the indicated regression tests, '
-                         'specified as a comma separated list of test names'),
-                   dest='regression_tests', type="string")
-    opt.add_option('--with-regression-traces',
-                   help=('Path to the regression reference traces directory'),
-                   default=None,
-                   dest='regression_traces', type="string")
     opt.add_option('--enable-static',
                    help=('Compile NS-3 statically: works only on linux, without python'),
                    dest='enable_static', action='store_true',
@@ -257,20 +218,6 @@ def configure(conf):
     except Configure.ConfigurationError:
         pass
     conf.check_tool('command', ['waf-tools'])
-
-    # Check for the location of regression reference traces
-    if Options.options.regression_traces is not None:
-        if os.path.isdir(Options.options.regression_traces):
-            conf.check_message("regression traces location", '', True, ("%s (given)" % Options.options.regression_traces))
-            conf.env['REGRESSION_TRACES'] = os.path.abspath(Options.options.regression_traces)
-    else:
-        traces = os.path.join('..', "%s-%s%s" % (APPNAME, VERSION, REGRESSION_SUFFIX))
-        if os.path.isdir(traces):
-            conf.check_message("regression reference traces", '', True, ("%s (guessed)" % traces))
-            conf.env['REGRESSION_TRACES'] = os.path.abspath(traces)
-        del traces
-    if not conf.env['REGRESSION_TRACES']:
-        conf.check_message("regression reference traces", '', False)
 
     # create the second environment, set the variant and set its name
     variant_env = conf.env.copy()
@@ -372,9 +319,6 @@ def configure(conf):
 
     conf.report_optional_feature("ENABLE_EXAMPLES", "Build examples and samples", env['ENABLE_EXAMPLES'], 
                                  why_not_examples)
-
-    # we cannot pull regression traces without mercurial
-    conf.find_program('hg', var='MERCURIAL')
 
     conf.find_program('valgrind', var='VALGRIND')
 
@@ -591,11 +535,14 @@ def build(bld):
 
     if env['NS3_ENABLED_MODULES']:
         modules = env['NS3_ENABLED_MODULES']
+
+        # Find out about additional modules that need to be enabled
+        # due to dependency constraints.
         changed = True
         while changed:
             changed = False
             for module in modules:
-                module_obj = Object.name_to_obj(module)
+                module_obj = bld.name_to_obj(module, env)
                 if module_obj is None:
                     raise ValueError("module %s not found" % module)
                 for dep in module_obj.add_objects:
@@ -605,15 +552,47 @@ def build(bld):
                         modules.append(dep)
                         changed = True
 
-        ## remove objects that depend on modules not listed
+        env['NS3_ENABLED_MODULES'] = modules
+        print "Modules to build:", modules
+
+        def exclude_taskgen(bld, taskgen):
+            # ok, so WAF does not provide an API to prevent an
+            # arbitrary taskgen from running; we have to muck around with
+            # WAF internal state, something that might stop working if
+            # WAF is upgraded...
+            bld.all_task_gen.remove(taskgen)
+            for group in bld.task_manager.groups:
+                try:
+                    group.tasks_gen.remove(taskgen)
+                except ValueError:
+                    pass
+                else:
+                    break
+
+        # Exclude the programs other misc task gens that depend on disabled modules
         for obj in list(bld.all_task_gen):
+
+            # check for ns3moduleheader_taskgen
+            if type(obj).__name__ == 'ns3moduleheader_taskgen':
+                if ("ns3-%s" % obj.module) not in modules:
+                    obj.mode = 'remove' # tell it to remove headers instead of installing
+
+            # check for programs
             if hasattr(obj, 'ns3_module_dependencies'):
+                # this is an NS-3 program (bld.create_ns3_program)
                 for dep in obj.ns3_module_dependencies:
-                    if dep not in modules:
-                        bld.all_task_gen.remove(obj)
+                    if dep not in modules: # prog. depends on a module that isn't enabled?
+                        exclude_taskgen(bld, obj)
                         break
-            if obj.name in env['NS3_MODULES'] and obj.name not in modules:
-                bld.all_task_gen.remove(obj)
+
+            # disable the modules themselves
+            if hasattr(obj, "is_ns3_module") and obj.name not in modules:
+                exclude_taskgen(bld, obj) # kill the module
+
+            # disable the ns3header_taskgen
+            if type(obj).__name__ == 'ns3header_taskgen':
+                if ("ns3-%s" % obj.module) not in modules:
+                    obj.mode = 'remove' # tell it to remove headers instead of installing 
 
     ## Create a single ns3 library containing all enabled modules
     if env['ENABLE_STATIC_NS3']:
@@ -626,8 +605,6 @@ def build(bld):
         lib.target = 'ns3'
         if lib.env['CXX_NAME'] in ['gcc', 'icc'] and env['WL_SONAME_SUPPORTED']:
             lib.env.append_value('LINKFLAGS', '-Wl,--soname=%s' % ccroot.get_target_name(lib))
-        if sys.platform == 'cygwin':
-            lib.features.append('implib') # workaround for WAF bug #472
 
     if env['NS3_ENABLED_MODULES']:
         lib.add_objects = list(modules)
@@ -650,19 +627,6 @@ def build(bld):
         for gen in bld.all_task_gen:
             if type(gen).__name__ in ['ns3header_taskgen', 'ns3moduleheader_taskgen']:
                 gen.post()
-
-    if Options.options.regression or Options.options.regression_generate:
-        regression_traces = env['REGRESSION_TRACES']
-        if not regression_traces:
-            raise Utils.WafError("Cannot run regression tests: reference traces directory not given"
-                                 " (--with-regression-traces configure option)")
-
-        if env['ENABLE_EXAMPLES'] == True:
-            regression.run_regression(bld, regression_traces)
-        else:
-            raise Utils.WafError("Cannot run regression tests: building the ns-3 examples is not enabled"
-                                 " (regression tests are based on examples)")
-
 
     if Options.options.doxygen_no_build:
         _doxygen(bld)

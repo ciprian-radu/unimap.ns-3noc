@@ -6,8 +6,12 @@ def configure(conf):
 def build(bld):
     test = bld.create_ns3_module('test', ['core'])
     test.source = [
+        'csma-system-test-suite.cc',
+        'global-routing-test-suite.cc',
         'sample-test-suite.cc',
+        'static-routing-test-suite.cc',
         'error-model-test-suite.cc',
+        'mobility-test-suite.cc',
         ]
 
     headers = bld.new_task_gen('ns3header')
