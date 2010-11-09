@@ -162,13 +162,15 @@ namespace ns3
     uint8_t
     const GetLoad ();
 
-  private:
+  public:
 
     /**
      * the size of this type of header, in bytes
      */
     // Make sure to update this field whenever you modify the structure of the header
     static const int HEADER_SIZE = 23;
+
+  private:
 
     /**
      * the identifier of this kind of header
