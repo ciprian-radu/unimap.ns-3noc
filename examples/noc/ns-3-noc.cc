@@ -216,7 +216,7 @@ main (int argc, char *argv[])
 
   double injectionProbability (1);
 
-  int dataPacketSpeedup (1);
+  int dataFlitSpeedup (1);
 
   uint64_t bufferSize (9);
 
@@ -239,14 +239,16 @@ main (int argc, char *argv[])
   cmd.AddValue<uint32_t> ("h-size", "How many nodes a 2D mesh has horizontally (default is 4)", hSize);
   cmd.AddValue<uint64_t> ("flits-per-packet", "How many flits a packet has (default is 9, minimum value is 2)", flitsPerPacket);
   cmd.AddValue<double> ("injection-probability", "The packet injection probability (default is 1 (maximum), minimum is zero).", injectionProbability);
-  cmd.AddValue<int> ("data-packet-speedup", "The speedup used for data packets (compared to head packets) (default is 1 (minimum value) - no speedup)", dataPacketSpeedup);
+  cmd.AddValue<int> ("data-packet-speedup", "The speedup used for data packets (compared to head packets) (default is 1 (minimum value) - no speedup)", dataFlitSpeedup);
   cmd.AddValue<uint64_t> ("buffer-size", "The size of the input channel buffers (measured in multiples of packet size) (default is 9)", bufferSize);
   cmd.AddValue<std::string> ("traffic-pattern", "The traffic pattern "
       "(possible values: UniformRandom - default value, BitMatrixTranspose, BitComplement, BitReverse, DestinationSpecified). "
       "The default one is UniformRandom and is used when nothing or an invalid value is specified.", trafficPattern);
-  cmd.AddValue<uint64_t> ("warmup-cycles", "The number of simulation warm-up cycles", warmupCycles);
-  cmd.AddValue<uint64_t> ("simulation-cycles", "The number of simulation cycles (includes the warm-up cycles)", simulationCycles);
+  cmd.AddValue<uint64_t> ("warmup-cycles", "The number of simulation warm-up cycles (default is 1000)", warmupCycles);
+  cmd.AddValue<uint64_t> ("simulation-cycles", "The number of simulation cycles (includes the warm-up cycles, default is 10000)", simulationCycles);
   cmd.Parse (argc, argv);
+
+  NS_LOG_INFO ("ns-3 NoC simulator");
 
   NS_ASSERT_MSG (numberOfNodes % hSize == 0,
       "The number of nodes ("<< numberOfNodes
@@ -254,12 +256,12 @@ main (int argc, char *argv[])
       << hSize << ")");
   NS_ASSERT_MSG (flitsPerPacket >= 2, "At least 2 flits per packet are required!");
   NS_ASSERT_MSG (injectionProbability >= 0 && injectionProbability <= 1, "Injection probability must be in [0,1]!");
-  NS_ASSERT_MSG (dataPacketSpeedup >= 1, "Data packet speedup must be >= 1!");
+  NS_ASSERT_MSG (dataFlitSpeedup >= 1, "Data packet speedup must be >= 1!");
   // the buffer size is allowed to be any number >= 0
   NS_ASSERT_MSG (simulationCycles > warmupCycles, "The number of simulation cycles is not greater than the number of warm-up cycles!");
 
   // set the global parameters
-  NocRegistry::GetInstance ()->SetAttribute ("DataPacketSpeedup", IntegerValue (dataPacketSpeedup));
+  NocRegistry::GetInstance ()->SetAttribute ("DataPacketSpeedup", IntegerValue (dataFlitSpeedup));
   NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (Seconds (globalClock)));
 
   // Here, we will explicitly create the NoC nodes.

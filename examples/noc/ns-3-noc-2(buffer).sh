@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Each ns-3 NoC script must have a unique SCRIPT_ID (AKA experiment ID)
 # This helps at identifying the simulation results in the database
@@ -98,7 +98,7 @@ do
 			AND \
 			S.VARIABLE = 'latency-average' \
 		GROUP BY E.INPUT \
-		ORDER BY E.INPUT ASC \
+		ORDER BY ABS(E.INPUT) ASC \
 		; \
 		"
 		
