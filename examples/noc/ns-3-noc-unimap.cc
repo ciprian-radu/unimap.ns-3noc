@@ -603,10 +603,11 @@ main (int argc, char *argv[])
                 }
             }
 
-          NocCtgApplicationHelper nocCtgAppHelper(nodes, devs, hSize, taskList,
-              taskSenderList, taskReceiverList);
-          nocCtgAppHelper.SetAttribute("FlitSize", UintegerValue (flitSize));
-          nocCtgAppHelper.SetAttribute("NumberOfFlits", UintegerValue (flitsPerPacket));
+          NocCtgApplicationHelper nocCtgAppHelper (nodes, devs, hSize, taskList, taskSenderList, taskReceiverList);
+          nocCtgAppHelper.SetAttribute ("Period", TimeValue (Seconds (theCtgType->period ().get ())));
+          nocCtgAppHelper.SetAttribute ("Iterations", UintegerValue (2));
+          nocCtgAppHelper.SetAttribute ("FlitSize", UintegerValue (flitSize));
+          nocCtgAppHelper.SetAttribute ("NumberOfFlits", UintegerValue (flitsPerPacket));
           //      nocCtgAppHelper.SetAttribute ("MaxFlits", UintegerValue (100));
 
           uint32_t nodeId;

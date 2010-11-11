@@ -56,6 +56,12 @@ namespace ns3
         tid = TypeId ("ns3::NocCtgApplication")
             .SetParent<Application> ()
             .AddConstructor<NocCtgApplication> ()
+            .AddAttribute ("Period", "The period of the CTG", TimeValue (Seconds (0)),
+                MakeTimeAccessor (&NocCtgApplication::m_period),
+                MakeTimeChecker ())
+            .AddAttribute ("Iterations", "How many times the CTG is iterated, with the specified period", UintegerValue (1),
+                MakeUintegerAccessor (&NocCtgApplication::m_iterations),
+                MakeUintegerChecker<uint64_t> (1))
             .AddAttribute ("HSize", "The horizontal size of a 2D mesh (how many nodes can be put on a line)."
                 " The vertical size of the 2D mesh is given by number of nodes", UintegerValue (4),
                 MakeUintegerAccessor (&NocCtgApplication::m_hSize),
@@ -97,16 +103,9 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    m_connected = false;
-    m_lastStartTime = Seconds (0);
-    m_totBytes = 0;
-    m_totFlits = 0;
-    m_currentFlitIndex = 0;
+    m_firstRunningIteration = 0;
     m_totalExecTime = Seconds (0);
     m_totalData = 0;
-    m_receivedData = 0;
-    m_currentDestinationIndex = 0;
-    m_totalTaskBytes = 0;
   }
 
   NocCtgApplication::~NocCtgApplication ()
@@ -118,6 +117,7 @@ namespace ns3
   NocCtgApplication::FlitReceivedCallback (std::string path, Ptr<const Packet> packet)
   {
     NS_LOG_FUNCTION ("path" << path << "packet UID" << packet->GetUid ());
+    NS_LOG_DEBUG ("Received a flit for CTG iteration " << m_firstRunningIteration);
 
     if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
       {
@@ -137,18 +137,21 @@ namespace ns3
         dataSize -= header.GetSerializedSize ();
       }
 
-    m_receivedData += dataSize * 8;
+    m_receivedData[m_firstRunningIteration] += dataSize * 8;
 
-    NS_LOG_DEBUG ("Current received data is " << m_receivedData << ". Total data to be received is " << m_totalData);
+    NS_LOG_DEBUG ("Current received data is " << m_receivedData[m_firstRunningIteration] << ". Total data to be received is " << m_totalData);
 
-    if (m_receivedData >= m_totalData)
+    if (m_receivedData[m_firstRunningIteration] >= m_totalData)
     {
-        m_receivedData = m_totalData;
+        m_receivedData[m_firstRunningIteration] = m_totalData;
 
     	NS_LOG_INFO ("Received " << m_totalData
     			<< " bits of data. Since this is the amount of data expected, this node can start injecting flits.");
 
-    	ScheduleStartEvent();
+    	NS_ASSERT_MSG (m_firstRunningIteration < m_iterations, "The last iteration of the CTG that received all the required data is "
+            << m_firstRunningIteration << " This exceeds the number of CTG iterations set: " << m_iterations);
+    	ScheduleStartEvent (m_firstRunningIteration);
+    	m_firstRunningIteration++;
     }
   }
 
@@ -187,9 +190,9 @@ namespace ns3
 
     list<TaskData>::iterator it;
     for (it = m_taskList.begin (); it != m_taskList.end (); it++)
-    {
-    	m_totalExecTime += it->GetExecTime ();
-	}
+      {
+        m_totalExecTime += it->GetExecTime ();
+      }
 
     NS_LOG_INFO ("Computed a total execution time of " << m_totalExecTime.GetSeconds ()
     		<< " seconds for the tasks from node " << GetNode ()->GetId ());
@@ -198,42 +201,43 @@ namespace ns3
   bool
   NocCtgApplication::TaskListContainsTask (string taskId)
   {
-	NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION_NOARGS ();
 
-	bool found = false;
+    bool found = false;
 
-	list<TaskData>::iterator it;
-	for (it = m_taskList.begin (); it != m_taskList.end (); it++) {
-		if (taskId == it->GetId ())
-		{
-			found = true;
-			break;
-		}
-	}
+    list<TaskData>::iterator it;
+    for (it = m_taskList.begin (); it != m_taskList.end (); it++)
+      {
+        if (taskId == it->GetId ())
+          {
+            found = true;
+            break;
+          }
+      }
 
-	return found;
+    return found;
   }
 
   NocCtgApplication::DependentTaskData
   NocCtgApplication::GetDestinationDependentTaskData (uint32_t index)
   {
-	NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION_NOARGS ();
 
-	NS_ASSERT (index < m_taskDestinationList.size ());
+    NS_ASSERT (index < m_taskDestinationList.size ());
 
-	uint32_t idx = 0;
-	DependentTaskData dtd = *(m_taskDestinationList.begin ());
-	list<DependentTaskData>::iterator it;
-	for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++)
-	{
-		if (index == idx)
-		{
-			dtd = *it;
-		}
-		idx++;
-	}
+    uint32_t idx = 0;
+    DependentTaskData dtd = *(m_taskDestinationList.begin ());
+    list<DependentTaskData>::iterator it;
+    for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++)
+      {
+        if (index == idx)
+          {
+            dtd = *it;
+          }
+        idx++;
+      }
 
-	return dtd;
+    return dtd;
   }
 
   void
@@ -243,21 +247,22 @@ namespace ns3
 
     m_taskSenderList = taskSenderList;
 
-	list<DependentTaskData>::iterator it;
-	for (it = m_taskSenderList.begin (); it != m_taskSenderList.end (); it++) {
-		if (!TaskListContainsTask (it->GetReceivingTaskId ()))
-		{
-			NS_LOG_ERROR ("Task " << it->GetSenderTaskId () << " has " << it->GetData ()
-					<< " bytes of data to send to task " << it->GetReceivingTaskId ()
-					<< ". However, this task is not in the task list!");
-		}
-		else
-		{
-			m_totalData += it->GetData ();
-		}
-	}
+    list<DependentTaskData>::iterator it;
+    for (it = m_taskSenderList.begin (); it != m_taskSenderList.end (); it++)
+      {
+        if (!TaskListContainsTask (it->GetReceivingTaskId ()))
+          {
+            NS_LOG_ERROR ("Task " << it->GetSenderTaskId () << " has " << it->GetData ()
+                << " bytes of data to send to task " << it->GetReceivingTaskId ()
+                << ". However, this task is not in the task list!");
+          }
+        else
+          {
+            m_totalData += it->GetData ();
+          }
+      }
 
-	NS_LOG_INFO ("The total amount of data to be received by this node is " << m_totalData << " bits.");
+    NS_LOG_INFO ("The total amount of data to be received by this node is " << m_totalData << " bits.");
   }
 
   void
@@ -267,15 +272,16 @@ namespace ns3
 
     m_taskDestinationList = taskDestinationList;
 
-	list<DependentTaskData>::iterator it;
-	for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++) {
-		if (!TaskListContainsTask (it->GetSenderTaskId ()))
-		{
-			NS_LOG_ERROR ("Task " << it->GetSenderTaskId () << " has " << it->GetData ()
-					<< " bytes of data to send to task " << it->GetReceivingTaskId ()
-					<< ". However, this task is not in the task list!");
-		}
-	}
+    list<DependentTaskData>::iterator it;
+    for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++)
+      {
+        if (!TaskListContainsTask (it->GetSenderTaskId ()))
+          {
+            NS_LOG_ERROR ("Task " << it->GetSenderTaskId () << " has " << it->GetData ()
+                << " bytes of data to send to task " << it->GetReceivingTaskId ()
+                << ". However, this task is not in the task list!");
+          }
+      }
   }
 
   void
@@ -290,7 +296,8 @@ namespace ns3
   void
   NocCtgApplication::StartApplication () // Called at time specified by Start
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_LOGIC ("Starting the application at time " << Simulator::Now ().GetSeconds () << " seconds");
+    NS_LOG_LOGIC ("The CTG will be iterated " << m_iterations << " times, with a period of " << m_period.GetSeconds () << " seconds");
 
     uint32_t nodeId = GetNode ()->GetId ();
     NS_LOG_DEBUG ("Tracing the flits received at node " << (int) nodeId);
@@ -300,13 +307,22 @@ namespace ns3
     ss << "/NodeList/" << nodeId << "/DeviceList/*/$ns3::NocNetDevice/Receive";
     Config::Connect (ss.str (), MakeCallback (&NocCtgApplication::FlitReceivedCallback, this));
 
-    // Ensure no pending event
-    CancelEvents();
-    m_connected = true;
-
-    if (m_connected)
+    for (uint64_t i = 0; i < m_iterations; ++i)
       {
-        ScheduleStartEvent();
+        m_totBytes.insert (m_totBytes.end (), 0);
+        m_totFlits.insert (m_totFlits.end (), 0);
+        m_currentFlitIndex.insert (m_currentFlitIndex.end (), 0);
+        m_currentHeadFlit.insert (m_currentHeadFlit.end (), 0);
+        m_receivedData.insert (m_receivedData.end (), 0);
+        m_currentDestinationIndex.insert (m_currentDestinationIndex.end (), 0);
+        m_totalTaskBytes.insert (m_totalTaskBytes.end (), 0);
+        m_startEvent.insert (m_startEvent.end (), EventId ());
+        m_sendEvent.insert (m_sendEvent.end (), EventId ());
+
+        // Ensure no pending event
+        CancelEvents (i);
+
+        ScheduleStartEvent (i);
       }
   }
 
@@ -315,35 +331,34 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    CancelEvents();
+    for (uint64_t i = 0; i < m_iterations; ++i) {
+        CancelEvents (i);
+    }
   }
 
   void
-  NocCtgApplication::CancelEvents ()
+  NocCtgApplication::CancelEvents (uint64_t iteration)
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION (iteration);
 
-    Simulator::Cancel(m_sendEvent);
-    Simulator::Cancel(m_startEvent);
+    Simulator::Cancel (m_sendEvent[iteration]);
+    Simulator::Cancel (m_startEvent[iteration]);
   }
 
   // Event handlers
   void
-  NocCtgApplication::StartSending ()
+  NocCtgApplication::StartSending (uint64_t iteration)
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION (iteration);
 
-    m_lastStartTime = Simulator::Now ();
-    ScheduleNextTx (); // Schedule the send flit event
+    ScheduleNextTx (iteration); // Schedule the send flit event
   }
 
   void
-  NocCtgApplication::StopSending ()
+  NocCtgApplication::StopSending (uint64_t iteration)
   {
-    NS_LOG_FUNCTION_NOARGS ();
-    CancelEvents();
-
-//    ScheduleStartEvent();
+    NS_LOG_FUNCTION (iteration);
+    CancelEvents (iteration);
   }
 
   Time
@@ -359,15 +374,15 @@ namespace ns3
 
   // Private helpers
   void
-  NocCtgApplication::ScheduleNextTx ()
+  NocCtgApplication::ScheduleNextTx (uint64_t iteration)
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION (iteration);
 
-    if ((m_maxBytes == 0 || (m_maxBytes > 0 && m_totBytes < m_maxBytes))
-        && (m_maxFlits == 0 || (m_maxFlits > 0 && m_totFlits < m_maxFlits)))
+    if ((m_maxBytes == 0 || (m_maxBytes > 0 && m_totBytes[iteration] < m_maxBytes))
+        && (m_maxFlits == 0 || (m_maxFlits > 0 && m_totFlits[iteration] < m_maxFlits)))
       {
 //        int speedup = 1;
-//        if (m_currentFlitIndex != 0)
+//        if (m_currentFlitIndex[iteration] != 0)
 //          {
 //            // a data flit will be sent
 //            IntegerValue dataFlitSpeedup;
@@ -384,36 +399,41 @@ namespace ns3
         Time globalClock = GetGlobalClock ();
 //        Time sendAtTime = globalClock / Scalar (speedup);
         Time sendAtTime = globalClock;
-        if (m_totBytes == 0)
+        if (m_totBytes[iteration] == 0)
           {
             // force the first event to occur at time zero
             sendAtTime = Seconds (0);
           }
+        sendAtTime += m_period * Scalar (iteration);
         NS_LOG_DEBUG ("Schedule event (flit injection) to occur at time "
             << (Simulator::Now () + sendAtTime).GetSeconds () << " seconds");
-        m_sendEvent = Simulator::Schedule (sendAtTime, &NocCtgApplication::SendPacket, this);
+        m_sendEvent[iteration] = Simulator::Schedule (sendAtTime, &NocCtgApplication::SendFlit, this, iteration);
       }
     else
       { // All done, cancel any pending events
         NS_LOG_DEBUG ("Stopping the application");
-        NS_LOG_DEBUG ("maxBytes = " << m_maxBytes << " totBytes = " << m_totBytes);
-        NS_LOG_DEBUG ("maxFlits = " << m_maxFlits << " totFlits = " << m_totFlits);
+        NS_LOG_DEBUG ("maxBytes = " << m_maxBytes << " totBytes = " << m_totBytes[iteration]);
+        NS_LOG_DEBUG ("maxFlits = " << m_maxFlits << " totFlits = " << m_totFlits[iteration]);
 
         StopApplication();
       }
   }
 
   void
-  NocCtgApplication::ScheduleStartEvent ()
+  NocCtgApplication::ScheduleStartEvent (uint64_t iteration)
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION (iteration);
 
-    if (m_receivedData == m_totalData && m_taskDestinationList.size() > 0)
+    if (m_receivedData[iteration] == m_totalData && m_taskDestinationList.size() > 0)
     {
+        NS_LOG_LOGIC ("Execution time is " << m_totalExecTime.GetSeconds () << " seconds.");
+        NS_LOG_LOGIC ("CTG period is " << m_period.GetSeconds () << " seconds.");
+        NS_LOG_LOGIC ("Current CTG iteration is " << iteration << " (iteration 0 is the first one).");
         NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting flits after a time of "
-            << m_totalExecTime.GetSeconds() << " seconds.");
+            << (m_totalExecTime + m_period * Scalar (iteration)).GetSeconds() << " seconds.");
 
-        m_startEvent = Simulator::Schedule(Simulator::Now() + m_totalExecTime, &NocCtgApplication::StartSending, this);
+        m_startEvent[iteration] = Simulator::Schedule (Simulator::Now () + m_totalExecTime + m_period * Scalar (iteration),
+            &NocCtgApplication::StartSending, this, iteration);
     }
     else
     {
@@ -421,7 +441,7 @@ namespace ns3
           {
             NS_LOG_INFO ("Node " << GetNode ()->GetId () << " doesn't have any data to receive!");
           }
-        if (m_receivedData < m_totalData)
+        if (m_receivedData[iteration] < m_totalData)
           {
             NS_LOG_INFO ("Node " << GetNode ()->GetId () << " still has to receive data before being able to inject its data into the NoC!");
           }
@@ -433,11 +453,11 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::SendPacket ()
+  NocCtgApplication::SendFlit (uint64_t iteration)
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION (iteration);
     NS_LOG_LOGIC ("sending flit at " << Simulator::Now ());
-    NS_ASSERT (m_sendEvent.IsExpired ());
+    NS_ASSERT (m_sendEvent[iteration].IsExpired ());
 
     Ptr<NocNode> sourceNode = GetNode ()->GetObject<NocNode> ();
     uint32_t sourceNodeId = sourceNode->GetId ();
@@ -446,7 +466,7 @@ namespace ns3
     NS_LOG_DEBUG ("source X = " << sourceX);
     NS_LOG_DEBUG ("source Y = " << sourceY);
 
-    DependentTaskData dtd = GetDestinationDependentTaskData (m_currentDestinationIndex);
+    DependentTaskData dtd = GetDestinationDependentTaskData (m_currentDestinationIndex[iteration]);
     uint32_t destinationNodeId = dtd.GetReceivingNodeId ();
     uint32_t destinationX = destinationNodeId % m_hSize;
     uint32_t destinationY = destinationNodeId / m_hSize;
@@ -485,10 +505,10 @@ namespace ns3
         NS_LOG_LOGIC ("Trying to send a packet from node " << sourceNodeId << " to node "
             << destinationNodeId << ". Aborting because source and destination nodes are the same.");
 
-        if (m_currentDestinationIndex < m_taskDestinationList.size () - 1)
+        if (m_currentDestinationIndex[iteration] < m_taskDestinationList.size () - 1)
         {
-            m_currentDestinationIndex++;
-            ScheduleNextTx();
+            m_currentDestinationIndex[iteration]++;
+            ScheduleNextTx (iteration);
         }
       }
     else
@@ -513,26 +533,26 @@ namespace ns3
 
         NS_ASSERT_MSG (m_numberOfFlits >= 1,
             "The number of flits must be at least 1 (the head flit) but it is " << m_numberOfFlits);
-        if (m_currentFlitIndex == 0)
+        if (m_currentFlitIndex[iteration] == 0)
           {
             NS_ASSERT_MSG (m_flitSize >= (uint32_t) NocHeader::HEADER_SIZE, "The flit size must be at least " << NocHeader::HEADER_SIZE << " (the flit header size)");
-            m_currentHeadFlit = Create<NocPacket> (relativeX, relativeY, sourceX,
+            m_currentHeadFlit[iteration] = Create<NocPacket> (relativeX, relativeY, sourceX,
                 sourceY, m_numberOfFlits - 1, m_flitSize - NocHeader::HEADER_SIZE);
-            NS_LOG_LOGIC ("Preparing to inject flit " << *m_currentHeadFlit);
+            NS_LOG_LOGIC ("Preparing to inject flit " << *m_currentHeadFlit[iteration]);
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
-                m_flitInjectedTrace (m_currentHeadFlit);
+                m_flitInjectedTrace (m_currentHeadFlit[iteration]);
               }
-            sourceNode->InjectPacket (m_currentHeadFlit, destinationNode);
-            m_currentFlitIndex++;
-            m_totBytes += m_flitSize - NocHeader::HEADER_SIZE;
-            m_totalTaskBytes += m_flitSize - NocHeader::HEADER_SIZE;
+            sourceNode->InjectPacket (m_currentHeadFlit[iteration], destinationNode);
+            m_currentFlitIndex[iteration]++;
+            m_totBytes[iteration] += m_flitSize - NocHeader::HEADER_SIZE;
+            m_totalTaskBytes[iteration] += m_flitSize - NocHeader::HEADER_SIZE;
           }
         else
           {
             bool isTail = false;
             // the last packet sent might be smaller (i.e. its number of flits is < m_numberOfFlits)
-            if (m_currentFlitIndex + 1 == m_numberOfFlits || (m_totalTaskBytes + m_flitSize) * 8 >= dtd.GetData())
+            if (m_currentFlitIndex[iteration] + 1 == m_numberOfFlits || (m_totalTaskBytes[iteration] + m_flitSize) * 8 >= dtd.GetData())
               {
                 isTail = true;
                 NS_LOG_DEBUG ("About to inject a tail flit");
@@ -541,46 +561,45 @@ namespace ns3
               {
                 NS_LOG_DEBUG ("About to inject a data flit");
               }
-            Ptr<NocPacket> dataFlit = Create<NocPacket> (m_currentHeadFlit->GetUid (), m_flitSize, isTail);
+            Ptr<NocPacket> dataFlit = Create<NocPacket> (m_currentHeadFlit[iteration]->GetUid (), m_flitSize, isTail);
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
                 m_flitInjectedTrace (dataFlit);
               }
             sourceNode->InjectPacket (dataFlit, destinationNode);
-            m_currentFlitIndex++;
-            m_totBytes += m_flitSize;
-            m_totalTaskBytes += m_flitSize;
+            m_currentFlitIndex[iteration]++;
+            m_totBytes[iteration] += m_flitSize;
+            m_totalTaskBytes[iteration] += m_flitSize;
           }
-        if (m_currentFlitIndex == m_numberOfFlits)
+        if (m_currentFlitIndex[iteration] == m_numberOfFlits)
           {
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
                 NS_LOG_DEBUG ("An entire packet was injected into the network");
-                m_packetInjectedTrace (m_currentHeadFlit);
+                m_packetInjectedTrace (m_currentHeadFlit[iteration]);
               }
-            m_currentFlitIndex = 0;
+            m_currentFlitIndex[iteration] = 0;
           }
 
-        m_totFlits ++;
-        m_lastStartTime = Simulator::Now ();
+        m_totFlits[iteration] ++;
 
-        if (m_totalTaskBytes * 8 >= dtd.GetData())
+        if (m_totalTaskBytes[iteration] * 8 >= dtd.GetData())
         {
             // the last packet sent might be smaller (i.e. its number of flits is < m_numberOfFlits)
             // this means that it must be traced (m_packetTrace) here because the above tracing will most likely not apply
-            if (m_currentFlitIndex > 0 && m_currentFlitIndex < m_numberOfFlits && Simulator::Now () >= GetGlobalClock ()
+            if (m_currentFlitIndex[iteration] > 0 && m_currentFlitIndex[iteration] < m_numberOfFlits && Simulator::Now () >= GetGlobalClock ()
                 * Scalar (m_warmupCycles))
               {
                 NS_LOG_DEBUG ("An entire packet was injected into the network (this is the last packet injected and it has a smaller number of flits)");
-                m_packetInjectedTrace (m_currentHeadFlit);
+                m_packetInjectedTrace (m_currentHeadFlit[iteration]);
               }
-            m_currentFlitIndex = 0;
-            m_currentDestinationIndex++;
-            m_totalTaskBytes = 0;
+            m_currentFlitIndex[iteration] = 0;
+            m_currentDestinationIndex[iteration]++;
+            m_totalTaskBytes[iteration] = 0;
         }
-        if (m_currentDestinationIndex < m_taskDestinationList.size ())
+        if (m_currentDestinationIndex[iteration] < m_taskDestinationList.size ())
         {
-            ScheduleNextTx();
+            ScheduleNextTx (iteration);
         }
       }
   }

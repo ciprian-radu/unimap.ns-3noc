@@ -31,6 +31,7 @@
 #include "ns3/net-device-container.h"
 #include "ns3/noc-packet.h"
 #include "ns3/nstime.h"
+#include <vector>
 
 using namespace std;
 
@@ -215,37 +216,47 @@ private:
   virtual void
   StopApplication ();     // Called at time specified by Stop
 
-  //helpers
   void
-  CancelEvents ();
+  CancelEvents (uint64_t iteration);
 
   // Event handlers
   void
-  StartSending ();
+  StartSending (uint64_t iteration);
 
   void
-  StopSending ();
+  StopSending (uint64_t iteration);
 
   void
-  SendPacket ();
+  SendFlit (uint64_t iteration);
 
-  bool               m_connected;               // True if connected
+  /** the period of the CTG */
+  Time m_period;
+
+  /** how many times the CTG is iterated, with the specified period */
+  uint64_t m_iterations;
+
+  /**
+   * Which is the first iteration of the CTG that still that still needs to receive data.
+   * For example, if iterations 0 and 1 of the CTG are in progress, than all the packets arriving at this node are for iteration 0.
+   * Only after iteration 0 is finished, the packets received are for iteration 1.
+   *
+   **/
+  uint64_t m_firstRunningIteration;
+
   uint32_t           m_hSize;                   // The horizontal size of a 2D mesh (how many nodes can be put on a line). The vertical size of the 2D mesh is given by number of nodes
   NetDeviceContainer m_devices;                 // the net devices from the NoC network
   NodeContainer      m_nodes;                   // the nodes from the NoC network
   uint32_t           m_flitSize;                // The flit size (the head flit will use part of this size for the flit header)
   uint16_t           m_numberOfFlits;           // How many flits a packet will have
-  uint16_t           m_currentFlitIndex;        // the index of the flit to be injected ( [0, m_numberOfFlits - 1] )
-  Ptr<NocPacket>     m_currentHeadFlit;         // the current head flit
-  Time               m_lastStartTime;           // Time last flit sent
+  vector<uint16_t>   m_currentFlitIndex;        // the index of the flit to be injected ( [0, m_numberOfFlits - 1] )
+  vector<Ptr<NocPacket> > m_currentHeadFlit;    // the current head flit
   uint32_t           m_maxBytes;                // Limit total number of bytes sent
-  uint32_t           m_totBytes;                // Total bytes sent so far
+  vector<uint32_t>   m_totBytes;                // Total bytes sent so far
   uint32_t           m_maxFlits;                // the maximum number of flits which may be injected (zero means no limit)
-  uint32_t           m_totFlits;                // Total flits injected so far
+  vector<uint32_t>   m_totFlits;                // Total flits injected so far
   uint32_t           m_warmupCycles;            // During warmup cycles, no statistics are collected
-  EventId            m_startEvent;              // Event id for next start event
-  EventId            m_sendEvent;               // Event id of pending send flit event
-  bool               m_sending;                 // True if currently in sending state
+  vector<EventId>    m_startEvent;              // Event id for next start event
+  vector<EventId>    m_sendEvent;               // Event id of pending send flit event
   
   /** keeps all the tasks that are assigned to the IP core associated with this ns-3 application */
   list<TaskData> m_taskList;
@@ -270,13 +281,13 @@ private:
   double m_totalData;
 
   /** keeps the amount of data currently received by this node (in bits). It obviously cannot exceed m_totalData */
-  double m_receivedData;
+  vector<double> m_receivedData;
 
   /** keeps all the local tasks that send data to tasks from remote NoC nodes */
   list<DependentTaskData> m_taskDestinationList;
 
   /** marks the element from the m_taskDestinationList list that is currently active for flit injection */
-  uint32_t m_currentDestinationIndex;
+  vector<uint32_t> m_currentDestinationIndex;
 
   /**
    * Retrieves the item from the task destination list, located at the specified index
@@ -288,7 +299,7 @@ private:
   DependentTaskData GetDestinationDependentTaskData (uint32_t index);
 
   /** the total number of bytes sent to the current destination task */
-  uint32_t m_totalTaskBytes;
+  vector<uint32_t> m_totalTaskBytes;
 
   /**
    * Allows tracing injected packets into the network.
@@ -313,10 +324,10 @@ private:
   FlitReceivedCallback (std::string path, Ptr<const Packet> packet);
 
   void
-  ScheduleNextTx ();
+  ScheduleNextTx (uint64_t iteration);
 
   void
-  ScheduleStartEvent ();
+  ScheduleStartEvent (uint64_t iteration);
 
 };
 

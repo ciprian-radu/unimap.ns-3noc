@@ -21,7 +21,8 @@ H_SIZE="4"
 #SIMULATION_CYCLES="10000"
 
 FLIT_SIZE="32"
-NUMBER_OF_FLITS_PER_PACKET="2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"
+#NUMBER_OF_FLITS_PER_PACKET="2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"
+NUMBER_OF_FLITS_PER_PACKET="10"
 APPLICATION="auto-indust-mocsyn"
 declare MAPPING_FILE_PATH
 MAPPING_FILE_PATH=("../Mapper/xml/e3s/auto-indust-mocsyn.tgff/ctg-0/mapping-1.xml")
@@ -51,7 +52,7 @@ then
 	  exit 255
 	fi
 
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:bin/
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:bin/:/usr/local/lib/
 
 	if [ -e ../../data.db ]
 	then
