@@ -431,31 +431,31 @@ namespace ns3
   void
   NocHelper::AsciiTxEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    *stream->GetStream () << "t " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
+    *stream->GetStream () << "t " << Simulator::Now () << " " << path << " " << *packet << std::endl;
   }
 
   void
   NocHelper::AsciiRxEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    *stream->GetStream () << "r " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
+    *stream->GetStream () << "r " << Simulator::Now () << " " << path << " " << *packet << std::endl;
   }
 
   void
   NocHelper::AsciiEnqueueEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    *stream->GetStream () << "+ " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
+    *stream->GetStream () << "+ " << Simulator::Now () << " " << path << " " << *packet << std::endl;
   }
 
   void
   NocHelper::AsciiDequeueEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    *stream->GetStream () << "- " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
+    *stream->GetStream () << "- " << Simulator::Now () << " " << path << " " << *packet << std::endl;
   }
 
   void
   NocHelper::AsciiDropEvent (Ptr<OutputStreamWrapper> stream, std::string path, Ptr<const Packet> packet)
   {
-    *stream->GetStream () << "d " << Simulator::Now ().GetSeconds () << " " << path << " " << *packet << std::endl;
+    *stream->GetStream () << "d " << Simulator::Now () << " " << path << " " << *packet << std::endl;
   }
 
 } // namespace ns3

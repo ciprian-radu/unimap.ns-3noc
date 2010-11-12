@@ -326,8 +326,16 @@ private:
   void
   ScheduleNextTx (uint64_t iteration);
 
+
+  /**
+   * For each IP core from the CTG, the flit injection is just started with this method.
+   * ScheduleNextTx (...) is used to continue the flit injection.
+   *
+   * \param injectionStarted marks if this is the first time a flit is scheduled to be injected
+   * \param iteration the CTG iteration number (0 is the first iteration)
+   */
   void
-  ScheduleStartEvent (uint64_t iteration);
+  ScheduleStartEvent (bool injectionStarted, uint64_t iteration);
 
 };
 

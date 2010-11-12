@@ -296,7 +296,7 @@ main (int argc, char *argv[])
 
   // Note: if you want to change the global clock from being measured in seconds,
   // be aware that the change must be done everywhere the global clock is used (NocRegistry references)
-  uint64_t globalClock = 1; // in seconds
+  Time globalClock = PicoSeconds (1000); // in picoseconds
 
   uint64_t flitSize = 32; // in bytes
 
@@ -351,7 +351,7 @@ main (int argc, char *argv[])
 
   // set the global parameters
   NocRegistry::GetInstance ()->SetAttribute ("DataPacketSpeedup", IntegerValue (dataFlitSpeedup));
-  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (Seconds (globalClock)));
+  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (globalClock));
 
   // Here, we will explicitly create the NoC nodes.
   NS_LOG_INFO ("Create nodes.");
@@ -365,10 +365,13 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocHelper> noc = CreateObject<NocHelper> ();
-// Note that the following channel attributes are not considered with a synchronous NoC (like this one)
 
-  //  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
-  //  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
+  // set channel bandwidth to 1 flit / network clock
+  // FIXME properly set the channel bandwidth
+  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("256Gbps")));
+//  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ((uint64_t) ((flitSize * 8) / globalClock.GetSeconds ()))));
+  // the channel has no propagation delay
+  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
 
 // By default, we use full-duplex communication
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
@@ -399,7 +402,7 @@ main (int argc, char *argv[])
   // setting the routing protocol
   ObjectFactory routingProtocolFactory;
   routingProtocolFactory.SetTypeId ("ns3::XyRouting");
-  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
+//  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
 
 //  routingProtocolFactory.SetTypeId ("ns3::SlbRouting");
 //  routingProtocolFactory.Set ("LoadThreshold", IntegerValue (30));
@@ -605,7 +608,7 @@ main (int argc, char *argv[])
 
           NocCtgApplicationHelper nocCtgAppHelper (nodes, devs, hSize, taskList, taskSenderList, taskReceiverList);
           nocCtgAppHelper.SetAttribute ("Period", TimeValue (Seconds (theCtgType->period ().get ())));
-          nocCtgAppHelper.SetAttribute ("Iterations", UintegerValue (2));
+          nocCtgAppHelper.SetAttribute ("Iterations", UintegerValue (1));
           nocCtgAppHelper.SetAttribute ("FlitSize", UintegerValue (flitSize));
           nocCtgAppHelper.SetAttribute ("NumberOfFlits", UintegerValue (flitsPerPacket));
           //      nocCtgAppHelper.SetAttribute ("MaxFlits", UintegerValue (100));

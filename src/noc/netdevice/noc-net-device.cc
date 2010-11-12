@@ -66,7 +66,7 @@ namespace ns3
   NocNetDevice::NocNetDevice() :
     m_channel(0), m_node(0), m_mtu(0xffff), m_ifIndex(0), m_nocHelper(0), m_routingDirection(0)
   {
-    m_lastScheduledEvent = Seconds (0);
+    m_lastScheduledEvent = PicoSeconds (0);
   }
 
   NocNetDevice::~NocNetDevice()
@@ -557,31 +557,7 @@ namespace ns3
                   {
                     deviceId = m_viaNetDevice->m_deviceId;
                   }
-                bool canSend = true;
-//                TimeValue timeValue;
-//                NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
-//                Time globalClock = timeValue.Get ();
-//                if (!globalClock.IsZero ())
-//                  {
-//                    Scalar integerPart (HighPrecision (
-//                        (Simulator::Now () / globalClock).GetHighPrecision ().GetInteger (), true));
-//                    Time realPart (HighPrecision (Simulator::Now ().GetHighPrecision ().GetDouble ()
-//                        - (integerPart * globalClock).GetHighPrecision ().GetDouble ()));
-//                    NS_LOG_DEBUG ("integer part " << integerPart.GetHighPrecision ().GetDouble ());
-//                    NS_LOG_DEBUG ("real part " << realPart);
-//                    if (!realPart.IsZero ())
-//                      {
-//                        canSend = false;
-//                        NS_LOG_DEBUG ("The packet with UID " << packetToSend->GetUid ()
-//                            << " cannot be sent at time " << Simulator::Now ()
-//                            << " because a clock cycle did not occur yet (clock cycle = "
-//                            << globalClock << ")");
-//                      }
-//                  }
-                if (canSend)
-                  {
-                    canSend = channel->TransmitStart (this, packetToSend, deviceId);
-                  }
+                bool canSend = channel->TransmitStart (this, packetToSend, deviceId);
                 if (canSend)
                   {
                     result = channel->Send (to, from);
@@ -641,18 +617,18 @@ namespace ns3
                     if (m_lastScheduledEvent != Simulator::Now () + time)
                       {
                         NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
-                            << (Simulator::Now () + time).GetSeconds ()
-                            << " seconds (net device " << GetAddress ()<< ", last scheduled event was at time "
-                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                            << Simulator::Now () + time
+                            << " (net device " << GetAddress ()<< ", last scheduled event was at time "
+                            << m_lastScheduledEvent << ")");
                         Simulator::Schedule (time, &NocNetDevice::ProcessBufferedPackets,
                             this, originalHeader, (Ptr<Packet>) 0);
                       }
                     else
                       {
                         NS_LOG_DEBUG ("An event was already scheduled at time "
-                            << (Simulator::Now () + time).GetSeconds ()
-                            << " seconds (net device " << GetAddress () << ", last scheduled event was at time "
-                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                            << Simulator::Now () + time
+                            << " (net device " << GetAddress () << ", last scheduled event was at time "
+                            << m_lastScheduledEvent << ")");
                       }
                   }
                 else
@@ -670,59 +646,31 @@ namespace ns3
                       }
                     NS_LOG_DEBUG ("Data flit speedup is " << speedup);
                     NS_LOG_DEBUG ("Packet has UID " << packetToSend->GetUid ());
-//                    NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
-//                        << (Simulator::Now () + globalClock / Scalar (speedup)).GetSeconds ()
-//                        << " seconds (net device " << GetAddress () << ")");
-//                    Simulator::Schedule (globalClock / Scalar (speedup), &NocNetDevice::ProcessBufferedPackets,
-//                        this, originalHeader, (Ptr<Packet>) 0);
 
                     if (m_lastScheduledEvent != Simulator::Now () + globalClock / Scalar (speedup))
                       {
                         NS_LOG_DEBUG ("Packet has UID " << packetToSend->GetUid ());
                         NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
-                            << (Simulator::Now () + globalClock / Scalar (speedup)).GetSeconds ()
-                            << " seconds (net device " << GetAddress ()<< ", last scheduled event was at time "
-                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                            << Simulator::Now () + globalClock / Scalar (speedup)
+                            << " (net device " << GetAddress () << ", last scheduled event was at time "
+                            << m_lastScheduledEvent);
+                        // find the next network clock cycle
+                        uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetPicoSeconds ()
+                            / globalClock.GetPicoSeconds ()); // 1 + current clock cycle
+                        Time nextClock = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
                         m_lastScheduledEvent = Simulator::Now () + globalClock / Scalar (speedup);
-                        Simulator::Schedule (globalClock / Scalar (speedup), &NocNetDevice::ProcessBufferedPackets,
+                        // Simulator::Schedule (...) receives a relative time
+                        NS_LOG_LOGIC ("Processing a new buffered flit at " << Simulator::Now () + nextClock);
+                        Simulator::Schedule (nextClock, &NocNetDevice::ProcessBufferedPackets,
                             this, originalHeader, (Ptr<Packet>) 0);
                       }
                     else
                       {
                         NS_LOG_DEBUG ("An event was already scheduled at time "
-                            << (Simulator::Now () + globalClock / Scalar (speedup)).GetSeconds ()
-                            << " seconds (net device " << GetAddress () << ", last scheduled event was at time "
-                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
+                            << Simulator::Now () + globalClock / Scalar (speedup)
+                            << " (net device " << GetAddress () << ", last scheduled event was at time "
+                            << m_lastScheduledEvent << ")");
                       }
-
-//                    // FIXME is this line needed?
-//                    globalClock = globalClock / Scalar (speedup);
-//
-//                    Scalar integerPart (HighPrecision (
-//                        (Simulator::Now () / globalClock).GetHighPrecision ().GetInteger (), true));
-//                    Time realPart (HighPrecision (Simulator::Now ().GetHighPrecision ().GetDouble ()
-//                        - (integerPart * globalClock).GetHighPrecision ().GetDouble ()));
-//                    NS_LOG_DEBUG ("integer part " << integerPart.GetHighPrecision ().GetDouble ());
-//                    NS_LOG_DEBUG ("real part " << realPart);
-//                    NS_ASSERT (Simulator::Now () + globalClock >= realPart);
-//                    if (m_lastScheduledEvent != Simulator::Now () + globalClock - realPart)
-//                      {
-//                        NS_LOG_DEBUG ("Packet has UID " << packetToSend->GetUid ());
-//                        NS_LOG_LOGIC ("Schedule event (net device process buffered packets) to occur at time "
-//                            << (Simulator::Now () + globalClock - realPart).GetSeconds ()
-//                            << " seconds (net device " << GetAddress ()<< ", last scheduled event was at time "
-//                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
-//                        m_lastScheduledEvent = Simulator::Now () + globalClock - realPart;
-//                        Simulator::Schedule (globalClock - realPart, &NocNetDevice::ProcessBufferedPackets,
-//                            this, originalHeader, (Ptr<Packet>) 0);
-//                      }
-//                    else
-//                      {
-//                        NS_LOG_DEBUG ("An event was already scheduled at time "
-//                            << (Simulator::Now () + globalClock - realPart).GetSeconds ()
-//                            << " seconds (net device " << GetAddress () << ", last scheduled event was at time "
-//                            << m_lastScheduledEvent.GetSeconds () << " seconds)");
-//                      }
                   }
               }
           }

@@ -303,23 +303,7 @@ namespace ns3
     if ((m_maxBytes == 0 || (m_maxBytes > 0 && m_totBytes < m_maxBytes))
         && (m_maxPackets == 0 || (m_maxPackets > 0 && m_totPackets < m_maxPackets)))
       {
-//        int speedup = 1;
-//        if (m_currentPacketIndex != 0)
-//          {
-//            // a data packet will be sent
-//            IntegerValue dataFlitSpeedup;
-//            Ptr<NocRegistry> nocRegistry = NocRegistry::GetInstance ();
-//            nocRegistry->GetAttribute ("DataPacketSpeedup", dataFlitSpeedup);
-//            speedup = dataFlitSpeedup.Get ();
-//            NS_LOG_DEBUG ("Data packet speedup is " << speedup);
-//          }
-//        else
-//          {
-//            NS_LOG_DEBUG ("Head packet speedup is " << speedup);
-//          }
-
         Time globalClock = GetGlobalClock ();
-//        Time sendAtTime = globalClock / Scalar (speedup);
         Time sendAtTime = globalClock;
         if (m_totBytes == 0)
           {
@@ -327,7 +311,7 @@ namespace ns3
             sendAtTime = Seconds (0);
           }
         NS_LOG_DEBUG ("Schedule event (packet injection) to occur at time "
-            << (Simulator::Now () + sendAtTime).GetSeconds () << " seconds");
+            << Simulator::Now () + sendAtTime);
         m_sendEvent = Simulator::Schedule (sendAtTime, &NocSyncApplication::SendPacket, this);
       }
     else
@@ -344,7 +328,7 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    m_startEvent = Simulator::Schedule(Simulator::Now(), &NocSyncApplication::StartSending, this);
+    m_startEvent = Simulator::ScheduleNow (&NocSyncApplication::StartSending, this);
   }
 
   void
