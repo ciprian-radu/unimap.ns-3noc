@@ -62,7 +62,7 @@ namespace ns3
             .AddAttribute (
                 "GlobalClock",
                 "The global clock used by a synchronous NoC",
-                TimeValue (Seconds (0)),
+                TimeValue (PicoSeconds (0)),
                 MakeTimeAccessor (&NocRegistry::m_globalClock),
                 MakeTimeChecker ())
             ;

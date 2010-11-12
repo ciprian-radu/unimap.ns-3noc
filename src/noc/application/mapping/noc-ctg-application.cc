@@ -150,7 +150,7 @@ namespace ns3
 
     	NS_ASSERT_MSG (m_firstRunningIteration < m_iterations, "The last iteration of the CTG that received all the required data is "
             << m_firstRunningIteration << " This exceeds the number of CTG iterations set: " << m_iterations);
-    	ScheduleStartEvent (m_firstRunningIteration);
+    	ScheduleStartEvent (false, m_firstRunningIteration);
     	m_firstRunningIteration++;
     }
   }
@@ -194,8 +194,8 @@ namespace ns3
         m_totalExecTime += it->GetExecTime ();
       }
 
-    NS_LOG_INFO ("Computed a total execution time of " << m_totalExecTime.GetSeconds ()
-    		<< " seconds for the tasks from node " << GetNode ()->GetId ());
+    NS_LOG_INFO ("Computed a total execution time of " << m_totalExecTime
+        << " for the tasks from node " << GetNode ()->GetId ());
   }
 
   bool
@@ -296,8 +296,8 @@ namespace ns3
   void
   NocCtgApplication::StartApplication () // Called at time specified by Start
   {
-    NS_LOG_LOGIC ("Starting the application at time " << Simulator::Now ().GetSeconds () << " seconds");
-    NS_LOG_LOGIC ("The CTG will be iterated " << m_iterations << " times, with a period of " << m_period.GetSeconds () << " seconds");
+    NS_LOG_LOGIC ("Starting the application at time " << Simulator::Now ());
+    NS_LOG_LOGIC ("The CTG will be iterated " << m_iterations << " times, with a period of " << m_period);
 
     uint32_t nodeId = GetNode ()->GetId ();
     NS_LOG_DEBUG ("Tracing the flits received at node " << (int) nodeId);
@@ -322,7 +322,7 @@ namespace ns3
         // Ensure no pending event
         CancelEvents (i);
 
-        ScheduleStartEvent (i);
+        ScheduleStartEvent (true, i);
       }
   }
 
@@ -381,32 +381,25 @@ namespace ns3
     if ((m_maxBytes == 0 || (m_maxBytes > 0 && m_totBytes[iteration] < m_maxBytes))
         && (m_maxFlits == 0 || (m_maxFlits > 0 && m_totFlits[iteration] < m_maxFlits)))
       {
-//        int speedup = 1;
-//        if (m_currentFlitIndex[iteration] != 0)
-//          {
-//            // a data flit will be sent
-//            IntegerValue dataFlitSpeedup;
-//            Ptr<NocRegistry> nocRegistry = NocRegistry::GetInstance ();
-//            nocRegistry->GetAttribute ("DataFlitSpeedup", dataFlitSpeedup);
-//            speedup = dataFlitSpeedup.Get ();
-//            NS_LOG_DEBUG ("Data flit speedup is " << speedup);
-//          }
-//        else
-//          {
-//            NS_LOG_DEBUG ("Head flit speedup is " << speedup);
-//          }
-
         Time globalClock = GetGlobalClock ();
-//        Time sendAtTime = globalClock / Scalar (speedup);
-        Time sendAtTime = globalClock;
+        Time sendAtTime;
         if (m_totBytes[iteration] == 0)
           {
-            // force the first event to occur at time zero
-            sendAtTime = Seconds (0);
+            // the first flit injection event must occur with no delay
+            sendAtTime = PicoSeconds (0);
           }
-        sendAtTime += m_period * Scalar (iteration);
+        else
+          {
+            // find the next network clock cycle
+            uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetPicoSeconds ()
+                / globalClock.GetPicoSeconds ()); // 1 + current clock cycle
+            sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
+          }
+        NS_ASSERT_MSG (sendAtTime >= Scalar (0),
+            "The next flit injection is scheduled to run at a time less than the current simulation time!");
         NS_LOG_DEBUG ("Schedule event (flit injection) to occur at time "
-            << (Simulator::Now () + sendAtTime).GetSeconds () << " seconds");
+            << Simulator::Now () + sendAtTime);
+        // Simulator::Schedule (...) receives a relative time
         m_sendEvent[iteration] = Simulator::Schedule (sendAtTime, &NocCtgApplication::SendFlit, this, iteration);
       }
     else
@@ -420,20 +413,37 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::ScheduleStartEvent (uint64_t iteration)
+  NocCtgApplication::ScheduleStartEvent (bool injectionStarted, uint64_t iteration)
   {
-    NS_LOG_FUNCTION (iteration);
+    NS_LOG_FUNCTION (injectionStarted << iteration);
 
     if (m_receivedData[iteration] == m_totalData && m_taskDestinationList.size() > 0)
     {
-        NS_LOG_LOGIC ("Execution time is " << m_totalExecTime.GetSeconds () << " seconds.");
-        NS_LOG_LOGIC ("CTG period is " << m_period.GetSeconds () << " seconds.");
+        NS_LOG_LOGIC ("Execution time is " << m_totalExecTime);
+        NS_LOG_LOGIC ("CTG period is " << m_period);
         NS_LOG_LOGIC ("Current CTG iteration is " << iteration << " (iteration 0 is the first one).");
-        NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting flits after a time of "
-            << (m_totalExecTime + m_period * Scalar (iteration)).GetSeconds() << " seconds.");
 
-        m_startEvent[iteration] = Simulator::Schedule (Simulator::Now () + m_totalExecTime + m_period * Scalar (iteration),
-            &NocCtgApplication::StartSending, this, iteration);
+        Time delay;
+        if (injectionStarted)
+          {
+            // the execution of an IP core is simulated by introducing a delay
+            // (only before the first flit is injected into the network)
+            delay += m_totalExecTime;
+          }
+        delay += m_period * Scalar (iteration);
+        NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting flits after a delay of "
+            << delay);
+
+        Time globalClock = GetGlobalClock ();
+        uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetPicoSeconds ()
+            / globalClock.GetPicoSeconds ()); // 1 + current clock cycle
+        Time nextClock = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
+
+        NS_LOG_LOGIC ("The clock cycle when node " << GetNode ()->GetId () << " will start injecting flits is "
+            << globalClock * Scalar (clockMultiplier));
+
+        // Simulator::Schedule (...) receives a relative time
+        m_startEvent[iteration] = Simulator::Schedule (nextClock, &NocCtgApplication::StartSending, this, iteration);
     }
     else
     {

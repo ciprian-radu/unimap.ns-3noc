@@ -53,7 +53,7 @@ namespace ns3
                        MakeDataRateAccessor (&NocChannel::m_bps),
                        MakeDataRateChecker ())
         .AddAttribute ("Delay", "Transmission delay through the channel",
-                       TimeValue (Seconds (0)), // no channel delay by default
+                       TimeValue (PicoSeconds (0)), // no channel delay by default
                        MakeTimeAccessor (&NocChannel::m_delay),
                        MakeTimeChecker ())
         ;
@@ -168,59 +168,52 @@ namespace ns3
     NS_LOG_DEBUG("number of devices for node " << sender->GetNode()->GetId() << " is " << m_devices.size());
     NS_LOG_DEBUG ("The packet " << (*m_currentPkt[link]) << " has size " << (int) m_currentPkt[link]->GetSize ());
 
-    TimeValue timeValue;
-    NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
-    Time globalClock = timeValue.Get ();
-    if (globalClock.IsZero ())
+    int speedup = 1;
+    if (m_currentPkt[link] != 0)
       {
-        Time tEvent = Seconds (m_bps.CalculateTxTime (m_currentPkt[link]->GetSize ()));
-        NS_LOG_LOGIC ("The channel will send the packet in " << (m_delay.GetSeconds () + tEvent.GetSeconds())
-            << " seconds (" << m_delay.GetSeconds () << " + " << tEvent.GetSeconds()
-            << ") from " << from << " to " << m_currentDestDevice[link]->GetAddress () << " (final destination is " << to << ")");
-        m_state[link] = PROPAGATING;
-        if (!m_fullDuplex) {
-            NS_LOG_LOGIC ("switched to PROPAGATING");
-        } else {
-            NS_LOG_LOGIC ("switched to PROPAGATING (for link " << (int)link << ")");
-        }
-        NS_LOG_DEBUG ("Schedule event (net device receive) to occur at time "
-            << (Simulator::Now() + m_delay + tEvent).GetSeconds () << " seconds");
-        Simulator::Schedule(m_delay + tEvent, &NocChannel::TransmitEnd, this, sender, to, m_currentDestDevice[link], from);
+        NocHeader header;
+        m_currentPkt[link]->PeekHeader (header);
+        if (header.IsEmpty ())
+          {
+            // a data packet will be sent
+            IntegerValue dataFlitSpeedup;
+            Ptr<NocRegistry> nocRegistry = NocRegistry::GetInstance ();
+            nocRegistry->GetAttribute ("DataPacketSpeedup", dataFlitSpeedup);
+            speedup = dataFlitSpeedup.Get ();
+          }
+      }
+    NS_LOG_LOGIC ("The channel has a delay of " << m_delay);
+    NS_LOG_LOGIC ("Channel data rate (bandwidth) is " << m_bps);
+    if (speedup != 1)
+      {
+        NS_LOG_LOGIC ("Data flit speedup is " << speedup);
       }
     else
       {
-        int speedup = 1;
-        if (m_currentPkt[link] != 0)
-          {
-            NocHeader header;
-            m_currentPkt[link]->PeekHeader (header);
-            if (header.IsEmpty ())
-              {
-                // a data packet will be sent
-                IntegerValue dataFlitSpeedup;
-                Ptr<NocRegistry> nocRegistry = NocRegistry::GetInstance ();
-                nocRegistry->GetAttribute ("DataPacketSpeedup", dataFlitSpeedup);
-                speedup = dataFlitSpeedup.Get ();
-              }
-          }
         NS_LOG_DEBUG ("Data flit speedup is " << speedup);
-        if (m_fullDuplex) {
-            NS_LOG_LOGIC ("Working in full-duplex mode");
-        } else {
-            NS_LOG_LOGIC ("Working in half-duplex mode");
-        }
-        NS_LOG_LOGIC ("The channel will send the packet in " << (globalClock / Scalar (speedup)).GetSeconds()
-            << " seconds from " << from << " to " << m_currentDestDevice[link]->GetAddress () << " (final destination is " << to << ")");
-        m_state[link] = PROPAGATING;
-        if (!m_fullDuplex) {
-            NS_LOG_LOGIC ("switched to PROPAGATING");
-        } else {
-            NS_LOG_LOGIC ("switched to PROPAGATING (for link " << (int)link << ")");
-        }
-        NS_LOG_DEBUG ("Schedule event (net device receive) to occur at time "
-            << (Simulator::Now() + globalClock / Scalar (speedup)).GetSeconds () << " seconds");
-        Simulator::Schedule(globalClock / Scalar (speedup), &NocChannel::TransmitEnd, this, sender, to, m_currentDestDevice[link], from);
       }
+
+    if (m_fullDuplex) {
+        NS_LOG_LOGIC ("Working in full-duplex mode");
+    } else {
+        NS_LOG_LOGIC ("Working in half-duplex mode");
+    }
+    Time tEvent = Seconds (m_bps.CalculateTxTime (m_currentPkt[link]->GetSize ()));
+    NS_LOG_LOGIC ("The channel will send the packet in " << m_delay + tEvent
+        << " (" << m_delay << " + " << tEvent
+        << ") from " << from << " to " << m_currentDestDevice[link]->GetAddress () << " (final destination is " << to << ")");
+    m_state[link] = PROPAGATING;
+    if (!m_fullDuplex) {
+        NS_LOG_LOGIC ("switched to PROPAGATING");
+    } else {
+        NS_LOG_LOGIC ("switched to PROPAGATING (for link " << (int)link << ")");
+    }
+    NS_LOG_DEBUG ("Schedule event (channel transmission) to occur at time "
+        << Simulator::Now() + (m_delay + tEvent) / Scalar (speedup));
+    // if default values for delay and data rate are used (0 and respectively infinite), then the channel transports the data instantly
+    Simulator::Schedule ((m_delay + tEvent) / Scalar (speedup), &NocChannel::TransmitEnd, this, sender, to,
+        m_currentDestDevice[link], from);
+
     result = true;
 
     return result;

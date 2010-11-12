@@ -210,7 +210,7 @@ main (int argc, char *argv[])
 
   // Note: if you want to change the global clock from being measured in seconds,
   // be aware that the change must be done everywhere the global clock is used (NocRegistry references)
-  uint64_t globalClock = 1; // in seconds
+  Time globalClock = Seconds (1); // in seconds
 
   uint64_t flitsPerPacket = 9;
 
@@ -262,7 +262,7 @@ main (int argc, char *argv[])
 
   // set the global parameters
   NocRegistry::GetInstance ()->SetAttribute ("DataPacketSpeedup", IntegerValue (dataFlitSpeedup));
-  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (Seconds (globalClock)));
+  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (globalClock));
 
   // Here, we will explicitly create the NoC nodes.
   NS_LOG_INFO ("Create nodes.");

@@ -274,7 +274,7 @@ namespace ns3
         Time nextTime(Seconds(bits / static_cast<double> (m_dataRate.GetBitRate()) / speedup)); // Time till next packet
         NS_LOG_LOGIC ("nextTime = " << nextTime << " (packet size = " << bits << " data rate = " << m_dataRate.GetBitRate() << ")");
         NS_LOG_DEBUG ("Schedule event (packet injection) to occur at time "
-            << (Simulator::Now () + nextTime).GetSeconds () << " seconds");
+            << Simulator::Now () + nextTime);
         m_sendEvent = Simulator::Schedule(nextTime, &NocApplication::SendPacket, this);
       }
     else
@@ -288,7 +288,7 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    m_startEvent = Simulator::Schedule(Simulator::Now(), &NocApplication::StartSending, this);
+    m_startEvent = Simulator::ScheduleNow (&NocApplication::StartSending, this);
   }
 
   void
