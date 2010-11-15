@@ -145,7 +145,7 @@ void FlitReceivedCallback (int dummy, std::string path, Ptr<const Packet> flit)
 
   NS_LOG_LOGIC ("Flit " << *flit << " has injection time " << tag.GetInjectionTime()
       << " and receive time " << tag.GetReceiveTime ());
-  NS_ASSERT (tag.GetReceiveTime ().GetNanoSeconds () - tag.GetInjectionTime().GetNanoSeconds () >= 0);
+  NS_ASSERT (tag.GetReceiveTime ().GetPicoSeconds () - tag.GetInjectionTime().GetPicoSeconds () >= 0);
 }
 
 /**
@@ -178,8 +178,8 @@ void ComputeLatenciesOfPackets (Ptr<TimeMinMaxAvgTotalCalculator > calc)
               << lt.m_startTime << " " << lt.m_endTime);
           TimeValue globalClock;
           NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", globalClock);
-          calc->Update (NanoSeconds ((uint64_t)((lt.m_endTime.GetNanoSeconds () - lt.m_startTime.GetNanoSeconds ()) * 1.0
-              / globalClock.Get ().GetNanoSeconds ())));
+          calc->Update (PicoSeconds ((uint64_t) ((lt.m_endTime.GetPicoSeconds () - lt.m_startTime.GetPicoSeconds ()) * 1.0
+              / globalClock.Get ().GetPicoSeconds ())));
         }
     }
 }
@@ -208,9 +208,9 @@ main (int argc, char *argv[])
   // how many nodes a 2D mesh has horizontally
   uint32_t hSize = 4;
 
-  // Note: if you want to change the global clock from being measured in seconds,
-  // be aware that the change must be done everywhere the global clock is used (NocRegistry references)
-  Time globalClock = Seconds (1); // in seconds
+  Time globalClock = PicoSeconds (1000); // 1 ns -> NoC @ 1GHz
+
+  uint64_t flitSize = 32; // in bytes
 
   uint64_t flitsPerPacket = 9;
 
@@ -237,6 +237,7 @@ main (int argc, char *argv[])
   cmd.AddValue<std::string> ("author", "The author of this simulation (optional parameter).", author);
   cmd.AddValue<uint32_t> ("nodes", "The number of nodes from the NoC (default is 16)", numberOfNodes);
   cmd.AddValue<uint32_t> ("h-size", "How many nodes a 2D mesh has horizontally (default is 4)", hSize);
+  cmd.AddValue<uint64_t> ("flit-size", "The size of a flit, in bytes (default is 32, minimum value is given by the size of the packet header)", flitSize);
   cmd.AddValue<uint64_t> ("flits-per-packet", "How many flits a packet has (default is 9, minimum value is 2)", flitsPerPacket);
   cmd.AddValue<double> ("injection-probability", "The packet injection probability (default is 1 (maximum), minimum is zero).", injectionProbability);
   cmd.AddValue<int> ("data-packet-speedup", "The speedup used for data packets (compared to head packets) (default is 1 (minimum value) - no speedup)", dataFlitSpeedup);
@@ -254,6 +255,7 @@ main (int argc, char *argv[])
       "The number of nodes ("<< numberOfNodes
       <<") must be a multiple of the number of nodes on the horizontal axis ("
       << hSize << ")");
+  NS_ASSERT_MSG (flitSize >= (uint64_t) NocHeader::HEADER_SIZE, "The flit size must be at least " << NocHeader::HEADER_SIZE << "(the packet header size)!");
   NS_ASSERT_MSG (flitsPerPacket >= 2, "At least 2 flits per packet are required!");
   NS_ASSERT_MSG (injectionProbability >= 0 && injectionProbability <= 1, "Injection probability must be in [0,1]!");
   NS_ASSERT_MSG (dataFlitSpeedup >= 1, "Data packet speedup must be >= 1!");
@@ -276,10 +278,14 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocHelper> noc = CreateObject<NocHelper> ();
-// Note that the following channel attributes are not considered with a synchronous NoC (like this one)
 
-  //  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
-  //  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
+  // set channel bandwidth to 1 flit / network clock
+  // the channel's bandwidth is obviously expressed in bits / s
+  // however, in order to avoid losing precision, we work with PicoSeconds (instead of Seconds)
+  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ((uint64_t) (1e12 * (flitSize * 8)
+      / globalClock.GetPicoSeconds ()))));
+  // the channel has no propagation delay
+  noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (0)));
 
 // By default, we use full-duplex communication
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
@@ -310,7 +316,7 @@ main (int argc, char *argv[])
   // setting the routing protocol
   ObjectFactory routingProtocolFactory;
   routingProtocolFactory.SetTypeId ("ns3::XyRouting");
-  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
+//  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
 
 //  routingProtocolFactory.SetTypeId ("ns3::SlbRouting");
 //  routingProtocolFactory.Set ("LoadThreshold", IntegerValue (30));
@@ -335,7 +341,8 @@ main (int argc, char *argv[])
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
     {
       NocSyncApplicationHelper nocSyncAppHelper (nodes, devs, hSize);
-      nocSyncAppHelper.SetAttribute ("NumberOfPackets", UintegerValue (flitsPerPacket));
+      nocSyncAppHelper.SetAttribute ("FlitSize", UintegerValue (flitSize));
+      nocSyncAppHelper.SetAttribute ("NumberOfFlits", UintegerValue (flitsPerPacket));
       nocSyncAppHelper.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
       nocSyncAppHelper.SetAttribute ("TrafficPattern", EnumValue (
           NocSyncApplication::TrafficPatternFromString (trafficPattern)));
@@ -343,11 +350,11 @@ main (int argc, char *argv[])
 //      nocSyncAppHelper.SetAttribute ("MaxPackets", UintegerValue (100));
       nocSyncAppHelper.SetAttribute ("WarmupCycles", UintegerValue (warmupCycles));
       ApplicationContainer apps = nocSyncAppHelper.Install (nodes.Get (i)); // source
-      double startTime = 0.0;
-      apps.Start (Seconds (startTime));
-//      apps.Stop (Seconds (10.0));
+      uint64_t startTime = 0;
+      apps.Start (PicoSeconds (startTime));
+//      apps.Stop (PicoSeconds (10.0));
       // the application can also be limited by MaxPackets (the two ways of ending the application are equivalent)
-      apps.Stop (Seconds (simulationCycles * globalClock + startTime)); // stop = simulationCycles * globalClock + start
+      apps.Stop (PicoSeconds ((uint64_t) (simulationCycles * globalClock + startTime))); // stop = simulationCycles * globalClock + start
     }
  
 // Configure tracing of all enqueue, dequeue, and NetDevice receive events
@@ -386,12 +393,12 @@ main (int argc, char *argv[])
   // (if there are packets for which only a part of them is injected into the network,
   // then such messages are not counted)
   Ptr<CounterCalculator<> > appPacketInjected = CreateObject<CounterCalculator<> > ();
-  appPacketInjected->SetKey ("packets-received");
+  appPacketInjected->SetKey ("packets-injected");
   appPacketInjected->SetContext (context);
   // we have to put $ because MessageInjected is not an Attribute
   // by using * we specify that we count for all the messages, injected by all applications in all nodes
   // see http://www.nsnam.org/wiki/index.php/HOWTO_determine_the_path_of_an_attribute_or_trace_source
-  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocSyncApplication/MessageInjected",
+  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocSyncApplication/PacketInjected",
                   MakeBoundCallback (&PacketInjectedCallback, appPacketInjected));
   data.AddDataCalculator (appPacketInjected);
 
@@ -399,7 +406,7 @@ main (int argc, char *argv[])
   Ptr<CounterCalculator<> > appFlitInjected = CreateObject<CounterCalculator<> > ();
   appFlitInjected->SetKey ("flits-injected");
   appFlitInjected->SetContext (context);
-  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocSyncApplication/Tx",
+  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocSyncApplication/FlitInjected",
                   MakeBoundCallback (&FlitInjectedCallback, appFlitInjected));
   data.AddDataCalculator (appFlitInjected);
 
@@ -407,7 +414,7 @@ main (int argc, char *argv[])
   Ptr<TimeMinMaxAvgTotalCalculator> latencyStat = CreateObject<TimeMinMaxAvgTotalCalculator>();
   latencyStat->SetKey ("latency");
   latencyStat->SetContext (context);
-  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocSyncApplication/PacketReceived",
+  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocSyncApplication/FlitReceived",
                   MakeBoundCallback (&FlitReceivedCallback, 0));
   data.AddDataCalculator(latencyStat);
 
