@@ -612,7 +612,9 @@ namespace ns3
                 Time globalClock = timeValue.Get ();
                 if (globalClock.IsZero ())
                   {
-                    Time tEvent = Seconds (channel->GetDataRate ().CalculateTxTime (m_inQueue->Peek ()->GetSize ()));
+                    // the channel's bandwidth is obviously expressed in bits / s
+                    // however, in order to avoid losing precision, we create a PicoSeconds object (instead of a Seconds object)
+                    Time tEvent = PicoSeconds ((uint64_t) channel->GetDataRate ().CalculateTxTime (m_inQueue->Peek ()->GetSize ()));
                     Time time = tEvent + channel->GetDelay ();
                     if (m_lastScheduledEvent != Simulator::Now () + time)
                       {

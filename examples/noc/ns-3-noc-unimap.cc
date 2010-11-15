@@ -162,7 +162,7 @@ void FlitReceivedCallback (int dummy, std::string path, Ptr<const Packet> flit)
 
   NS_LOG_LOGIC ("Flit " << *flit << " has injection time " << tag.GetInjectionTime()
       << " and receive time " << tag.GetReceiveTime ());
-  NS_ASSERT (tag.GetReceiveTime ().GetNanoSeconds () - tag.GetInjectionTime().GetNanoSeconds () >= 0);
+  NS_ASSERT (tag.GetReceiveTime ().GetPicoSeconds () - tag.GetInjectionTime().GetPicoSeconds () >= 0);
 }
 
 /**
@@ -195,8 +195,8 @@ void ComputeLatenciesOfPackets (Ptr<TimeMinMaxAvgTotalCalculator > calc)
               << lt.m_startTime << " " << lt.m_endTime);
           TimeValue globalClock;
           NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", globalClock);
-          calc->Update (NanoSeconds ((uint64_t) ((lt.m_endTime.GetNanoSeconds () - lt.m_startTime.GetNanoSeconds ()) * 1.0
-              / globalClock.Get ().GetNanoSeconds ())));
+          calc->Update (PicoSeconds ((uint64_t) ((lt.m_endTime.GetPicoSeconds () - lt.m_startTime.GetPicoSeconds ()) * 1.0
+              / globalClock.Get ().GetPicoSeconds ())));
         }
     }
 }
@@ -294,9 +294,7 @@ main (int argc, char *argv[])
   // how many nodes a 2D mesh has horizontally
   uint32_t hSize = 4;
 
-  // Note: if you want to change the global clock from being measured in seconds,
-  // be aware that the change must be done everywhere the global clock is used (NocRegistry references)
-  Time globalClock = PicoSeconds (1000); // in picoseconds
+  Time globalClock = PicoSeconds (1000); // 1 ns -> NoC @ 1GHz
 
   uint64_t flitSize = 32; // in bytes
 
@@ -367,11 +365,12 @@ main (int argc, char *argv[])
   Ptr<NocHelper> noc = CreateObject<NocHelper> ();
 
   // set channel bandwidth to 1 flit / network clock
-  // FIXME properly set the channel bandwidth
-  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("256Gbps")));
-//  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ((uint64_t) ((flitSize * 8) / globalClock.GetSeconds ()))));
+  // the channel's bandwidth is obviously expressed in bits / s
+  // however, in order to avoid losing precision, we work with PicoSeconds (instead of Seconds)
+  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ((uint64_t) (1e12 * (flitSize * 8)
+      / globalClock.GetPicoSeconds ()))));
   // the channel has no propagation delay
-  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
+  noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (0)));
 
 // By default, we use full-duplex communication
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
@@ -608,7 +607,7 @@ main (int argc, char *argv[])
 
           NocCtgApplicationHelper nocCtgAppHelper (nodes, devs, hSize, taskList, taskSenderList, taskReceiverList);
           nocCtgAppHelper.SetAttribute ("Period", TimeValue (Seconds (theCtgType->period ().get ())));
-          nocCtgAppHelper.SetAttribute ("Iterations", UintegerValue (1));
+          nocCtgAppHelper.SetAttribute ("Iterations", UintegerValue (2));
           nocCtgAppHelper.SetAttribute ("FlitSize", UintegerValue (flitSize));
           nocCtgAppHelper.SetAttribute ("NumberOfFlits", UintegerValue (flitsPerPacket));
           //      nocCtgAppHelper.SetAttribute ("MaxFlits", UintegerValue (100));
@@ -620,11 +619,11 @@ main (int argc, char *argv[])
             }
 
           ApplicationContainer apps = nocCtgAppHelper.Install (nodes.Get (nodeId)); // source
-          double startTime = 0.0;
-          apps.Start (Seconds (startTime));
-          //      apps.Stop (Seconds (10.0));
+          uint64_t startTime = 0;
+          apps.Start (PicoSeconds (startTime));
+          //      apps.Stop (PicoSeconds (10.0));
           // the application can also be limited by MaxPackets (the two ways of ending the application are equivalent)
-          //      apps.Stop (Seconds (simulationCycles * globalClock + startTime)); // stop = simulationCycles * globalClock + start
+          //      apps.Stop (PicoSeconds ((uint64_t) (simulationCycles * globalClock + startTime))); // stop = simulationCycles * globalClock + start
 
         }
     }

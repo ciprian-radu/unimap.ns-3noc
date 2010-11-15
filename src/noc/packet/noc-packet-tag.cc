@@ -84,8 +84,8 @@ namespace ns3 {
     i.WriteU8 (m_type);
     i.WriteU32 (m_headPacketUid);
     i.WriteU8 (m_packetBlocked);
-    i.WriteU64 (m_injectionTime.GetNanoSeconds ());
-    i.WriteU64 (m_receiveTime.GetNanoSeconds ());
+    i.WriteU64 (m_injectionTime.GetPicoSeconds ());
+    i.WriteU64 (m_receiveTime.GetPicoSeconds ());
   }
 
   void
@@ -110,8 +110,8 @@ namespace ns3 {
     }
     m_headPacketUid = i.ReadU32 ();
     m_packetBlocked = i.ReadU8 ();
-    m_injectionTime = NanoSeconds (i.ReadU64 ());
-    m_receiveTime = NanoSeconds (i.ReadU64 ());
+    m_injectionTime = PicoSeconds (i.ReadU64 ());
+    m_receiveTime = PicoSeconds (i.ReadU64 ());
   }
 
   void

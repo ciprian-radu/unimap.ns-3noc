@@ -117,36 +117,35 @@ namespace ns3
                 " The vertical size of the 2D mesh is given by number of nodes", UintegerValue(4),
                 MakeUintegerAccessor(&NocSyncApplication::m_hSize),
                 MakeUintegerChecker<uint32_t> (2))
-            .AddAttribute("PacketSize", "The size of data packets sent (in Bytes). "
-                "For head packets, the size of the header is not included.", UintegerValue(512),
-                MakeUintegerAccessor(&NocSyncApplication::m_pktSize),
-                MakeUintegerChecker<uint32_t> (1))
-            .AddAttribute("NumberOfPackets", "How many packets a message will have.", UintegerValue(3),
-                MakeUintegerAccessor(&NocSyncApplication::m_numberOfPackets),
-                MakeUintegerChecker<uint32_t> (1))
+            .AddAttribute("FlitSize", "The flit size, in bytes "
+                "(the head flit will use part of this size for the packet header).", UintegerValue (32),
+                MakeUintegerAccessor(&NocSyncApplication::m_flitSize),
+                MakeUintegerChecker<uint32_t> ((uint32_t) NocHeader::HEADER_SIZE))
+            .AddAttribute ("NumberOfFlits", "The number of flits composing a packet.", UintegerValue (3),
+                MakeUintegerAccessor (&NocSyncApplication::m_numberOfFlits),
+                MakeUintegerChecker<uint32_t> (2))
             .AddAttribute("MaxBytes",
                 "The total number of bytes to send. Once these bytes are sent, "
-                "no packet is sent again. The value zero means that there is no limit. "
-                "Note that if you also set MaxPackets, both constraints must be met for the application to stop.",
+                "no flit is sent again. The value zero means that there is no limit. "
+                "Note that if you also set MaxFlits, both constraints must be met for the application to stop.",
                 UintegerValue(0), MakeUintegerAccessor(&NocSyncApplication::m_maxBytes),
                 MakeUintegerChecker<uint32_t> ())
-            .AddAttribute("MaxPackets",
-                "The maximum number of packets (head and data) that could be injected. "
-                "We say 'could' because the injection probability is considered. "
+            .AddAttribute ("MaxFlits",
+                "The maximum number of flits (head and data) that are injected. "
                 "The value zero means that there is no limit. "
                 "Note that if you also set MaxBytes, both constraints must be met for the application to stop.",
-                UintegerValue(0), MakeUintegerAccessor(&NocSyncApplication::m_maxPackets),
+                UintegerValue (0), MakeUintegerAccessor (&NocSyncApplication::m_maxFlits),
                 MakeUintegerChecker<uint32_t> ())
             .AddAttribute("WarmupCycles",
                 "How many warmup cycles are considered. During warmup cycles, no statistics are collected",
                 UintegerValue(0), MakeUintegerAccessor(&NocSyncApplication::m_warmupCycles),
                 MakeUintegerChecker<uint32_t> ())
-            .AddTraceSource("Tx", "A new packet is created and sent",
-                MakeTraceSourceAccessor(&NocSyncApplication::m_txTrace))
-            .AddTraceSource("MessageInjected", "A new message was injected into the network",
-                MakeTraceSourceAccessor(&NocSyncApplication::m_messageTrace))
-            .AddTraceSource("PacketReceived", "A packet reached its destination",
-                MakeTraceSourceAccessor(&NocSyncApplication::m_packetReceivedTrace))
+            .AddTraceSource("FlitInjected", "A flit packet is created and sent",
+                MakeTraceSourceAccessor(&NocSyncApplication::m_flitInjectedTrace))
+            .AddTraceSource("PacketInjected", "A new packet was injected into the network",
+                MakeTraceSourceAccessor(&NocSyncApplication::m_packetInjectedTrace))
+            .AddTraceSource("FlitReceived", "A flit reached its destination",
+                MakeTraceSourceAccessor(&NocSyncApplication::m_flitReceivedTrace))
             .AddAttribute("TrafficPattern",
                 "The traffic pattern which will be used by this application",
                 EnumValue (BIT_COMPLEMENT), MakeEnumAccessor (&NocSyncApplication::m_trafficPatternEnum),
@@ -167,12 +166,10 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    m_connected = false;
-    m_lastStartTime = Seconds(0);
     m_totBytes = 0;
-    m_totPackets = 0;
+    m_totFlits = 0;
     m_trafficPatternEnum = BIT_COMPLEMENT;
-    m_currentPacketIndex = 0;
+    m_currentFlitIndex = 0;
   }
 
   NocSyncApplication::~NocSyncApplication()
@@ -181,17 +178,17 @@ namespace ns3
   }
 
   void
-  NocSyncApplication::PacketReceivedCallback (std::string path, Ptr<const Packet> packet)
+  NocSyncApplication::FlitReceivedCallback (std::string path, Ptr<const Packet> packet)
   {
     NS_LOG_FUNCTION ("path" << path << "packet UID" << packet->GetUid ());
     if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
       {
-        NS_LOG_DEBUG ("Tracing the packet");
-        m_packetReceivedTrace (packet);
+        NS_LOG_DEBUG ("Tracing the flit");
+        m_flitReceivedTrace (packet);
       }
     else
       {
-        NS_LOG_DEBUG ("Not tracing the packet");
+        NS_LOG_DEBUG ("Not tracing the flit (warmup period)");
       }
   }
 
@@ -202,20 +199,21 @@ namespace ns3
     m_maxBytes = maxBytes;
   }
 
-  void NocSyncApplication::SetNetDeviceContainer(NetDeviceContainer devices)
+  void NocSyncApplication::SetNetDeviceContainer (NetDeviceContainer devices)
   {
-    NS_LOG_FUNCTION_NOARGS();
+    NS_LOG_FUNCTION_NOARGS ();
     m_devices = devices;
   }
 
-  void NocSyncApplication::SetNodeContainer(NodeContainer nodes)
+  void NocSyncApplication::SetNodeContainer (NodeContainer nodes)
   {
-    NS_LOG_FUNCTION_NOARGS();
+    NS_LOG_FUNCTION_NOARGS ();
+
     m_nodes = nodes;
   }
 
   void
-  NocSyncApplication::DoDispose(void)
+  NocSyncApplication::DoDispose ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -226,30 +224,26 @@ namespace ns3
   void
   NocSyncApplication::StartApplication() // Called at time specified by Start
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_LOGIC ("Starting the application at time " << Simulator::Now ());
 
     uint32_t nodeId = GetNode ()->GetId ();
-    NS_LOG_DEBUG ("Tracing the packets received at node " << (int) nodeId);
+    NS_LOG_DEBUG ("Tracing the flits received at node " << (int) nodeId);
     // we configure this trace here and not in the constructor, because
     // the node is not initialized yet at constructor time
     std::stringstream ss;
     ss << "/NodeList/" << nodeId << "/DeviceList/*/$ns3::NocNetDevice/Receive";
-    Config::Connect (ss.str (), MakeCallback (&NocSyncApplication::PacketReceivedCallback, this));
+    Config::Connect (ss.str (), MakeCallback (&NocSyncApplication::FlitReceivedCallback, this));
 
     NS_LOG_DEBUG ("Using the " << TrafficPatternToString(m_trafficPatternEnum) << " traffic pattern");
 
     // Ensure no pending event
     CancelEvents();
-    m_connected = true;
 
-    if (m_connected)
-      {
-        ScheduleStartEvent();
-      }
+    ScheduleStartEvent();
   }
 
   void
-  NocSyncApplication::StopApplication() // Called at time specified by Stop
+  NocSyncApplication::StopApplication () // Called at time specified by Stop
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -257,30 +251,29 @@ namespace ns3
   }
 
   void
-  NocSyncApplication::CancelEvents()
+  NocSyncApplication::CancelEvents ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    Simulator::Cancel(m_sendEvent);
-    Simulator::Cancel(m_startEvent);
+    Simulator::Cancel (m_sendEvent);
+    Simulator::Cancel (m_startEvent);
   }
 
   // Event handlers
   void
-  NocSyncApplication::StartSending()
+  NocSyncApplication::StartSending ()
   {
     NS_LOG_FUNCTION_NOARGS ();
-    m_lastStartTime = Simulator::Now();
-    ScheduleNextTx(); // Schedule the send packet event
+    ScheduleNextTx (); // Schedule the send flit event
   }
 
   void
-  NocSyncApplication::StopSending()
+  NocSyncApplication::StopSending ()
   {
     NS_LOG_FUNCTION_NOARGS ();
-    CancelEvents();
+    CancelEvents ();
 
-    ScheduleStartEvent();
+    ScheduleStartEvent ();
   }
 
   Time
@@ -296,35 +289,45 @@ namespace ns3
 
   // Private helpers
   void
-  NocSyncApplication::ScheduleNextTx()
+  NocSyncApplication::ScheduleNextTx ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
     if ((m_maxBytes == 0 || (m_maxBytes > 0 && m_totBytes < m_maxBytes))
-        && (m_maxPackets == 0 || (m_maxPackets > 0 && m_totPackets < m_maxPackets)))
+        && (m_maxFlits == 0 || (m_maxFlits > 0 && m_totFlits < m_maxFlits)))
       {
         Time globalClock = GetGlobalClock ();
-        Time sendAtTime = globalClock;
+        Time sendAtTime;
         if (m_totBytes == 0)
           {
-            // force the first event to occur at time zero
-            sendAtTime = Seconds (0);
+            // the first flit injection event must occur with no delay
+            sendAtTime = PicoSeconds (0);
           }
-        NS_LOG_DEBUG ("Schedule event (packet injection) to occur at time "
+        else
+          {
+            // find the next network clock cycle
+            uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetPicoSeconds ()
+                / globalClock.GetPicoSeconds ()); // 1 + current clock cycle
+            sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
+          }
+        NS_ASSERT_MSG (sendAtTime >= Scalar (0),
+            "The next flit injection is scheduled to run at a time less than the current simulation time!");
+        NS_LOG_DEBUG ("Schedule event (flit injection) to occur at time "
             << Simulator::Now () + sendAtTime);
-        m_sendEvent = Simulator::Schedule (sendAtTime, &NocSyncApplication::SendPacket, this);
+        // Simulator::Schedule (...) receives a relative time
+        m_sendEvent = Simulator::Schedule (sendAtTime, &NocSyncApplication::SendFlit, this);
       }
     else
       { // All done, cancel any pending events
         NS_LOG_DEBUG ("Stopping the application");
         NS_LOG_DEBUG ("maxBytes = " << m_maxBytes << " totBytes = " << m_totBytes);
-        NS_LOG_DEBUG ("maxPackets = " << m_maxPackets << " totPackets = " << m_totPackets);
+        NS_LOG_DEBUG ("maxFlits = " << m_maxFlits << " totFlits = " << m_totFlits);
         StopApplication();
       }
   }
 
   void
-  NocSyncApplication::ScheduleStartEvent()
+  NocSyncApplication::ScheduleStartEvent ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
@@ -332,10 +335,10 @@ namespace ns3
   }
 
   void
-  NocSyncApplication::SendPacket()
+  NocSyncApplication::SendFlit ()
   {
     NS_LOG_FUNCTION_NOARGS ();
-    NS_LOG_LOGIC ("sending packet at " << Simulator::Now ());
+    NS_LOG_LOGIC ("sending flit at " << Simulator::Now ());
     NS_ASSERT (m_sendEvent.IsExpired ());
 
     Ptr<NocNode> sourceNode = GetNode ()->GetObject<NocNode> ();
@@ -374,7 +377,7 @@ namespace ns3
           break;
 
         case UNIFORM_RANDOM:
-          if (m_currentPacketIndex == 0)
+          if (m_currentFlitIndex == 0)
             {
               m_uniformDestinationX = m_trafficPattern.GetUniformRandomNumber (0, m_hSize - 1);
               m_uniformDestinationY = m_trafficPattern.GetUniformRandomNumber (0, m_nodes.GetN() / m_hSize - 1);
@@ -428,16 +431,16 @@ namespace ns3
       }
     if (sourceNodeId == destinationNodeId)
       {
-        NS_LOG_LOGIC ("Trying to send a message from node " << sourceNodeId << " to node "
+        NS_LOG_LOGIC ("Trying to send a packet from node " << sourceNodeId << " to node "
             << destinationNodeId << ". Aborting because source and destination nodes are the same.");
         if (m_trafficPatternEnum == UNIFORM_RANDOM)
           {
-            ScheduleNextTx();
+            ScheduleNextTx ();
           }
       }
     else
       {
-        NS_LOG_LOGIC ("A packet is sent from node " << sourceNodeId << " to node " << destinationNodeId);
+        NS_LOG_LOGIC ("A flit is sent from node " << sourceNodeId << " to node " << destinationNodeId);
 
         uint32_t relativeX = 0;
         uint32_t relativeY = 0;
@@ -455,9 +458,9 @@ namespace ns3
         relativeY = relativeY | std::abs ((int) (destinationY - sourceY));
         // end traffic pattern
 
-        NS_ASSERT_MSG (m_numberOfPackets >= 1,
-            "The number of packets must be at least 1 (the head packet) but it is " << m_numberOfPackets);
-        if (m_currentPacketIndex == 0)
+        NS_ASSERT_MSG (m_numberOfFlits >= 1,
+            "The number of flits must be at least 1 (the head flit) but it is " << m_numberOfFlits);
+        if (m_currentFlitIndex == 0)
           {
             int randomValue = rand ();
             randomValue = randomValue % 100 + 1; // 1 .. 100
@@ -466,15 +469,16 @@ namespace ns3
                 NS_LOG_LOGIC ("A new message is injected into the network (injection probability is "
                     << m_injectionProbability << ")");
 
-                m_currentHeadPacket = Create<NocPacket> (relativeX, relativeY, sourceX,
-                    sourceY, m_numberOfPackets - 1, m_pktSize);
-                NS_LOG_LOGIC ("Preparing to inject packet " << *m_currentHeadPacket);
+                m_currentHeadFlit = Create<NocPacket> (relativeX, relativeY, sourceX,
+                    sourceY, m_numberOfFlits - 1, m_flitSize - NocHeader::HEADER_SIZE);
+                NS_LOG_LOGIC ("Preparing to inject packet " << *m_currentHeadFlit);
                 if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
                   {
-                    m_txTrace (m_currentHeadPacket);
+                    m_flitInjectedTrace (m_currentHeadFlit);
                   }
-                sourceNode->InjectPacket (m_currentHeadPacket, destinationNode);
-                m_currentPacketIndex++;
+                sourceNode->InjectPacket (m_currentHeadFlit, destinationNode);
+                m_currentFlitIndex++;
+                m_totBytes += m_flitSize - NocHeader::HEADER_SIZE;
               }
             else
               {
@@ -485,36 +489,36 @@ namespace ns3
         else
           {
             bool isTail = false;
-            if (m_currentPacketIndex + 1 == m_numberOfPackets)
+            if (m_currentFlitIndex + 1 == m_numberOfFlits)
               {
                 isTail = true;
-                NS_LOG_DEBUG ("About to inject a tail packet");
+                NS_LOG_DEBUG ("About to inject a tail flit");
               }
             else
               {
-                NS_LOG_DEBUG ("About to inject a data packet");
+                NS_LOG_DEBUG ("About to inject a data flit");
               }
-            Ptr<NocPacket> dataPacket = Create<NocPacket> (m_currentHeadPacket->GetUid (), m_pktSize, isTail);
+            Ptr<NocPacket> dataFlit = Create<NocPacket> (m_currentHeadFlit->GetUid (), m_flitSize, isTail);
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
-                m_txTrace (dataPacket);
+                m_flitInjectedTrace (dataFlit);
               }
-            sourceNode->InjectPacket (dataPacket, destinationNode);
-            m_currentPacketIndex++;
+            sourceNode->InjectPacket (dataFlit, destinationNode);
+            m_currentFlitIndex++;
+            m_totBytes += m_flitSize;
           }
-        if (m_currentPacketIndex == m_numberOfPackets)
+        if (m_currentFlitIndex == m_numberOfFlits)
           {
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
-                m_messageTrace (m_currentHeadPacket);
+                NS_LOG_DEBUG ("An entire packet was injected into the network");              
+                m_packetInjectedTrace (m_currentHeadFlit);
               }
-              m_currentPacketIndex = 0;
+              m_currentFlitIndex = 0;
           }
 
-        m_totBytes += m_pktSize;
-        m_totPackets ++;
-        m_lastStartTime = Simulator::Now ();
-        ScheduleNextTx();
+        m_totFlits ++;
+        ScheduleNextTx ();
       }
   }
 

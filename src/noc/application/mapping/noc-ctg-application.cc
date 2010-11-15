@@ -428,14 +428,13 @@ namespace ns3
           {
             // the execution of an IP core is simulated by introducing a delay
             // (only before the first flit is injected into the network)
-            delay += m_totalExecTime;
+            delay += m_totalExecTime + m_period * Scalar (iteration);
           }
-        delay += m_period * Scalar (iteration);
         NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting flits after a delay of "
             << delay);
 
         Time globalClock = GetGlobalClock ();
-        uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetPicoSeconds ()
+        uint64_t clockMultiplier = 1 + (uint64_t) ceil ((Simulator::Now () + delay).GetPicoSeconds ()
             / globalClock.GetPicoSeconds ()); // 1 + current clock cycle
         Time nextClock = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
 

@@ -198,7 +198,9 @@ namespace ns3
     } else {
         NS_LOG_LOGIC ("Working in half-duplex mode");
     }
-    Time tEvent = Seconds (m_bps.CalculateTxTime (m_currentPkt[link]->GetSize ()));
+    // the channel's bandwidth is obviously expressed in bits / s
+    // however, in order to avoid losing precision, we create a PicoSeconds object (instead of a Seconds object)
+    Time tEvent = PicoSeconds ((uint64_t) (1e12 * m_bps.CalculateTxTime (m_currentPkt[link]->GetSize ())));
     NS_LOG_LOGIC ("The channel will send the packet in " << m_delay + tEvent
         << " (" << m_delay << " + " << tEvent
         << ") from " << from << " to " << m_currentDestDevice[link]->GetAddress () << " (final destination is " << to << ")");
