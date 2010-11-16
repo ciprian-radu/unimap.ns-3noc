@@ -306,8 +306,6 @@ main (int argc, char *argv[])
 
   uint64_t bufferSize (9);
 
-  std::string trafficPattern = "UniformRandom";
-
   uint64_t warmupCycles = 1000;
 
   // the number of simulation cycles includes the warmup cycles
@@ -607,10 +605,10 @@ main (int argc, char *argv[])
 
           NocCtgApplicationHelper nocCtgAppHelper (nodes, devs, hSize, taskList, taskSenderList, taskReceiverList);
           nocCtgAppHelper.SetAttribute ("Period", TimeValue (Seconds (theCtgType->period ().get ())));
-          nocCtgAppHelper.SetAttribute ("Iterations", UintegerValue (2));
+          nocCtgAppHelper.SetAttribute ("Iterations", UintegerValue (1));
           nocCtgAppHelper.SetAttribute ("FlitSize", UintegerValue (flitSize));
           nocCtgAppHelper.SetAttribute ("NumberOfFlits", UintegerValue (flitsPerPacket));
-          //      nocCtgAppHelper.SetAttribute ("MaxFlits", UintegerValue (100));
+//          nocCtgAppHelper.SetAttribute ("MaxFlits", UintegerValue (100));
 
           uint32_t nodeId;
           if (!fromString<uint32_t> (nodeId, theMapType.node (), std::dec))
@@ -621,9 +619,9 @@ main (int argc, char *argv[])
           ApplicationContainer apps = nocCtgAppHelper.Install (nodes.Get (nodeId)); // source
           uint64_t startTime = 0;
           apps.Start (PicoSeconds (startTime));
-          //      apps.Stop (PicoSeconds (10.0));
-          // the application can also be limited by MaxPackets (the two ways of ending the application are equivalent)
-          //      apps.Stop (PicoSeconds ((uint64_t) (simulationCycles * globalClock + startTime))); // stop = simulationCycles * globalClock + start
+//          apps.Stop (PicoSeconds (10.0));
+//          // the application can also be limited by MaxPackets (the two ways of ending the application are equivalent)
+//          apps.Stop (PicoSeconds ((uint64_t) (simulationCycles * globalClock + startTime))); // stop = simulationCycles * globalClock + start
 
         }
     }
