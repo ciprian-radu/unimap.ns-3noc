@@ -257,6 +257,7 @@ private:
   uint32_t           m_warmupCycles;            // During warmup cycles, no statistics are collected
   vector<EventId>    m_startEvent;              // Event id for next start event
   vector<EventId>    m_sendEvent;               // Event id of pending send flit event
+  bool               m_injectionStarted;        // marks if this is the first time a flit is scheduled to be injected
   
   /** keeps all the tasks that are assigned to the IP core associated with this ns-3 application */
   list<TaskData> m_taskList;
@@ -331,11 +332,10 @@ private:
    * For each IP core from the CTG, the flit injection is just started with this method.
    * ScheduleNextTx (...) is used to continue the flit injection.
    *
-   * \param injectionStarted marks if this is the first time a flit is scheduled to be injected
    * \param iteration the CTG iteration number (0 is the first iteration)
    */
   void
-  ScheduleStartEvent (bool injectionStarted, uint64_t iteration);
+  ScheduleStartEvent (uint64_t iteration);
 
 };
 

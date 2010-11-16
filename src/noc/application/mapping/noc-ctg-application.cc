@@ -106,6 +106,7 @@ namespace ns3
     m_firstRunningIteration = 0;
     m_totalExecTime = Seconds (0);
     m_totalData = 0;
+    m_injectionStarted = false;
   }
 
   NocCtgApplication::~NocCtgApplication ()
@@ -145,12 +146,12 @@ namespace ns3
     {
         m_receivedData[m_firstRunningIteration] = m_totalData;
 
-    	NS_LOG_INFO ("Received " << m_totalData
-    			<< " bits of data. Since this is the amount of data expected, this node can start injecting flits.");
+    	NS_LOG_INFO ("Node " << GetNode ()->GetId () << " received " << m_totalData
+            << " bits of data. Since this is the amount of data expected, node " << GetNode ()->GetId () << " can start injecting flits.");
 
     	NS_ASSERT_MSG (m_firstRunningIteration < m_iterations, "The last iteration of the CTG that received all the required data is "
             << m_firstRunningIteration << " This exceeds the number of CTG iterations set: " << m_iterations);
-    	ScheduleStartEvent (false, m_firstRunningIteration);
+    	ScheduleStartEvent (m_firstRunningIteration);
     	m_firstRunningIteration++;
     }
   }
@@ -188,13 +189,15 @@ namespace ns3
 
     m_totalExecTime = Seconds (0);
 
+    NS_LOG_DEBUG ("Computing the total execution time for NoC node " << GetNode ()->GetId ());
     list<TaskData>::iterator it;
     for (it = m_taskList.begin (); it != m_taskList.end (); it++)
       {
+        NS_LOG_DEBUG ("Task " << it->GetId () << " has execution time " << it->GetExecTime ());
         m_totalExecTime += it->GetExecTime ();
       }
 
-    NS_LOG_INFO ("Computed a total execution time of " << m_totalExecTime
+    NS_LOG_LOGIC ("Computed a total execution time of " << m_totalExecTime
         << " for the tasks from node " << GetNode ()->GetId ());
   }
 
@@ -296,7 +299,7 @@ namespace ns3
   void
   NocCtgApplication::StartApplication () // Called at time specified by Start
   {
-    NS_LOG_LOGIC ("Starting the application at time " << Simulator::Now ());
+    NS_LOG_LOGIC ("Trying to start injecting flits by checking CTG dependencies (node " << GetNode ()->GetId () << ")");
     NS_LOG_LOGIC ("The CTG will be iterated " << m_iterations << " times, with a period of " << m_period);
 
     uint32_t nodeId = GetNode ()->GetId ();
@@ -322,7 +325,7 @@ namespace ns3
         // Ensure no pending event
         CancelEvents (i);
 
-        ScheduleStartEvent (true, i);
+        ScheduleStartEvent (i);
       }
   }
 
@@ -413,9 +416,9 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::ScheduleStartEvent (bool injectionStarted, uint64_t iteration)
+  NocCtgApplication::ScheduleStartEvent (uint64_t iteration)
   {
-    NS_LOG_FUNCTION (injectionStarted << iteration);
+    NS_LOG_FUNCTION (iteration);
 
     if (m_receivedData[iteration] == m_totalData && m_taskDestinationList.size() > 0)
     {
@@ -424,7 +427,7 @@ namespace ns3
         NS_LOG_LOGIC ("Current CTG iteration is " << iteration << " (iteration 0 is the first one).");
 
         Time delay;
-        if (injectionStarted)
+        if (!m_injectionStarted)
           {
             // the execution of an IP core is simulated by introducing a delay
             // (only before the first flit is injected into the network)
@@ -440,6 +443,8 @@ namespace ns3
 
         NS_LOG_LOGIC ("The clock cycle when node " << GetNode ()->GetId () << " will start injecting flits is "
             << globalClock * Scalar (clockMultiplier));
+
+        m_injectionStarted = true;
 
         // Simulator::Schedule (...) receives a relative time
         m_startEvent[iteration] = Simulator::Schedule (nextClock, &NocCtgApplication::StartSending, this, iteration);
