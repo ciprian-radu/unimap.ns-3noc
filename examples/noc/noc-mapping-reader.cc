@@ -46,6 +46,9 @@ findCoreInApcg(apcgType theApcgType, string coreId)
 int
 main(int argc, char* argv[])
 {
+
+  // FIXME the example is broken with the new mapping XSD
+
   try
     {
       // parse the mapping XML
@@ -58,8 +61,9 @@ main(int argc, char* argv[])
               research::noc::application_mapping::unified_framework::schema::mapping::mapping(
                   mappingXmlFilePath, flags::dont_validate));
 
-      cerr << "Mapping ID: " << theMappingType->id() << " APCG ID: "
-          << theMappingType->apcg() << endl;
+      // FIXME APCG ID
+//      cerr << "Mapping ID: " << theMappingType->id() << " APCG ID: "
+//          << theMappingType->apcg() << endl;
 
       //      for (mappingType::map_const_iterator i(theMappingType->map().begin()); i
       //          != theMappingType->map().end(); i++)
@@ -74,8 +78,9 @@ main(int argc, char* argv[])
           mappingXmlFilePath.find_last_of(FILE_SEPARATOR));
       //      cerr << "CTG file path: " << ctgFilePath << endl;
 
+      // FIXME APCG ID
       string apcgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "apcg-"
-          + theMappingType->apcg() + ".xml";
+          /*+ theMappingType->apcg()*/ + ".xml";
       //      cerr << "APCG XML file path: " << apcgXmlFilePath << endl;
       //      cerr << endl;
 
@@ -86,9 +91,10 @@ main(int argc, char* argv[])
               research::noc::application_mapping::unified_framework::schema::apcg::apcg(
                   apcgXmlFilePath, flags::dont_validate));
 
-      NS_ASSERT_MSG (theMappingType->apcg() == theApcgType->id(),
-          "Mapping XML says the APCG ID is " << theMappingType->apcg()
-          << " but, APCG XML says the APCG ID is " << theApcgType->id() << "!");
+      // FIXME APCG ID
+//      NS_ASSERT_MSG (theMappingType->apcg() == theApcgType->id(),
+//          "Mapping XML says the APCG ID is " << theMappingType->apcg()
+//          << " but, APCG XML says the APCG ID is " << theApcgType->id() << "!");
 
       //      for (apcgType::core_const_iterator i(theApcgType->core().begin()); i
       //          != theApcgType->core().end(); i++)
