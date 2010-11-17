@@ -92,7 +92,7 @@ namespace ns3
                   {
                     mapType theMapType = *k;
 
-                    if (theMapType.core ().get () == theCoreType.id ())
+                    if (theMapType.apcg () == theApcgType.id() && theMapType.core ().get () == theCoreType.id ())
                       {
                         nodeId = theMapType.node ();
                         goto done;
@@ -137,39 +137,38 @@ namespace ns3
 
         string ctgFilePath = m_mappingXmlFilePath.substr (0, m_mappingXmlFilePath.find_last_of (FILE_SEPARATOR));
 
-        // FIXME APCG ID
-        string apcgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "apcg-" + /*theMappingType->apcg () +*/ ".xml";
-        NS_LOG_LOGIC ("APCG XML file path is " << apcgXmlFilePath);
-
-        // parse the APCG XML
-        auto_ptr<apcgType> theApcgType (research::noc::application_mapping::unified_framework::schema::apcg::apcg (
-            apcgXmlFilePath, flags::dont_validate));
-
-        // FIXME APCG ID
-//        NS_ASSERT_MSG (theMappingType->apcg () == theApcgType->id (),
-//            "Mapping XML says the APCG ID is " << theMappingType->apcg ()
-//            << " but, APCG XML says the APCG ID is " << theApcgType->id () << "!");
-
-        string ctgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "ctg-" + theApcgType->ctg () + ".xml";
-        NS_LOG_LOGIC ("CTG XML file path is " << ctgXmlFilePath);
-
-        // parse the CTG XML
-        auto_ptr<ctgType> theCtgType (research::noc::application_mapping::unified_framework::schema::ctg::ctg (ctgXmlFilePath,
-            flags::dont_validate));
-
-        NS_ASSERT_MSG (theApcgType->ctg () == theCtgType->id (),
-            "APCG XML says the CTG ID is " << theApcgType->ctg ()
-            << " but, CTG XML says the CTG ID is " << theCtgType->id () << "!");
-
-        // extract all required information from all XMLs
-        string coresFilePath = ctgFilePath.substr (0, ctgFilePath.find_last_of (FILE_SEPARATOR) + 1) + "cores";
-
-        string tasksFilePath = ctgFilePath + FILE_SEPARATOR + "tasks";
-
         for (mappingType::map_const_iterator i (theMappingType->map ().begin ()); i != theMappingType->map ().end (); i++)
           {
             mapType theMapType = *i;
-            NS_LOG_INFO ("\t node: " << theMapType.node ());NS_LOG_INFO ("\t core: " << theMapType.core ());
+            NS_LOG_INFO ("\t node: " << theMapType.node ());
+            NS_LOG_INFO ("\t core: " << theMapType.core ());
+
+            string apcgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "apcg-" + theMapType.apcg () + ".xml";
+            NS_LOG_LOGIC ("APCG XML file path is " << apcgXmlFilePath);
+
+            // parse the APCG XML
+            auto_ptr<apcgType> theApcgType (research::noc::application_mapping::unified_framework::schema::apcg::apcg (
+                apcgXmlFilePath, flags::dont_validate));
+
+            NS_ASSERT_MSG (theMapType.apcg () == theApcgType->id (),
+                "Mapping XML says the APCG ID is " << theMapType.apcg ()
+                << " but, APCG XML says the APCG ID is " << theApcgType->id () << "!");
+
+            string ctgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "ctg-" + theApcgType->ctg () + ".xml";
+            NS_LOG_LOGIC ("CTG XML file path is " << ctgXmlFilePath);
+
+            // parse the CTG XML
+            auto_ptr<ctgType> theCtgType (research::noc::application_mapping::unified_framework::schema::ctg::ctg (ctgXmlFilePath,
+                flags::dont_validate));
+
+            NS_ASSERT_MSG (theApcgType->ctg () == theCtgType->id (),
+                "APCG XML says the CTG ID is " << theApcgType->ctg ()
+                << " but, CTG XML says the CTG ID is " << theCtgType->id () << "!");
+
+            // extract all required information from all XMLs
+            string coresFilePath = ctgFilePath.substr (0, ctgFilePath.find_last_of (FILE_SEPARATOR) + 1) + "cores";
+
+            string tasksFilePath = ctgFilePath + FILE_SEPARATOR + "tasks";
 
             string coreXmlFilePath = coresFilePath + FILE_SEPARATOR + "core-" + theMapType.core ().get () + ".xml";
             NS_LOG_LOGIC ("IP core XML file path is " << coreXmlFilePath);
@@ -209,7 +208,8 @@ namespace ns3
                     research::noc::application_mapping::unified_framework::schema::task::task (taskXmlFilePath,
                         flags::dont_validate));
                 NS_ASSERT_MSG (theApcgTaskType.id () == theTaskType->ID (), "APCG XML says the task ID is "
-                    << theApcgTaskType.id () << " but, task XML says the ID is " << theTaskType->ID () << "!");NS_LOG_INFO ("\t\t (name: " << theTaskType->name () << " type: "
+                    << theApcgTaskType.id () << " but, task XML says the ID is " << theTaskType->ID () << "!");
+                NS_LOG_INFO ("\t\t (name: " << theTaskType->name () << " type: "
                     << theTaskType->type ());
 
                 for (research::noc::application_mapping::unified_framework::schema::core::coreType::task_const_iterator i (

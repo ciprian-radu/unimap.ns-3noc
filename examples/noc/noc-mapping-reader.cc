@@ -47,101 +47,86 @@ int
 main(int argc, char* argv[])
 {
 
-  // FIXME the example is broken with the new mapping XSD
-
   try
     {
       // parse the mapping XML
 
       string mappingXmlFilePath(
-          "../Mapper/xml/e3s/auto-indust-mocsyn.tgff/ctg-0/mapping-0.xml");
+          "../Mapper/xml/e3s/auto-indust-mocsyn.tgff/ctg-0+1/mapping-0+1_1_0.xml");
 
       auto_ptr<mappingType>
           theMappingType(
               research::noc::application_mapping::unified_framework::schema::mapping::mapping(
                   mappingXmlFilePath, flags::dont_validate));
 
-      // FIXME APCG ID
-//      cerr << "Mapping ID: " << theMappingType->id() << " APCG ID: "
-//          << theMappingType->apcg() << endl;
+      cerr << "Printing the core to node mappings" << endl;
 
-      //      for (mappingType::map_const_iterator i(theMappingType->map().begin()); i
-      //          != theMappingType->map().end(); i++)
-      //        {
-      //          mapType theMapType = *i;
-      //          cerr << "\t node: " << theMapType.node() << endl;
-      //          cerr << "\t core: " << theMapType.core() << endl;
-      //          cerr << endl;
-      //        }
-
-      string ctgFilePath = mappingXmlFilePath.substr(0,
-          mappingXmlFilePath.find_last_of(FILE_SEPARATOR));
-      //      cerr << "CTG file path: " << ctgFilePath << endl;
-
-      // FIXME APCG ID
-      string apcgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "apcg-"
-          /*+ theMappingType->apcg()*/ + ".xml";
-      //      cerr << "APCG XML file path: " << apcgXmlFilePath << endl;
-      //      cerr << endl;
-
-      // parse the APCG XML
-
-      auto_ptr<apcgType>
-          theApcgType(
-              research::noc::application_mapping::unified_framework::schema::apcg::apcg(
-                  apcgXmlFilePath, flags::dont_validate));
-
-      // FIXME APCG ID
-//      NS_ASSERT_MSG (theMappingType->apcg() == theApcgType->id(),
-//          "Mapping XML says the APCG ID is " << theMappingType->apcg()
-//          << " but, APCG XML says the APCG ID is " << theApcgType->id() << "!");
-
-      //      for (apcgType::core_const_iterator i(theApcgType->core().begin()); i
-      //          != theApcgType->core().end(); i++)
-      //        {
-      //          apcgType::core_type theApcgCoreType = *i;
-      //          cerr << "\t core: " << theApcgCoreType.id() << endl;
-      //          for (apcgType::core_type::task_const_iterator i(
-      //              theApcgCoreType.task().begin()); i != theApcgCoreType.task().end(); i++)
-      //            {
-      //              apcgType::core_type::task_type theTaskType = *i;
-      //              cerr << "\t\t task: " << theTaskType << endl;
-      //              cerr << endl;
-      //            }
-      //        }
-
-      string ctgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "ctg-"
-          + theApcgType->ctg() + ".xml";
-      //      cerr << "CTG XML file path: " << ctgXmlFilePath << endl;
-      //      cerr << endl;
-
-      // parse the CTG XML
-
-      auto_ptr<ctgType>
-          theCtgType(
-              research::noc::application_mapping::unified_framework::schema::ctg::ctg(
-                  ctgXmlFilePath, flags::dont_validate));
-
-      NS_ASSERT_MSG (theApcgType->ctg() == theCtgType->id(),
-          "APCG XML says the CTG ID is " << theApcgType->ctg()
-          << " but, CTG XML says the CTG ID is " << theCtgType->id() << "!");
-
-      cerr << "CTG ID: " << theCtgType->id() << " CTG period: "
-          << theCtgType->period() << " (ms)" << endl;
-
-      // extract all required information from all XMLs
-
-      string coresFilePath = ctgFilePath.substr(0, ctgFilePath.find_last_of(
-          FILE_SEPARATOR) + 1) + "cores";
-
-      string tasksFilePath = ctgFilePath + FILE_SEPARATOR + "tasks";
-
-      for (mappingType::map_const_iterator i(theMappingType->map().begin()); i
-          != theMappingType->map().end(); i++)
+      for (mappingType::map_const_iterator i (theMappingType->map ().begin ()); i != theMappingType->map ().end (); i++)
         {
           mapType theMapType = *i;
-          cerr << "\t node: " << theMapType.node() << endl;
-          cerr << "\t core: " << theMapType.core();
+          cerr << "core: " << theMapType.core () << endl;
+          cerr << "node: " << theMapType.node () << endl;
+
+          cerr << "Mapping ID: " << theMappingType->id () << " APCG ID: " << theMapType.apcg () << endl;
+
+          //      for (mappingType::map_const_iterator i(theMappingType->map().begin()); i
+          //          != theMappingType->map().end(); i++)
+          //        {
+          //          mapType theMapType = *i;
+          //          cerr << "\t node: " << theMapType.node() << endl;
+          //          cerr << "\t core: " << theMapType.core() << endl;
+          //          cerr << endl;
+          //        }
+
+          string ctgFilePath = mappingXmlFilePath.substr (0, mappingXmlFilePath.find_last_of (FILE_SEPARATOR));
+          //      cerr << "CTG file path: " << ctgFilePath << endl;
+
+          string apcgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "apcg-" + theMapType.apcg () + ".xml";
+          //      cerr << "APCG XML file path: " << apcgXmlFilePath << endl;
+          //      cerr << endl;
+
+          // parse the APCG XML
+
+          auto_ptr<apcgType> theApcgType (research::noc::application_mapping::unified_framework::schema::apcg::apcg (
+              apcgXmlFilePath, flags::dont_validate));
+
+          NS_ASSERT_MSG (theMapType.apcg () == theApcgType->id (), "Mapping XML says the APCG ID is " << theMapType.apcg ()
+              << " but, APCG XML says the APCG ID is " << theApcgType->id() << "!");
+
+          //      for (apcgType::core_const_iterator i(theApcgType->core().begin()); i
+          //          != theApcgType->core().end(); i++)
+          //        {
+          //          apcgType::core_type theApcgCoreType = *i;
+          //          cerr << "\t core: " << theApcgCoreType.id() << endl;
+          //          for (apcgType::core_type::task_const_iterator i(
+          //              theApcgCoreType.task().begin()); i != theApcgCoreType.task().end(); i++)
+          //            {
+          //              apcgType::core_type::task_type theTaskType = *i;
+          //              cerr << "\t\t task: " << theTaskType << endl;
+          //              cerr << endl;
+          //            }
+          //        }
+
+          string ctgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "ctg-" + theApcgType->ctg () + ".xml";
+          //      cerr << "CTG XML file path: " << ctgXmlFilePath << endl;
+          //      cerr << endl;
+
+          // parse the CTG XML
+
+          auto_ptr<ctgType> theCtgType (research::noc::application_mapping::unified_framework::schema::ctg::ctg (
+              ctgXmlFilePath, flags::dont_validate));
+
+          NS_ASSERT_MSG (theApcgType->ctg() == theCtgType->id(),
+              "APCG XML says the CTG ID is " << theApcgType->ctg()
+              << " but, CTG XML says the CTG ID is " << theCtgType->id() << "!");
+
+          cerr << "CTG ID: " << theCtgType->id () << " CTG period: " << theCtgType->period () << " (ms)" << endl;
+
+          // extract all required information from all XMLs
+
+          string coresFilePath = ctgFilePath.substr (0, ctgFilePath.find_last_of (FILE_SEPARATOR) + 1) + "cores";
+
+          string tasksFilePath = ctgFilePath + FILE_SEPARATOR + "tasks";
 
           string coreXmlFilePath = coresFilePath + FILE_SEPARATOR + "core-"
               + theMapType.core().get() + ".xml";
@@ -165,80 +150,66 @@ main(int argc, char* argv[])
               theMapType.core().get());
           NS_ASSERT_MSG (theApcgCoreType.id() != "",
               "Error: couldn't find core with ID " << theMapType.core() << " in the APCG XML!");
-          for (apcgType::core_type::task_const_iterator i(
-              theApcgCoreType.task().begin()); i
-              != theApcgCoreType.task().end(); i++)
+          for (apcgType::core_type::task_const_iterator i (theApcgCoreType.task ().begin ()); i
+              != theApcgCoreType.task ().end (); i++)
             {
               apcgType::core_type::task_type theApcgTaskType = *i;
-              cerr << "\t\t task: " << theApcgTaskType.id();
+              cerr << "task: " << theApcgTaskType.id ();
 
-              string taskXmlFilePath = tasksFilePath + FILE_SEPARATOR + "task-"
-                  + theApcgTaskType.id() + ".xml";
+              string taskXmlFilePath = tasksFilePath + FILE_SEPARATOR + "task-" + theApcgTaskType.id () + ".xml";
 
-              auto_ptr<
-                  research::noc::application_mapping::unified_framework::schema::task::taskType>
-                  theTaskType(
-                      research::noc::application_mapping::unified_framework::schema::task::task(
-                          taskXmlFilePath, flags::dont_validate));
+              auto_ptr<research::noc::application_mapping::unified_framework::schema::task::taskType> theTaskType (
+                  research::noc::application_mapping::unified_framework::schema::task::task (taskXmlFilePath,
+                      flags::dont_validate));
               NS_ASSERT_MSG (theApcgTaskType.id() == theTaskType->ID(), "APCG XML says the task ID is "
                   << theApcgTaskType.id() << " but, task XML says the ID is " << theTaskType->ID() << "!");
-              cerr << " (name: " << theTaskType->name() << " type: "
-                  << theTaskType->type() << " ";
+              cerr << " (name: " << theTaskType->name () << " type: " << theTaskType->type () << " ";
 
-              for (research::noc::application_mapping::unified_framework::schema::core::coreType::task_const_iterator
-                  i(theCoreType->task().begin()); i
-                  != theCoreType->task().end(); i++)
+              for (research::noc::application_mapping::unified_framework::schema::core::coreType::task_const_iterator i (
+                  theCoreType->task ().begin ()); i != theCoreType->task ().end (); i++)
                 {
-                  research::noc::application_mapping::unified_framework::schema::core::coreType::task_type
-                      theCoreTaskType = *i;
-                  if (theTaskType->type() == theCoreTaskType.type())
+                  research::noc::application_mapping::unified_framework::schema::core::coreType::task_type theCoreTaskType = *i;
+                  if (theTaskType->type () == theCoreTaskType.type ())
                     {
-                      cerr << "execution time: " << theCoreTaskType.execTime()
-                          << " (s) " << "power:" << theCoreTaskType.power()
-                          << " (W) )" << endl;
+                      cerr << "execution time: " << theCoreTaskType.execTime () << " (s) " << "power:"
+                          << theCoreTaskType.power () << " (W) )" << endl;
                       break;
                     }
                 }
             }
           cerr << endl;
-        }
 
-      cerr << "Communications:" << endl;
+          cerr << "Communications:" << endl;
 
-      for (ctgType::communication_const_iterator i(
-          theCtgType->communication().begin()); i
-          != theCtgType->communication().end(); i++)
-        {
-          ctgType::communication_type theCommunicationType = *i;
-
-          cerr << "\tsource task: " << theCommunicationType.source().id()
-              << endl;
-          for (research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_const_iterator
-              i(theCommunicationType.source().deadline().begin()); i
-              != theCommunicationType.source().deadline().end(); i++)
+          for (ctgType::communication_const_iterator i (theCtgType->communication ().begin ()); i
+              != theCtgType->communication ().end (); i++)
             {
-              research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_type
-                  deadline = *i;
-              cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline
-                  << " (ms)" << endl;
+              ctgType::communication_type theCommunicationType = *i;
+
+              cerr << "\tsource task: " << theCommunicationType.source ().id () << endl;
+              for (research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_const_iterator
+                  i (theCommunicationType.source ().deadline ().begin ()); i
+                  != theCommunicationType.source ().deadline ().end (); i++)
+                {
+                  research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_type
+                      deadline = *i;
+                  cerr << "\t\tdeadline: " << deadline.type () << " at " << deadline << " (ms)" << endl;
+                }
+
+              cerr << "\tdestination task: " << theCommunicationType.destination ().id () << endl;
+              for (research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_const_iterator
+                  i (theCommunicationType.destination ().deadline ().begin ()); i
+                  != theCommunicationType.destination ().deadline ().end (); i++)
+                {
+                  research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_type
+                      deadline = *i;
+                  cerr << "\t\tdeadline: " << deadline.type () << " at " << deadline << " (ms)" << endl;
+                }
+
+              cerr << "\tcommunication volume: " << theCommunicationType.volume () << " (bits)" << endl;
+
+              cerr << endl;
             }
-
-          cerr << "\tdestination task: "
-              << theCommunicationType.destination().id() << endl;
-          for (research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_const_iterator
-              i(theCommunicationType.destination().deadline().begin()); i
-              != theCommunicationType.destination().deadline().end(); i++)
-            {
-              research::noc::application_mapping::unified_framework::schema::ctg::communicatingTaskType::deadline_type
-                  deadline = *i;
-              cerr << "\t\tdeadline: " << deadline.type() << " at " << deadline
-                  << " (ms)" << endl;
-            }
-
-          cerr << "\tcommunication volume: " << theCommunicationType.volume()
-              << " (bits)" << endl;
-
-          cerr << endl;
         }
 
     }
