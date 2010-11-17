@@ -109,7 +109,6 @@ namespace ns3
     m_firstRunningIteration = 0;
     m_totalExecTime = Seconds (0);
     m_totalData = 0;
-    m_injectionStarted = false;
   }
 
   NocCtgApplication::~NocCtgApplication ()
@@ -268,7 +267,7 @@ namespace ns3
           }
       }
 
-    NS_LOG_INFO ("The total amount of data to be received by this node is " << m_totalData << " bits.");
+    NS_LOG_INFO ("The total amount of data to be received by node " << GetNode ()->GetId () << " is " << m_totalData << " bits.");
   }
 
   void
@@ -315,6 +314,7 @@ namespace ns3
 
     for (uint64_t i = 0; i < m_iterations; ++i)
       {
+        m_injectionStarted.insert (m_injectionStarted.end (), false);
         m_totBytes.insert (m_totBytes.end (), 0);
         m_totFlits.insert (m_totFlits.end (), 0);
         m_currentFlitIndex.insert (m_currentFlitIndex.end (), 0);
@@ -430,11 +430,16 @@ namespace ns3
         NS_LOG_LOGIC ("Current CTG iteration is " << iteration << " (iteration 0 is the first one).");
 
         Time delay;
-        if (!m_injectionStarted)
+        if (!m_injectionStarted[iteration])
           {
+            NS_LOG_LOGIC ("This is the first time when node " << GetNode ()->GetId () << " injects flits from CTG iteration " << iteration);
             // the execution of an IP core is simulated by introducing a delay
             // (only before the first flit is injected into the network)
             delay += m_totalExecTime + m_period * Scalar (iteration);
+          }
+        else
+          {
+            NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " continues injecting flits from CTG iteration " << iteration);
           }
         NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting flits after a delay of "
             << delay);
@@ -447,7 +452,7 @@ namespace ns3
         NS_LOG_LOGIC ("The clock cycle when node " << GetNode ()->GetId () << " will start injecting flits is "
             << globalClock * Scalar (clockMultiplier));
 
-        m_injectionStarted = true;
+        m_injectionStarted[iteration] = true;
 
         // Simulator::Schedule (...) receives a relative time
         m_startEvent[iteration] = Simulator::Schedule (nextClock, &NocCtgApplication::StartSending, this, iteration);

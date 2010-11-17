@@ -341,7 +341,7 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Create CTG based Applications.");
 
-  NocCtgApplicationHelper ctgApplicationHelper (mappingXmlFilePath, 1, flitSize, flitsPerPacket, simulationCycles, nodes, devs,
+  NocCtgApplicationHelper ctgApplicationHelper (mappingXmlFilePath, 2, flitSize, flitsPerPacket, simulationCycles, nodes, devs,
       hSize);
   ctgApplicationHelper.Initialize ();
 
