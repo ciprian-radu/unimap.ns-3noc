@@ -1,6 +1,8 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2009 Systems and Networking, University of Augsburg, Germany
+ * Copyright (c) 2010
+ *               Advanced Computer Architecture and Processing Systems (ACAPS),
+ *               Lucian Blaga University of Sibiu, Romania
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,7 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
+ * Author: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
+ *         http://webspace.ulbsibiu.ro/ciprian.radu/
  */
 
 #include "noc-net-device.h"
@@ -64,7 +67,7 @@ namespace ns3
   }
 
   NocNetDevice::NocNetDevice() :
-    m_channel(0), m_node(0), m_mtu(0xffff), m_ifIndex(0), m_nocHelper(0), m_routingDirection(0)
+    m_channel (0), m_node (0), m_mtu (0xffff), m_ifIndex (0), m_nocTopology (0), m_routingDirection (0)
   {
     m_lastScheduledEvent = PicoSeconds (0);
   }
@@ -138,7 +141,7 @@ namespace ns3
         // ask the node to deal with this (the node talks to the router)
         NS_LOG_DEBUG ("The packet is intended for another net device.");
         Ptr<NocNode> nocNode = GetNode ()->GetObject<NocNode> ();
-        Ptr<NocNetDevice> destinationNetDevice = GetNocHelper ()->FindNetDeviceByAddress (to);
+        Ptr<NocNetDevice> destinationNetDevice = GetNocTopology ()->FindNetDeviceByAddress (to);
         nocNode->Send (this, packet, destinationNetDevice->GetNode ()->GetObject<NocNode> ());
       }
   }
@@ -771,15 +774,15 @@ namespace ns3
   }
 
   void
-  NocNetDevice::SetNocHelper (Ptr<NocHelper> nocHelper)
+  NocNetDevice::SetNocTopology (Ptr<NocTopology> nocTopology)
   {
-    m_nocHelper = nocHelper;
+    m_nocTopology = nocTopology;
   }
 
-  Ptr<NocHelper>
-  NocNetDevice::GetNocHelper () const
+  Ptr<NocTopology>
+  NocNetDevice::GetNocTopology () const
   {
-    return m_nocHelper;
+    return m_nocTopology;
   }
 
   bool

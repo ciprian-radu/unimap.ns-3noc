@@ -34,7 +34,7 @@
 #include "ns3/core-module.h"
 #include "ns3/simulator-module.h"
 #include "ns3/node-module.h"
-#include "ns3/helper-module.h"
+#include "ns3/topology-module.h"
 #include "ns3/noc-ctg-application.h"
 #include "ns3/noc-ctg-application-helper.h"
 #include "ns3/noc-node.h"
@@ -44,6 +44,7 @@
 #include "ns3/so-load-router-component.h"
 #include "ns3/noc-registry.h"
 #include "ns3/integer.h"
+#include "ns3/uinteger.h"
 #include "ns3/stats-module.h"
 #include "ns3/noc-packet-tag.h"
 #include "ns3/nstime.h"
@@ -280,7 +281,8 @@ main (int argc, char *argv[])
 //  nodes.Create (numberOfNodes);
 
   NS_LOG_INFO ("Build Topology.");
-  Ptr<NocHelper> noc = CreateObject<NocHelper> ();
+  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+  noc->SetAttribute ("hSize", UintegerValue (hSize));
 
   // set channel bandwidth to 1 flit / network clock
   // the channel's bandwidth is obviously expressed in bits / s
@@ -299,9 +301,8 @@ main (int argc, char *argv[])
       "MaxPackets", UintegerValue (bufferSize));
 
   // configure the routers
-  ObjectFactory routerFactory;
-  routerFactory.SetTypeId ("ns3::FourWayRouter");
-//  routerFactory.SetTypeId ("ns3::IrvineLoadRouter");
+  noc->SetRouter ("ns3::FourWayRouter");
+//  noc->SetRouter ("ns3::IrvineLoadRouter");
 
   // WARNING setting properties for objects in this manner means that all the created objects
   // will refer to the *same* object
@@ -311,39 +312,35 @@ main (int argc, char *argv[])
   //
   // Ptr<LoadRouterComponent> loadComponent = CreateObject<SlbLoadRouterComponent> ();
 
-//  routerFactory.Set ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
-//  routerFactory.Set ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
+//  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
+//  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
 
   // Do not forget about changing the routing protocol when changing the load router component
 
   // setting the routing protocol
-  ObjectFactory routingProtocolFactory;
-  routingProtocolFactory.SetTypeId ("ns3::XyRouting");
-//  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
+  noc->SetRoutingProtocol ("ns3::XyRouting");
+//  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
-//  routingProtocolFactory.SetTypeId ("ns3::SlbRouting");
-//  routingProtocolFactory.Set ("LoadThreshold", IntegerValue (30));
+//  noc->SetRoutingProtocol ("ns3::SlbRouting");
+//  noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
 
-//  routingProtocolFactory.SetTypeId ("ns3::SoRouting");
+//  noc->SetRoutingProtocol ("ns3::SoRouting");
 
   // setting the switching mechanism
-  ObjectFactory switchingProtocolFactory;
-//  switchingProtocolFactory.SetTypeId ("ns3::SafSwitching");
-//  switchingProtocolFactory.SetTypeId ("ns3::VctSwitching");
-  switchingProtocolFactory.SetTypeId ("ns3::WormholeSwitching");
+//  noc->SetSwitchingProtocol ("ns3::SafSwitching");
+//  noc->SetSwitchingProtocol ("ns3::VctSwitching");
+  noc->SetSwitchingProtocol ("ns3::WormholeSwitching");
 
   // installing the topology
-  NetDeviceContainer devs = noc->Install2DMesh (nodes, hSize,
-      routerFactory,
-      routingProtocolFactory,
-      switchingProtocolFactory);
+  NetDeviceContainer devs = noc->Install (nodes);
   // done with installing the topology
 
   NS_LOG_INFO ("Create CTG based Applications.");
 
   NocCtgApplicationHelper ctgApplicationHelper (mappingXmlFilePath, 2, flitSize, flitsPerPacket, simulationCycles, nodes, devs,
       hSize);
-  ctgApplicationHelper.Initialize ();
+  // FIXME uncomment below
+//  ctgApplicationHelper.Initialize ();
 
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the ns-3NoCUniMap.tr file
@@ -351,6 +348,7 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Configure Tracing.");
   Ptr<OutputStreamWrapper> stream = Create<OutputStreamWrapper> ("ns-3NoCUniMap.tr", std::ios_base::binary | std::ios_base::out);
   noc->EnableAsciiAll (stream);
+  noc->SaveTopology (nodes, "../NoC-XML/src/ro/ulbsibiu/acaps/noc/topology/mesh2D");
 
 //  GtkConfigStore configstore;
 //  configstore.ConfigureAttributes();
