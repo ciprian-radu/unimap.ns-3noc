@@ -3,12 +3,24 @@
 def build(bld):
     topology = bld.create_ns3_module('topology', ['core', 'simulator'])
     topology.source = [
-        'noc-helper.cc',              
+		'../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/link/link.cxx',
+        '../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/node/node.cxx',
+    	'../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/topologyParameter/topology-parameter.cxx',
+        'noc-topology.cc',
+		'noc-mesh-2d.cc',
+		'noc-irvine-mesh-2d.cc',            
         ]
 
     headers = bld.new_task_gen('ns3header')
     headers.module = 'topology'
     headers.source = [
-        'noc-helper.h',              
+    	'../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/link/link.hxx',
+    	'../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/node/node.hxx',
+    	'../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/topologyParameter/topology-parameter.hxx',
+        'noc-topology.h',
+        'noc-mesh-2d.h',
+        'noc-irvine-mesh-2d.h',             
         ]
+
+    topology.uselib = 'Xerces-C++'
 

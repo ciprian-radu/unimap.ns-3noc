@@ -1,6 +1,8 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2009 Systems and Networking, University of Augsburg, Germany
+ * Copyright (c) 2010
+ *               Advanced Computer Architecture and Processing Systems (ACAPS),
+ *               Lucian Blaga University of Sibiu, Romania
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,7 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
+ * Author: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
+ *         http://webspace.ulbsibiu.ro/ciprian.radu/
  */
 
 // This example is based on the CSMA example csma-packet-socket.cc
@@ -33,7 +36,7 @@
 #include "ns3/core-module.h"
 #include "ns3/simulator-module.h"
 #include "ns3/node-module.h"
-#include "ns3/helper-module.h"
+#include "ns3/topology-module.h"
 #include "ns3/noc-application.h"
 #include "ns3/noc-application-helper.h"
 #include "ns3/noc-faulty-node.h"
@@ -81,7 +84,8 @@ main (int argc, char *argv[])
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
-  Ptr<NocHelper> noc = CreateObject<NocHelper> ();
+  Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
+  noc->SetAttribute ("hSize", UintegerValue (hSize));
   noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
   noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
   noc->SetInQueue ("ns3::DropTailQueue",
@@ -92,7 +96,7 @@ main (int argc, char *argv[])
 
   // install the topology
   ObjectFactory routerFactory;
-  routerFactory.SetTypeId ("ns3::IrvineLoadRouter");
+  noc->SetRouter ("ns3::IrvineLoadRouter");
   // WARNING setting properties for objects in this manner means that all the created objects
   // will refer to the *same* object
   //
@@ -100,26 +104,23 @@ main (int argc, char *argv[])
   // we therefore can't do something like this:
   //
   // Ptr<LoadRouterComponent> loadComponent = CreateObject<SlbLoadRouterComponent> ();
-//  routerFactory.Set ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
-  routerFactory.Set ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
+//  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
+  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
   // Do not forget about changing the routing protocol when changing the load router component
 
-  ObjectFactory routingProtocolFactory;
-//  routingProtocolFactory.SetTypeId ("ns3::XyRouting");
-//  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
+//  noc->SetRoutingProtocol ("ns3::XyRouting");
+//  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
-//  routingProtocolFactory.SetTypeId ("ns3::SlbRouting");
-//  routingProtocolFactory.Set ("LoadThreshold", IntegerValue (30));
+//  noc->SetRoutingProtocol ("ns3::SlbRouting");
+//  noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
 
-  routingProtocolFactory.SetTypeId ("ns3::SoRouting");
+  noc->SetRoutingProtocol ("ns3::SoRouting");
 
-  ObjectFactory switchingProtocolFactory;
-  switchingProtocolFactory.SetTypeId ("ns3::SafSwitching");
+//  noc->SetSwitchingProtocol ("ns3::WormholeSwitching");
+  noc->SetSwitchingProtocol ("ns3::SafSwitching");
+//  noc->SetSwitchingProtocol ("ns3::VctSwitching");
 
-  NetDeviceContainer devs = noc->Install2DMeshIrvine (nodes, hSize,
-      routerFactory,
-      routingProtocolFactory,
-      switchingProtocolFactory);
+  NetDeviceContainer devs = noc->Install (nodes);
   // done with installing the topology
 
   NS_LOG_INFO ("Create Applications.");

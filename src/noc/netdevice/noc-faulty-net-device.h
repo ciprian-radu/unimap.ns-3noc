@@ -1,6 +1,8 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2009 Systems and Networking, University of Augsburg, Germany
+ * Copyright (c) 2010
+ *               Advanced Computer Architecture and Processing Systems (ACAPS),
+ *               Lucian Blaga University of Sibiu, Romania
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,7 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
+ * Author: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
+ *         http://webspace.ulbsibiu.ro/ciprian.radu/
  */
 
 #ifndef NOCFAULTYNETDEVICE_H_
@@ -102,10 +105,10 @@ namespace ns3
     GetRoutingDirection () const;
 
     virtual void
-    SetNocHelper (Ptr<NocHelper> nocHelper);
+    SetNocTopology (Ptr<NocTopology> nocHelper);
 
-    virtual Ptr<NocHelper>
-    GetNocHelper () const;
+    virtual Ptr<NocTopology>
+    GetNocTopology () const;
 
     virtual bool
     Send (Ptr<Packet> packet, const Address& dest, uint16_t protocolNumber);
