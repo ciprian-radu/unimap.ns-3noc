@@ -32,6 +32,7 @@
 #include "ns3/vct-switching.h"
 #include "ns3/noc-packet-tag.h"
 #include "ns3/uinteger.h"
+#include "ns3/file-utils.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocMesh2D");
 
@@ -193,15 +194,20 @@ namespace ns3
   {
     NS_LOG_FUNCTION (directoryPath);
 
+    stringstream ss;
+    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_hSize << FILE_SEPARATOR << "nodes";
+    string nodesXmlDirectoryPath = ss.str ();
+    FileUtils::MkdirRecursive (nodesXmlDirectoryPath.c_str ());
+
+    // saving the nodes
     for (uint32_t i = 0; i < nodes.GetN (); ++i)
       {
-        Ptr<Node> node = nodes.Get(i);
+        Ptr<Node> node = nodes.Get (i);
         uint32_t nodeId = node->GetId ();
 
         ofstream nodeXml;
-        stringstream ss;
-        ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_hSize << FILE_SEPARATOR << "nodes"
-            << FILE_SEPARATOR << "node-" << i << ".xml";
+        ss.str ("");
+        ss << nodesXmlDirectoryPath << FILE_SEPARATOR << "node-" << i << ".xml";
         string nodeXmlFilePath = ss.str ();
         NS_LOG_DEBUG ("Saving node " << nodeId << " in " << nodeXmlFilePath);
         nodeXml.open (nodeXmlFilePath.c_str (), ios::out);
@@ -211,10 +217,66 @@ namespace ns3
         string nodeIdAsString = ss.str ();
         try
           {
-            nodeType::id_type idType (nodeIdAsString);
-            nodeType theNodeType (idType);
+            nodeType::id_type id (nodeIdAsString);
+            nodeType theNode (id);
+            nodeType::topologyParameter_type::topology_type topology ("mesh2D");
+            nodeType::topologyParameter_type::type_type rowType ("row");
+            ss.str ("");
+            ss << i / m_hSize;
+            string rowAsString = ss.str ();
+            nodeType::topologyParameter_type::value_type rowValue (rowAsString);
+            nodeType::topologyParameter_type rowTopologyParameter (topology);
+            rowTopologyParameter.type (rowType);
+            rowTopologyParameter.value (rowValue);
+            NS_LOG_DEBUG ("Setting row topology parameter to " << rowAsString);
 
-            research::noc::application_mapping::unified_framework::schema::node::node (nodeXml, theNodeType);
+            nodeType::topologyParameter_type::type_type columnType ("column");
+            ss.str ("");
+            ss << i % m_hSize;
+            string columnAsString = ss.str ();
+            nodeType::topologyParameter_type::value_type columnValue (columnAsString);
+            nodeType::topologyParameter_type columnTopologyParameter (topology);
+            columnTopologyParameter.type (columnType);
+            columnTopologyParameter.value (columnValue);
+            NS_LOG_DEBUG ("Setting column topology parameter to " << columnAsString);
+
+            theNode.topologyParameter ().push_back (rowTopologyParameter);
+            theNode.topologyParameter ().push_back (columnTopologyParameter);
+
+            for (uint32_t j = 0; j < node->GetNDevices (); ++j)
+              {
+                Ptr<NetDevice> netDevice = node->GetDevice (j);
+                NS_ASSERT (netDevice != 0);NS_LOG_DEBUG ("Node " << i << " has net device " << netDevice->GetAddress ());
+                Ptr<Channel> channel = netDevice->GetChannel ();
+                if (channel == 0)
+                  {
+                    NS_LOG_DEBUG ("Skipping this net device because it does not have any channel attached to it");
+                  }
+                else
+                  {
+                    uint32_t channelId = channel->GetId ();
+                    NS_LOG_DEBUG ("This net device has channel " << channelId);
+
+                    nodeType::link_type::type_type outChannelType ("out");
+                    nodeType::link_type outLink (outChannelType);
+                    ss.str ("");
+                    ss << channelId;
+                    string channelIdAsString = ss.str ();
+                    nodeType::link_type::value_type outChannelValue (channelIdAsString);
+                    outLink.value (outChannelValue);
+                    theNode.link ().push_back (outLink);
+                    NS_LOG_DEBUG ("Channel " << channelId << " was added as out link to node " << i);
+
+                    nodeType::link_type::type_type inChannelType ("in");
+                    nodeType::link_type inLink (inChannelType);
+                    nodeType::link_type::value_type inChannelValue (channelIdAsString);
+                    inLink.value (inChannelValue);
+                    theNode.link ().push_back (inLink);
+                    NS_LOG_DEBUG ("Channel " << channelId << " was added as in link to node " << i);
+                  }
+              }
+
+            research::noc::application_mapping::unified_framework::schema::node::node (nodeXml, theNode);
           }
         catch (const xml_schema::exception& e)
           {
@@ -222,6 +284,77 @@ namespace ns3
           }
 
         nodeXml.close ();
+      }
+
+    ss.str ("");
+    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_hSize << FILE_SEPARATOR << "links";
+    string linksXmlDirectoryPath = ss.str ();
+    FileUtils::MkdirRecursive (linksXmlDirectoryPath.c_str ());
+
+    list<uint32_t> visitiedChannels;
+
+    // saving the links
+    for (uint32_t i = 0; i < m_devices.GetN (); ++i)
+      {
+        Ptr<NetDevice> netDevice = m_devices.Get (i);
+        Ptr<Channel> channel = netDevice->GetChannel ();
+        if (channel != 0)
+          {
+            uint32_t channelId = channel->GetId ();
+            bool found = false;
+            for (list<uint32_t>::iterator it = visitiedChannels.begin (); it != visitiedChannels.end (); it++)
+              {
+                if (*it == channelId)
+                  {
+                    found = true;
+                    break;
+                  }
+              }
+            if (!found)
+              {
+                ofstream linkXml;
+                ss.str ("");
+                ss << linksXmlDirectoryPath << FILE_SEPARATOR << "link-" << channelId << ".xml";
+                string linkXmlFilePath = ss.str ();
+                NS_LOG_DEBUG ("Saving link " << channelId << " in " << linkXmlFilePath);
+                linkXml.open (linkXmlFilePath.c_str (), ios::out);
+
+                try
+                  {
+                    ss.str ("");
+                    ss << channelId;
+                    string channelIdAsString = ss.str ();
+                    research::noc::application_mapping::unified_framework::schema::link::linkType::id_type id (
+                        channelIdAsString);
+
+                    NS_ASSERT_MSG (channel->GetNDevices () == 2, "Each channel is expected to connect exactly two nodes!");
+                    ss.str ("");
+                    ss << channel->GetDevice (0)->GetNode ()->GetId ();
+                    string firstNodeIdAsString = ss.str ();
+                    research::noc::application_mapping::unified_framework::schema::link::linkType::firstNode_type firstNode (
+                        firstNodeIdAsString);
+                    ss.str ("");
+                    ss << channel->GetDevice (1)->GetNode ()->GetId ();
+                    string secondNodeIdAsString = ss.str ();
+                    research::noc::application_mapping::unified_framework::schema::link::linkType::firstNode_type secondNode (
+                        secondNodeIdAsString);
+
+                    NS_LOG_DEBUG ("Link " << channelId << " has as first node " << firstNodeIdAsString << " and second node " << secondNodeIdAsString);
+                    research::noc::application_mapping::unified_framework::schema::link::linkType theLink (firstNode,
+                        secondNode, id);
+
+                    research::noc::application_mapping::unified_framework::schema::link::link (linkXml, theLink);
+                  }
+                catch (const xml_schema::exception& e)
+                  {
+                    NS_LOG_ERROR (e);
+                  }
+
+                linkXml.close ();
+                visitiedChannels.push_back (channelId);
+              }
+          }
+
       }
   }
 

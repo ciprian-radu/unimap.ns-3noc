@@ -21,32 +21,30 @@
  *         http://webspace.ulbsibiu.ro/ciprian.radu/
  */
 
-#ifndef NOCREGISTRY_H_
-#define NOCREGISTRY_H_
+#ifndef FILE_UTILS_H_
+#define FILE_UTILS_H_
 
 #include "ns3/object.h"
 #include "ns3/ptr.h"
-#include "ns3/nstime.h"
 
 namespace ns3
 {
 
-  /**
-   * \brief Registry for globally accessible values
-   * \detail This class follows the Singleton design pattern.
-   *         Registry values are statically defined in this class,
-   *         new registry values cannot be defined at runtime
-   *         (only existing registry values can be set).
-   */
-  class NocRegistry : public Object
+  class FileUtils : public Object
   {
   public:
 
     static TypeId
     GetTypeId ();
 
-    static Ptr<NocRegistry>
-    GetInstance ();
+    /**
+     * Recursively creates all the directories so that the given directory path can be created.
+     * The code is based on http://nion.modprobe.de/tmp/mkdir.c
+     *
+     * \param path the directory path
+     */
+    static void
+    MkdirRecursive (const char *path);
 
   private:
 
@@ -55,25 +53,15 @@ namespace ns3
      */
     friend class TypeId;
 
-    NocRegistry ();                                   // Private constructor
+    FileUtils (); // Private constructor
 
-    NocRegistry (const NocRegistry&);                 // Prevent copy-construction
+    FileUtils (const FileUtils&); // Prevent copy-construction
 
-    NocRegistry& operator= (const NocRegistry&);      // Prevent assignment
-
-    /**
-     *  the speedup used for routing a data packet, as compared to a head packet
-     */
-    int m_dataFlitSpeedup;
-
-    /**
-     * the clock period with which events must be generated.
-     * It is used only with a synchronous NoC.
-     */
-    Time m_globalClock;
+    FileUtils&
+    operator= (const FileUtils&); // Prevent assignment
 
   };
 
 } // namespace ns3
 
-#endif /* NOCREGISTRY_H_ */
+#endif /* FILE_UTILS_H_ */

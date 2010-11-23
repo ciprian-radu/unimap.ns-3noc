@@ -339,7 +339,6 @@ main (int argc, char *argv[])
 
   NocCtgApplicationHelper ctgApplicationHelper (mappingXmlFilePath, 2, flitSize, flitsPerPacket, simulationCycles, nodes, devs,
       hSize);
-  // FIXME uncomment below
 //  ctgApplicationHelper.Initialize ();
 
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
