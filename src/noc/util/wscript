@@ -3,12 +3,14 @@
 def build(bld):
     util = bld.create_ns3_module('util', ['core', 'simulator'])
     util.source = [
-        'noc-registry.cc',              
+        'noc-registry.cc',
+        'file-utils.cc',         
         ]
 
     headers = bld.new_task_gen('ns3header')
     headers.module = 'util'
     headers.source = [
-        'noc-registry.h',              
+        'noc-registry.h',
+        'file-utils.h',  
         ]
 
