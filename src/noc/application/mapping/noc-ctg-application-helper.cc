@@ -61,10 +61,10 @@ namespace ns3
   apcgType::core_type
   NocCtgApplicationHelper::FindCoreInApcg (apcgType theApcgType, string coreId)
   {
-    apcgType::core_type theApcgCoreType ("");
+    apcgType::core_type theApcgCoreType ("", "");
     for (apcgType::core_iterator i (theApcgType.core ().begin ()); i != theApcgType.core ().end (); i++)
       {
-        if ((*i).id () == coreId)
+        if ((*i).uid () == coreId)
           {
             theApcgCoreType = *i;
             break;
@@ -186,7 +186,7 @@ namespace ns3
             // Note that I am dereferencing theApcgType. If I am working with the (auto) pointer,
             // at the second iteration theApcgType becomes NULL and I don't know why...
             apcgType::core_type theApcgCoreType = FindCoreInApcg (*theApcgType, theMapType.core ().get ());
-            NS_ASSERT_MSG (theApcgCoreType.id () != "",
+            NS_ASSERT_MSG (theApcgCoreType.uid () != "",
                 "Error: couldn't find core with ID " << theMapType.core () << " in the APCG XML!");
 
             list<NocCtgApplication::TaskData> taskList;
