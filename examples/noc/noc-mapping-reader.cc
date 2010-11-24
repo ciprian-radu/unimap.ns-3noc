@@ -45,11 +45,11 @@ const char FILE_SEPARATOR = '/';
 apcgType::core_type
 findCoreInApcg(apcgType theApcgType, string coreId)
 {
-  apcgType::core_type theApcgCoreType("");
+  apcgType::core_type theApcgCoreType("", "");
   for (apcgType::core_iterator i(theApcgType.core().begin()); i
       != theApcgType.core().end(); i++)
     {
-      if ((*i).id() == coreId)
+      if ((*i).uid() == coreId)
         {
           theApcgCoreType = *i;
           break;
@@ -163,7 +163,7 @@ main(int argc, char* argv[])
           // at the second iteration theApcgType becomes NULL and I don't know why...
           apcgType::core_type theApcgCoreType = findCoreInApcg(*theApcgType,
               theMapType.core().get());
-          NS_ASSERT_MSG (theApcgCoreType.id() != "",
+          NS_ASSERT_MSG (theApcgCoreType.uid() != "",
               "Error: couldn't find core with ID " << theMapType.core() << " in the APCG XML!");
           for (apcgType::core_type::task_const_iterator i (theApcgCoreType.task ().begin ()); i
               != theApcgCoreType.task ().end (); i++)
