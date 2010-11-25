@@ -21,11 +21,11 @@ H_SIZE="4"
 #SIMULATION_CYCLES="10000"
 
 FLIT_SIZE="32"
-#NUMBER_OF_FLITS_PER_PACKET="2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"
-NUMBER_OF_FLITS_PER_PACKET="10"
-APPLICATION="auto-indust-mocsyn"
+NUMBER_OF_FLITS_PER_PACKET="2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"
+#NUMBER_OF_FLITS_PER_PACKET="10"
+APPLICATION="consumer-mocsyn_bb consumer-mocsyn_manual"
 declare MAPPING_FILE_PATH
-MAPPING_FILE_PATH=("../Mapper/xml/e3s/auto-indust-mocsyn.tgff/ctg-0/mapping-1.xml")
+MAPPING_FILE_PATH=("../CTG-XML/xml/e3s/consumer-mocsyn.tgff/ctg-0/mapping-0_2_bb.xml" "../CTG-XML/xml/e3s/consumer-mocsyn.tgff/ctg-0/mapping-0_2_manual.xml")
 
 if [ "$1" != "co" ]
 then
