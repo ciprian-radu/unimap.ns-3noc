@@ -182,8 +182,7 @@ void ComputeLatenciesOfPackets (Ptr<TimeMinMaxAvgTotalCalculator > calc)
               << lt.m_startTime << " " << lt.m_endTime);
           TimeValue globalClock;
           NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", globalClock);
-          calc->Update (PicoSeconds ((uint64_t) ((lt.m_endTime.GetPicoSeconds () - lt.m_startTime.GetPicoSeconds ()) * 1.0
-              / globalClock.Get ().GetPicoSeconds ())));
+          calc->Update ((lt.m_endTime - lt.m_startTime) / globalClock.Get ());
         }
     }
 }
