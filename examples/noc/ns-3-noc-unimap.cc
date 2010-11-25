@@ -337,9 +337,16 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Create CTG based Applications.");
 
-  NocCtgApplicationHelper ctgApplicationHelper (mappingXmlFilePath, 2, flitSize, flitsPerPacket, simulationCycles, nodes, devs,
+  NocCtgApplicationHelper ctgApplicationHelper (
+      mappingXmlFilePath,
+      1, // the number of CTG iterations
+      flitSize,
+      flitsPerPacket,
+      simulationCycles,
+      nodes,
+      devs,
       hSize);
-//  ctgApplicationHelper.Initialize ();
+  ctgApplicationHelper.Initialize ();
 
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the ns-3NoCUniMap.tr file
