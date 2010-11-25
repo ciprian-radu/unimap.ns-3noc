@@ -92,7 +92,7 @@ namespace ns3
                   {
                     mapType theMapType = *k;
 
-                    if (theMapType.apcg () == theApcgType.id() && theMapType.core ().get () == theCoreType.id ())
+                    if (theMapType.apcg () == theApcgType.id() && theMapType.core ().get () == theCoreType.uid ())
                       {
                         nodeId = theMapType.node ();
                         goto done;
