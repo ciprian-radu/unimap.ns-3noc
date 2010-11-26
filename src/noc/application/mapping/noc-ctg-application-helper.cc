@@ -170,24 +170,25 @@ namespace ns3
 
             string tasksFilePath = ctgFilePath + FILE_SEPARATOR + "tasks";
 
-            string coreXmlFilePath = coresFilePath + FILE_SEPARATOR + "core-" + theMapType.core ().get () + ".xml";
-            NS_LOG_LOGIC ("IP core XML file path is " << coreXmlFilePath);
-
-            auto_ptr<research::noc::application_mapping::unified_framework::schema::core::coreType> theCoreType (
-                research::noc::application_mapping::unified_framework::schema::core::core (coreXmlFilePath,
-                    flags::dont_validate));
-            NS_ASSERT_MSG (theMapType.core ().get () == theCoreType->ID (), "APCG XML says the core ID is " << theMapType.core ()
-                << " but, core XML says the ID is " << theCoreType->ID () << "!");NS_LOG_INFO ("\t (name: " << theCoreType->name () << " frequency: "
-                << theCoreType->frequency () << " (Hz) height: "
-                << theCoreType->height () << " (mm) width: "
-                << theCoreType->width () << " (mm) idle power: "
-                << theCoreType->idlePower () << " (W) )");
-
             // Note that I am dereferencing theApcgType. If I am working with the (auto) pointer,
             // at the second iteration theApcgType becomes NULL and I don't know why...
             apcgType::core_type theApcgCoreType = FindCoreInApcg (*theApcgType, theMapType.core ().get ());
             NS_ASSERT_MSG (theApcgCoreType.uid () != "",
                 "Error: couldn't find core with ID " << theMapType.core () << " in the APCG XML!");
+
+            string coreXmlFilePath = coresFilePath + FILE_SEPARATOR + "core-" + theApcgCoreType.id () + ".xml";
+            NS_LOG_LOGIC ("IP core XML file path is " << coreXmlFilePath);
+
+            auto_ptr<research::noc::application_mapping::unified_framework::schema::core::coreType> theCoreType (
+                research::noc::application_mapping::unified_framework::schema::core::core (coreXmlFilePath,
+                    flags::dont_validate));
+            NS_ASSERT_MSG (theApcgCoreType.id () == theCoreType->ID (), "APCG XML says the core ID is " << theApcgCoreType.id ()
+                << " but, core XML says the ID is " << theCoreType->ID () << "!");
+            NS_LOG_INFO ("\t (name: " << theCoreType->name () << " frequency: "
+                << theCoreType->frequency () << " (Hz) height: "
+                << theCoreType->height () << " (mm) width: "
+                << theCoreType->width () << " (mm) idle power: "
+                << theCoreType->idlePower () << " (W) )");
 
             list<NocCtgApplication::TaskData> taskList;
             list<NocCtgApplication::DependentTaskData> taskSenderList;
@@ -212,21 +213,26 @@ namespace ns3
                 NS_LOG_INFO ("\t\t (name: " << theTaskType->name () << " type: "
                     << theTaskType->type ());
 
-                for (research::noc::application_mapping::unified_framework::schema::core::coreType::task_const_iterator i (
-                    theCoreType->task ().begin ()); i != theCoreType->task ().end (); i++)
-                  {
-                    research::noc::application_mapping::unified_framework::schema::core::coreType::task_type theCoreTaskType =
-                        *i;
-                    if (theTaskType->type () == theCoreTaskType.type ())
-                      {
-                        NS_LOG_INFO ("\t\t execution time: " << theCoreTaskType.execTime ()
-                            << " (s) " << "power:" << theCoreTaskType.power ()
-                            << " (W) )");
-                        taskData = new NocCtgApplication::TaskData (theApcgTaskType.id (), Seconds (
-                            theCoreTaskType.execTime ().get ()));
-                        break;
-                      }
-                  }
+                // use the code commented below if you want to access some core information that is not in the APCG
+
+//                for (research::noc::application_mapping::unified_framework::schema::core::coreType::task_const_iterator i (
+//                    theCoreType->task ().begin ()); i != theCoreType->task ().end (); i++)
+//                  {
+//                    research::noc::application_mapping::unified_framework::schema::core::coreType::task_type theCoreTaskType =
+//                        *i;
+//                    if (theTaskType->type () == theCoreTaskType.type ())
+//                      {
+//                        NS_LOG_INFO ("\t\t execution time: " << theCoreTaskType.execTime ()
+//                            << " (s) " << "power:" << theCoreTaskType.power ()
+//                            << " (W) )");
+//                        taskData = new NocCtgApplication::TaskData (theApcgTaskType.id (), Seconds (
+//                            theCoreTaskType.execTime ().get ()));
+//                        break;
+//                      }
+//                  }
+
+                taskData
+                    = new NocCtgApplication::TaskData (theApcgTaskType.id (), Seconds (theApcgTaskType.execTime ().get ()));
                 taskList.insert (taskList.end (), *taskData);
 
                 // build the task source and destination lists
