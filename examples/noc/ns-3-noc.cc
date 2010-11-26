@@ -61,7 +61,7 @@ NS_LOG_COMPONENT_DEFINE ("ns-3NoC");
 // parameters path and packet are required by the Trace Source Accesor
 void PacketInjectedCallback (Ptr<CounterCalculator<> > calc, std::string path, Ptr<const Packet> flit)
 {
-  NS_LOG_INFO ("Packet injected counted in the " << calc->GetKey () << " statistic");
+  NS_LOG_LOGIC ("Packet injected counted in the " << calc->GetKey () << " statistic");
 
   calc->Update();
 }
@@ -71,7 +71,7 @@ void PacketInjectedCallback (Ptr<CounterCalculator<> > calc, std::string path, P
  */
 void FlitInjectedCallback (Ptr<CounterCalculator<> > calc, std::string path, Ptr<const Packet> flit)
 {
-  NS_LOG_INFO ("Flit injected counted in the " << calc->GetKey () << " statistic");
+  NS_LOG_LOGIC ("Flit injected counted in the " << calc->GetKey () << " statistic");
 
   calc->Update();
 }
@@ -102,7 +102,7 @@ std::map<uint32_t, LatencyTimes> g_latencyOfPackets;
  */
 void FlitReceivedCallback (int dummy, std::string path, Ptr<const Packet> flit)
 {
-  NS_LOG_INFO ("Packet with UID " << flit->GetUid () << " received");
+  NS_LOG_LOGIC ("Packet with UID " << flit->GetUid () << " received");
 
   LatencyTimes latencyTimes;
 
@@ -113,26 +113,27 @@ void FlitReceivedCallback (int dummy, std::string path, Ptr<const Packet> flit)
   NocPacketTag tag;
   flit->PeekPacketTag (tag);
   NocPacket::Type flitType = tag.GetPacketType ();
-  switch (flitType) {
-    case NocPacket::HEAD:
-      NS_LOG_DEBUG ("Flit type is head");
-      latencyTimes = g_latencyOfPackets[flit->GetUid ()];
-      latencyTimes.m_startTime = tag.GetInjectionTime();
-      break;
-    case NocPacket::DATA:
-      NS_LOG_DEBUG ("Flit type is data");
-      break;
-    case NocPacket::TAIL:
-      NS_LOG_DEBUG ("Flit type is tail");
-      uid = tag.GetPacketHeadUid ();
-      latencyTimes = g_latencyOfPackets[uid];
-      latencyTimes.m_endTime = tag.GetReceiveTime ();
-      break;
-    case NocPacket::UNKNOWN:
-    default:
-      NS_LOG_ERROR ("Flit type is unknown");
-      break;
-  }
+  switch (flitType)
+    {
+  case NocPacket::HEAD:
+    NS_LOG_LOGIC ("Flit type is head");
+    latencyTimes = g_latencyOfPackets[flit->GetUid ()];
+    latencyTimes.m_startTime = tag.GetInjectionTime ();
+    break;
+  case NocPacket::DATA:
+    NS_LOG_LOGIC ("Flit type is data");
+    break;
+  case NocPacket::TAIL:
+    NS_LOG_LOGIC ("Flit type is tail");
+    uid = tag.GetPacketHeadUid ();
+    latencyTimes = g_latencyOfPackets[uid];
+    latencyTimes.m_endTime = tag.GetReceiveTime ();
+    break;
+  case NocPacket::UNKNOWN:
+  default:
+    NS_LOG_ERROR ("Flit type is unknown");
+    break;
+    }
 
   if (NocPacket::HEAD == flitType)
     {
@@ -417,8 +418,9 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();
-  Simulator::Destroy ();
   NS_LOG_INFO ("Done.");
+  NS_LOG_INFO ("Simulation time is " << Simulator::Now ());
+  Simulator::Destroy ();
 
   // this must be done after the simulation ended
   ComputeLatenciesOfPackets (latencyStat);
