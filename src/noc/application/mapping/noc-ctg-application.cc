@@ -435,7 +435,14 @@ namespace ns3
             NS_LOG_LOGIC ("This is the first time when node " << GetNode ()->GetId () << " injects flits from CTG iteration " << iteration);
             // the execution of an IP core is simulated by introducing a delay
             // (only before the first flit is injected into the network)
-            delay += m_totalExecTime + m_period * Scalar (iteration);
+            NS_LOG_LOGIC ("Adding the execution time");
+            delay += m_totalExecTime;
+            if (m_taskSenderList.size () == 0)
+              {
+                // periodicity applies only to source nodes (CTG roots)
+                NS_LOG_LOGIC ("Adding CTG period because this node is a traffic source");
+                delay += m_period * Scalar (iteration);
+              }
           }
         else
           {
