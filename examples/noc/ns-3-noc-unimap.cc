@@ -338,7 +338,7 @@ main (int argc, char *argv[])
 
   NocCtgApplicationHelper ctgApplicationHelper (
       mappingXmlFilePath,
-      1, // the number of CTG iterations
+      2, // the number of CTG iterations
       flitSize,
       flitsPerPacket,
       simulationCycles,
