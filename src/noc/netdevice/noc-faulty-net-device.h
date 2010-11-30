@@ -31,7 +31,7 @@
 #include "ns3/noc-channel.h"
 #include "ns3/traced-callback.h"
 #include "ns3/noc-routing-protocol.h"
-#include "ns3/noc-helper.h"
+#include "ns3/noc-topology.h"
 #include "ns3/queue.h"
 #include <map>
 
