@@ -25,6 +25,7 @@
 #include "ns3/log.h"
 #include <sys/stat.h>
 #include <errno.h>
+#include <string.h>
 
 NS_LOG_COMPONENT_DEFINE ("FileUtils");
 
