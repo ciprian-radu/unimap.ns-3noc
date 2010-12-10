@@ -49,6 +49,9 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.735952449.1354571868" name="noc-torus-2d.cc" rcbsApplicability="disable" resourcePath="src/noc/topology/noc-torus-2d.cc" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.716864465.1150590137">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.716864465.1150590137" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.716864465"/>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="examples"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="samples"/>
