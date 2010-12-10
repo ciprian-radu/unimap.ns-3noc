@@ -23,7 +23,7 @@
 
 // This example is based on the CSMA example csma-packet-socket.cc
 //
-// Network topology: 2D mesh
+// Network topology: 2D torus
 //
 //
 //
@@ -93,7 +93,7 @@ main (int argc, char *argv[])
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
-  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+  Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
   // Note that the next two channel attributes are not considered with a NocSyncApplication!
 //  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
@@ -137,20 +137,20 @@ main (int argc, char *argv[])
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (1)); // destination
-  nocSyncAppHelper1.SetAttribute ("MaxPackets", UintegerValue (3));
+  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (11)); // destination
+  nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (3));
   ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (0)); // source
 //  apps1.Start (Seconds (0.0));
 //  apps1.Stop (Seconds (10.0));
 
-  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
-  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
-  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (0)); // destination
-  nocSyncAppHelper2.SetAttribute ("MaxPackets", UintegerValue (3));
-  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (1)); // source
-//  apps2.Start (Seconds (0.0));
-//  apps2.Stop (Seconds (10.0));
+//  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
+//  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
+//  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
+//  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (0)); // destination
+//  nocSyncAppHelper2.SetAttribute ("MaxFlits", UintegerValue (3));
+//  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (1)); // source
+////  apps2.Start (Seconds (0.0));
+////  apps2.Stop (Seconds (10.0));
  
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-sync-test.tr file
