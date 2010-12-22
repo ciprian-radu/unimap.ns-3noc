@@ -1,0 +1,37 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    obj = bld.create_ns3_program('noc-test', ['noc', 'generic'])
+    obj.source = 'noc-test.cc'
+    
+    obj = bld.create_ns3_program('noc-sync-test', ['noc', 'generic'])
+    obj.source = 'noc-sync-test.cc'
+    
+    obj = bld.create_ns3_program('noc-faulty-test', ['noc', 'generic'])
+    obj.source = 'noc-faulty-test.cc'
+    
+    obj = bld.create_ns3_program('noc-simulator', ['noc', 'generic'])
+    obj.source = 'noc-simulator.cc'
+    
+    obj = bld.create_ns3_program('ns-3-noc', ['noc', 'generic'])
+    obj.source = 'ns-3-noc.cc'
+    
+    obj = bld.create_ns3_program('noc-mapping-reader', ['noc', 'generic'])
+    obj.includes = ['../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/mapping/mapping.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/apcg/apcg.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/ctg/ctg.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/core/core.hxx',
+                    '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/task/task.hxx',
+                   ]
+    obj.source = ['noc-mapping-reader.cc',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/mapping/mapping.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/apcg/apcg.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/ctg/ctg.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/core/core.cxx',
+                  '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/task/task.cxx',
+                 ]
+    obj.uselib = 'Xerces-C++'
+    
+    obj = bld.create_ns3_program('ns-3-noc-unimap', ['noc', 'generic'])   
+    obj.source = ['ns-3-noc-unimap.cc',
+                 ]

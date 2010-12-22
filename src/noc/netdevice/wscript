@@ -1,0 +1,16 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    netdevice = bld.create_ns3_module('netdevice', ['core', 'simulator'])
+    netdevice.source = [
+        'noc-net-device.cc',
+        'noc-faulty-net-device.cc',       
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'netdevice'
+    headers.source = [
+        'noc-net-device.h',
+        'noc-faulty-net-device.h',              
+        ]
+

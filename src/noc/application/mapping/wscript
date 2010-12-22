@@ -1,0 +1,28 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    nocApp = bld.create_ns3_module('mapping', ['core', 'simulator', 'noc'])
+    nocApp.source = [
+        '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/mapping/mapping.cxx',
+        '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/apcg/apcg.cxx',
+        '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/ctg/ctg.cxx',
+        '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/core/core.cxx',
+        '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/task/task.cxx',
+        'noc-ctg-application.cc',
+        'noc-ctg-application-helper.cc',        
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'mapping'
+    headers.source = [
+	    '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/mapping/mapping.hxx',
+	    '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/apcg/apcg.hxx',
+	    '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/ctg/ctg.hxx',
+	    '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/core/core.hxx',
+	    '../../../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/task/task.hxx',
+        'noc-ctg-application.h',
+        'noc-ctg-application-helper.h', 
+        ]
+
+    nocApp.uselib = 'Xerces-C++'
+

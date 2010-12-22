@@ -1,0 +1,20 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    nocApp = bld.create_ns3_module('generic', ['core', 'simulator', 'noc'])
+    nocApp.source = [
+        'noc-application.cc',
+        'noc-application-helper.cc',
+        'noc-sync-application.cc',
+        'noc-sync-application-helper.cc',        
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'generic'
+    headers.source = [
+        'noc-application.h',
+        'noc-application-helper.h',
+        'noc-sync-application.h',
+        'noc-sync-application-helper.h', 
+        ]
+

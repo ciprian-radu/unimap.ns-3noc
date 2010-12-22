@@ -1,0 +1,16 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    fourway = bld.create_ns3_module('4way', ['core', 'simulator', 'router'])
+    fourway.source = [
+        '4-way-router.cc',
+        '4-way-load-router.cc',               
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = '4way'
+    headers.source = [
+        '4-way-router.h',
+        '4-way-load-router.h',        
+        ]
+
