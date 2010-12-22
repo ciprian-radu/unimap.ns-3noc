@@ -336,16 +336,20 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Create CTG based Applications.");
 
-  NocCtgApplicationHelper ctgApplicationHelper (
-      mappingXmlFilePath,
-      2, // the number of CTG iterations
-      flitSize,
-      flitsPerPacket,
-      simulationCycles,
-      nodes,
-      devs,
-      hSize);
-  ctgApplicationHelper.Initialize ();
+  // do not instantiate the NocCtgApplicationHelper if you just want to save the NoC topology in XML format
+  bool justSaveTopology = false;
+  if (!justSaveTopology) {
+    NocCtgApplicationHelper ctgApplicationHelper (
+        mappingXmlFilePath,
+        2, // the number of CTG iterations
+        flitSize,
+        flitsPerPacket,
+        simulationCycles,
+        nodes,
+        devs,
+        hSize);
+    ctgApplicationHelper.Initialize ();
+  }
 
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the ns-3NoCUniMap.tr file
