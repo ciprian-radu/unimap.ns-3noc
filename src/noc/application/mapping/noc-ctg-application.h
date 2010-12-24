@@ -249,8 +249,8 @@ private:
   NetDeviceContainer m_devices;                 // the net devices from the NoC network
   NodeContainer      m_nodes;                   // the nodes from the NoC network
   uint32_t           m_flitSize;                // The flit size (the head flit will use part of this size for the flit header)
-  uint16_t           m_numberOfFlits;           // How many flits a packet will have
-  vector<uint16_t>   m_currentFlitIndex;        // the index of the flit to be injected ( [0, m_numberOfFlits - 1] )
+  uint64_t           m_numberOfFlits;           // How many flits a packet will have
+  vector<uint64_t>   m_currentFlitIndex;        // the index of the flit to be injected ( [0, m_numberOfFlits - 1] )
   vector<Ptr<NocPacket> > m_currentHeadFlit;    // the current head flit
   uint32_t           m_maxBytes;                // Limit total number of bytes sent
   vector<uint32_t>   m_totBytes;                // Total bytes sent so far

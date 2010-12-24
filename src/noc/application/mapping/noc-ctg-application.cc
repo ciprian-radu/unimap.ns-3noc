@@ -75,7 +75,7 @@ namespace ns3
                 MakeUintegerChecker<uint32_t> ((uint32_t) NocHeader::HEADER_SIZE))
             .AddAttribute ("NumberOfFlits", "The number of flits composing a packet.", UintegerValue (3),
                 MakeUintegerAccessor (&NocCtgApplication::m_numberOfFlits),
-                MakeUintegerChecker<uint32_t> (2))
+                MakeUintegerChecker<uint64_t> (2))
             .AddAttribute ("MaxBytes",
                 "The total number of bytes to send. Once these bytes are sent, "
                 "no flit is sent again. The value zero means that there is no limit. "
@@ -502,7 +502,7 @@ namespace ns3
     NS_LOG_DEBUG ("destination X = " << destinationX);
     NS_LOG_DEBUG ("destination Y = " << destinationY);
 
-    uint16_t upperValue = (uint16_t)ceil((dtd.GetData() / 8) / m_flitSize);
+    uint64_t upperValue = (uint64_t)ceil((dtd.GetData() / 8) / m_flitSize);
     // the following test is to account for the smaller payload carried by the head flit
     if ((upperValue - 1) * m_flitSize + m_flitSize - NocHeader::HEADER_SIZE < dtd.GetData() / 8)
       {
@@ -517,6 +517,7 @@ namespace ns3
       {
         m_numberOfFlits = upperValue;
       }
+    NS_ASSERT_MSG (m_numberOfFlits >= 1, "The number of flits must be at least 1 (the head flit) but it is " << m_numberOfFlits);
 
     Ptr<NocNode> destinationNode;
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i
