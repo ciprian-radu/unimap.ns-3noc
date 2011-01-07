@@ -192,6 +192,8 @@ main (int argc, char *argv[])
 {
   // ns-3 NoC parameters
 
+  bool justSaveTopology = false; // optional
+
   std::string experiment (""); // mandatory
 
   std::string strategy (""); // mandatory
@@ -233,13 +235,14 @@ main (int argc, char *argv[])
 
   // Set up command line parameters used to control the experiment.
   CommandLine cmd;
-  cmd.AddValue<string> ("experiment", "The experiment is the study of which this trial (AKA simulation) is a member (mandatory parameter).", experiment);
-  cmd.AddValue<string> ("strategy", "The strategy is the code or parameters being examined in this trial (mandatory parameter).", strategy);
-  cmd.AddValue<string> ("input", "The input is the particular problem given to this trial (mandatory parameter).", input);
+  cmd.AddValue<bool> ("just-save-topology", "If set to true, this application doesn't do any simulation, it just saves the NoC topology (optional parameter, false by default).", justSaveTopology);
+  cmd.AddValue<string> ("experiment", "The experiment is the study of which this trial (AKA simulation) is a member (mandatory parameter when just-save-topology = false).", experiment);
+  cmd.AddValue<string> ("strategy", "The strategy is the code or parameters being examined in this trial (mandatory paramete rwhen just-save-topology = false).", strategy);
+  cmd.AddValue<string> ("input", "The input is the particular problem given to this trial (mandatory parameter when just-save-topology = false).", input);
   cmd.AddValue<string> ("description", "The description can be used to specify the characteristics of the simulated NoC (optional parameter).", description);
-  cmd.AddValue<string> ("run", "The run is a unique identifier for this trial with which it's information is tagged for identification in later analysis (mandatory parameter).", run);
+  cmd.AddValue<string> ("run", "The run is a unique identifier for this trial with which it's information is tagged for identification in later analysis (mandatory parameter when just-save-topology = false).", run);
   cmd.AddValue<string> ("author", "The author of this simulation (optional parameter).", author);
-  cmd.AddValue<string> ("mapping-file-path", "The path to the XML file that contains the application mapping (mandatory parameter)", mappingXmlFilePath);
+  cmd.AddValue<string> ("mapping-file-path", "The path to the XML file that contains the application mapping (mandatory parameter when just-save-topology = false)", mappingXmlFilePath);
   cmd.AddValue<uint32_t> ("nodes", "The number of nodes from the NoC (default is 16)", numberOfNodes);
   cmd.AddValue<uint32_t> ("h-size", "How many nodes a 2D mesh has horizontally (default is 4)", hSize);
   cmd.AddValue<uint64_t> ("flit-size", "The size of a flit, in bytes (default is 32, minimum value is given by the size of the packet header)", flitSize);
@@ -253,17 +256,21 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("ns-3 NoC simulator for UniMap");
 
-  NS_ASSERT_MSG (mappingXmlFilePath.size() > 0, "Please specify the file path for the XML containing the mapping!");
+  if (!justSaveTopology) {
+      NS_ASSERT_MSG (mappingXmlFilePath.size() > 0, "Please specify the file path for the XML containing the mapping!");
+  }
   NS_ASSERT_MSG (numberOfNodes % hSize == 0,
       "The number of nodes ("<< numberOfNodes
       <<") must be a multiple of the number of nodes on the horizontal axis ("
       << hSize << ")");
-  NS_ASSERT_MSG (flitSize >= (uint64_t) NocHeader::HEADER_SIZE, "The flit size must be at least " << NocHeader::HEADER_SIZE << "(the packet header size)!");
-  NS_ASSERT_MSG (flitsPerPacket >= 2, "At least 2 flits per packet are required!");
+  if (!justSaveTopology) {
+    NS_ASSERT_MSG (flitSize >= (uint64_t) NocHeader::HEADER_SIZE, "The flit size must be at least " << NocHeader::HEADER_SIZE << "(the packet header size)!");
+    NS_ASSERT_MSG (flitsPerPacket >= 2, "At least 2 flits per packet are required!");
 //  NS_ASSERT_MSG (injectionProbability >= 0 && injectionProbability <= 1, "Injection probability must be in [0,1]!");
-  NS_ASSERT_MSG (dataFlitSpeedup >= 1, "Data packet speedup must be >= 1!");
-  // the buffer size is allowed to be any number >= 0
-  NS_ASSERT_MSG (simulationCycles > warmupCycles, "The number of simulation cycles is not greater than the number of warm-up cycles!");
+    NS_ASSERT_MSG (dataFlitSpeedup >= 1, "Data packet speedup must be >= 1!");
+    // the buffer size is allowed to be any number >= 0
+    NS_ASSERT_MSG (simulationCycles > warmupCycles, "The number of simulation cycles is not greater than the number of warm-up cycles!");
+  }
 
   // set the global parameters
   NocRegistry::GetInstance ()->SetAttribute ("DataPacketSpeedup", IntegerValue (dataFlitSpeedup));
@@ -336,8 +343,6 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Create CTG based Applications.");
 
-  // do not instantiate the NocCtgApplicationHelper if you just want to save the NoC topology in XML format
-  bool justSaveTopology = false;
   if (!justSaveTopology) {
     NocCtgApplicationHelper ctgApplicationHelper (
         mappingXmlFilePath,
@@ -349,91 +354,93 @@ main (int argc, char *argv[])
         devs,
         hSize);
     ctgApplicationHelper.Initialize ();
+
+    // Configure tracing of all enqueue, dequeue, and NetDevice receive events
+    // Trace output will be sent to the ns-3NoCUniMap.tr file
+  // Tracing should be kept disabled for big simulations
+    NS_LOG_INFO ("Configure Tracing.");
+    Ptr<OutputStreamWrapper> stream = Create<OutputStreamWrapper> ("ns-3NoCUniMap.tr", std::ios_base::binary | std::ios_base::out);
+    noc->EnableAsciiAll (stream);
   }
 
-  // Configure tracing of all enqueue, dequeue, and NetDevice receive events
-  // Trace output will be sent to the ns-3NoCUniMap.tr file
-// Tracing should be kept disabled for big simulations
-  NS_LOG_INFO ("Configure Tracing.");
-  Ptr<OutputStreamWrapper> stream = Create<OutputStreamWrapper> ("ns-3NoCUniMap.tr", std::ios_base::binary | std::ios_base::out);
-  noc->EnableAsciiAll (stream);
   noc->SaveTopology (nodes, "../NoC-XML/src/ro/ulbsibiu/acaps/noc/topology/mesh2D");
 
-//  GtkConfigStore configstore;
-//  configstore.ConfigureAttributes();
+  if (!justSaveTopology) {
+  //  GtkConfigStore configstore;
+  //  configstore.ConfigureAttributes();
 
-  // Setup statistics and data collection
+    // Setup statistics and data collection
 
-  // a trial (simulation) is described by a run and a context (AKA name, in the database - SINGLETONS table)
+    // a trial (simulation) is described by a run and a context (AKA name, in the database - SINGLETONS table)
 
-  std::string context ("average packet latency");
+    std::string context ("average packet latency");
 
-  NS_ASSERT_MSG (experiment.size() > 0, "Please name the experiment you are performing with ns-3 NoC");
-  NS_ASSERT_MSG (strategy.size() > 0, "Please name the strategy used in this experiment (CSV values)");
-  NS_ASSERT_MSG (input.size() > 0, "Please specify the input of this simulation (CSV values)");
-  // description is optional
-  NS_ASSERT_MSG (run.size() > 0, "Please specify the unique identifier of this simulation (CSV values)");
-  // author is optional
+    NS_ASSERT_MSG (experiment.size() > 0, "Please name the experiment you are performing with ns-3 NoC");
+    NS_ASSERT_MSG (strategy.size() > 0, "Please name the strategy used in this experiment (CSV values)");
+    NS_ASSERT_MSG (input.size() > 0, "Please specify the input of this simulation (CSV values)");
+    // description is optional
+    NS_ASSERT_MSG (run.size() > 0, "Please specify the unique identifier of this simulation (CSV values)");
+    // author is optional
 
-  // Create a DataCollector object to hold information about this run.
-  DataCollector data;
-  data.DescribeRun (experiment, strategy, input, run, description);
+    // Create a DataCollector object to hold information about this run.
+    DataCollector data;
+    data.DescribeRun (experiment, strategy, input, run, description);
 
-  // Add any information we wish to record about this run.
-  if (author.size() > 0) {
-      data.AddMetadata("author", author);
+    // Add any information we wish to record about this run.
+    if (author.size() > 0) {
+        data.AddMetadata("author", author);
+    }
+
+    // This counter tracks how many complete packets are injected
+    // (if there are packets for which only a part of them is injected into the network,
+    // then such messages are not counted)
+    Ptr<CounterCalculator<> > appPacketInjected = CreateObject<CounterCalculator<> > ();
+    appPacketInjected->SetKey ("packets-injected");
+    appPacketInjected->SetContext (context);
+    // we have to put $ because MessageInjected is not an Attribute
+    // by using * we specify that we count for all the messages, injected by all applications in all nodes
+    // see http://www.nsnam.org/wiki/index.php/HOWTO_determine_the_path_of_an_attribute_or_trace_source
+    Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocCtgApplication/PacketInjected",
+                    MakeBoundCallback (&PacketInjectedCallback, appPacketInjected));
+    data.AddDataCalculator (appPacketInjected);
+
+    // This counter tracks how many flits are injected
+    Ptr<CounterCalculator<> > appFlitInjected = CreateObject<CounterCalculator<> > ();
+    appFlitInjected->SetKey ("flits-injected");
+    appFlitInjected->SetContext (context);
+    Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocCtgApplication/FlitInjected",
+                    MakeBoundCallback (&FlitInjectedCallback, appFlitInjected));
+    data.AddDataCalculator (appFlitInjected);
+
+    // Computes the average packet latency
+    Ptr<TimeMinMaxAvgTotalCalculator> latencyStat = CreateObject<TimeMinMaxAvgTotalCalculator>();
+    latencyStat->SetKey ("latency");
+    latencyStat->SetContext (context);
+    Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocCtgApplication/FlitReceived",
+                    MakeBoundCallback (&FlitReceivedCallback, 0));
+    data.AddDataCalculator(latencyStat);
+
+    // start the simulation
+
+    NS_LOG_INFO ("Run Simulation.");
+    Simulator::Run ();
+    NS_LOG_INFO ("Done.");
+    NS_LOG_INFO ("Simulation time is " << Simulator::Now ());
+    Simulator::Destroy ();
+
+    // this must be done after the simulation ended
+    ComputeLatenciesOfPackets (latencyStat);
+
+    // Generate statistics output
+
+  // NOTE: Deleting the database here is useful only for a single test
+  // This must obviously be commented out when using a script that runs multiple simulations
+  //  remove ("data.db");
+
+    // Pick an output writer based in the requested format.
+    NS_LOG_INFO ("Creating sqlite formatted data output.");
+    Ptr<DataOutputInterface> output = CreateObject<SqliteDataOutput> ();
+    output->Output (data);
   }
-
-  // This counter tracks how many complete packets are injected
-  // (if there are packets for which only a part of them is injected into the network,
-  // then such messages are not counted)
-  Ptr<CounterCalculator<> > appPacketInjected = CreateObject<CounterCalculator<> > ();
-  appPacketInjected->SetKey ("packets-injected");
-  appPacketInjected->SetContext (context);
-  // we have to put $ because MessageInjected is not an Attribute
-  // by using * we specify that we count for all the messages, injected by all applications in all nodes
-  // see http://www.nsnam.org/wiki/index.php/HOWTO_determine_the_path_of_an_attribute_or_trace_source
-  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocCtgApplication/PacketInjected",
-                  MakeBoundCallback (&PacketInjectedCallback, appPacketInjected));
-  data.AddDataCalculator (appPacketInjected);
-
-  // This counter tracks how many flits are injected
-  Ptr<CounterCalculator<> > appFlitInjected = CreateObject<CounterCalculator<> > ();
-  appFlitInjected->SetKey ("flits-injected");
-  appFlitInjected->SetContext (context);
-  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocCtgApplication/FlitInjected",
-                  MakeBoundCallback (&FlitInjectedCallback, appFlitInjected));
-  data.AddDataCalculator (appFlitInjected);
-
-  // Computes the average packet latency
-  Ptr<TimeMinMaxAvgTotalCalculator> latencyStat = CreateObject<TimeMinMaxAvgTotalCalculator>();
-  latencyStat->SetKey ("latency");
-  latencyStat->SetContext (context);
-  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::NocCtgApplication/FlitReceived",
-                  MakeBoundCallback (&FlitReceivedCallback, 0));
-  data.AddDataCalculator(latencyStat);
-
-  // start the simulation
-
-  NS_LOG_INFO ("Run Simulation.");
-  Simulator::Run ();
-  NS_LOG_INFO ("Done.");
-  NS_LOG_INFO ("Simulation time is " << Simulator::Now ());
-  Simulator::Destroy ();
-
-  // this must be done after the simulation ended
-  ComputeLatenciesOfPackets (latencyStat);
-
-  // Generate statistics output
-
-// NOTE: Deleting the database here is useful only for a single test
-// This must obviously be commented out when using a script that runs multiple simulations
-//  remove ("data.db");
-
-  // Pick an output writer based in the requested format.
-  NS_LOG_INFO ("Creating sqlite formatted data output.");
-  Ptr<DataOutputInterface> output = CreateObject<SqliteDataOutput> ();
-  output->Output (data);
-
   return 0;
 }
