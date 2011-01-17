@@ -26,7 +26,7 @@ NS_LOG_COMPONENT_DEFINE ("NocHeader");
 namespace ns3
 {
 
-  NS_OBJECT_ENSURE_REGISTERED (NocHeader);
+  NS_OBJECT_ENSURE_REGISTERED ( NocHeader);
 
   NocHeader::NocHeader ()
   {
@@ -40,8 +40,7 @@ namespace ns3
     m_load = 0;
   }
 
-  NocHeader::NocHeader (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX,
-      uint32_t sourceY, uint16_t dataFlitCount)
+  NocHeader::NocHeader (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX, uint32_t sourceY, uint16_t dataFlitCount)
   {
     NocHeader::m_xDistance = xDistance;
     NocHeader::m_yDistance = yDistance;
@@ -61,10 +60,7 @@ namespace ns3
   TypeId
   NocHeader::GetTypeId ()
   {
-    static TypeId tid = TypeId ("NocHeader")
-      .SetParent<Header> ()
-      .AddConstructor<NocHeader> ()
-    ;
+    static TypeId tid = TypeId ("NocHeader") .SetParent<Header> () .AddConstructor<NocHeader> ();
     return tid;
   }
 
@@ -141,34 +137,59 @@ namespace ns3
     std::string xDir;
     std::string yDir;
 
-    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+    //    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+    //      {
+    //        xDir = "W";
+    //      }
+    //    else
+    //      {
+    //        if (m_xDistance != 0)
+    //          {
+    //            xDir = "E";
+    //          }
+    //      }
+    //    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+    //      {
+    //        yDir = "N";
+    //      }
+    //    else
+    //      {
+    //        if (m_yDistance != 0)
+    //          {
+    //            yDir = "S";
+    //          }
+    //      }
+
+    if (m_xDistance < 0)
       {
         xDir = "W";
       }
-    else
+
+    if (m_xDistance > 0)
       {
-        if (m_xDistance != 0)
-          {
-            xDir = "E";
-          }
+        xDir = "E";
       }
-    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+
+    if (m_yDistance < 0)
       {
         yDir = "N";
       }
-    else
+
+    if (m_yDistance > 0)
       {
-        if (m_yDistance != 0)
-          {
-            yDir = "S";
-          }
+        yDir = "S";
       }
 
-    os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
-        << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
-        << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
-        << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
-        << (long) m_dataFlitCount << " load=" << (int) m_load;
+    //    os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
+    //        << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
+    //        << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
+    //        << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
+    //        << (long) m_dataFlitCount << " load=" << (int) m_load;
+    //
+    os << "x=<" << (int) (m_xDistance) << ", " << xDir << "> " << "y=<" << (int) (m_yDistance) << ", " << yDir << "> "
+        << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId=" << (int) m_subdataId
+        << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount=" << (long) m_dataFlitCount << " load="
+        << (int) m_load;
   }
 
   /**
@@ -183,34 +204,33 @@ namespace ns3
   bool
   NocHeader::IsEmpty () const
   {
-    return (m_xDistance == 0) && (m_yDistance == 0) && (m_sourceX == 0)
-        && (m_sourceY == 0) && (m_subdataId == 0) && (m_peGroupAddress == 0)
-        && (m_dataFlitCount == 0) && (m_load == 0);
+    return (m_xDistance == 0) && (m_yDistance == 0) && (m_sourceX == 0) && (m_sourceY == 0) && (m_subdataId == 0)
+        && (m_peGroupAddress == 0) && (m_dataFlitCount == 0) && (m_load == 0);
   }
 
-//  void
-//  NocHeader::SetXDistance(uint32_t xDistance)
-//  {
-//    m_xDistance = xDistance;
-//  }
-//
-//  uint32_t
-//  const NocHeader::GetXDistance()
-//  {
-//    return m_xDistance;
-//  }
-//
-//  void
-//  NocHeader::SetYDistance(uint32_t yDistance)
-//  {
-//    m_yDistance = yDistance;
-//  }
-//
-//  uint32_t
-//  const NocHeader::GetYDistance()
-//  {
-//    return m_yDistance;
-//  }
+  //  void
+  //  NocHeader::SetXDistance(uint32_t xDistance)
+  //  {
+  //    m_xDistance = xDistance;
+  //  }
+  //
+  //  uint32_t
+  //  const NocHeader::GetXDistance()
+  //  {
+  //    return m_xDistance;
+  //  }
+  //
+  //  void
+  //  NocHeader::SetYDistance(uint32_t yDistance)
+  //  {
+  //    m_yDistance = yDistance;
+  //  }
+  //
+  //  uint32_t
+  //  const NocHeader::GetYDistance()
+  //  {
+  //    return m_yDistance;
+  //  }
 
   bool
   NocHeader::HasEastDirection ()
@@ -239,39 +259,41 @@ namespace ns3
   void
   NocHeader::SetXOffset (uint32_t xOffset)
   {
-    if (HasEastDirection ())
-      {
-        m_xDistance = xOffset;
-      }
-    else
-      {
-        m_xDistance = xOffset | DIRECTION_BIT_MASK;
-      }
+//    if (HasEastDirection ())
+//      {
+//        m_xDistance = xOffset;
+//      }
+//    else
+//      {
+//        m_xDistance = xOffset | DIRECTION_BIT_MASK;
+//      }
+    m_xDistance = xOffset;
   }
 
   void
   NocHeader::SetYOffset (uint32_t yOffset)
   {
-    if (HasSouthDirection ())
-      {
-        m_yDistance = yOffset;
-      }
-    else
-      {
-        m_yDistance = yOffset | DIRECTION_BIT_MASK;
-      }
+//    if (HasSouthDirection ())
+//      {
+//        m_yDistance = yOffset;
+//      }
+//    else
+//      {
+//        m_yDistance = yOffset | DIRECTION_BIT_MASK;
+//      }
+    m_yDistance = yOffset;
   }
 
   uint32_t
   NocHeader::GetXOffset ()
   {
-    return m_xDistance & OFFSET_BIT_MASK;
+    return m_xDistance;// & OFFSET_BIT_MASK;
   }
 
   uint32_t
   NocHeader::GetYOffset ()
   {
-    return m_yDistance & OFFSET_BIT_MASK;
+    return m_yDistance; //& OFFSET_BIT_MASK;
   }
 
   void
@@ -281,7 +303,8 @@ namespace ns3
   }
 
   uint32_t
-  const NocHeader::GetSourceX ()
+  const
+  NocHeader::GetSourceX ()
   {
     return m_sourceX;
   }
@@ -293,7 +316,8 @@ namespace ns3
   }
 
   uint32_t
-  const NocHeader::GetSourceY ()
+  const
+  NocHeader::GetSourceY ()
   {
     return m_sourceY;
   }
@@ -305,7 +329,8 @@ namespace ns3
   }
 
   uint8_t
-  const NocHeader::GetSubdataId ()
+  const
+  NocHeader::GetSubdataId ()
   {
     return m_subdataId;
   }
@@ -317,7 +342,8 @@ namespace ns3
   }
 
   uint16_t
-  const NocHeader::GetPeGroupAddress ()
+  const
+  NocHeader::GetPeGroupAddress ()
   {
     return m_peGroupAddress;
   }
@@ -329,7 +355,8 @@ namespace ns3
   }
 
   uint16_t
-  const NocHeader::GetDataFlitCount ()
+  const
+  NocHeader::GetDataFlitCount ()
   {
     return m_dataFlitCount;
   }
@@ -341,7 +368,8 @@ namespace ns3
   }
 
   uint8_t
-  const NocHeader::GetLoad ()
+  const
+  NocHeader::GetLoad ()
   {
     return m_load;
   }

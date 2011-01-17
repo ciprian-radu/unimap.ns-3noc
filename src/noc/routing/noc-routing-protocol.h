@@ -47,7 +47,7 @@ namespace ns3
   {
   public:
 
-    enum Direction2DMesh {NONE, NORTH, EAST, SOUTH, WEST};
+    enum Direction2DMesh {NONE, NORTH, EAST, SOUTH, WEST, UP, DOWN};
 
     static Direction2DMesh
     GetOpositeDirection2DMesh (int direction);
