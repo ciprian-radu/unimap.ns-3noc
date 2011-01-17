@@ -52,6 +52,8 @@
 #include "ns3/nstime.h"
 #include "ns3/output-stream-wrapper.h"
 #include "ns3/uinteger.h"
+#include "src/noc/topology/noc-torus-2d.h"
+
 
 using namespace ns3;
 
@@ -89,23 +91,21 @@ main (int argc, char *argv[])
       Ptr<NocNode> nocNode = CreateObject<NocNode> ();
       nodes.Add (nocNode);
     }
-//  nodes.Create (numberOfNodes);
+  //  nodes.Create (numberOfNodes);
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
   // Note that the next two channel attributes are not considered with a NocSyncApplication!
-//  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
-//  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
+  //  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
+  //  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
 
-//  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
-  noc->SetInQueue ("ns3::DropTailQueue",
-      "Mode", EnumValue (DropTailQueue::PACKETS),
-      "MaxPackets", UintegerValue (1)); // the in queue must have at least 1 packet
+  //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
+  noc->SetInQueue ("ns3::DropTailQueue", "Mode", EnumValue (DropTailQueue::PACKETS), "MaxPackets", UintegerValue (1)); // the in queue must have at least 1 packet
 
   // install the topology
-//  noc->SetRouter ("ns3::IrvineLoadRouter");
+  //  noc->SetRouter ("ns3::IrvineLoadRouter");
   noc->SetRouter ("ns3::FourWayRouter");
   // WARNING setting properties for objects in this manner means that all the created objects
   // will refer to the *same* object
@@ -114,21 +114,21 @@ main (int argc, char *argv[])
   // we therefore can't do something like this:
   //
   // Ptr<LoadRouterComponent> loadComponent = CreateObject<SlbLoadRouterComponent> ();
-//  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
-//  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
+  //  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
+  //  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
   // Do not forget about changing the routing protocol when changing the load router component
 
   noc->SetRoutingProtocol ("ns3::XyRouting");
-//  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
+  //  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
 
-//  noc->SetRoutingProtocol ("ns3::SlbRouting");
-//  noc->SetRoutingProtocolAttribute("LoadThreshold", IntegerValue (30));
+  //  noc->SetRoutingProtocol ("ns3::SlbRouting");
+  //  noc->SetRoutingProtocolAttribute("LoadThreshold", IntegerValue (30));
 
-//  noc->SetRoutingProtocol ("ns3::SoRouting");
+  //  noc->SetRoutingProtocol ("ns3::SoRouting");
 
   noc->SetSwitchingProtocol ("ns3::WormholeSwitching");
-//  noc->SetSwitchingProtocol ("ns3::SafSwitching");
-//  noc->SetSwitchingProtocol ("ns3::VctSwitching");
+  //  noc->SetSwitchingProtocol ("ns3::SafSwitching");
+  //  noc->SetSwitchingProtocol ("ns3::VctSwitching");
 
   NetDeviceContainer devs = noc->Install (nodes);
   // done with installing the topology
@@ -137,30 +137,31 @@ main (int argc, char *argv[])
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (11)); // destination
+  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (0)); // destination
   nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (3));
-  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (0)); // source
-//  apps1.Start (Seconds (0.0));
-//  apps1.Stop (Seconds (10.0));
+  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (15)); // source
+  //  apps1.Start (Seconds (0.0));
+  //  apps1.Stop (Seconds (10.0));
 
-//  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
-//  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
-//  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-//  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (0)); // destination
-//  nocSyncAppHelper2.SetAttribute ("MaxFlits", UintegerValue (3));
-//  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (1)); // source
-////  apps2.Start (Seconds (0.0));
-////  apps2.Stop (Seconds (10.0));
- 
+  //  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
+  //  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
+  //  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
+  //  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (0)); // destination
+  //  nocSyncAppHelper2.SetAttribute ("MaxFlits", UintegerValue (3));
+  //  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (1)); // source
+  ////  apps2.Start (Seconds (0.0));
+  ////  apps2.Stop (Seconds (10.0));
+
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-sync-test.tr file
-// Tracing should be kept disabled for big simulations
+  // Tracing should be kept disabled for big simulations
   NS_LOG_INFO ("Configure Tracing.");
-  Ptr<OutputStreamWrapper> stream = Create<OutputStreamWrapper> ("noc-sync-test.tr", std::ios_base::binary | std::ios_base::out);
+  Ptr<OutputStreamWrapper> stream =
+      Create<OutputStreamWrapper> ("noc-sync-test.tr", std::ios_base::binary | std::ios_base::out);
   noc->EnableAsciiAll (stream);
 
-//  GtkConfigStore configstore;
-//  configstore.ConfigureAttributes();
+  //  GtkConfigStore configstore;
+  //  configstore.ConfigureAttributes();
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();
