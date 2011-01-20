@@ -444,18 +444,29 @@ namespace ns3
 
         uint32_t relativeX = 0;
         uint32_t relativeY = 0;
-        if (destinationX < sourceX)
-          {
-            // 0 = East; 1 = West
-            relativeX = NocHeader::DIRECTION_BIT_MASK;
-          }
-        if (destinationY < sourceY)
-          {
-            // 0 = South; 1 = North
-            relativeY = NocHeader::DIRECTION_BIT_MASK;
-          }
-        relativeX = relativeX | std::abs ((int) (destinationX - sourceX));
-        relativeY = relativeY | std::abs ((int) (destinationY - sourceY));
+//        if (destinationX < sourceX)
+//          {
+//            // 0 = East; 1 = West
+//            relativeX = NocHeader::DIRECTION_BIT_MASK;
+//          }
+//        if (destinationY < sourceY)
+//          {
+//            // 0 = South; 1 = North
+//            relativeY = NocHeader::DIRECTION_BIT_MASK;
+//          }
+
+        NS_LOG_LOGIC ("dest"<<destinationX);
+        NS_LOG_LOGIC ("source"<<sourceX);
+
+        //relativeX = relativeX | std::abs ((int) (destinationX - sourceX));
+        relativeX=((int)(destinationX - sourceX))%m_hSize;
+        if (relativeX>(m_hSize/2))
+          relativeX=relativeX-m_hSize;
+
+       // relativeY = relativeY | std::abs ((int) (destinationY - sourceY));
+        relativeY=((int)(destinationY - sourceY))%m_hSize;
+        if (relativeY>(m_hSize/2))
+                  relativeY=relativeY-m_hSize;
         // end traffic pattern
 
         NS_ASSERT_MSG (m_numberOfFlits >= 1,

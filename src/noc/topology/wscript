@@ -8,6 +8,8 @@ def build(bld):
     	'../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/topologyParameter/topology-parameter.cxx',
         'noc-topology.cc',
 		'noc-mesh-2d.cc',
+		'noc-torus-2d.cc',
+		'noc-mesh-3d.cc',
 		'noc-irvine-mesh-2d.cc',            
         ]
 
@@ -19,6 +21,8 @@ def build(bld):
     	'../../../../NoC-XML/src/ro/ulbsibiu/acaps/noc/xml/topologyParameter/topology-parameter.hxx',
         'noc-topology.h',
         'noc-mesh-2d.h',
+        'noc-torus-2d.h',
+        'noc-mesh-3d.h',
         'noc-irvine-mesh-2d.h',             
         ]
 
