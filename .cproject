@@ -56,6 +56,35 @@
 					</sourceEntries>
 				</configuration>
 			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
+				<buildTargets>
+					<target name="doxygen" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
+						<buildArguments>--doxygen</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="run hello-simulator" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
+						<buildArguments>--run hello-simulator</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="distclean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
+						<buildArguments>distclean</buildArguments>
+						<buildTarget/>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+				</buildTargets>
+			</storageModule>
 			<storageModule moduleId="scannerConfiguration">
 				<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 				<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
@@ -221,8 +250,8 @@
 						</scannerInfoProvider>
 					</profile>
 				</scannerConfigBuildInfo>
-				<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1954609900;cdt.managedbuild.config.gnu.exe.release.1954609900.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.575383071;cdt.managedbuild.tool.gnu.c.compiler.input.993257032">
-					<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
+				<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.735952449;cdt.managedbuild.config.gnu.exe.debug.735952449.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.716864465;cdt.managedbuild.tool.gnu.cpp.compiler.input.1964042135">
+					<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
 					<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 						<buildOutputProvider>
 							<openAction enabled="true" filePath=""/>
@@ -304,8 +333,8 @@
 						</scannerInfoProvider>
 					</profile>
 				</scannerConfigBuildInfo>
-				<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.735952449;cdt.managedbuild.config.gnu.exe.debug.735952449.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.716864465;cdt.managedbuild.tool.gnu.cpp.compiler.input.1964042135">
-					<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
+				<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1954609900;cdt.managedbuild.config.gnu.exe.release.1954609900.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.575383071;cdt.managedbuild.tool.gnu.c.compiler.input.993257032">
+					<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 					<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 						<buildOutputProvider>
 							<openAction enabled="true" filePath=""/>
@@ -470,35 +499,6 @@
 						</scannerInfoProvider>
 					</profile>
 				</scannerConfigBuildInfo>
-			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
-			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
-			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
-				<buildTargets>
-					<target name="doxygen" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
-						<buildArguments>--doxygen</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="run hello-simulator" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
-						<buildArguments>--run hello-simulator</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="distclean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>/home/cipi/workspace/ns3dev/waf</buildCommand>
-						<buildArguments>distclean</buildArguments>
-						<buildTarget/>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-				</buildTargets>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
