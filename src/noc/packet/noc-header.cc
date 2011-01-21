@@ -1,6 +1,9 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2009 Systems and Networking, University of Augsburg, Germany
+ * Copyright (c) 2009 - 2011
+ *               - Advanced Computer Architecture and Processing Systems (ACAPS),
+ *               						Lucian Blaga University of Sibiu, Romania
+ *               - Systems and Networking, University of Augsburg, Germany
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,7 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
+ * Authors: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
+ *         		http://webspace.ulbsibiu.ro/ciprian.radu/
+ *          Andreea Gancea <andreea.gancea@ulbsibiu.ro>
  */
 
 #include "noc-header.h"
@@ -60,7 +65,10 @@ namespace ns3
   TypeId
   NocHeader::GetTypeId ()
   {
-    static TypeId tid = TypeId ("NocHeader") .SetParent<Header> () .AddConstructor<NocHeader> ();
+	static TypeId tid = TypeId ("NocHeader")
+	  .SetParent<Header> ()
+	  .AddConstructor<NocHeader> ()
+	;
     return tid;
   }
 
@@ -137,59 +145,34 @@ namespace ns3
     std::string xDir;
     std::string yDir;
 
-    //    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
-    //      {
-    //        xDir = "W";
-    //      }
-    //    else
-    //      {
-    //        if (m_xDistance != 0)
-    //          {
-    //            xDir = "E";
-    //          }
-    //      }
-    //    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
-    //      {
-    //        yDir = "N";
-    //      }
-    //    else
-    //      {
-    //        if (m_yDistance != 0)
-    //          {
-    //            yDir = "S";
-    //          }
-    //      }
+	if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+	  {
+		xDir = "W";
+	  }
+	else
+	  {
+		if (m_xDistance != 0)
+		  {
+			xDir = "E";
+		  }
+	  }
+	if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+	  {
+		yDir = "N";
+	  }
+	else
+	  {
+		if (m_yDistance != 0)
+		  {
+			yDir = "S";
+		  }
+	  }
 
-    if (m_xDistance < 0)
-      {
-        xDir = "W";
-      }
-
-    if (m_xDistance > 0)
-      {
-        xDir = "E";
-      }
-
-    if (m_yDistance < 0)
-      {
-        yDir = "N";
-      }
-
-    if (m_yDistance > 0)
-      {
-        yDir = "S";
-      }
-
-    //    os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
-    //        << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
-    //        << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
-    //        << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
-    //        << (long) m_dataFlitCount << " load=" << (int) m_load;
-    //
-    os << "x=<" << (int) (m_xDistance) << ", " << xDir << "> " << "y=<" << (int) (m_yDistance) << ", " << yDir << "> "
-        << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId=" << (int) m_subdataId
-        << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount=" << (long) m_dataFlitCount << " load="
-        << (int) m_load;
+	os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
+		<< "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
+		<< "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
+		<< (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
+		<< (long) m_dataFlitCount << " load=" << (int) m_load;
   }
 
   /**
@@ -259,41 +242,39 @@ namespace ns3
   void
   NocHeader::SetXOffset (uint32_t xOffset)
   {
-//    if (HasEastDirection ())
-//      {
-//        m_xDistance = xOffset;
-//      }
-//    else
-//      {
-//        m_xDistance = xOffset | DIRECTION_BIT_MASK;
-//      }
-    m_xDistance = xOffset;
+    if (HasEastDirection ())
+      {
+        m_xDistance = xOffset;
+      }
+    else
+      {
+        m_xDistance = xOffset | DIRECTION_BIT_MASK;
+      }
   }
 
   void
   NocHeader::SetYOffset (uint32_t yOffset)
   {
-//    if (HasSouthDirection ())
-//      {
-//        m_yDistance = yOffset;
-//      }
-//    else
-//      {
-//        m_yDistance = yOffset | DIRECTION_BIT_MASK;
-//      }
-    m_yDistance = yOffset;
+    if (HasSouthDirection ())
+      {
+        m_yDistance = yOffset;
+      }
+    else
+      {
+        m_yDistance = yOffset | DIRECTION_BIT_MASK;
+      }
   }
 
   uint32_t
   NocHeader::GetXOffset ()
   {
-    return m_xDistance;// & OFFSET_BIT_MASK;
+    return m_xDistance & OFFSET_BIT_MASK;
   }
 
   uint32_t
   NocHeader::GetYOffset ()
   {
-    return m_yDistance; //& OFFSET_BIT_MASK;
+    return m_yDistance & OFFSET_BIT_MASK;
   }
 
   void

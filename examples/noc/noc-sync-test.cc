@@ -1,8 +1,9 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2010
- *               Advanced Computer Architecture and Processing Systems (ACAPS),
- *               Lucian Blaga University of Sibiu, Romania
+ * Copyright (c) 2009 - 2011
+ *               - Advanced Computer Architecture and Processing Systems (ACAPS),
+ *               						Lucian Blaga University of Sibiu, Romania
+ *               - Systems and Networking, University of Augsburg, Germany
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -119,7 +120,7 @@ main (int argc, char *argv[])
   // Do not forget about changing the routing protocol when changing the load router component
 
   noc->SetRoutingProtocol ("ns3::XyRouting");
-  //  routingProtocolFactory.Set ("RouteXFirst", BooleanValue (false));
+  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
   //  noc->SetRoutingProtocol ("ns3::SlbRouting");
   //  noc->SetRoutingProtocolAttribute("LoadThreshold", IntegerValue (30));
@@ -137,9 +138,9 @@ main (int argc, char *argv[])
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (0)); // destination
+  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (4)); // destination
   nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (3));
-  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (15)); // source
+  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (11)); // source
   //  apps1.Start (Seconds (0.0));
   //  apps1.Stop (Seconds (10.0));
 

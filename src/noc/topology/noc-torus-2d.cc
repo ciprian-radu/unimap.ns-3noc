@@ -1,6 +1,6 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010 - 2011
  *               Advanced Computer Architecture and Processing Systems (ACAPS),
  *               Lucian Blaga University of Sibiu, Romania
  *
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Andreea Gancea <andreea_gancea@yahoo.com>
+ * Author: Andreea Gancea <andreea.gancea@ulbsibiu.ro>
  *
  */
 
@@ -44,14 +44,17 @@ namespace ns3
   TypeId
   NocTorus2D::GetTypeId ()
   {
-    static TypeId tid = TypeId ("ns3::NocTorus2D") .SetParent<NocTopology> () .AddConstructor<NocTorus2D> () .AddAttribute (
-        "hSize", "how many nodes the 2D torus will have on one horizontal line", UintegerValue (4), MakeUintegerAccessor (
-            &NocTorus2D::t_hSize), MakeUintegerChecker<uint32_t> (1));
+    static TypeId tid = TypeId("ns3::NocTorus2D")
+    		.SetParent<NocTopology> ()
+    		.AddConstructor<NocTorus2D> ()
+    		.AddAttribute("hSize",
+    				"how many nodes the 2D torus will have on one horizontal line",
+    				UintegerValue(4), MakeUintegerAccessor(&NocTorus2D::m_hSize),
+    				MakeUintegerChecker<uint32_t> (1));
     return tid;
   }
 
-  NocTorus2D::NocTorus2D () :
-    NocTopology ()
+  NocTorus2D::NocTorus2D () : NocTopology ()
   {
     NS_LOG_FUNCTION_NOARGS ();
   }
@@ -64,7 +67,8 @@ namespace ns3
   NetDeviceContainer
   NocTorus2D::Install (NodeContainer nodes)
   {
-    NS_LOG_FUNCTION_NOARGS ();NS_LOG_DEBUG ("hSize " << t_hSize);
+    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_DEBUG ("hSize " << m_hSize);
 
     Ptr<NocChannel> channel = 0;
     Ptr<NocChannel> channel_torus = 0;
@@ -83,7 +87,6 @@ namespace ns3
             Ptr<NocSwitchingProtocol> switchingProtocol =
                 m_switchingProtocolFactory.Create ()->GetObject<NocSwitchingProtocol> ();
             router->SetSwitchingProtocol (switchingProtocol);
-
           }
       }
 
@@ -105,7 +108,8 @@ namespace ns3
             nocNode->AddDevice (netDevice);
             nocNode->GetRouter ()->AddDevice (netDevice);
           }
-        if (i == 0 || (i > 0 && (i + 1) % t_hSize != 0))
+
+        if (i == 0 || (i > 0 && (i + 1) % m_hSize != 0))
           {
             channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
             netDevice = CreateObject<NocNetDevice> ();
@@ -124,7 +128,7 @@ namespace ns3
           {
             channel = 0;
           }
-        if (i == 0 || (i > 0 && i % t_hSize == 0))
+        if (i == 0 || (i > 0 && i % m_hSize == 0))
           {
             channel_torus = m_channelFactory.Create ()->GetObject<NocChannel> ();
             netDevice = CreateObject<NocNetDevice> ();
@@ -139,7 +143,7 @@ namespace ns3
             nocNode->AddDevice (netDevice);
             nocNode->GetRouter ()->AddDevice (netDevice);
           }
-        if ((i + 1) % t_hSize == 0)
+        if ((i + 1) % m_hSize == 0)
           {
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress (Mac48Address::Allocate ());
@@ -157,11 +161,11 @@ namespace ns3
 
     // create the vertical channels (and net devices)
     channel = 0;
-    std::vector<Ptr<NocChannel> > columnChannels (t_hSize);
-    std::vector<Ptr<NocChannel> > columnChannels_torus (t_hSize);
-    for (unsigned int i = 0; i < nodes.GetN (); i = i + t_hSize)
+    std::vector<Ptr<NocChannel> > columnChannels (m_hSize);
+    std::vector<Ptr<NocChannel> > columnChannels_torus (m_hSize);
+    for (unsigned int i = 0; i < nodes.GetN (); i = i + m_hSize)
       {
-        for (unsigned int j = 0; j < t_hSize; ++j)
+        for (unsigned int j = 0; j < m_hSize; ++j)
           {
             Ptr<NocNode> nocNode = nodes.Get (i + j)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)
@@ -179,7 +183,7 @@ namespace ns3
                 nocNode->AddDevice (netDevice);
                 nocNode->GetRouter ()->AddDevice (netDevice);
               }
-            if (i < nodes.GetN () - t_hSize)
+            if (i < nodes.GetN () - m_hSize)
               {
                 channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
                 netDevice = CreateObject<NocNetDevice> ();
@@ -199,7 +203,7 @@ namespace ns3
               {
                 columnChannels[j] = 0;
               }
-            if (i < t_hSize)
+            if (i < m_hSize)
               {
                 channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
                 netDevice = CreateObject<NocNetDevice> ();
@@ -215,7 +219,7 @@ namespace ns3
                 nocNode->GetRouter ()->AddDevice (netDevice);
                 columnChannels_torus[j] = channel;
               }
-            if (i >= nodes.GetN () - t_hSize)
+            if (i >= nodes.GetN () - m_hSize)
               {
                 channel = columnChannels_torus[j];
                 netDevice = CreateObject<NocNetDevice> ();
@@ -240,7 +244,8 @@ namespace ns3
         NS_LOG_DEBUG ("\tNode " << device->GetNode()->GetId() <<
             " has a net device with (MAC) address " << device->GetAddress() <<
             " connected to channel " << device->GetChannel()->GetId());
-      }NS_LOG_DEBUG ("Done with printing the 2D torus topology.");
+      }
+      NS_LOG_DEBUG ("Done with printing the 2D torus topology.");
 
     return m_devices;
   }
@@ -251,7 +256,7 @@ namespace ns3
     NS_LOG_FUNCTION (directoryPath);
 
     stringstream ss;
-    ss << directoryPath << FILE_SEPARATOR << t_hSize << "x" << nodes.GetN () / t_hSize << FILE_SEPARATOR << "nodes";
+    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_hSize << FILE_SEPARATOR << "nodes";
     string nodesXmlDirectoryPath = ss.str ();
     FileUtils::MkdirRecursive (nodesXmlDirectoryPath.c_str ());
 
@@ -278,7 +283,7 @@ namespace ns3
             nodeType::topologyParameter_type::topology_type topology ("torus2D");
             nodeType::topologyParameter_type::type_type rowType ("row");
             ss.str ("");
-            ss << i / t_hSize;
+            ss << i / m_hSize;
             string rowAsString = ss.str ();
             nodeType::topologyParameter_type::value_type rowValue (rowAsString);
             nodeType::topologyParameter_type rowTopologyParameter (topology);
@@ -288,7 +293,7 @@ namespace ns3
 
             nodeType::topologyParameter_type::type_type columnType ("column");
             ss.str ("");
-            ss << i % t_hSize;
+            ss << i % m_hSize;
             string columnAsString = ss.str ();
             nodeType::topologyParameter_type::value_type columnValue (columnAsString);
             nodeType::topologyParameter_type columnTopologyParameter (topology);
@@ -334,7 +339,7 @@ namespace ns3
       }
 
     ss.str ("");
-    ss << directoryPath << FILE_SEPARATOR << t_hSize << "x" << nodes.GetN () / t_hSize << FILE_SEPARATOR << "links";
+    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_hSize << FILE_SEPARATOR << "links";
     string linksXmlDirectoryPath = ss.str ();
     FileUtils::MkdirRecursive (linksXmlDirectoryPath.c_str ());
 
