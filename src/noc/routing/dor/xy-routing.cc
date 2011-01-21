@@ -1,6 +1,9 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2009 Systems and Networking, University of Augsburg, Germany
+ * Copyright (c) 2009 - 2011
+ *               - Advanced Computer Architecture and Processing Systems (ACAPS),
+ *               						Lucian Blaga University of Sibiu, Romania
+ *               - Systems and Networking, University of Augsburg, Germany
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,7 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Ciprian Radu <radu@informatik.uni-augsburg.de>
+ * Authors: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
+ *         		http://webspace.ulbsibiu.ro/ciprian.radu/
+ *          Andreea Gancea <andreea.gancea@ulbsibiu.ro>
  */
 
 #include "xy-routing.h"
@@ -33,23 +38,26 @@ namespace ns3
   TypeId
   XyRouting::GetTypeId ()
   {
-    static TypeId tid =
-        TypeId ("ns3::XyRouting") .SetParent<NocRoutingProtocol> () .AddConstructor<XyRouting> () .AddAttribute ("RouteXFirst",
-            "whether or not the X dimension is routed first", BooleanValue (true), MakeBooleanAccessor (
-                &XyRouting::SetRouteXFirst, &XyRouting::GetRouteXFirst), MakeBooleanChecker ());
+	static TypeId tid = TypeId("ns3::XyRouting")
+		.SetParent<NocRoutingProtocol> ()
+		.AddConstructor<XyRouting> ()
+		.AddAttribute ("RouteXFirst",
+			"whether or not the X dimension is routed first",
+			BooleanValue (true),
+			MakeBooleanAccessor(&XyRouting::SetRouteXFirst, &XyRouting::GetRouteXFirst),
+			MakeBooleanChecker ())
+		;
     return tid;
   }
 
   // we could easily name the protocol "XY", but using __FILE__ should be more useful for debugging
-  XyRouting::XyRouting () :
-    NocRoutingProtocol (__FILE__)
+  XyRouting::XyRouting () : NocRoutingProtocol (__FILE__)
   {
     m_routeXFirst = true;
     NS_LOG_DEBUG ("XY routing with X dimension routed first");
   }
 
-  XyRouting::XyRouting (bool routeXFirst) :
-    NocRoutingProtocol (__FILE__)
+  XyRouting::XyRouting (bool routeXFirst) : NocRoutingProtocol (__FILE__)
   {
     m_routeXFirst = routeXFirst;
     NS_LOG_DEBUG ("XY routing with " << (routeXFirst ? "X" : "Y") << " dimension routed first");
@@ -97,148 +105,79 @@ namespace ns3
     NS_LOG_DEBUG ("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
     NS_LOG_DEBUG ("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
 
-    //    /*if (m_routeXFirst)
-    //      {
-    //        if (xOffset != 0) // note that we prefer the X direction
-    //          {
-    //            xOffset--;
-    //            if (isEast)
-    //              {
-    //                NS_ASSERT_MSG (xOffset >= 0, "A packet going to East will have the offset < 0");
-    //                xDirection = NocRoutingProtocol::EAST;
-    //              }
-    //            else
-    //              {
-    //                NS_ASSERT_MSG (xOffset >= 0, "A packet going to West will have the offset < 0");
-    //                xDirection = NocRoutingProtocol::WEST;
-    //              }
-    //            nocHeader.SetXOffset (xOffset);
-    //          }
-    //        else
-    //          {
-    //            if (yOffset != 0)
-    //              {
-    //                yOffset--;
-    //                if (isSouth)
-    //                  {
-    //                    NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-    //                    yDirection = NocRoutingProtocol::SOUTH;
-    //                  }
-    //                else
-    //                  {
-    //                    NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
-    //                    yDirection = NocRoutingProtocol::NORTH;
-    //                  }
-    //                nocHeader.SetYOffset (yOffset);
-    //              }
-    //          }
-    //      }
-    //    else
-    //      {
-    //        if (yOffset != 0)
-    //          {
-    //            yOffset--;
-    //            if (isSouth)
-    //              {
-    //                NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-    //                yDirection = NocRoutingProtocol::SOUTH;
-    //              }
-    //            else
-    //              {
-    //                NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
-    //                yDirection = NocRoutingProtocol::NORTH;
-    //              }
-    //            nocHeader.SetYOffset (yOffset);
-    //          }
-    //        else
-    //          {
-    //            if (xOffset != 0) // note that we prefer the Y direction
-    //              {
-    //                xOffset--;
-    //                if (isEast)
-    //                  {
-    //                    NS_ASSERT_MSG (xOffset >= 0, "A packet going to East will have the offset < 0");
-    //                    xDirection = NocRoutingProtocol::EAST;
-    //                  }
-    //                else
-    //                  {
-    //                    NS_ASSERT_MSG (xOffset >= 0, "A packet going to West will have the offset < 0");
-    //                    xDirection = NocRoutingProtocol::WEST;
-    //                  }
-    //                nocHeader.SetXOffset (xOffset);
-    //              }
-    //          }
-    //      }
+	if (m_routeXFirst)
+	  {
+		if (xOffset != 0) // note that we prefer the X direction
+		  {
+			xOffset--;
+			if (isEast)
+			  {
+				NS_ASSERT_MSG (xOffset >= 0, "A packet going to East will have the offset < 0");
+				xDirection = NocRoutingProtocol::EAST;
+			  }
+			else
+			  {
+				NS_ASSERT_MSG (xOffset >= 0, "A packet going to West will have the offset < 0");
+				xDirection = NocRoutingProtocol::WEST;
+			  }
+			nocHeader.SetXOffset (xOffset);
+		  }
+		else
+		  {
+			if (yOffset != 0)
+			  {
+				yOffset--;
+				if (isSouth)
+				  {
+					NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+					yDirection = NocRoutingProtocol::SOUTH;
+				  }
+				else
+				  {
+					NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
+					yDirection = NocRoutingProtocol::NORTH;
+				  }
+				nocHeader.SetYOffset (yOffset);
+			  }
+		  }
+	  }
+	else
+	  {
+		if (yOffset != 0)
+		  {
+			yOffset--;
+			if (isSouth)
+			  {
+				NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+				yDirection = NocRoutingProtocol::SOUTH;
+			  }
+			else
+			  {
+				NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
+				yDirection = NocRoutingProtocol::NORTH;
+			  }
+			nocHeader.SetYOffset (yOffset);
+		  }
+		else
+		  {
+			if (xOffset != 0) // note that we prefer the Y direction
+			  {
+				xOffset--;
+				if (isEast)
+				  {
+					NS_ASSERT_MSG (xOffset >= 0, "A packet going to East will have the offset < 0");
+					xDirection = NocRoutingProtocol::EAST;
+				  }
+				else
+				  {
+					NS_ASSERT_MSG (xOffset >= 0, "A packet going to West will have the offset < 0");
+					xDirection = NocRoutingProtocol::WEST;
+				  }
+				nocHeader.SetXOffset (xOffset);
+			  }
+		  }
+	  }
 
-    if (m_routeXFirst)
-      {
-
-        if (xOffset != 0)
-          {
-            if (xOffset > 0) // note that we prefer the X direction
-              {
-                xOffset--;
-                xDirection = NocRoutingProtocol::EAST;
-              }
-            else
-              {
-                xOffset++;
-                xDirection = NocRoutingProtocol::WEST;
-              }
-            nocHeader.SetXOffset (xOffset);
-          }
-        else
-
-        if (yOffset != 0)
-          {
-            if (yOffset > 0)
-              {
-                yOffset--;
-                yDirection = NocRoutingProtocol::SOUTH;
-              }
-            else
-              {
-                yOffset++;
-                yDirection = NocRoutingProtocol::NORTH;
-              }
-            nocHeader.SetYOffset (yOffset);
-          }
-      }
-    else
-      {
-        if (yOffset != 0)
-          {
-            if (yOffset > 0)
-              {
-                yOffset--;
-                yDirection = NocRoutingProtocol::SOUTH;
-              }
-            else
-              {
-                yOffset++;
-                yDirection = NocRoutingProtocol::NORTH;
-              }
-            nocHeader.SetYOffset (yOffset);
-          }
-        else
-          {
-            if (xOffset != 0)
-              {
-                if (xOffset > 0) // note that we prefer the X direction
-
-                  {
-                    xOffset--;
-                    xDirection = NocRoutingProtocol::EAST;
-                  }
-                else
-                  {
-                    xOffset++;
-                    xDirection = NocRoutingProtocol::WEST;
-                  }
-                nocHeader.SetXOffset (xOffset);
-              }
-          }
-      }
     NS_LOG_DEBUG ("new X offset " << (int) nocHeader.GetXOffset ());
     NS_LOG_DEBUG ("new Y offset " << (int) nocHeader.GetYOffset ());
 
@@ -253,67 +192,65 @@ namespace ns3
 
     bool routeX = true;
     bool routeY = true;
-    switch (xDirection)
-      {
-    case NocRoutingProtocol::EAST:
-      m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, EAST);
-      NS_ASSERT (m_sourceNetDevice != 0);
-      m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, WEST);
-      NS_ASSERT (m_destinationNetDevice != 0);
-      route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
-      break;
-    case NocRoutingProtocol::WEST:
-      m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, WEST);
-      NS_ASSERT (m_sourceNetDevice != 0);
-      m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, EAST);
-      NS_ASSERT (m_destinationNetDevice != 0);
-      route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
-      break;
-    case NocRoutingProtocol::NORTH:
-      NS_LOG_ERROR ("A NORTH direction is not allowed as a horizontal direction");
-      routeX = false;
-      break;
-    case NocRoutingProtocol::SOUTH:
-      NS_LOG_ERROR ("A SOUTH direction is not allowed as a horizontal direction");
-      routeX = false;
-      break;
-    case NocRoutingProtocol::NONE:
-      routeX = false;
-    default:
-      routeX = false;
-      break;
+    switch (xDirection) {
+		case NocRoutingProtocol::EAST:
+		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, EAST);
+		  NS_ASSERT (m_sourceNetDevice != 0);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, WEST);
+		  NS_ASSERT (m_destinationNetDevice != 0);
+		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
+		  break;
+		case NocRoutingProtocol::WEST:
+		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, WEST);
+		  NS_ASSERT (m_sourceNetDevice != 0);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, EAST);
+		  NS_ASSERT (m_destinationNetDevice != 0);
+		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
+		  break;
+		case NocRoutingProtocol::NORTH:
+		  NS_LOG_ERROR ("A NORTH direction is not allowed as a horizontal direction");
+		  routeX = false;
+		  break;
+		case NocRoutingProtocol::SOUTH:
+		  NS_LOG_ERROR ("A SOUTH direction is not allowed as a horizontal direction");
+		  routeX = false;
+		  break;
+		case NocRoutingProtocol::NONE:
+		  routeX = false;
+		default:
+		  routeX = false;
+		  break;
       }
 
-    switch (yDirection)
-      {
-    case NocRoutingProtocol::NORTH:
-      m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, NORTH);
-      NS_ASSERT (m_sourceNetDevice != 0);
-      m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::SOUTH);
-      NS_ASSERT (m_destinationNetDevice != 0);
-      route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
-      break;
-    case NocRoutingProtocol::SOUTH:
-      m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source,
-          NocRoutingProtocol::SOUTH);
-      NS_ASSERT (m_sourceNetDevice != 0);
-      m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::NORTH);
-      NS_ASSERT (m_destinationNetDevice != 0);
-      route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
-      break;
-    case NocRoutingProtocol::EAST:
-      NS_LOG_ERROR ("A EAST direction is not allowed as a vertical direction");
-      routeY = false;
-      break;
-    case NocRoutingProtocol::WEST:
-      NS_LOG_ERROR ("A WEST direction is not allowed as a vertical direction");
-      routeY = false;
-      break;
-    case NocRoutingProtocol::NONE:
-      routeY = false;
-    default:
-      routeY = false;
-      break;
+    switch (yDirection) {
+		case NocRoutingProtocol::NORTH:
+		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, NORTH);
+		  NS_ASSERT (m_sourceNetDevice != 0);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::SOUTH);
+		  NS_ASSERT (m_destinationNetDevice != 0);
+		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
+		  break;
+		case NocRoutingProtocol::SOUTH:
+		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source,
+			  NocRoutingProtocol::SOUTH);
+		  NS_ASSERT (m_sourceNetDevice != 0);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::NORTH);
+		  NS_ASSERT (m_destinationNetDevice != 0);
+		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
+		  break;
+		case NocRoutingProtocol::EAST:
+		  NS_LOG_ERROR ("A EAST direction is not allowed as a vertical direction");
+		  routeY = false;
+		  break;
+		case NocRoutingProtocol::WEST:
+		  NS_LOG_ERROR ("A WEST direction is not allowed as a vertical direction");
+		  routeY = false;
+		  break;
+		case NocRoutingProtocol::NONE:
+		  routeY = false;
+		default:
+		  routeY = false;
+		  break;
       }
 
     if (!routeX && !routeY)

@@ -1,6 +1,6 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010 - 2011
  *               Advanced Computer Architecture and Processing Systems (ACAPS),
  *               Lucian Blaga University of Sibiu, Romania
  *
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Andreea Gancea <andreea_gancea@yahoo.com>
+ * Author: Andreea Gancea <andreea.gancea@ulbsibiu.ro>
  *
  */
 
@@ -60,7 +60,7 @@ namespace ns3
     /**
      * how many nodes the 2D torus will have on one horizontal line
      */
-    uint32_t t_hSize;
+    uint32_t m_hSize;
 
   };
 

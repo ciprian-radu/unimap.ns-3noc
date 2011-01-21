@@ -1,6 +1,6 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010 - 2011
  *               Advanced Computer Architecture and Processing Systems (ACAPS),
  *               Lucian Blaga University of Sibiu, Romania
  *
@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
- *         http://webspace.ulbsibiu.ro/ciprian.radu/
+ * Author: Andreea Gancea <andreea.gancea@ulbsibiu.ro>
+ *
  */
 
 #include "noc-mesh-3d.h"
@@ -44,14 +44,17 @@ namespace ns3
   TypeId
   NocMesh3D::GetTypeId ()
   {
-    static TypeId tid = TypeId ("ns3::NocMesh3D") .SetParent<NocTopology> () .AddConstructor<NocMesh3D> () .AddAttribute (
-        "hSize", "how many nodes the 3D mesh will have on one horizontal line", UintegerValue (4), MakeUintegerAccessor (
-            &NocMesh3D::m_hSize), MakeUintegerChecker<uint32_t> (1));
+    static TypeId tid = TypeId ("ns3::NocMesh3D")
+    	.SetParent<NocTopology> ()
+    	.AddConstructor<NocMesh3D> ()
+    	.AddAttribute ("hSize",
+    		"how many nodes the 3D mesh will have on one horizontal line",
+    		UintegerValue (4), MakeUintegerAccessor (&NocMesh3D::m_hSize),
+    		MakeUintegerChecker<uint32_t> (1));
     return tid;
   }
 
-  NocMesh3D::NocMesh3D () :
-    NocTopology ()
+  NocMesh3D::NocMesh3D () : NocTopology ()
   {
     NS_LOG_FUNCTION_NOARGS ();
   }
@@ -89,11 +92,9 @@ namespace ns3
       }
 
     // create the horizontal channels (and net devices)
-
     for (unsigned int i = 0; i < nodes.GetN (); ++i)
       {
         Ptr<NocNode> nocNode = nodes.Get (i)->GetObject<NocNode> ();
-
         if (channel != 0)
           {
             netDevice = CreateObject<NocNetDevice> ();
@@ -128,7 +129,6 @@ namespace ns3
           {
             channel = 0;
           }
-
       }
 
     // create the vertical channels (and net devices)

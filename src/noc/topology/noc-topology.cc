@@ -1,6 +1,6 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010 - 2011
  *               Advanced Computer Architecture and Processing Systems (ACAPS),
  *               Lucian Blaga University of Sibiu, Romania
  *
