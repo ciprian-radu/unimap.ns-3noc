@@ -70,6 +70,8 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
     NS_LOG_DEBUG ("hSize " << m_hSize);
 
+    m_nodes = nodes;
+
     uint32_t numberOfNodesXY = m_hSize * m_hSize;
 
     Ptr<NocChannel> channel = 0;
@@ -235,6 +237,13 @@ namespace ns3
     NS_LOG_DEBUG ("Done with printing the 3D mesh topology.");
 
     return m_devices;
+  }
+
+  vector<uint32_t>
+  NocMesh3D::GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId)
+  {
+    NS_LOG_ERROR ("This method must be implemented! Exiting...");
+    exit(-1);
   }
 
   void

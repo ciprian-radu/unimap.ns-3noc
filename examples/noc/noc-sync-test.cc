@@ -96,6 +96,8 @@ main (int argc, char *argv[])
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
+//  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+//  Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
   Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
   // Note that the next two channel attributes are not considered with a NocSyncApplication!
@@ -120,7 +122,7 @@ main (int argc, char *argv[])
   // Do not forget about changing the routing protocol when changing the load router component
 
   noc->SetRoutingProtocol ("ns3::XyRouting");
-  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
+//  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
   //  noc->SetRoutingProtocol ("ns3::SlbRouting");
   //  noc->SetRoutingProtocolAttribute("LoadThreshold", IntegerValue (30));
@@ -132,15 +134,16 @@ main (int argc, char *argv[])
   //  noc->SetSwitchingProtocol ("ns3::VctSwitching");
 
   NetDeviceContainer devs = noc->Install (nodes);
+  NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
 
   NS_LOG_INFO ("Create Applications.");
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (4)); // destination
+  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (3)); // destination
   nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (3));
-  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (11)); // source
+  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (12)); // source
   //  apps1.Start (Seconds (0.0));
   //  apps1.Stop (Seconds (10.0));
 

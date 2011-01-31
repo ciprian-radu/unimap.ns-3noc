@@ -42,6 +42,7 @@
 #include "stdio.h"
 #include "ns3/config.h"
 #include "ns3/noc-packet-tag.h"
+#include "ns3/pointer.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocCtgApplication");
 
@@ -545,20 +546,14 @@ namespace ns3
       {
         NS_LOG_LOGIC ("A flit is sent from node " << sourceNodeId << " to node " << destinationNodeId);
 
-        uint32_t relativeX = 0;
-        uint32_t relativeY = 0;
-        if (destinationX < sourceX)
-          {
-            // 0 = East; 1 = West
-            relativeX = NocHeader::DIRECTION_BIT_MASK;
-          }
-        if (destinationY < sourceY)
-          {
-            // 0 = South; 1 = North
-            relativeY = NocHeader::DIRECTION_BIT_MASK;
-          }
-        relativeX = relativeX | std::abs ((int) (destinationX - sourceX));
-        relativeY = relativeY | std::abs ((int) (destinationY - sourceY));
+        PointerValue nocPointer;
+        NocRegistry::GetInstance ()->GetAttribute ("NoCTopology", nocPointer);
+        Ptr<NocTopology> nocTopology = nocPointer.Get<NocTopology> ();
+        NS_ASSERT_MSG (nocTopology != 0, "The NoC topology was not registered in NocRegistry!");
+        vector<uint32_t> relativepositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
+            destinationNodeId);
+        uint32_t relativeX = relativepositions[0];
+        uint32_t relativeY = relativepositions[1];
         // end traffic pattern
 
         NS_ASSERT_MSG (m_numberOfFlits >= 1,

@@ -43,6 +43,7 @@
 #include "stdio.h"
 #include "ns3/config.h"
 #include "ns3/noc-packet-tag.h"
+#include "ns3/pointer.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocSyncApplication");
 
@@ -445,37 +446,14 @@ namespace ns3
       {
         NS_LOG_LOGIC ("A flit is sent from node " << sourceNodeId << " to node " << destinationNodeId);
 
-        // FIXME this code (down to comment "end traffic pattern") is topology dependent
-        uint32_t relativeX = 0;
-        uint32_t relativeY = 0;
-        int xOffset = (destinationX - sourceX) % m_hSize;
-        if (xOffset > (int) (m_hSize / 2)) {
-        	xOffset = xOffset - m_hSize;
-		}
-        NS_LOG_DEBUG ("xOffset " << xOffset);
-        if (xOffset < 0)
-          {
-            // 0 = East; 1 = West
-            relativeX = NocHeader::DIRECTION_BIT_MASK;
-            xOffset = std::abs (xOffset);
-          }
-        relativeX = relativeX | xOffset;
-        NS_LOG_DEBUG ("relativeX " << relativeX);
-
-        int yOffset = (destinationY - sourceY) % (m_nodes.GetN() / m_hSize);
-        if (yOffset > (int) ((m_nodes.GetN() / m_hSize) / 2)) {
-        	yOffset = yOffset - (m_nodes.GetN() / m_hSize);
-		}
-        NS_LOG_DEBUG ("yOffset " << yOffset);
-        if (yOffset < 0)
-          {
-            // 0 = South; 1 = North
-            relativeY = NocHeader::DIRECTION_BIT_MASK;
-            yOffset = std::abs (yOffset);
-          }
-        relativeY = relativeY | yOffset;
-        NS_LOG_DEBUG ("relativeY " << relativeY);
-        // end traffic pattern
+        PointerValue nocPointer;
+        NocRegistry::GetInstance ()->GetAttribute ("NoCTopology", nocPointer);
+        Ptr<NocTopology> nocTopology = nocPointer.Get<NocTopology> ();
+        NS_ASSERT_MSG (nocTopology != 0, "The NoC topology was not registered in NocRegistry!");
+        vector<uint32_t> relativepositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
+            destinationNodeId);
+        uint32_t relativeX = relativepositions[0];
+        uint32_t relativeY = relativepositions[1];
 
         NS_ASSERT_MSG (m_numberOfFlits >= 1,
             "The number of flits must be at least 1 (the head flit) but it is " << m_numberOfFlits);

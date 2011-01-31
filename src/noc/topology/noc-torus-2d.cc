@@ -70,6 +70,8 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
     NS_LOG_DEBUG ("hSize " << m_hSize);
 
+    m_nodes = nodes;
+
     Ptr<NocChannel> channel = 0;
     Ptr<NocChannel> channel_torus = 0;
     Ptr<NocNetDevice> netDevice;
@@ -248,6 +250,53 @@ namespace ns3
       NS_LOG_DEBUG ("Done with printing the 2D torus topology.");
 
     return m_devices;
+  }
+
+  vector<uint32_t>
+  NocTorus2D::GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId)
+  {
+    NS_LOG_FUNCTION (sourceNodeId << destinationNodeId);
+
+    vector<uint32_t> relativePositions;
+
+    uint32_t sourceX = sourceNodeId % m_hSize;
+    uint32_t sourceY = sourceNodeId / m_hSize;
+    uint32_t destinationX = destinationNodeId % m_hSize;
+    uint32_t destinationY = destinationNodeId / m_hSize;
+    uint32_t relativeX = 0;
+    uint32_t relativeY = 0;
+    int xOffset = (destinationX - sourceX) % m_hSize;
+    if (xOffset > (int) (m_hSize / 2))
+      {
+        xOffset = xOffset - m_hSize;
+      } NS_LOG_DEBUG ("xOffset " << xOffset);
+    if (xOffset < 0)
+      {
+        // 0 = East; 1 = West
+        relativeX = NocHeader::DIRECTION_BIT_MASK;
+        xOffset = std::abs (xOffset);
+      }
+    relativeX = relativeX | xOffset;
+    NS_LOG_DEBUG ("relativeX " << relativeX);
+
+    int yOffset = (destinationY - sourceY) % (m_nodes.GetN () / m_hSize);
+    if (yOffset > (int) ((m_nodes.GetN () / m_hSize) / 2))
+      {
+        yOffset = yOffset - (m_nodes.GetN () / m_hSize);
+      } NS_LOG_DEBUG ("yOffset " << yOffset);
+    if (yOffset < 0)
+      {
+        // 0 = South; 1 = North
+        relativeY = NocHeader::DIRECTION_BIT_MASK;
+        yOffset = std::abs (yOffset);
+      }
+    relativeY = relativeY | yOffset;
+    NS_LOG_DEBUG ("relativeY " << relativeY);
+
+    relativePositions.insert (relativePositions.end (), relativeX);
+    relativePositions.insert (relativePositions.end (), relativeY);
+
+    return relativePositions;
   }
 
   void

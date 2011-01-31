@@ -52,6 +52,9 @@ namespace ns3
     NetDeviceContainer
     Install (NodeContainer nodes);
 
+    vector<uint32_t>
+    GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId);
+
     void
     SaveTopology (NodeContainer nodes, string directoryPath);
 

@@ -38,6 +38,7 @@
 #include <bitset>
 #include "stdio.h"
 #include "ns3/random-variable.h"
+#include "ns3/pointer.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocApplication");
 
@@ -399,20 +400,14 @@ namespace ns3
       {
         NS_LOG_LOGIC ("A packet is sent from node " << sourceNodeId << " to node " << destinationNodeId);
 
-        uint32_t relativeX = 0;
-        uint32_t relativeY = 0;
-        if (destinationX < sourceX)
-          {
-            // 0 = East; 1 = West
-            relativeX = 8; // 1000 (in binary)
-          }
-        if (destinationY < sourceY)
-          {
-            // 0 = South; 1 = North
-            relativeY = 8; // 1000 (in binary)
-          }
-        relativeX = relativeX | std::abs((int) (destinationX - sourceX));
-        relativeY = relativeY | std::abs((int) (destinationY - sourceY));
+        PointerValue nocPointer;
+        NocRegistry::GetInstance ()->GetAttribute ("NoCTopology", nocPointer);
+        Ptr<NocTopology> nocTopology = nocPointer.Get<NocTopology> ();
+        NS_ASSERT_MSG (nocTopology != 0, "The NoC topology was not registered in NocRegistry!");
+        vector<uint32_t> relativepositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
+            destinationNodeId);
+        uint32_t relativeX = relativepositions[0];
+        uint32_t relativeY = relativepositions[1];
         // end traffic pattern
 
         NS_ASSERT_MSG (m_numberOfPackets >= 1,

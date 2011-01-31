@@ -72,6 +72,8 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
     NS_LOG_DEBUG ("hSize " << m_hSize);
 
+    m_nodes = nodes;
+
     Ptr<NocChannel> channel = 0;
     Ptr<NocNetDevice> netDevice;
 
@@ -188,6 +190,40 @@ namespace ns3
     NS_LOG_DEBUG ("Done with printing the 2D mesh topology.");
 
     return m_devices;
+  }
+
+  vector<uint32_t>
+  NocMesh2D::GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId)
+  {
+    NS_LOG_FUNCTION (sourceNodeId << destinationNodeId);
+
+    vector<uint32_t> relativePositions;
+
+    uint32_t sourceX = sourceNodeId % m_hSize;
+    uint32_t sourceY = sourceNodeId / m_hSize;
+    uint32_t destinationX = destinationNodeId % m_hSize;
+    uint32_t destinationY = destinationNodeId / m_hSize;
+    uint32_t relativeX = 0;
+    uint32_t relativeY = 0;
+    if (destinationX < sourceX)
+      {
+        // 0 = East; 1 = West
+        relativeX = NocHeader::DIRECTION_BIT_MASK;
+      }
+    if (destinationY < sourceY)
+      {
+        // 0 = South; 1 = North
+        relativeY = NocHeader::DIRECTION_BIT_MASK;
+      }
+    relativeX = relativeX | std::abs ((int) (destinationX - sourceX));
+    NS_LOG_DEBUG ("relativeX " << relativeX);
+    relativeY = relativeY | std::abs ((int) (destinationY - sourceY));
+    NS_LOG_DEBUG ("relativeY " << relativeY);
+
+    relativePositions.insert (relativePositions.end (), relativeX);
+    relativePositions.insert (relativePositions.end (), relativeY);
+
+    return relativePositions;
   }
 
   void
