@@ -222,6 +222,18 @@ namespace ns3
     Install (NodeContainer nodes) = 0;
 
     /**
+     * Computes the position of a destination node, relative to a source node.
+     * The destination's relative position in each topological dimension is returned.
+     *
+     * \param sourceNodeId the source node
+     * \param destinationNodeId the destination node
+     *
+     * \return an array with the destination's relative position in each dimension
+     */
+    virtual vector<uint32_t>
+    GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId) = 0;
+
+    /**
      * Saves this topology using the NoC-XML interface: for each NocNode and NocChannel, an XML file is built.
      * The node XMLs are put in the nodes directory, and the link XMLs are put in the links directory.
      * Both nodes and links directories are subdirectories of a directory given as parameter
@@ -237,6 +249,8 @@ namespace ns3
     FindNetDeviceByAddress (Mac48Address address);
 
 protected:
+
+    NodeContainer m_nodes;
 
     NetDeviceContainer m_devices;
 

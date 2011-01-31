@@ -27,6 +27,7 @@
 #include "ns3/object.h"
 #include "ns3/ptr.h"
 #include "ns3/nstime.h"
+#include "ns3/noc-topology.h"
 
 namespace ns3
 {
@@ -71,6 +72,11 @@ namespace ns3
      * It is used only with a synchronous NoC.
      */
     Time m_globalClock;
+
+    /**
+     * the NoC topology
+     */
+    Ptr<NocTopology> m_nocTopology;
 
   };
 

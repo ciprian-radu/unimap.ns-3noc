@@ -24,6 +24,7 @@
 #include "noc-registry.h"
 #include "ns3/log.h"
 #include "ns3/integer.h"
+#include "ns3/pointer.h"
 #include "ns3/object-factory.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocRegistry");
@@ -68,6 +69,12 @@ namespace ns3
                 TimeValue (PicoSeconds (0)),
                 MakeTimeAccessor (&NocRegistry::m_globalClock),
                 MakeTimeChecker ())
+            .AddAttribute (
+                "NoCTopology",
+                "The Network-on-Chip topology",
+                PointerValue (),
+                MakePointerAccessor (&NocRegistry::m_nocTopology),
+                MakePointerChecker<NocTopology> ())
             ;
     return tid;
   }
