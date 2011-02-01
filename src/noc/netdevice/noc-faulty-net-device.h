@@ -99,16 +99,13 @@ namespace ns3
     Drop (Ptr<Packet> packet);
 
     virtual void
-    SetRoutingDirection (int routingDirection);
+    SetRoutingDirection (int routingDirection, uint32_t dimension);
 
     virtual int
     GetRoutingDirection () const;
 
-    virtual void
-    SetNocTopology (Ptr<NocTopology> nocHelper);
-
-    virtual Ptr<NocTopology>
-    GetNocTopology () const;
+    virtual int
+    GetRoutingDimension () const;
 
     virtual bool
     Send (Ptr<Packet> packet, const Address& dest, uint16_t protocolNumber);

@@ -124,14 +124,15 @@ namespace ns3
   }
 
   Ptr<NocNetDevice>
-  FourWayRouter::GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
+  FourWayRouter::GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension)
   {
     NS_LOG_DEBUG ("Searching for a net device for node " << GetNocNode ()->GetId () << " and direction " << routingDirection);
     Ptr<NocNetDevice> netDevice = 0;
     for (unsigned int i = 0; i < GetNDevices (); ++i)
       {
         Ptr<NocNetDevice> tmpNetDevice = GetDevice (i)->GetObject<NocNetDevice> ();
-        if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+        if (tmpNetDevice->GetRoutingDirection () == routingDirection
+            && tmpNetDevice->GetRoutingDimension () == routingDimension)
           {
             netDevice = tmpNetDevice;
             break;
@@ -149,9 +150,9 @@ namespace ns3
   }
 
   Ptr<NocNetDevice>
-  FourWayRouter::GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
+  FourWayRouter::GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension)
   {
-    return GetInputNetDevice (sender, routingDirection);
+    return GetInputNetDevice (sender, routingDirection, routingDimension);
   }
 
   std::vector<Ptr<NocNetDevice> >

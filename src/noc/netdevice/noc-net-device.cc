@@ -32,6 +32,7 @@
 #include "ns3/noc-packet-tag.h"
 #include "ns3/integer.h"
 #include "ns3/noc-registry.h"
+#include "ns3/pointer.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocNetDevice");
 
@@ -67,7 +68,7 @@ namespace ns3
   }
 
   NocNetDevice::NocNetDevice() :
-    m_channel (0), m_node (0), m_mtu (0xffff), m_ifIndex (0), m_nocTopology (0), m_routingDirection (0)
+    m_channel (0), m_node (0), m_mtu (0xffff), m_ifIndex (0), m_routingDirection (0), m_routingDimension (-1)
   {
     m_lastScheduledEvent = PicoSeconds (0);
   }
@@ -141,7 +142,11 @@ namespace ns3
         // ask the node to deal with this (the node talks to the router)
         NS_LOG_DEBUG ("The packet is intended for another net device.");
         Ptr<NocNode> nocNode = GetNode ()->GetObject<NocNode> ();
-        Ptr<NocNetDevice> destinationNetDevice = GetNocTopology ()->FindNetDeviceByAddress (to);
+        PointerValue nocPointer;
+        NocRegistry::GetInstance ()->GetAttribute ("NoCTopology", nocPointer);
+        Ptr<NocTopology> nocTopology = nocPointer.Get<NocTopology> ();
+        NS_ASSERT_MSG (nocTopology != 0, "NoC topology was not set in the NocRegistry!");
+        Ptr<NocNetDevice> destinationNetDevice = nocTopology->FindNetDeviceByAddress (to);
         nocNode->Send (this, packet, destinationNetDevice->GetNode ()->GetObject<NocNode> ());
       }
   }
@@ -762,27 +767,25 @@ namespace ns3
   }
 
   void
-  NocNetDevice::SetRoutingDirection (int routingDirection)
+  NocNetDevice::SetRoutingDirection (int routingDirection, uint32_t dimension)
   {
+    NS_LOG_FUNCTION (routingDirection << dimension);
     m_routingDirection = routingDirection;
+    m_routingDimension = dimension;
   }
 
   int
   NocNetDevice::GetRoutingDirection () const
   {
+    NS_LOG_FUNCTION_NOARGS ();
     return m_routingDirection;
   }
 
-  void
-  NocNetDevice::SetNocTopology (Ptr<NocTopology> nocTopology)
+  int
+  NocNetDevice::GetRoutingDimension () const
   {
-    m_nocTopology = nocTopology;
-  }
-
-  Ptr<NocTopology>
-  NocNetDevice::GetNocTopology () const
-  {
-    return m_nocTopology;
+    NS_LOG_FUNCTION_NOARGS ();
+    return m_routingDimension;
   }
 
   bool

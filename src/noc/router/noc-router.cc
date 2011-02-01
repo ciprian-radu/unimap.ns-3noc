@@ -101,7 +101,7 @@ namespace ns3
   }
 
   int
-  NocRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction)
+  NocRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction, int dimension)
   {
     // This method is meant to be overridden by the subclassing routers which work with load information
     return 0;

@@ -128,10 +128,10 @@ namespace ns3
     IrvineRouter (std::string name);
 
     Ptr<NocNetDevice>
-    GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection);
+    GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension);
 
     Ptr<NocNetDevice>
-    GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection);
+    GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension);
 
   private:
 

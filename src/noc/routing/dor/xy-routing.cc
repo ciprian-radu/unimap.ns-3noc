@@ -100,8 +100,8 @@ namespace ns3
     bool isSouth = nocHeader.HasSouthDirection ();
     int yOffset = nocHeader.GetYOffset ();
 
-    Direction2DMesh xDirection = NocRoutingProtocol::NONE;
-    Direction2DMesh yDirection = NocRoutingProtocol::NONE;
+    RoutingDirection xDirection = NocRoutingProtocol::NONE;
+    RoutingDirection yDirection = NocRoutingProtocol::NONE;
     NS_LOG_DEBUG ("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
     NS_LOG_DEBUG ("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
 
@@ -113,12 +113,12 @@ namespace ns3
 			if (isEast)
 			  {
 				NS_ASSERT_MSG (xOffset >= 0, "A packet going to East will have the offset < 0");
-				xDirection = NocRoutingProtocol::EAST;
+				xDirection = NocRoutingProtocol::FORWARD;
 			  }
 			else
 			  {
 				NS_ASSERT_MSG (xOffset >= 0, "A packet going to West will have the offset < 0");
-				xDirection = NocRoutingProtocol::WEST;
+				xDirection = NocRoutingProtocol::BACK;
 			  }
 			nocHeader.SetXOffset (xOffset);
 		  }
@@ -130,12 +130,12 @@ namespace ns3
 				if (isSouth)
 				  {
 					NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-					yDirection = NocRoutingProtocol::SOUTH;
+					yDirection = NocRoutingProtocol::BACK;
 				  }
 				else
 				  {
 					NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
-					yDirection = NocRoutingProtocol::NORTH;
+					yDirection = NocRoutingProtocol::FORWARD;
 				  }
 				nocHeader.SetYOffset (yOffset);
 			  }
@@ -149,12 +149,12 @@ namespace ns3
 			if (isSouth)
 			  {
 				NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-				yDirection = NocRoutingProtocol::SOUTH;
+				yDirection = NocRoutingProtocol::BACK;
 			  }
 			else
 			  {
 				NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
-				yDirection = NocRoutingProtocol::NORTH;
+				yDirection = NocRoutingProtocol::FORWARD;
 			  }
 			nocHeader.SetYOffset (yOffset);
 		  }
@@ -166,12 +166,12 @@ namespace ns3
 				if (isEast)
 				  {
 					NS_ASSERT_MSG (xOffset >= 0, "A packet going to East will have the offset < 0");
-					xDirection = NocRoutingProtocol::EAST;
+					xDirection = NocRoutingProtocol::FORWARD;
 				  }
 				else
 				  {
 					NS_ASSERT_MSG (xOffset >= 0, "A packet going to West will have the offset < 0");
-					xDirection = NocRoutingProtocol::WEST;
+					xDirection = NocRoutingProtocol::BACK;
 				  }
 				nocHeader.SetXOffset (xOffset);
 			  }
@@ -193,27 +193,19 @@ namespace ns3
     bool routeX = true;
     bool routeY = true;
     switch (xDirection) {
-		case NocRoutingProtocol::EAST:
-		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, EAST);
+		case NocRoutingProtocol::FORWARD:
+		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, FORWARD, 0);
 		  NS_ASSERT (m_sourceNetDevice != 0);
-		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, WEST);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, BACK, 0);
 		  NS_ASSERT (m_destinationNetDevice != 0);
 		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
 		  break;
-		case NocRoutingProtocol::WEST:
-		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, WEST);
+		case NocRoutingProtocol::BACK:
+		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, BACK, 0);
 		  NS_ASSERT (m_sourceNetDevice != 0);
-		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, EAST);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, FORWARD, 0);
 		  NS_ASSERT (m_destinationNetDevice != 0);
 		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
-		  break;
-		case NocRoutingProtocol::NORTH:
-		  NS_LOG_ERROR ("A NORTH direction is not allowed as a horizontal direction");
-		  routeX = false;
-		  break;
-		case NocRoutingProtocol::SOUTH:
-		  NS_LOG_ERROR ("A SOUTH direction is not allowed as a horizontal direction");
-		  routeX = false;
 		  break;
 		case NocRoutingProtocol::NONE:
 		  routeX = false;
@@ -223,28 +215,20 @@ namespace ns3
       }
 
     switch (yDirection) {
-		case NocRoutingProtocol::NORTH:
-		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, NORTH);
+		case NocRoutingProtocol::FORWARD:
+		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source, FORWARD, 1);
 		  NS_ASSERT (m_sourceNetDevice != 0);
-		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::SOUTH);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::BACK, 1);
 		  NS_ASSERT (m_destinationNetDevice != 0);
 		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
 		  break;
-		case NocRoutingProtocol::SOUTH:
+		case NocRoutingProtocol::BACK:
 		  m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->GetOutputNetDevice (source,
-			  NocRoutingProtocol::SOUTH);
+			  NocRoutingProtocol::BACK, 1);
 		  NS_ASSERT (m_sourceNetDevice != 0);
-		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::NORTH);
+		  m_destinationNetDevice = destination->GetRouter ()->GetInputNetDevice (m_sourceNetDevice, NocRoutingProtocol::FORWARD, 1);
 		  NS_ASSERT (m_destinationNetDevice != 0);
 		  route = CreateObject<Route> (packet, m_sourceNetDevice, m_destinationNetDevice);
-		  break;
-		case NocRoutingProtocol::EAST:
-		  NS_LOG_ERROR ("A EAST direction is not allowed as a vertical direction");
-		  routeY = false;
-		  break;
-		case NocRoutingProtocol::WEST:
-		  NS_LOG_ERROR ("A WEST direction is not allowed as a vertical direction");
-		  routeY = false;
 		  break;
 		case NocRoutingProtocol::NONE:
 		  routeY = false;

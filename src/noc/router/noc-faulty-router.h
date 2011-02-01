@@ -190,11 +190,12 @@ namespace ns3
      *
      * \param sender the sender NoC net device
      * \param routingDirection in what direction the packet will go (routing protocol dependent)
+     * \param routingDimension in what topological dimension the routing direction applies
      *
      * \return the input net device
      */
     virtual Ptr<NocNetDevice>
-    GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection) = 0;
+    GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension) = 0;
 
     /**
      * Searches for the NoC net device which must be used to forward the message to the next node.
@@ -203,11 +204,12 @@ namespace ns3
      *
      * \param sender the sender NoC net device
      * \param routingDirection in what direction the packet will go (routing protocol dependent)
+     * \param routingDimension in what topological dimension the routing direction applies
      *
      * \return the output net device
      */
     virtual Ptr<NocNetDevice>
-    GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection) = 0;
+    GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension) = 0;
 
     /**
      * Retrieves all the possible output net devices for a packet sent by the specified net device

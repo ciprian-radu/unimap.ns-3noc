@@ -90,22 +90,32 @@ namespace ns3
     switch (sourceDevice->GetRoutingDirection ())
       {
         // TODO this router knows to work only with 2D meshes (it is only aware of NORTH, SOUTH, EAST, WEST directions)
-        case NocRoutingProtocol::NORTH:
-          m_southLoad = load;
+        case NocRoutingProtocol::FORWARD:
+          if (sourceDevice->GetRoutingDimension () == 1)
+            {
+              m_southLoad = load;
+            }
+          else
+            {
+              if (sourceDevice->GetRoutingDirection () == 0)
+                {
+                  m_westLoad = load;
+                }
+            }
           break;
-
-        case NocRoutingProtocol::EAST:
-          m_westLoad = load;
+        case NocRoutingProtocol::BACK:
+          if (sourceDevice->GetRoutingDimension () == 1)
+            {
+              m_northLoad = load;
+            }
+          else
+            {
+              if (sourceDevice->GetRoutingDirection () == 0)
+                {
+                  m_eastLoad = load;
+                }
+            }
           break;
-
-        case NocRoutingProtocol::SOUTH:
-          m_northLoad = load;
-          break;
-
-        case NocRoutingProtocol::WEST:
-          m_eastLoad = load;
-          break;
-
         case NocRoutingProtocol::NONE:
         default:
           NS_LOG_ERROR ("Unknown routing direction!");
@@ -121,22 +131,32 @@ namespace ns3
     int load = 0;
 
     switch (sourceDevice->GetRoutingDirection ()) {
-      case NocRoutingProtocol::NORTH:
-        load = m_southLoad;
+      case NocRoutingProtocol::FORWARD:
+        if (sourceDevice->GetRoutingDimension () == 1)
+          {
+            load = m_southLoad;
+          }
+        else
+          {
+            if (sourceDevice->GetRoutingDimension () == 0)
+              {
+                load = m_westLoad;
+              }
+          }
         break;
-
-      case NocRoutingProtocol::EAST:
-        load = m_westLoad;
+      case NocRoutingProtocol::BACK:
+        if (sourceDevice->GetRoutingDimension () == 1)
+          {
+            load = m_northLoad;
+          }
+        else
+          {
+            if (sourceDevice->GetRoutingDimension () == 0)
+              {
+                load = m_eastLoad;
+              }
+          }
         break;
-
-      case NocRoutingProtocol::SOUTH:
-        load = m_northLoad;
-        break;
-
-      case NocRoutingProtocol::WEST:
-        load = m_eastLoad;
-        break;
-
       case NocRoutingProtocol::NONE:
       default:
         NS_LOG_ERROR ("Unknown routing direction!");
@@ -147,7 +167,7 @@ namespace ns3
   }
 
   int
-  FourWayLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction)
+  FourWayLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction, int dimension)
   {
     NS_ASSERT (sourceDevice != 0);
     int load = 0;
@@ -155,7 +175,7 @@ namespace ns3
     NS_LOG_DEBUG ("Requesting neighbor load (source net device is "
         << sourceDevice->GetAddress () << ", direction is " << direction);
 
-    Ptr<NocNetDevice> device = GetInputNetDevice (sourceDevice, direction);
+    Ptr<NocNetDevice> device = GetInputNetDevice (sourceDevice, direction, dimension);
     if (device == 0)
       {
         NS_LOG_WARN ("No input net device was found based on source device "

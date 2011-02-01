@@ -98,52 +98,62 @@ namespace ns3
     switch (sourceDevice->GetRoutingDirection ())
       {
         // TODO this router knows to work only with 2D meshes (it is only aware of NORTH, SOUTH, EAST, WEST directions)
-        case NocRoutingProtocol::NORTH:
-          if (sourceRouter->isLeftRouter (sourceDevice))
+        case NocRoutingProtocol::FORWARD:
+          if (sourceDevice->GetRoutingDimension () == 1)
             {
-              m_southLeftLoad = load;
-            }
-          else
-            {
-              if (sourceRouter->isRightRouter (sourceDevice))
+              if (sourceRouter->isLeftRouter (sourceDevice))
                 {
-                  m_southRightLoad = load;
+                  m_southLeftLoad = load;
                 }
               else
                 {
-                  NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
-                      << " does not belong to the left router, neither the right router!");
+                  if (sourceRouter->isRightRouter (sourceDevice))
+                    {
+                      m_southRightLoad = load;
+                    }
+                  else
+                    {
+                      NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                          << " does not belong to the left router, neither the right router!");
+                    }
                 }
-            }
-          break;
-
-        case NocRoutingProtocol::EAST:
-          m_westLoad = load;
-          break;
-
-        case NocRoutingProtocol::SOUTH:
-          if (sourceRouter->isLeftRouter (sourceDevice))
-            {
-              m_northLeftLoad = load;
             }
           else
             {
-              if (sourceRouter->isRightRouter (sourceDevice))
+              if (sourceDevice->GetRoutingDimension () == 0)
                 {
-                  m_northRightLoad = load;
-                }
-              else
-                {
-                  NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
-                      << " does not belong to the left router, neither the right router!");
+                  m_westLoad = load;
                 }
             }
           break;
-
-        case NocRoutingProtocol::WEST:
-          m_eastLoad = load;
+        case NocRoutingProtocol::BACK:
+          if (sourceDevice->GetRoutingDimension () == 1)
+            {
+              if (sourceRouter->isLeftRouter (sourceDevice))
+                {
+                  m_northLeftLoad = load;
+                }
+              else
+                {
+                  if (sourceRouter->isRightRouter (sourceDevice))
+                    {
+                      m_northRightLoad = load;
+                    }
+                  else
+                    {
+                      NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                          << " does not belong to the left router, neither the right router!");
+                    }
+                }
+            }
+          else
+            {
+              if (sourceDevice->GetRoutingDimension () == 0)
+                {
+                  m_eastLoad = load;
+                }
+            }
           break;
-
         case NocRoutingProtocol::NONE:
         default:
           NS_LOG_ERROR ("Unknown routing direction!");
@@ -159,52 +169,62 @@ namespace ns3
     int load = 0;
 
     switch (sourceDevice->GetRoutingDirection ()) {
-      case NocRoutingProtocol::NORTH:
-        if (isLeftRouter (sourceDevice))
+      case NocRoutingProtocol::FORWARD:
+        if (sourceDevice->GetRoutingDimension () == 1)
           {
-            load = m_southLeftLoad;
-          }
-        else
-          {
-            if (isRightRouter (sourceDevice))
+            if (isLeftRouter (sourceDevice))
               {
-                load = m_southRightLoad;
+                load = m_southLeftLoad;
               }
             else
               {
-                NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
-                    << " does not belong to the left router, neither the right router!");
+                if (isRightRouter (sourceDevice))
+                  {
+                    load = m_southRightLoad;
+                  }
+                else
+                  {
+                    NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                        << " does not belong to the left router, neither the right router!");
+                  }
               }
-          }
-        break;
-
-      case NocRoutingProtocol::EAST:
-        load = m_westLoad;
-        break;
-
-      case NocRoutingProtocol::SOUTH:
-        if (isLeftRouter (sourceDevice))
-          {
-            load = m_northLeftLoad;
           }
         else
           {
-            if (isRightRouter (sourceDevice))
+            if (sourceDevice->GetRoutingDimension () == 0)
               {
-                load = m_northRightLoad;
-              }
-            else
-              {
-                NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
-                    << " does not belong to the left router, neither the right router!");
+                load = m_westLoad;
               }
           }
         break;
-
-      case NocRoutingProtocol::WEST:
-        load = m_eastLoad;
+      case NocRoutingProtocol::BACK:
+        if (sourceDevice->GetRoutingDimension () == 1)
+          {
+            if (isLeftRouter (sourceDevice))
+              {
+                load = m_northLeftLoad;
+              }
+            else
+              {
+                if (isRightRouter (sourceDevice))
+                  {
+                    load = m_northRightLoad;
+                  }
+                else
+                  {
+                    NS_LOG_ERROR ("The net device " << sourceDevice->GetAddress ()
+                        << " does not belong to the left router, neither the right router!");
+                  }
+              }
+          }
+        else
+          {
+            if (sourceDevice->GetRoutingDimension () == 0)
+              {
+                load = m_eastLoad;
+              }
+          }
         break;
-
       case NocRoutingProtocol::NONE:
       default:
         NS_LOG_ERROR ("Unknown routing direction!");
@@ -215,7 +235,7 @@ namespace ns3
   }
 
   int
-  IrvineLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction)
+  IrvineLoadRouter::GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction, int dimension)
   {
     NS_ASSERT (sourceDevice != 0);
     int load = 0;
@@ -223,7 +243,7 @@ namespace ns3
     NS_LOG_DEBUG ("Requesting neighbor load (source net device is "
         << sourceDevice->GetAddress () << ", direction is " << direction);
 
-    Ptr<NocNetDevice> device = GetInputNetDevice (sourceDevice, direction);
+    Ptr<NocNetDevice> device = GetInputNetDevice (sourceDevice, direction, dimension);
     if (device == 0)
       {
         NS_LOG_WARN ("No input net device was found based on source device "

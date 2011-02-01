@@ -35,6 +35,7 @@
 #include "ns3/queue.h"
 #include <map>
 #include "ns3/noc-header.h"
+#include <vector>
 
 namespace ns3
 {
@@ -162,16 +163,13 @@ namespace ns3
     IsLinkUp(void) const;
 
     virtual void
-    SetRoutingDirection (int routingDirection);
+    SetRoutingDirection (int routingDirection, uint32_t dimension);
 
     virtual int
     GetRoutingDirection () const;
 
-    virtual void
-    SetNocTopology (Ptr<NocTopology> nocHelper);
-
-    virtual Ptr<NocTopology>
-    GetNocTopology () const;
+    virtual int
+    GetRoutingDimension () const;
 
     virtual void
     AddLinkChangeCallback(Callback<void> callback);
@@ -389,11 +387,6 @@ namespace ns3
     Mac48Address m_address;
 
     /**
-     * The NoC topology
-     */
-    Ptr<NocTopology> m_nocTopology;
-
-    /**
      * Marks to what direction this NoC net device can route packets to.
      * This field should take the value from an enum (enumeration) taken
      * from each particular routing protocol.
@@ -401,6 +394,11 @@ namespace ns3
      * Value 0 (zero) should always mean no routing direction.
      */
     int m_routingDirection;
+
+    /**
+     * Marks the topological dimension in which this NoC net device routes packets.
+     */
+    int m_routingDimension;
 
     /**
      * The trace source fired when packets are sent.
