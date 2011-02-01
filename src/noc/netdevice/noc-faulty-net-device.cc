@@ -233,13 +233,13 @@ namespace ns3
   }
 
   void
-  NocFaultyNetDevice::SetRoutingDirection (int routingDirection)
+  NocFaultyNetDevice::SetRoutingDirection (int routingDirection, uint32_t dimension)
   {
     NS_LOG_FUNCTION_NOARGS ();
 
     if (!m_faulty)
       {
-        NocNetDevice::SetRoutingDirection (routingDirection);
+        NocNetDevice::SetRoutingDirection (routingDirection, dimension);
       }
     else
       {
@@ -270,42 +270,25 @@ namespace ns3
     return routingDirection;
   }
 
-  void
-  NocFaultyNetDevice::SetNocTopology (Ptr<NocTopology> nocTopology)
+  int
+  NocFaultyNetDevice::GetRoutingDimension () const
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    if (!m_faulty)
-      {
-        NocNetDevice::SetNocTopology (nocTopology);
-      }
-    else
-      {
-        NS_LOG_ERROR ("Cannot set NoC helper because net device " << GetAddress () << " is faulty!");
-        // just force the simulation to stop
-        NS_ASSERT (!m_faulty);
-      }
-  }
-
-  Ptr<NocTopology>
-  NocFaultyNetDevice::GetNocTopology () const
-  {
-    NS_LOG_FUNCTION_NOARGS ();
-
-    Ptr<NocTopology> helper;
+    int routingDimension;
 
     if (!m_faulty)
       {
-        helper = NocNetDevice::GetNocTopology ();
+        routingDimension = NocNetDevice::GetRoutingDimension ();
       }
     else
       {
-        NS_LOG_ERROR ("Cannot get NoC helper because net device " << GetAddress () << " is faulty!");
+        NS_LOG_ERROR ("Cannot get routing dimension because net device " << GetAddress () << " is faulty!");
         // just force the simulation to stop
         NS_ASSERT (!m_faulty);
       }
 
-    return helper;
+    return routingDimension;
   }
 
 } // namespace ns3

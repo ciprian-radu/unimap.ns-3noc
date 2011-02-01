@@ -103,7 +103,8 @@ namespace ns3
     NS_LOG_FUNCTION (type);
 
     m_routerFactory.SetTypeId (type);
-    NS_ASSERT_MSG (NocRouter::GetTypeId () == m_routerFactory.GetTypeId ().GetParent (), "The router type " << type << " is not a child of " << NocRouter::GetTypeId ());
+    // the assert below doesn't work if the router doesn't descend *directly* from NocRouter
+//    NS_ASSERT_MSG (NocRouter::GetTypeId () == m_routerFactory.GetTypeId ().GetParent (), "The router type " << type << " is not a child of " << NocRouter::GetTypeId ());
   }
 
   void
@@ -221,6 +222,9 @@ namespace ns3
             nocNetDevice = netDevice->GetObject<NocNetDevice> ();
           }
       }
+
+    NS_ASSERT_MSG (nocNetDevice != 0, "NoC net device with address " << address << " was not found in the topology!");
+
     return nocNetDevice;
   }
 

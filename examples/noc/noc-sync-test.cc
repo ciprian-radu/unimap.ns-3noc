@@ -96,8 +96,8 @@ main (int argc, char *argv[])
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
-//  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
-//  Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
+  // Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+  // Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
   Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
   // Note that the next two channel attributes are not considered with a NocSyncApplication!
@@ -108,30 +108,27 @@ main (int argc, char *argv[])
   noc->SetInQueue ("ns3::DropTailQueue", "Mode", EnumValue (DropTailQueue::PACKETS), "MaxPackets", UintegerValue (1)); // the in queue must have at least 1 packet
 
   // install the topology
-  //  noc->SetRouter ("ns3::IrvineLoadRouter");
+
   noc->SetRouter ("ns3::FourWayRouter");
-  // WARNING setting properties for objects in this manner means that all the created objects
-  // will refer to the *same* object
-  //
-  // example: all routers will use the *same* load component; this is obviously incorrect
-  // we therefore can't do something like this:
-  //
-  // Ptr<LoadRouterComponent> loadComponent = CreateObject<SlbLoadRouterComponent> ();
-  //  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
-  //  noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
+  //  noc->SetRouter ("ns3::FourWayLoadRouter");
+  //  noc->SetRouter ("ns3::IrvineLoadRouter");
+  //  noc->SetRouter ("ns3::IrvineRouter");
+
+  // noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SlbLoadRouterComponent")));
+  // noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
   // Do not forget about changing the routing protocol when changing the load router component
 
-  noc->SetRoutingProtocol ("ns3::XyRouting");
-//  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
+   noc->SetRoutingProtocol ("ns3::XyRouting");
+  // noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
-  //  noc->SetRoutingProtocol ("ns3::SlbRouting");
-  //  noc->SetRoutingProtocolAttribute("LoadThreshold", IntegerValue (30));
+  // noc->SetRoutingProtocol ("ns3::SlbRouting");
+  // noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
 
-  //  noc->SetRoutingProtocol ("ns3::SoRouting");
+  // noc->SetRoutingProtocol ("ns3::SoRouting");
 
   noc->SetSwitchingProtocol ("ns3::WormholeSwitching");
-  //  noc->SetSwitchingProtocol ("ns3::SafSwitching");
-  //  noc->SetSwitchingProtocol ("ns3::VctSwitching");
+  // noc->SetSwitchingProtocol ("ns3::SafSwitching");
+  // noc->SetSwitchingProtocol ("ns3::VctSwitching");
 
   NetDeviceContainer devs = noc->Install (nodes);
   NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
@@ -141,9 +138,9 @@ main (int argc, char *argv[])
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (3)); // destination
+  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (13)); // destination
   nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (3));
-  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (12)); // source
+  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (3)); // source
   //  apps1.Start (Seconds (0.0));
   //  apps1.Stop (Seconds (10.0));
 

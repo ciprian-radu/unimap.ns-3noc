@@ -101,24 +101,28 @@ namespace ns3
 
     Ptr<NocRouter> router = sourceDevice->GetNode ()->GetObject<NocNode> ()->GetRouter ();
     NS_ASSERT (router);
-    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::NORTH)
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::FORWARD
+        && selectedDevice->GetRoutingDimension () != 1)
       {
-        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::NORTH);
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::FORWARD, 1);
         counter++;
       }
-    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::EAST)
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::FORWARD
+        && selectedDevice->GetRoutingDimension () != 0)
       {
-        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::EAST);
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::FORWARD, 0);
         counter++;
       }
-    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::SOUTH)
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::BACK
+        && selectedDevice->GetRoutingDimension () != 1)
       {
-        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::SOUTH);
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::BACK, 1);
         counter++;
       }
-    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::WEST)
+    if (selectedDevice->GetRoutingDirection () != NocRoutingProtocol::BACK
+        && selectedDevice->GetRoutingDimension () != 0)
       {
-        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::WEST);
+        neighbourLoad += router->GetNeighborLoad (sourceDevice, NocRoutingProtocol::BACK, 0);
         counter++;
       }
     if (counter != 0)

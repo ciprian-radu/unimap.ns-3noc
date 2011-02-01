@@ -86,34 +86,34 @@ namespace ns3
     Ptr<NocNetDevice> selectedDevice = DoSelectionFunction(devices, source, destination, packet);
     UpdateHeader (packet, selectedDevice, source);
 
-    m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()->
-        GetOutputNetDevice(source, selectedDevice->GetRoutingDirection ());
+    m_sourceNetDevice = source->GetNode ()->GetObject<NocNode> ()->GetRouter ()-> GetOutputNetDevice (source,
+        selectedDevice->GetRoutingDirection (), selectedDevice->GetRoutingDimension ());
     NS_ASSERT(m_sourceNetDevice != 0);
-    m_destinationNetDevice = destination->GetRouter ()->
-        GetInputNetDevice(m_sourceNetDevice,
-            NocRoutingProtocol::GetOpositeDirection2DMesh (selectedDevice->GetRoutingDirection ()));
+    m_destinationNetDevice = destination->GetRouter ()-> GetInputNetDevice (m_sourceNetDevice,
+        NocRoutingProtocol::GetOpositeRoutingDirection (selectedDevice->GetRoutingDirection ()),
+        selectedDevice->GetRoutingDimension ());
 
     // ensure that we find the opposite net device at the destination node
     if (m_destinationNetDevice == 0)
       {
         m_destinationNetDevice = destination->GetRouter ()->
             GetInputNetDevice(m_sourceNetDevice,
-                NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::NORTH));
+                NocRoutingProtocol::GetOpositeRoutingDirection (NocRoutingProtocol::FORWARD), 1);
         if (m_destinationNetDevice == 0)
           {
             m_destinationNetDevice = destination->GetRouter ()->
                 GetInputNetDevice(m_sourceNetDevice,
-                    NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::EAST));
+                    NocRoutingProtocol::GetOpositeRoutingDirection (NocRoutingProtocol::FORWARD), 0);
             if (m_destinationNetDevice == 0)
               {
                 m_destinationNetDevice = destination->GetRouter ()->
                     GetInputNetDevice(m_sourceNetDevice,
-                        NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::SOUTH));
+                        NocRoutingProtocol::GetOpositeRoutingDirection (NocRoutingProtocol::BACK), 1);
                 if (m_destinationNetDevice == 0)
                   {
                       m_destinationNetDevice = destination->GetRouter ()->
                           GetInputNetDevice(m_sourceNetDevice,
-                              NocRoutingProtocol::GetOpositeDirection2DMesh (NocRoutingProtocol::WEST));
+                              NocRoutingProtocol::GetOpositeRoutingDirection (NocRoutingProtocol::BACK), 0);
                   }
               }
           }
@@ -149,8 +149,7 @@ namespace ns3
             if ((header.GetXOffset ()) == 0)
               {
                 // eliminate the East and West directions
-                if (devices[i]->GetRoutingDirection () == NocRoutingProtocol::NORTH ||
-                    devices[i]->GetRoutingDirection () == NocRoutingProtocol::SOUTH)
+                if (devices[i]->GetRoutingDimension () == 1)
                   {
                     // include only the progressive direction
                     if (IsProgressiveDirection (packet, devices[i]))
@@ -164,8 +163,7 @@ namespace ns3
                 if ((header.GetYOffset ()) == 0)
                   {
                     // eliminate the North and South directions
-                    if (devices[i]->GetRoutingDirection () == NocRoutingProtocol::EAST ||
-                        devices[i]->GetRoutingDirection () == NocRoutingProtocol::WEST)
+                    if (devices[i]->GetRoutingDimension () == 0)
                       {
                         // include only the progressive direction
                         if (IsProgressiveDirection (packet, devices[i]))
@@ -325,28 +323,32 @@ namespace ns3
         << (header.HasSouthDirection () ? "south" : "north"));
 
     if (((header.HasEastDirection ()) && (header.GetXOffset ()) > 0)
-        && device->GetRoutingDirection () == NocRoutingProtocol::EAST)
+        && device->GetRoutingDirection () == NocRoutingProtocol::FORWARD
+        && device->GetRoutingDimension () == 0)
       {
         isProgressive = true;
       }
     else
       {
         if (((header.HasWestDirection ()) && (header.GetXOffset ()) > 0)
-            && device->GetRoutingDirection () == NocRoutingProtocol::WEST)
+            && device->GetRoutingDirection () == NocRoutingProtocol::BACK
+            && device->GetRoutingDimension () == 0)
           {
             isProgressive = true;
           }
         else
           {
             if (((header.HasNorthDirection ())  && (header.GetYOffset ()) > 0)
-                && device->GetRoutingDirection () == NocRoutingProtocol::NORTH)
+                && device->GetRoutingDirection () == NocRoutingProtocol::FORWARD
+                && device->GetRoutingDimension () == 1)
               {
                 isProgressive = true;
               }
             else
               {
                 if (((header.HasSouthDirection ())  && (header.GetYOffset ()) > 0)
-                    && device->GetRoutingDirection () == NocRoutingProtocol::SOUTH)
+                    && device->GetRoutingDirection () == NocRoutingProtocol::BACK
+                    && device->GetRoutingDimension () == 1)
                   {
                     isProgressive = true;
                   }
@@ -380,22 +382,36 @@ namespace ns3
     int yOffset = nocHeader.GetYOffset ();
 
     switch (device->GetRoutingDirection ()) {
-      case NORTH:
-        yOffset--;
-        nocHeader.SetYOffset (yOffset);
+      case FORWARD:
+      if (device->GetRoutingDimension () == 0)
+        {
+          xOffset--;
+          nocHeader.SetXOffset (xOffset);
+        }
+      else
+        {
+          if (device->GetRoutingDimension () == 1)
+            {
+              yOffset--;
+              nocHeader.SetYOffset (yOffset);
+            }
+        }
         break;
-      case EAST:
-        xOffset--;
-        nocHeader.SetXOffset (xOffset);
-        break;
-      case SOUTH:
-        yOffset--;
-        nocHeader.SetYOffset (yOffset);
-        break;
-      case WEST:
-        xOffset--;
-        nocHeader.SetXOffset (xOffset);
-        break;
+      case BACK:
+      if (device->GetRoutingDimension () == 0)
+        {
+          xOffset--;
+          nocHeader.SetXOffset (xOffset);
+        }
+      else
+        {
+          if (device->GetRoutingDimension () == 1)
+            {
+              yOffset--;
+              nocHeader.SetYOffset (yOffset);
+            }
+        }
+      break;
       case NONE:
       default:
         NS_LOG_ERROR ("Unknown routing direction");

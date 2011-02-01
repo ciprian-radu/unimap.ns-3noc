@@ -51,10 +51,14 @@ namespace ns3
   {
   public:
 
-    enum Direction2DMesh {NONE, NORTH, EAST, SOUTH, WEST, UP, DOWN};
+    /**
+     * routing direction, in a particular dimension. For example, a routing protocol for a 2D mesh
+     * will use two such enums: one for the horizontal axis and the other for the vertical axis
+     **/
+    enum RoutingDirection {NONE, FORWARD, BACK};
 
-    static Direction2DMesh
-    GetOpositeDirection2DMesh (int direction);
+    static RoutingDirection
+    GetOpositeRoutingDirection (int direction);
 
     static TypeId
     GetTypeId();
@@ -120,8 +124,6 @@ namespace ns3
      * (determined from the header of the last head packet)
      */
     uint32_t m_dataPacketsToBeRouted;
-
-  protected:
 
     /**
      * the name of the routing protocol

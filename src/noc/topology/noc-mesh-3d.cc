@@ -102,9 +102,8 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress (Mac48Address::Allocate ());
             netDevice->SetChannel (channel);
-            netDevice->SetRoutingDirection (NocRoutingProtocol::WEST);
+            netDevice->SetRoutingDirection (NocRoutingProtocol::BACK, 0); // WEST
             m_devices.Add (netDevice);
-            netDevice->SetNocTopology (this);
             // attach input buffering (we don't use output buffering for the moment)
             Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
             netDevice->SetInQueue (inQueue);
@@ -118,9 +117,8 @@ namespace ns3
             netDevice = CreateObject<NocNetDevice> ();
             netDevice->SetAddress (Mac48Address::Allocate ());
             netDevice->SetChannel (channel);
-            netDevice->SetRoutingDirection (NocRoutingProtocol::EAST);
+            netDevice->SetRoutingDirection (NocRoutingProtocol::FORWARD, 0); // EAST
             m_devices.Add (netDevice);
-            netDevice->SetNocTopology (this);
             // attach input buffering (we don't use output buffering for the moment)
             Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
             netDevice->SetInQueue (inQueue);
@@ -149,9 +147,8 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress (Mac48Address::Allocate ());
                 netDevice->SetChannel (channel);
-                netDevice->SetRoutingDirection (NocRoutingProtocol::NORTH);
+                netDevice->SetRoutingDirection (NocRoutingProtocol::FORWARD, 1); // NORTH
                 m_devices.Add (netDevice);
-                netDevice->SetNocTopology (this);
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);
@@ -164,9 +161,8 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress (Mac48Address::Allocate ());
                 netDevice->SetChannel (channel);
-                netDevice->SetRoutingDirection (NocRoutingProtocol::SOUTH);
+                netDevice->SetRoutingDirection (NocRoutingProtocol::BACK, 1); // SOUTH
                 m_devices.Add (netDevice);
-                netDevice->SetNocTopology (this);
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);
@@ -196,9 +192,8 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress (Mac48Address::Allocate ());
                 netDevice->SetChannel (channel);
-                netDevice->SetRoutingDirection (NocRoutingProtocol::UP);
+                netDevice->SetRoutingDirection (NocRoutingProtocol::FORWARD, 2); // UP
                 m_devices.Add (netDevice);
-                netDevice->SetNocTopology (this);
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);
@@ -211,9 +206,8 @@ namespace ns3
                 netDevice = CreateObject<NocNetDevice> ();
                 netDevice->SetAddress (Mac48Address::Allocate ());
                 netDevice->SetChannel (channel);
-                netDevice->SetRoutingDirection (NocRoutingProtocol::DOWN);
+                netDevice->SetRoutingDirection (NocRoutingProtocol::BACK, 2); // DOWN
                 m_devices.Add (netDevice);
-                netDevice->SetNocTopology (this);
                 // attach input buffering (we don't use output buffering for the moment)
                 Ptr<Queue> inQueue = m_inQueueFactory.Create<Queue> ();
                 netDevice->SetInQueue (inQueue);

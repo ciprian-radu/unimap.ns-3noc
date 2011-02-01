@@ -181,47 +181,61 @@ namespace ns3
           case NocRoutingProtocol::NONE:
             NS_LOG_WARN("The net device " << device->GetAddress () << " has no routing direction!");
             break;
-          case NocRoutingProtocol::NORTH:
-            if (!m_north1DeviceAdded)
+          case NocRoutingProtocol::FORWARD:
+            if (device->GetRoutingDimension () == 1)
               {
-                m_rightRouterInputDevices.push_back (device);
-                m_rightRouterOutputDevices.push_back (device);
-                m_north1DeviceAdded = true;
+                if (!m_north1DeviceAdded)
+                  {
+                    m_rightRouterInputDevices.push_back (device);
+                    m_rightRouterOutputDevices.push_back (device);
+                    m_north1DeviceAdded = true;
+                  }
+                else
+                  {
+                    NS_ASSERT(!m_north2DeviceAdded);
+                    m_leftRouterInputDevices.push_back (device);
+                    m_leftRouterOutputDevices.push_back (device);
+                    m_north2DeviceAdded = true;
+                  }
               }
             else
               {
-                NS_ASSERT(!m_north2DeviceAdded);
-                m_leftRouterInputDevices.push_back (device);
-                m_leftRouterOutputDevices.push_back (device);
-                m_north2DeviceAdded = true;
+                if (device->GetRoutingDimension () == 0)
+                  {
+                    NS_ASSERT(!m_eastDeviceAdded);
+                    m_leftRouterInputDevices.push_back (device);
+                    m_rightRouterOutputDevices.push_back (device);
+                    m_eastDeviceAdded = true;
+                  }
               }
             break;
-          case NocRoutingProtocol::EAST:
-            NS_ASSERT(!m_eastDeviceAdded);
-            m_leftRouterInputDevices.push_back (device);
-            m_rightRouterOutputDevices.push_back (device);
-            m_eastDeviceAdded = true;
-            break;
-          case NocRoutingProtocol::SOUTH:
-            if (!m_south1DeviceAdded)
+          case NocRoutingProtocol::BACK:
+            if (device->GetRoutingDimension () == 1)
               {
-                m_rightRouterInputDevices.push_back (device);
-                m_rightRouterOutputDevices.push_back (device);
-                m_south1DeviceAdded = true;
+                if (!m_south1DeviceAdded)
+                  {
+                    m_rightRouterInputDevices.push_back (device);
+                    m_rightRouterOutputDevices.push_back (device);
+                    m_south1DeviceAdded = true;
+                  }
+                else
+                  {
+                    NS_ASSERT(!m_south2DeviceAdded);
+                    m_leftRouterInputDevices.push_back (device);
+                    m_leftRouterOutputDevices.push_back (device);
+                    m_south2DeviceAdded = true;
+                  }
               }
             else
               {
-                NS_ASSERT(!m_south2DeviceAdded);
-                m_leftRouterInputDevices.push_back (device);
-                m_leftRouterOutputDevices.push_back (device);
-                m_south2DeviceAdded = true;
+                if (device->GetRoutingDimension () == 0)
+                  {
+                    NS_ASSERT(!m_westDeviceAdded);
+                    m_rightRouterInputDevices.push_back (device);
+                    m_leftRouterOutputDevices.push_back (device);
+                    m_westDeviceAdded = true;
+                  }
               }
-            break;
-          case NocRoutingProtocol::WEST:
-            NS_ASSERT(!m_westDeviceAdded);
-            m_rightRouterInputDevices.push_back (device);
-            m_leftRouterOutputDevices.push_back (device);
-            m_westDeviceAdded = true;
             break;
           default:
             break;
@@ -230,7 +244,7 @@ namespace ns3
   }
 
   Ptr<NocNetDevice>
-  IrvineRouter::GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
+  IrvineRouter::GetInputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension)
   {
     NS_LOG_DEBUG ("Searching for an input net device for node " << GetNocNode ()->GetId ()
         << " and direction " << routingDirection);
@@ -254,7 +268,8 @@ namespace ns3
           {
             Ptr<NocNetDevice> tmpNetDevice = m_rightRouterInputDevices[i]->GetObject<NocNetDevice> ();
             NS_LOG_DEBUG ("Right input " << tmpNetDevice->GetAddress ());
-            if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+            if (tmpNetDevice->GetRoutingDirection () == routingDirection
+                && tmpNetDevice->GetRoutingDimension () == routingDimension)
               {
                 netDevice = tmpNetDevice;
                 found = true;
@@ -267,7 +282,8 @@ namespace ns3
               {
                 Ptr<NocNetDevice> tmpNetDevice = m_leftRouterInputDevices[i]->GetObject<NocNetDevice> ();
                 NS_LOG_DEBUG ("Left input " << tmpNetDevice->GetAddress ());
-                if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+                if (tmpNetDevice->GetRoutingDirection () == routingDirection
+                    && tmpNetDevice->GetRoutingDimension () == routingDimension)
                   {
                     netDevice = tmpNetDevice;
                     found = true;
@@ -284,7 +300,8 @@ namespace ns3
           {
             Ptr<NocNetDevice> tmpNetDevice = m_leftRouterInputDevices[i]->GetObject<NocNetDevice> ();
             NS_LOG_DEBUG ("Left input " << tmpNetDevice->GetAddress ());
-            if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+            if (tmpNetDevice->GetRoutingDirection () == routingDirection
+                && tmpNetDevice->GetRoutingDimension () == routingDimension)
               {
                 netDevice = tmpNetDevice;
                 found = true;
@@ -297,7 +314,8 @@ namespace ns3
               {
                 Ptr<NocNetDevice> tmpNetDevice = m_rightRouterInputDevices[i]->GetObject<NocNetDevice> ();
                 NS_LOG_DEBUG ("Right input " << tmpNetDevice->GetAddress ());
-                if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+                if (tmpNetDevice->GetRoutingDirection () == routingDirection
+                    && tmpNetDevice->GetRoutingDimension () == routingDimension)
                   {
                     netDevice = tmpNetDevice;
                     found = true;
@@ -318,7 +336,7 @@ namespace ns3
   }
 
   Ptr<NocNetDevice>
-  IrvineRouter::GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection)
+  IrvineRouter::GetOutputNetDevice (Ptr<NocNetDevice> sender, const int routingDirection, const int routingDimension)
   {
     NS_LOG_DEBUG ("Searching for an output net device for node " << GetNocNode ()->GetId ()
         << " and direction " << routingDirection << " (sender net device is " << sender->GetAddress () << ")");
@@ -338,7 +356,8 @@ namespace ns3
           {
             Ptr<NocNetDevice> tmpNetDevice = m_rightRouterOutputDevices[i]->GetObject<NocNetDevice> ();
             NS_LOG_DEBUG ("Right output " << tmpNetDevice->GetAddress ());
-            if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+            if (tmpNetDevice->GetRoutingDirection () == routingDirection
+                && tmpNetDevice->GetRoutingDimension () == routingDimension)
               {
                 netDevice = tmpNetDevice;
 //                break;
@@ -352,7 +371,8 @@ namespace ns3
           {
             Ptr<NocNetDevice> tmpNetDevice = m_leftRouterOutputDevices[i]->GetObject<NocNetDevice> ();
             NS_LOG_DEBUG ("Left output " << tmpNetDevice->GetAddress ());
-            if (tmpNetDevice->GetRoutingDirection () == routingDirection)
+            if (tmpNetDevice->GetRoutingDirection () == routingDirection
+                && tmpNetDevice->GetRoutingDimension () == routingDimension)
               {
                 netDevice = tmpNetDevice;
 //                break;
@@ -396,7 +416,8 @@ namespace ns3
             Ptr<NocNetDevice> tmpNetDevice = m_rightRouterOutputDevices[i]->GetObject<NocNetDevice> ();
             if (header.GetXOffset () == 0)
               {
-                if (tmpNetDevice->GetRoutingDirection () != NocRoutingProtocol::EAST)
+                if (tmpNetDevice->GetRoutingDirection () != NocRoutingProtocol::FORWARD
+                    && tmpNetDevice->GetRoutingDimension () != 0)
                   {
                     // we do not allow routing left once we are on the same column with the source
                     // because an Irvine router doesn't allow a packet to turn from West to East
@@ -417,7 +438,8 @@ namespace ns3
             Ptr<NocNetDevice> tmpNetDevice = m_leftRouterOutputDevices[i]->GetObject<NocNetDevice> ();
             if (header.GetXOffset () == 0)
               {
-                if (tmpNetDevice->GetRoutingDirection () != NocRoutingProtocol::EAST)
+                if (tmpNetDevice->GetRoutingDirection () != NocRoutingProtocol::FORWARD
+                    && tmpNetDevice->GetRoutingDimension () != 0)
                   {
                     // we do not allow routing left once we are on the same column with the source
                     // because an Irvine router doesn't allow a packet to turn from East to West

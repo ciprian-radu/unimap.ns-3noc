@@ -31,19 +31,15 @@ namespace ns3
 
   NS_OBJECT_ENSURE_REGISTERED (NocRoutingProtocol);
 
-  NocRoutingProtocol::Direction2DMesh
-  NocRoutingProtocol::GetOpositeDirection2DMesh (int direction)
+  NocRoutingProtocol::RoutingDirection
+  NocRoutingProtocol::GetOpositeRoutingDirection (int direction)
   {
     switch (direction)
       {
-        case NORTH:
-          return SOUTH;
-        case EAST:
-          return WEST;
-        case SOUTH:
-          return NORTH;
-        case WEST:
-          return EAST;
+        case FORWARD:
+          return BACK;
+        case BACK:
+          return FORWARD;
         case NONE:
         default:
           return NONE;

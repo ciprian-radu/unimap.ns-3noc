@@ -86,11 +86,12 @@ namespace ns3
      *
      * \param sourceDevice the net device of this router (it marks where the packet is in this router)
      * \param direction the direction of the neighbor
+     * \param dimension the topological dimension
      *
      * \return the load
      */
     int
-    GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction);
+    GetNeighborLoad (Ptr<NocNetDevice> sourceDevice, int direction, int dimension);
 
   private:
 
