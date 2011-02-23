@@ -1,0 +1,42 @@
+## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    orion = bld.create_ns3_module('orion')
+    orion.source = [
+    	'SIM_router.c',
+    	'SIM_arbiter.c',
+    	'SIM_crossbar.c',
+    	'SIM_router_power.c',
+    	'SIM_link.c',
+    	'SIM_clock.c',
+    	'SIM_router_area.c',
+    	'SIM_array_l.c',
+    	'SIM_array_m.c',
+    	'SIM_cam.c',
+    	'SIM_ALU.c',
+    	'SIM_misc.c',
+    	'SIM_permu.c',
+    	'SIM_static.c',
+    	'SIM_util.c',
+    	'SIM_time.c',
+        ]
+
+    headers = bld.new_task_gen('ns3header')
+    headers.module = 'orion'
+    headers.source = [
+    	'SIM_router.h',
+    	'SIM_arbiter.h',
+    	'SIM_crossbar.h',
+    	'SIM_router_power.h',
+    	'SIM_link.h',
+    	'SIM_clock.h',
+    	'SIM_router_area.h',
+    	'SIM_cam.h',
+    	'SIM_ALU.h',
+    	'SIM_misc.h',
+    	'SIM_permu.h',
+    	'SIM_static.h',
+    	'SIM_util.h',
+    	'SIM_time.h',
+        ]
+
