@@ -65,6 +65,7 @@ all_modules = (
     'noc/traffic-pattern',
     'noc/fault-tolerance',
     'noc/util',
+    'noc/orion',
     'noc',
     'devices/wifi',
     'helper',
