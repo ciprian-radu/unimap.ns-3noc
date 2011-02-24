@@ -170,7 +170,8 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 
 	/* switch allocator input port arbiter */
 	if (info->n_v_class * info->n_v_channel > 1) {
-		if (info->sw_in_arb_model == PARM(sw_in_arb_model)) {
+	        info->sw_in_arb_model = PARM(sw_in_arb_model);
+		if (info->sw_in_arb_model) {
 			if (PARM(sw_in_arb_model) == QUEUE_ARBITER) {
 				SIM_array_init(&info->sw_in_arb_queue_info, 1, 1, 1, info->n_v_class*info->n_v_channel, SIM_logtwo(info->n_v_class*info->n_v_channel), 0, REGISTER);
 				if (info->cache_class > 1)
@@ -224,7 +225,8 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 
 	/* virtual channel allocator input port arbiter */
 	if ( info->n_v_channel > 1 && info->n_in > 1) {
-		if (info->vc_in_arb_model == PARM(vc_in_arb_model)) {
+	        info->vc_in_arb_model = PARM(vc_in_arb_model);
+		if (info->vc_in_arb_model) {
 			if (PARM(vc_in_arb_model) == QUEUE_ARBITER) { 
 				SIM_array_init(&info->vc_in_arb_queue_info, 1, 1, 1, info->n_v_channel, SIM_logtwo(info->n_v_channel), 0, REGISTER);
 				info->vc_in_arb_ff_model = SIM_NO_MODEL;
