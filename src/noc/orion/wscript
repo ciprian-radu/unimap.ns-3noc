@@ -40,3 +40,18 @@ def build(bld):
     	'SIM_time.h',
         ]
 
+# test_alu cannot be compiled because we miss SIM_power_ALU.h
+#    obj = bld.create_ns3_program('test_alu', ['orion'])
+#    obj.source = 'test_alu.c'
+    				
+    obj = bld.create_ns3_program('test_permu', ['orion'])
+    obj.source = 'test_permu.c'
+    
+    obj = bld.create_ns3_program('orion_link', ['orion'])
+    obj.source = 'orion_link.c'
+    
+    obj = bld.create_ns3_program('orion_router_power', ['orion'])
+    obj.source = ['orion_router_power.c', 'SIM_router_power.c']
+    
+    obj = bld.create_ns3_program('orion_router_area', ['orion'])
+    obj.source = 'orion_router_area.c'    

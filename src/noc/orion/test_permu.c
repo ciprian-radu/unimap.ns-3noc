@@ -34,14 +34,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "SIM_parameter.h"
+#include "SIM_util.h"
 #include "SIM_permu.h"
 
 
 int main(int argc, char **argv)
 {
-	u_int in_p, mode_p, op_p, in_c, mode_c, op_c;
+	u_int in_p, mode_p, op_p, in_c, /*mode_c,*/ op_c;
 	SIM_permu_t permu;
 	double Emax, Etmp;
 	u_int d_tab[150];

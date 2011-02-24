@@ -351,7 +351,8 @@ static int SIM_array_wordline_init( SIM_array_wordline_t *wordline, int model, i
 		switch ( model ) {
 			case CAM_RW_WORDLINE:
 				wordline->e_read = SIM_cam_wordline_cap( cols * end, wire_cap, Wmemcellr ) * EnergyFactor;
-				if ( wordline->share_rw == share_rw )
+				wordline->share_rw = share_rw;
+				if ( wordline->share_rw )
 					wordline->e_write = wordline->e_read;
 				else
 					/* write bitlines are always double-ended */
@@ -372,7 +373,8 @@ static int SIM_array_wordline_init( SIM_array_wordline_t *wordline, int model, i
 
 			case CACHE_RW_WORDLINE:
 				wordline->e_read = SIM_array_wordline_cap( cols * end, wire_cap, Wmemcellr ) * EnergyFactor;
-				if ( wordline->share_rw == share_rw )
+				wordline->share_rw = share_rw;
+				if ( wordline->share_rw )
 					wordline->e_write = wordline->e_read;
 				else
 					wordline->e_write = SIM_array_wordline_cap( cols * 2, wire_cap, Wmemcellw ) * EnergyFactor;
@@ -606,7 +608,8 @@ static int SIM_array_bitline_init(SIM_array_bitline_t *bitline, int model, int s
 				else		/* end == 1 implies register file */
 					bitline->e_col_sel = 0;
 
-				if ( bitline->share_rw == share_rw ) {
+				bitline->share_rw = share_rw;
+				if ( bitline->share_rw ) {
 					/* shared bitlines are double-ended, so SenseEnergyFactor */
 					bitline->e_col_read = SIM_array_share_column_read_cap( rows, wire_cap, n_share_amp, n_bitline_pre, n_colsel_pre, pre_size ) * SenseEnergyFactor;
 					bitline->e_col_write = SIM_array_share_column_write_cap( rows, wire_cap, n_share_amp, n_bitline_pre, pre_size ) * EnergyFactor;
@@ -871,7 +874,8 @@ int SIM_array_comp_local_record( SIM_array_comp_t *comp, LIB_Type_max_uint prev_
 	u_int H_dist;
 	int mismatch;
 
-	if ( mismatch == ( curr_tag != input )) comp->n_mismatch ++;
+	mismatch = ( curr_tag != input );
+	if ( mismatch) comp->n_mismatch ++;
 
 	/* for cam, input changes are reflected in memory cells */
 	if ( comp->model == CACHE_COMP ) {
@@ -1425,7 +1429,8 @@ int SIM_array_power_init( SIM_array_info_t *info, SIM_array_t *arr)
 		info->tag_arr_height = 0;
 
 		/* BEGIN: data array power initialization */
-		if (dec_width == SIM_logtwo(info->n_set)) {
+		dec_width = SIM_logtwo(info->n_set);
+		if (dec_width) {
 			/* row decoder power initialization */
 			SIM_array_dec_init( &arr->row_dec, info->row_dec_model, dec_width );
 
@@ -1489,7 +1494,8 @@ int SIM_array_power_init( SIM_array_info_t *info, SIM_array_t *arr)
 		SIM_array_wordline_init( &arr->data_wordline, info->data_wordline_model, info->share_rw, cols, wordline_len * wordline_cmetal, info->data_end );
 		/* static power */
 		arr->I_static += arr->data_wordline.I_static * rows * ports;
-		if (dec_width == SIM_logtwo(info->n_item)) {
+		dec_width = SIM_logtwo(info->n_item);
+		if (dec_width) {
 			/* multiplexor power initialization */
 			SIM_array_mux_init( &arr->mux, info->mux_model, info->n_item, info->assoc );
 

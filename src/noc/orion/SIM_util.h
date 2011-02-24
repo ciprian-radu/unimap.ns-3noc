@@ -34,6 +34,8 @@
 #ifndef _SIM_UTIL_H
 #define _SIM_UTIL_H
 
+extern int SIM_init();
+
 extern u_int SIM_Hamming(LIB_Type_max_uint old_val, LIB_Type_max_uint new_val, LIB_Type_max_uint mask);
 extern u_int SIM_Hamming_group(LIB_Type_max_uint d1_new, LIB_Type_max_uint d1_old, LIB_Type_max_uint d2_new, LIB_Type_max_uint d2_old, u_int width, u_int n_grp);
 
