@@ -213,7 +213,7 @@ void getOptBuffering(int *k , double *h , double Length) {
 }
 
 // unit will be joule/bit/meter
-double LinkDynamicEnergyPerBitPerMeter(double Length, double vdd) 
+double LinkDynamicEnergyPerBitPerMeter(double Length, double vdd)
 {
     double cG = 2*computeGroundCapacitance(Length);
     double cC = 2*computeCouplingCapacitance(Length);

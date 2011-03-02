@@ -160,6 +160,61 @@ namespace ns3
     TransmitEnd (Ptr<NocNetDevice> srcNocNetDevice, Mac48Address to,
         Ptr<NocNetDevice> destNocNetDevice, Mac48Address from);
 
+private:
+
+    /**
+     * Uses ORION to measure this channel's dynamic power, consumed for sending the specified flit.
+     *
+     * \param flit the flit
+     *
+     * \return the dynamic power, in Watt
+     */
+    virtual double
+    GetDynamicPower (Ptr<Packet> flit);
+
+    /**
+     * Uses ORION to measure this channel's leakage power.
+     *
+     * \return the dynamic power, in Watt
+     */
+    virtual double
+    GetLeakagePower (Ptr<Packet> flit);
+
+public:
+
+    /**
+     * Uses ORION to get the dynamic power consumed by this channel.
+     *
+     * \return the dynamic power, in Watt
+     */
+    virtual double
+    GetDynamicPower ();
+
+    /**
+     * Uses ORION to get the leakage power consumed by this channel.
+     *
+     * \return the dynamic power, in Watt
+     */
+    virtual double
+    GetLeakagePower ();
+
+    /**
+     * \see GetDynamicPower
+     * \see GetLeakagePower
+     *
+     * \return the dynamic + leakage power, in Watt
+     */
+    virtual double
+    GetTotalPower ();
+
+    /**
+     * Uses ORION to measure this channel's area.
+     *
+     * \return the area, in um^2
+     */
+    virtual double
+    GetArea ();
+
   private:
 
     /**
@@ -183,6 +238,11 @@ namespace ns3
     Time m_delay;
 
     /**
+     * The length of this wire, in um (micro meters)
+     */
+    double m_length;
+
+    /**
      * Current state of each physical link of the channel.
      * There are 2 physical links in full-duplex mode and only one in half-duplex.
      */
@@ -194,6 +254,15 @@ namespace ns3
      * free). Note that each physical link of the channel may transmit a packet.
      */
     std::vector<Ptr<Packet> > m_currentPkt;
+
+    /**
+     * the number of transmitted Packets (as in Packet objects; flits to be precise)
+     */
+    uint64_t m_trasmittedPackets;
+
+    double m_dynamicPower;
+
+    double m_leakagePower;
 
     /**
      * The net device which tries to send a packet through this channel.

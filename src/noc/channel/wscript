@@ -13,4 +13,3 @@ def build(bld):
         'noc-channel.h',
         'noc-faulty-channel.h',
         ]
-

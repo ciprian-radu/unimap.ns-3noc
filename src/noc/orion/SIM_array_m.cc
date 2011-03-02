@@ -572,7 +572,7 @@ double SIM_array_stat_energy(SIM_array_info_t *info, SIM_array_t *arr, double n_
 
 		/*average write energy for one buffer entry*/
 		arr->ff.n_clock = info->data_width;
-		arr->ff.n_switch = info->data_width* 0.5;
+		arr->ff.n_switch = (u_int64_t) (info->data_width* 0.5);
 
 		avg_write = arr->ff.e_switch * arr->ff.n_switch + arr->ff.e_clock * arr->ff.n_clock ;
 
