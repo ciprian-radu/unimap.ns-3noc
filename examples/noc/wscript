@@ -30,7 +30,6 @@ def build(bld):
                   '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/core/core.cxx',
                   '../../../CTG-XML/src/ro/ulbsibiu/acaps/ctg/xml/task/task.cxx',
                  ]
-    obj.uselib = 'Xerces-C++'
     
     obj = bld.create_ns3_program('ns-3-noc-unimap', ['noc', 'generic'])   
     obj.source = ['ns-3-noc-unimap.cc',

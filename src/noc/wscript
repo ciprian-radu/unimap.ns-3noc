@@ -12,7 +12,6 @@ def build(bld):
                                         'router',
                                         'fault-tolerance',
                                         'util',
-                                        'orion',
                                         ])
     noc.source = [
         ]

@@ -65,7 +65,6 @@ all_modules = (
     'noc/traffic-pattern',
     'noc/fault-tolerance',
     'noc/util',
-    'noc/orion',
     'noc',
     'devices/wifi',
     'helper',
@@ -90,6 +89,10 @@ all_modules = (
     'contrib/topology-read',
     'contrib/energy',
     )
+
+non_ns3_modules = (
+	'noc/orion',
+	)
 
 def set_options(opt):
     opt.sub_options('simulator')
@@ -157,6 +160,7 @@ def build(bld):
     bld.create_obj = types.MethodType(create_obj, bld)
     
     bld.add_subdirs(list(all_modules))
+    bld.add_subdirs(list(non_ns3_modules))
 
     for module in all_modules:
         modheader = bld.new_task_gen('ns3moduleheader')

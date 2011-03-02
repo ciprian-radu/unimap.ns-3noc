@@ -662,7 +662,7 @@ inline static int SIM_grp_record(SIM_grp_t *grp, LIB_Type_max_uint in, LIB_Type_
 	win = SIM_grp_stg(win, lin, grp->data_width, 1, WBIT);
 
 	/* stage 2-6 */
-	for (stg = 2; 1 << stg <= grp->data_width; stg++) {
+	for (stg = 2; (u_int) (1 << stg) <= grp->data_width; stg++) {
 		grp->n_chg_zin[stg - 1] += SIM_Hamming(zin, grp->zin[stg - 1], grp->mask) +
 			SIM_Hamming(win, grp->win[stg - 1], grp->mask);
 		grp->zin[stg - 1] = zin;
@@ -729,7 +729,7 @@ inline static LIB_Type_max_uint SIM_grp_record_test(SIM_grp_t *grp, LIB_Type_max
 	win = SIM_grp_stg(win, lin, grp->data_width, 1, WBIT);
 
 	/* stage 2-6 */
-	for (stg = 2; 1 << stg <= grp->data_width; stg++) {
+	for (stg = 2; (u_int) (1 << stg) <= grp->data_width; stg++) {
 		grp->n_chg_zin[stg - 1] = SIM_Hamming(zin, grp->zin[stg - 1], grp->mask) +
 			SIM_Hamming(win, grp->win[stg - 1], grp->mask);
 		grp->n_chg_lin[stg - 1] = 0;

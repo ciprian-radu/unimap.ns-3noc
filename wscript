@@ -455,26 +455,27 @@ def create_ns3_program(bld, name, dependencies=('simulator',)):
     program.is_ns3_program = True
     program.name = name
     program.target = program.name
-    program.uselib_local = 'ns3'
+    program.uselib_local = 'ns3 orion'
     program.ns3_module_dependencies = ['ns3-'+dep for dep in dependencies]
     if program.env['ENABLE_STATIC_NS3']:
         if sys.platform == 'darwin':
             program.env.append_value('LINKFLAGS', '-Wl,-all_load')
-            program.env.append_value('LINKFLAGS', '-lns3')
+            program.env.append_value('LINKFLAGS', '-lns3 -lorion')
         else:
             program.env.append_value('LINKFLAGS', '-Wl,--whole-archive,-Bstatic')
-            program.env.append_value('LINKFLAGS', '-lns3')
+            program.env.append_value('LINKFLAGS', '-lns3 -lorion')
             program.env.append_value('LINKFLAGS', '-Wl,-Bdynamic,--no-whole-archive')
     return program
 
 def add_examples_programs(bld):
     env = bld.env_of_name('default')
     if env['ENABLE_EXAMPLES']:
-        for dir in os.listdir('examples'):
-            if dir.startswith('.') or dir == 'CVS':
-                continue
-            if os.path.isdir(os.path.join('examples', dir)):
-                bld.add_subdirs(os.path.join('examples', dir))
+    	bld.add_subdirs('examples')
+        #for dir in os.listdir('examples'):
+        #    if dir.startswith('.') or dir == 'CVS':
+        #        continue
+        #    if os.path.isdir(os.path.join('examples', dir)):
+        #        bld.add_subdirs(os.path.join('examples', dir))
 
 
 def add_scratch_programs(bld):
