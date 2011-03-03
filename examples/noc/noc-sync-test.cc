@@ -82,7 +82,7 @@ main (int argc, char *argv[])
 
   // set the global parameters
   NocRegistry::GetInstance ()->SetAttribute ("DataPacketSpeedup", IntegerValue (dataPacketSpeedup));
-  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (Seconds (1)));
+  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (NanoSeconds (1)));
 
   // Here, we will explicitly create four nodes.
   NS_LOG_INFO ("Create nodes.");
@@ -96,15 +96,16 @@ main (int argc, char *argv[])
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
-  // Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
   // Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
-  Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
+  // Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
   // Note that the next two channel attributes are not considered with a NocSyncApplication!
   //  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
   //  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
 
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
+  //  noc->SetChannelAttribute ("Length", DoubleValue (10)); // 10 micro-meters channel length
   noc->SetInQueue ("ns3::DropTailQueue", "Mode", EnumValue (DropTailQueue::PACKETS), "MaxPackets", UintegerValue (1)); // the in queue must have at least 1 packet
 
   // install the topology
@@ -134,12 +135,14 @@ main (int argc, char *argv[])
   NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
 
+  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (256)); // 32 bytes
+
   NS_LOG_INFO ("Create Applications.");
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (13)); // destination
-  nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (3));
+  nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (3)); // each packet is made of maximum 3 flits
   ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (3)); // source
   //  apps1.Start (Seconds (0.0));
   //  apps1.Stop (Seconds (10.0));
@@ -148,7 +151,7 @@ main (int argc, char *argv[])
   //  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   //  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   //  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (0)); // destination
-  //  nocSyncAppHelper2.SetAttribute ("MaxFlits", UintegerValue (3));
+  //  nocSyncAppHelper2.SetAttribute ("MaxFlits", UintegerValue (3)); // each packet is made of maximum 3 flits
   //  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (1)); // source
   ////  apps2.Start (Seconds (0.0));
   ////  apps2.Stop (Seconds (10.0));
@@ -166,6 +169,12 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();
+
+  NS_LOG_INFO ("NoC dynamic power: " << noc->GetDynamicPower () << " W");
+  NS_LOG_INFO ("NoC leakage power: " << noc->GetLeakagePower () << " W");
+  NS_LOG_INFO ("NoC total power: " << noc->GetTotalPower () << " W");
+  NS_LOG_INFO ("NoC area: " << noc->GetArea () << " um^2");
+
   Simulator::Destroy ();
   NS_LOG_INFO ("Done.");
 

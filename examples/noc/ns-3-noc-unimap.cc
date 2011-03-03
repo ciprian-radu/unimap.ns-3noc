@@ -339,7 +339,10 @@ main (int argc, char *argv[])
 
   // installing the topology
   NetDeviceContainer devs = noc->Install (nodes);
+  NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
+
+  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (256)); // 32 bytes
 
   NS_LOG_INFO ("Create CTG based Applications.");
 
@@ -347,7 +350,6 @@ main (int argc, char *argv[])
     NocCtgApplicationHelper ctgApplicationHelper (
         mappingXmlFilePath,
         2, // the number of CTG iterations
-        flitSize,
         flitsPerPacket,
         simulationCycles,
         nodes,

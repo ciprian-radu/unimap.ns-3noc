@@ -149,6 +149,122 @@ namespace ns3
     m_switchingProtocolFactory.Set (attributeName, attributeValue);
   }
 
+  double
+  NocTopology::GetDynamicPower ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    double power = 0;
+
+    map<uint32_t, bool> processedChannels;
+    for (uint32_t i = 0; i < m_devices.GetN (); i++)
+      {
+        Ptr<NocNetDevice> device = m_devices.Get (i)->GetObject<NocNetDevice> ();
+        Ptr<Channel> channel = device->GetChannel ();
+        if (channel != 0)
+          {
+            Ptr<NocChannel> nocChannel = channel->GetObject<NocChannel> ();
+            uint32_t channelId = nocChannel->GetId ();
+            if (!processedChannels[channelId])
+              {
+                double channelDynamicPower = nocChannel->GetDynamicPower ();
+                NS_LOG_DEBUG ("Channel " << channelId << " consumed a dynamic power of " << channelDynamicPower << " W");
+                power += channelDynamicPower;
+                processedChannels[channelId] = true;
+              }
+          }
+      }
+
+    NS_LOG_DEBUG ("NoC dynamic power is " << power << " W");
+    return power;
+  }
+
+  double
+  NocTopology::GetLeakagePower ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    double power = 0;
+
+    map<uint32_t, bool> processedChannels;
+    for (uint32_t i = 0; i < m_devices.GetN (); i++)
+      {
+        Ptr<NocNetDevice> device = m_devices.Get (i)->GetObject<NocNetDevice> ();
+        Ptr<Channel> channel = device->GetChannel ();
+        if (channel != 0)
+          {
+            Ptr<NocChannel> nocChannel = channel->GetObject<NocChannel> ();
+            uint32_t channelId = nocChannel->GetId ();
+            if (!processedChannels[channelId])
+              {
+                double channelLeakagePower = nocChannel->GetLeakagePower ();
+                NS_LOG_DEBUG ("Channel " << channelId << " consumed a leakage power of " << channelLeakagePower << " W");
+                power += channelLeakagePower;
+                processedChannels[channelId] = true;
+              }
+          }
+      }
+
+    NS_LOG_DEBUG ("NoC leakage power is " << power << " W");
+    return power;
+  }
+
+  double
+  NocTopology::GetTotalPower ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    double power = 0;
+
+    map<uint32_t, bool> processedChannels;
+    for (uint32_t i = 0; i < m_devices.GetN (); i++)
+      {
+        Ptr<NocNetDevice> device = m_devices.Get (i)->GetObject<NocNetDevice> ();
+        Ptr<Channel> channel = device->GetChannel ();
+        if (channel != 0)
+          {
+            Ptr<NocChannel> nocChannel = channel->GetObject<NocChannel> ();
+            uint32_t channelId = nocChannel->GetId ();
+            if (!processedChannels[channelId])
+              {
+                double channelTotalPower = nocChannel->GetTotalPower ();
+                NS_LOG_DEBUG ("Channel " << channelId << " consumed a total power of " << channelTotalPower << " W");
+                power += channelTotalPower;
+                processedChannels[channelId] = true;
+              }
+          }
+      }
+
+    NS_LOG_DEBUG ("NoC total power is " << power << " W");
+    return power;
+  }
+
+  double
+  NocTopology::GetArea ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    double area = 0;
+
+    map<uint32_t, bool> processedChannels;
+    for (uint32_t i = 0; i < m_devices.GetN (); i++)
+      {
+        Ptr<NocNetDevice> device = m_devices.Get (i)->GetObject<NocNetDevice> ();
+        Ptr<Channel> channel = device->GetChannel ();
+        if (channel != 0)
+          {
+            Ptr<NocChannel> nocChannel = channel->GetObject<NocChannel> ();
+            uint32_t channelId = nocChannel->GetId ();
+            if (!processedChannels[channelId])
+              {
+                double channelTotalArea = nocChannel->GetArea ();
+                NS_LOG_DEBUG ("Channel " << channelId << " required a total area of " << channelTotalArea << " um^2");
+                area += channelTotalArea;
+                processedChannels[channelId] = true;
+              }
+          }
+      }
+
+    NS_LOG_DEBUG ("NoC total area is " << area << " um^2");
+    return area;
+  }
+
   void
   NocTopology::EnableAscii (Ptr<OutputStreamWrapper> stream, uint32_t nodeid, uint32_t deviceid)
   {

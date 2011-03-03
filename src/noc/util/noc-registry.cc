@@ -58,8 +58,14 @@ namespace ns3
             .SetParent<Object> ()
             .AddConstructor<NocRegistry> ()
             .AddAttribute (
+                "FlitSize",
+                "the flit size, in bits",
+                IntegerValue (256), // 32 bytes
+                MakeIntegerAccessor (&NocRegistry::m_flitSize),
+                MakeIntegerChecker<uint32_t> (8 * NocHeader::HEADER_SIZE))
+            .AddAttribute (
                 "DataPacketSpeedup",
-                "How many times a data packet is routed faster than a head packet",
+                "How many times a data flit is routed faster than a head flit",
                 IntegerValue (1),
                 MakeIntegerAccessor (&NocRegistry::m_dataFlitSpeedup),
                 MakeIntegerChecker<int> (1))

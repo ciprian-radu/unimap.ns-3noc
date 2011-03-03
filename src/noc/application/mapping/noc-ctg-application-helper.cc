@@ -35,12 +35,11 @@ NS_LOG_COMPONENT_DEFINE ("NocCtgApplicationHelper");
 namespace ns3
 {
 
-  NocCtgApplicationHelper::NocCtgApplicationHelper (string mappingXmlFilePath, uint64_t iterations, uint64_t flitSize, uint64_t numberOfFlits,
+  NocCtgApplicationHelper::NocCtgApplicationHelper (string mappingXmlFilePath, uint64_t iterations, uint64_t numberOfFlits,
       uint64_t simulationCycles, NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize)
   {
     m_mappingXmlFilePath = mappingXmlFilePath;
     m_iterations = iterations;
-    m_flitSize = flitSize;
     m_numberOfFlits = numberOfFlits;
     m_simulationCycles = simulationCycles;
     m_nodes = nodes;
@@ -48,7 +47,6 @@ namespace ns3
     m_factory.SetTypeId ("ns3::NocCtgApplication");
     m_factory.Set ("HSize", UintegerValue (hSize));
     m_factory.Set ("Iterations", UintegerValue (m_iterations));
-    m_factory.Set ("FlitSize", UintegerValue (m_flitSize));
     m_factory.Set ("NumberOfFlits", UintegerValue (m_numberOfFlits));
   }
 

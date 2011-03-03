@@ -121,10 +121,6 @@ namespace ns3
                 " The vertical size of the 2D mesh is given by number of nodes", UintegerValue(4),
                 MakeUintegerAccessor(&NocSyncApplication::m_hSize),
                 MakeUintegerChecker<uint32_t> (2))
-            .AddAttribute("FlitSize", "The flit size, in bytes "
-                "(the head flit will use part of this size for the packet header).", UintegerValue (32),
-                MakeUintegerAccessor(&NocSyncApplication::m_flitSize),
-                MakeUintegerChecker<uint32_t> ((uint32_t) NocHeader::HEADER_SIZE))
             .AddAttribute ("NumberOfFlits", "The number of flits composing a packet.", UintegerValue (3),
                 MakeUintegerAccessor (&NocSyncApplication::m_numberOfFlits),
                 MakeUintegerChecker<uint32_t> (2))
@@ -170,6 +166,9 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
+    IntegerValue flitSize;
+    NocRegistry::GetInstance ()->GetAttribute ("FlitSize", flitSize);
+    m_flitSize = flitSize.Get () / 8; // in bytes
     m_totBytes = 0;
     m_totFlits = 0;
     m_trafficPatternEnum = BIT_COMPLEMENT;
