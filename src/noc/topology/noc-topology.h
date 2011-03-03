@@ -168,6 +168,39 @@ namespace ns3
     SetSwitchingProtocolAttribute (string attributeName, const AttributeValue &attributeValue);
 
     /**
+     * Uses ORION to get the dynamic power consumed by this NoC.
+     *
+     * \return the dynamic power, in Watt
+     */
+    double
+    GetDynamicPower ();
+
+    /**
+     * Uses ORION to get the leakage power consumed by this NoC.
+     *
+     * \return the dynamic power, in Watt
+     */
+    double
+    GetLeakagePower ();
+
+    /**
+     * \see GetDynamicPower
+     * \see GetLeakagePower
+     *
+     * \return the dynamic + leakage power, in Watt
+     */
+    double
+    GetTotalPower ();
+
+    /**
+     * Uses ORION to measure this NoC's area.
+     *
+     * \return the area, in um^2
+     */
+    double
+    GetArea ();
+
+    /**
      * \param stream output stream wrapper
      * \param nodeid the id of the node to generate ascii output for.
      * \param deviceid the id of the device to generate ascii output for.

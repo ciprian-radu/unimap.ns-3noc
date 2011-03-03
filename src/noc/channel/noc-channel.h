@@ -256,9 +256,9 @@ public:
     std::vector<Ptr<Packet> > m_currentPkt;
 
     /**
-     * the number of transmitted Packets (as in Packet objects; flits to be precise)
+     * the number of transmitted flits
      */
-    uint64_t m_trasmittedPackets;
+    uint64_t m_trasmittedFlits;
 
     double m_dynamicPower;
 

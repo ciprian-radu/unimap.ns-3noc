@@ -85,7 +85,7 @@ namespace ns3
      * \see Initialize ()
      *
      */
-    NocCtgApplicationHelper (string mappingXmlFilePath, uint64_t iterations, uint64_t flitSize, uint64_t numberOfFlits,
+    NocCtgApplicationHelper (string mappingXmlFilePath, uint64_t iterations, uint64_t numberOfFlits,
         uint64_t simulationCycles, NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize);
 
     /**
@@ -137,9 +137,6 @@ namespace ns3
 
     /** how many times the CTGs will be iterated */
     uint64_t m_iterations;
-
-    /** the size of a flit, in bytes */
-    uint64_t m_flitSize;
 
     /** the number of flits per packet */
     uint64_t m_numberOfFlits;

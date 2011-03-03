@@ -31,6 +31,7 @@
 #include "ns3/noc-registry.h"
 #include "src/noc/orion/SIM_parameter.h"
 #include "src/noc/orion/SIM_link.h"
+#include <math.h>
 
 NS_LOG_COMPONENT_DEFINE ("NocChannel");
 
@@ -62,7 +63,7 @@ namespace ns3
         .AddAttribute ("Length", "The length of this wire, in um (micro meters); 50 um by default",
                        DoubleValue (50),
                        MakeDoubleAccessor (&NocChannel::m_length),
-                       MakeDoubleChecker<double> (1))
+                       MakeDoubleChecker<double> (1e-3))
         ;
     return tid;
   }
@@ -71,7 +72,7 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
     m_fullDuplex = true;
-    m_trasmittedPackets = 0;
+    m_trasmittedFlits = 0;
     m_state.insert(m_state.end(), IDLE); // the state of the Tx line
     if (m_fullDuplex) {
         m_state.insert(m_state.end(), IDLE); // the state of the Rx line
@@ -90,6 +91,9 @@ namespace ns3
     }
     NS_LOG_LOGIC ("switched to IDLE");
     m_devices.clear();
+
+    m_dynamicPower = 0;
+    m_leakagePower = 0;
   }
 
   bool
@@ -296,10 +300,10 @@ namespace ns3
         NS_LOG_LOGIC ("switched to IDLE (for link " << (int)link << ")");
     }
 
-    m_trasmittedPackets++;
+    m_trasmittedFlits++;
     m_dynamicPower += GetDynamicPower (m_currentPkt[link]);
     m_leakagePower += GetLeakagePower (m_currentPkt[link]);
-    NS_LOG_LOGIC ("The channel transmitted " << m_trasmittedPackets << " flits. This generated a dynamic power of "
+    NS_LOG_LOGIC ("The channel transmitted " << m_trasmittedFlits << " flits. This generated a dynamic power of "
         << m_dynamicPower << " W and a leakage power of " << m_leakagePower << " W");
   }
 
@@ -394,7 +398,7 @@ namespace ns3
   double
   NocChannel::GetDynamicPower (Ptr<Packet> flit)
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION (*flit);
     double power = 0;
 
     TimeValue timeValue;
@@ -403,13 +407,20 @@ namespace ns3
 
     double freq = 1 / globalClock.GetSeconds ();
     NS_LOG_DEBUG ("NoC clock frequency is " << freq << " Hz");
-    double dataWidth = flit->GetSize ();
-    NS_LOG_DEBUG ("Transmitted packet has size " << dataWidth);
-    double load = m_trasmittedPackets / (Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds ());
+    double dataWidth = flit->GetSize () * 8; // in bits
+    NS_LOG_DEBUG ("Transmitted flit has size " << dataWidth);
+    NS_LOG_DEBUG ("transmitted flits " << m_trasmittedFlits << " ps");
+    NS_LOG_DEBUG ("simulator now " << Simulator::Now ().GetPicoSeconds () << " ps");
+    NS_LOG_DEBUG ("global clock " << globalClock.GetPicoSeconds () << " ps");
+    double clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
+    NS_LOG_DEBUG ("clock number " << clockNumber);
+    double load = m_trasmittedFlits / clockNumber;
     NS_LOG_DEBUG ("Channel load is " << load);
+    NS_ASSERT_MSG (load >= 0 && load <= 1, "Channel load in [0,1] interval");
 
-    power = 0.5 * load * LinkDynamicEnergyPerBitPerMeter(m_length, Vdd) * freq * m_length * dataWidth;
-    NS_LOG_LOGIC ("Flit " << flit << " required " << power << " W of dynamic power to be sent through this link");
+    double linkLength = m_length * 1e-6; //unit meter
+    power = 0.5 * load * LinkDynamicEnergyPerBitPerMeter(linkLength, Vdd) * freq * linkLength * dataWidth;
+    NS_LOG_LOGIC ("Flit " << *flit << " required " << power << " W of dynamic power to be sent through this link");
 
     return power;
   }
@@ -417,7 +428,7 @@ namespace ns3
   double
   NocChannel::GetLeakagePower (Ptr<Packet> flit)
   {
-    NS_LOG_FUNCTION_NOARGS ();
+    NS_LOG_FUNCTION (*flit);
     double power = 0;
 
     TimeValue timeValue;
@@ -426,13 +437,20 @@ namespace ns3
 
     double freq = 1 / globalClock.GetSeconds ();
     NS_LOG_DEBUG ("NoC clock frequency is " << freq << " Hz");
-    double dataWidth = flit->GetSize ();
-    NS_LOG_DEBUG ("Transmitted packet has size " << dataWidth);
-    double load = m_trasmittedPackets / (Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds ());
+    double dataWidth = flit->GetSize () * 8; // in bits
+    NS_LOG_DEBUG ("Transmitted flit has size " << dataWidth);
+    NS_LOG_DEBUG ("transmitted flits " << m_trasmittedFlits << " ps");
+    NS_LOG_DEBUG ("simulator now " << Simulator::Now ().GetPicoSeconds () << " ps");
+    NS_LOG_DEBUG ("global clock " << globalClock.GetPicoSeconds () << " ps");
+    double clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
+    NS_LOG_DEBUG ("clock number " << clockNumber);
+    double load = m_trasmittedFlits / clockNumber;
     NS_LOG_DEBUG ("Channel load is " << load);
+    NS_ASSERT_MSG (load >= 0 && load <= 1, "Channel load in [0,1] interval");
 
-    power = 0.5 * load * LinkLeakagePowerPerMeter(m_length, Vdd) * m_length * dataWidth;
-    NS_LOG_LOGIC ("Flit " << flit << " required " << power << " W of leakage power to be sent through this link");
+    double linkLength = m_length * 1e-6; //unit meter
+    power = 0.5 * load * LinkLeakagePowerPerMeter(linkLength, Vdd) * linkLength * dataWidth;
+    NS_LOG_LOGIC ("Flit " << *flit << " required " << power << " W of leakage power to be sent through this link");
 
     return power;
   }
@@ -464,8 +482,14 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
     double area = 0;
 
+    double linkLength = m_length * 1e-6; //unit meter
 
+    IntegerValue flitSize;
+    NocRegistry::GetInstance ()->GetAttribute ("FlitSize", flitSize);
 
+    area = LinkArea(linkLength, flitSize.Get ());
+
+    NS_LOG_LOGIC ("Channel area is " << area << " um^2");
     return area;
   }
 

@@ -63,6 +63,11 @@ namespace ns3
     NocRegistry& operator= (const NocRegistry&);      // Prevent assignment
 
     /**
+     * the flit size, in bits
+     */
+    uint32_t m_flitSize;
+
+    /**
      *  the speedup used for routing a data packet, as compared to a head packet
      */
     int m_dataFlitSpeedup;
