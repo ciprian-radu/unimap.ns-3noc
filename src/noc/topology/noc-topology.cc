@@ -253,12 +253,17 @@ namespace ns3
             uint32_t channelId = nocChannel->GetId ();
             if (!processedChannels[channelId])
               {
-                double channelTotalArea = nocChannel->GetArea ();
-                NS_LOG_DEBUG ("Channel " << channelId << " required a total area of " << channelTotalArea << " um^2");
-                area += channelTotalArea;
+                double channelArea = nocChannel->GetArea ();
+                NS_LOG_DEBUG ("Channel " << channelId << " requires an area of " << channelArea << " um^2");
+                area += channelArea;
                 processedChannels[channelId] = true;
               }
           }
+        Ptr<NocNode> node = device->GetNode ()->GetObject<NocNode> ();
+        Ptr<NocRouter> router = node->GetRouter ();
+        double routerArea = router->GetArea ();
+        NS_LOG_DEBUG ("Router " << node->GetId () << " requires an area of " << routerArea << " um^2");
+        area += routerArea;
       }
 
     NS_LOG_DEBUG ("NoC total area is " << area << " um^2");

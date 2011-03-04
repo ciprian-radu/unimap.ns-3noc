@@ -146,7 +146,7 @@
 #define PARM_vc_select_buf_type		REGISTER	/* vc_select buffer type, SRAM or REGISTER */
 
 /*link wire parameters*/
-#define WIRE_LAYER_TYPE         GLOBAL /*wire layer type, INTERMEDIATE or GLOBAL*/
+#define WIRE_LAYER_TYPE         GLOBAL_WLT /*wire layer type, INTERMEDIATE_WLT or GLOBAL_WLT*/
 #define PARM_width_spacing      DWIDTH_DSPACE   /*choices are SWIDTH_SSPACE, SWIDTH_DSPACE, DWIDTH_SSPACE, DWIDTH_DSPACE*/
 #define PARM_buffering_scheme   MIN_DELAY   	/*choices are MIN_DELAY, STAGGERED */
 #define PARM_shielding          FALSE   		/*choices are TRUE, FALSE */
