@@ -770,7 +770,7 @@
 /*=======================PARAMETERS for Link===========================*/
 
 #if(PARM(TECH_POINT) == 90) /* PARAMETERS for Link at 90nm */
-#if (WIRE_LAYER_TYPE == LOCAL)
+#if (WIRE_LAYER_TYPE == LOCAL_WLT)
 #define WireMinWidth            214e-9
 #define WireMinSpacing          214e-9
 #define WireMetalThickness      363.8e-9
@@ -778,7 +778,7 @@
 #define WireDielectricThickness 363.8e-9
 #define WireDielectricConstant  3.3
 
-#elif (WIRE_LAYER_TYPE == INTERMEDIATE)
+#elif (WIRE_LAYER_TYPE == INTERMEDIATE_WLT)
 #define WireMinWidth            275e-9
 #define WireMinSpacing          275e-9
 #define WireMetalThickness      467.5e-9
@@ -786,7 +786,7 @@
 #define WireDielectricThickness 412.5e-9
 #define WireDielectricConstant  3.3
 
-#elif (WIRE_LAYER_TYPE == GLOBAL)
+#elif (WIRE_LAYER_TYPE == GLOBAL_WLT)
 #define WireMinWidth            410e-9 
 #define WireMinSpacing          410e-9
 #define WireMetalThickness      861e-9 
@@ -797,7 +797,7 @@
 #endif /*WIRE_LAYER_TYPE for 90nm*/
 
 #elif(PARM(TECH_POINT) == 65) /* PARAMETERS for Link at 65nm */
-#if (WIRE_LAYER_TYPE == LOCAL)
+#if (WIRE_LAYER_TYPE == LOCAL_WLT)
 #define WireMinWidth 		    136e-9
 #define WireMinSpacing 		    136e-9
 #define WireMetalThickness	    231.2e-9
@@ -805,7 +805,7 @@
 #define WireDielectricThickness	    231.2e-9
 #define WireDielectricConstant	    2.85
 
-#elif (WIRE_LAYER_TYPE == INTERMEDIATE)
+#elif (WIRE_LAYER_TYPE == INTERMEDIATE_WLT)
 #define WireMinWidth                140e-9
 #define WireMinSpacing              140e-9
 #define WireMetalThickness          252e-9
@@ -813,7 +813,7 @@
 #define WireDielectricThickness     224e-9
 #define WireDielectricConstant      2.85
 
-#elif (WIRE_LAYER_TYPE == GLOBAL)
+#elif (WIRE_LAYER_TYPE == GLOBAL_WLT)
 #define WireMinWidth                400e-9 
 #define WireMinSpacing              400e-9
 #define WireMetalThickness          400e-9 
@@ -824,7 +824,7 @@
 #endif /*WIRE_LAYER_TYPE for 65nm*/
 
 #elif(PARM(TECH_POINT) == 45) /* PARAMETERS for Link at 45nm */
-#if (WIRE_LAYER_TYPE == LOCAL)
+#if (WIRE_LAYER_TYPE == LOCAL_WLT)
 #define WireMinWidth                    45e-9
 #define WireMinSpacing                  45e-9
 #define WireMetalThickness              129.6e-9
@@ -832,7 +832,7 @@
 #define WireDielectricThickness         162e-9
 #define WireDielectricConstant          2.0
 
-#elif (WIRE_LAYER_TYPE == INTERMEDIATE)
+#elif (WIRE_LAYER_TYPE == INTERMEDIATE_WLT)
 #define WireMinWidth                45e-9  
 #define WireMinSpacing              45e-9	
 #define WireMetalThickness          129.6e-9
@@ -840,7 +840,7 @@
 #define WireDielectricThickness     72e-9 	
 #define WireDielectricConstant      2.0
 
-#elif (WIRE_LAYER_TYPE == GLOBAL)
+#elif (WIRE_LAYER_TYPE == GLOBAL_WLT)
 #define WireMinWidth                67.5e-9 
 #define WireMinSpacing              67.5e-9
 #define WireMetalThickness          155.25e-9 
@@ -851,7 +851,7 @@
 #endif /*WIRE_LAYER_TYPE for 45nm*/
 
 #elif(PARM(TECH_POINT) == 32) /* PARAMETERS for Link at 32nm */
-#if (WIRE_LAYER_TYPE == LOCAL)
+#if (WIRE_LAYER_TYPE == LOCAL_WLT)
 #define WireMinWidth                    32e-9
 #define WireMinSpacing                  32e-9
 #define WireMetalThickness              60.8e-9
@@ -859,7 +859,7 @@
 #define WireDielectricThickness         60.8e-9
 #define WireDielectricConstant          1.9
 
-#elif (WIRE_LAYER_TYPE == INTERMEDIATE)
+#elif (WIRE_LAYER_TYPE == INTERMEDIATE_WLT)
 #define WireMinWidth                32e-9
 #define WireMinSpacing              32e-9
 #define WireMetalThickness          60.8e-9
@@ -867,7 +867,7 @@
 #define WireDielectricThickness     54.4e-9 
 #define WireDielectricConstant      1.9
 
-#elif (WIRE_LAYER_TYPE == GLOBAL)
+#elif (WIRE_LAYER_TYPE == GLOBAL_WLT)
 #define WireMinWidth                48e-9 
 #define WireMinSpacing              48e-9
 #define WireMetalThickness          120e-9 

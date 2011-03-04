@@ -31,6 +31,10 @@
 #include "ns3/load-router-component.h"
 #include "ns3/route.h"
 #include <vector>
+#include "src/noc/orion/SIM_router.h"
+#include "src/noc/orion/SIM_router_power.h"
+#include "src/noc/orion/SIM_router_area.h"
+#include "src/noc/orion/SIM_util.h"
 
 namespace ns3
 {
@@ -278,6 +282,26 @@ namespace ns3
      */
     virtual std::string
     GetName () const;
+
+  private:
+
+    /**
+     * This function is just a copy of the SIM_router_init function from ORION (SIM_router.cc).
+     * We use this approach because we want to be able to set some router parameters dynamically
+     * (the PARM approach is not very useful).
+     */
+    int
+    routerInitForOrion (SIM_router_info_t *info, SIM_router_power_t *router_power, SIM_router_area_t *router_area);
+
+  public:
+
+    /**
+     * Uses ORION to measure this router's area.
+     *
+     * \return the area, in um^2
+     */
+    virtual double
+    GetArea ();
 
   protected:
 

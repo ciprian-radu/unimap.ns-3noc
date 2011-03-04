@@ -35,9 +35,9 @@
 #define _SIM_LINK_MODEL_H
 
 /* link wire type model*/
-#define	LOCAL			1
-#define INTERMEDIATE	2
-#define GLOBAL			3
+#define	LOCAL_WLT		1
+#define INTERMEDIATE_WLT	2
+#define GLOBAL_WLT		3
 
 /* link width spacing type */
 #define SWIDTH_SSPACE	1  	//singleWidthSingleSpace
