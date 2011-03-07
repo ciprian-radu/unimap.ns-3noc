@@ -38,6 +38,9 @@
 #include "SIM_static.h"
 #include "SIM_util.h"
 #include "SIM_time.h"
+#include "ns3/noc-registry.h"
+
+using namespace ns3;
 
 /* switch cap of request signal (round robin arbiter) */
 static double SIM_rr_arbiter_req_cap(double length)
@@ -463,7 +466,13 @@ double SIM_arbiter_stat_energy(SIM_arbiter_t *arb, SIM_array_info_t *info, doubl
 	}
 
 	/* static power */
-	Estatic = arb->I_static * Vdd * Period * SCALE_S;
+//	Estatic = arb->I_static * Vdd * Period * SCALE_S;
+
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        Estatic = arb->I_static * Vdd * period * SCALE_S;
 
 	SIM_print_stat_energy(SIM_strcat(path, "static energy"), Estatic, next_depth);
 	SIM_res_path(path, path_len);

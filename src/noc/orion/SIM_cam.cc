@@ -38,6 +38,9 @@
 #include "SIM_cam.h"
 #include "SIM_util.h"
 #include "SIM_time.h"
+#include "ns3/noc-registry.h"
+
+using namespace ns3;
 
 /*============================== wordlines ==============================*/
 
@@ -50,7 +53,14 @@ double SIM_cam_wordline_cap( u_int cols, double wire_cap, double tx_width )
 	Ctotal = Cline = SIM_gatecappass( tx_width, 2 ) * cols + wire_cap;
 
 	/* part 2: input driver */
-	psize = SIM_driver_size( Cline, Period / 8 );
+//	psize = SIM_driver_size( Cline, Period / 8 );
+
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        psize = SIM_driver_size( Cline, period / 8 );
+
 	nsize = psize * Wdecinvn / Wdecinvp; 
 	/* WHS: 20 should go to PARM */
 	Ctotal += SIM_draincap( nsize, NCH, 1 ) + SIM_draincap( psize, PCH, 1 ) +

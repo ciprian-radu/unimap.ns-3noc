@@ -184,9 +184,9 @@
 #define Vt		(1.09 * VTSCALE)
 #define Vbitsense	(0.10 * SSCALE)
 
-#define SensePowerfactor3 (PARM(Freq))*(Vbitsense)*(Vbitsense)
-#define SensePowerfactor2 (PARM(Freq))*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
-#define SensePowerfactor  (PARM(Freq))*Vdd*(Vdd/2)
+//#define SensePowerfactor3 (PARM(Freq))*(Vbitsense)*(Vbitsense)
+//#define SensePowerfactor2 (PARM(Freq))*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
+//#define SensePowerfactor  (PARM(Freq))*Vdd*(Vdd/2)
 #define SenseEnergyFactor (Vdd*Vdd/2)
 
 /* transistor widths in um (as described in tech report, appendix 1) */

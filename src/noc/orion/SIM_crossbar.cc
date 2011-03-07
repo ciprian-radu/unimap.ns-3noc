@@ -38,6 +38,9 @@
 #include "SIM_static.h"
 #include "SIM_time.h"
 #include "SIM_util.h"
+#include "ns3/noc-registry.h"
+
+using namespace ns3;
 
 static double SIM_crossbar_in_cap(double wire_cap, u_int n_out, double n_seg, int connect_type, int trans_type, double *Nsize)
 {
@@ -76,7 +79,14 @@ static double SIM_crossbar_in_cap(double wire_cap, u_int n_out, double n_seg, in
 
 	/* part 3: input driver */
 	/* FIXME: how to specify timing? */
-	psize = SIM_driver_size(Ctotal, Period / 3);
+//	psize = SIM_driver_size(Ctotal, Period / 3);
+
+	TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        psize = SIM_driver_size(Ctotal, period / 3);
+
 	nsize = psize * Wdecinvn / Wdecinvp;
 	Ctotal += SIM_draincap(nsize, NCH, 1) + SIM_draincap(psize, PCH, 1) +
 		SIM_gatecap(nsize + psize, 0);
@@ -97,7 +107,14 @@ static double SIM_crossbar_out_cap(double length, u_int n_in, double n_seg, int 
 		/* FIXME: resizing strategy */
 		if (Nsize) {
 			/* FIXME: how to specify timing? */
-			psize = SIM_driver_size(Ctotal, Period / 3);
+//			psize = SIM_driver_size(Ctotal, Period / 3);
+
+		        TimeValue timeValue;
+		        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+		        Time globalClock = timeValue.Get ();
+		        double period = globalClock.GetSeconds ();
+		        psize = SIM_driver_size(Ctotal, period / 3);
+
 			*Nsize = nsize = psize * Wdecinvn / Wdecinvp;
 		}
 		else {
@@ -151,7 +168,14 @@ static double SIM_crossbar_io_cap(double length)
 
 	/* part 4: input driver */
 	/* FIXME: how to specify timing? */
-	psize = SIM_driver_size(Ctotal, Period * 0.8);
+//	psize = SIM_driver_size(Ctotal, Period * 0.8);
+
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        psize = SIM_driver_size(Ctotal, period * 0.8);
+
 	nsize = psize * Wdecinvn / Wdecinvp;
 	Ctotal += SIM_draincap(nsize, NCH, 1) + SIM_draincap(psize, PCH, 1) +
 		SIM_gatecap(nsize + psize, 0);
@@ -409,6 +433,11 @@ double SIM_crossbar_stat_energy(SIM_crossbar_t *crsbar, int print_depth, char *p
 	next_depth = NEXT_DEPTH(print_depth);
 	path_len = SIM_strlen(path);
 
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+
 	switch (crsbar->model) {
 		case MATRIX_CROSSBAR:
 		case CUT_THRU_CROSSBAR:
@@ -437,7 +466,9 @@ double SIM_crossbar_stat_energy(SIM_crossbar_t *crsbar, int print_depth, char *p
 			}
 
 			/* static power */
-			Estatic = crsbar->I_static * Vdd * Period * SCALE_S;
+//			Estatic = crsbar->I_static * Vdd * Period * SCALE_S;
+
+		        Estatic = crsbar->I_static * Vdd * period * SCALE_S;
 
 			SIM_print_stat_energy(SIM_strcat(path, "static energy"), Estatic, next_depth);
 			SIM_res_path(path, path_len);

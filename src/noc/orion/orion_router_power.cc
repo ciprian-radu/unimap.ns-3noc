@@ -70,7 +70,8 @@ int main(int argc, char **argv)
 
   SIM_router_init(&GLOB(router_info), &GLOB(router_power), NULL);
 
-  SIM_router_stat_energy(&GLOB(router_info), &GLOB(router_power), print_depth, name, max_flag, load, plot_flag, PARM(Freq));
+//  SIM_router_stat_energy(&GLOB(router_info), &GLOB(router_power), print_depth, name, max_flag, load, plot_flag, PARM(Freq));
+  SIM_router_stat_energy(&GLOB(router_info), &GLOB(router_power), print_depth, name, max_flag, load, plot_flag, 0.746e9);
 
   return 0;
 }

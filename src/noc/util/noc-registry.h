@@ -32,6 +32,8 @@
 namespace ns3
 {
 
+  class NocTopology;
+
   /**
    * \brief Registry for globally accessible values
    * \detail This class follows the Singleton design pattern.

@@ -58,6 +58,9 @@
 #include "SIM_time.h"
 #include "SIM_util.h"
 #include "SIM_cam.h"
+#include "ns3/noc-registry.h"
+
+using namespace ns3;
 
 	/*============================== decoder ==============================*/
 
@@ -306,7 +309,14 @@ static double SIM_array_wordline_cap( u_int cols, double wire_cap, double tx_wid
 	Ctotal = Cline = SIM_gatecappass( tx_width, BitWidth / 2 - tx_width ) * cols + wire_cap;
 
 	/* part 2: input driver */
-	psize = SIM_driver_size( Cline, Period / 16 );
+//	psize = SIM_driver_size( Cline, Period / 16 );
+
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        psize = SIM_driver_size( Cline, period / 16 );
+
 	nsize = psize * Wdecinvn / Wdecinvp; 
 	/* WHS: 20 should go to PARM */
 	Ctotal += SIM_draincap( nsize, NCH, 1 ) + SIM_draincap( psize, PCH, 1 ) +
@@ -527,7 +537,14 @@ static double SIM_array_column_write_cap( u_int rows, double wire_cap )
 	Ctotal = rows * SIM_draincap( Wmemcellw, NCH, 1 ) + wire_cap;
 
 	/* part 2: write driver */
-	psize = SIM_driver_size( Ctotal, Period / 8 );
+//	psize = SIM_driver_size( Ctotal, Period / 8 );
+
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        psize = SIM_driver_size( Ctotal, period / 8 );
+
 	nsize = psize * Wdecinvn / Wdecinvp; 
 	Ctotal += SIM_draincap( psize, PCH, 1 ) + SIM_draincap( nsize, NCH, 1 ) +
 		SIM_gatecap( psize + nsize, 1 );
@@ -555,7 +572,14 @@ static double SIM_array_share_column_write_cap( u_int rows, double wire_cap, u_i
 	else Ctotal += 2 * SIM_gatecap( WsenseQ1to4, 10 );
 
 	/* part 5: write driver */
-	psize = SIM_driver_size( Ctotal, Period / 8 );
+//	psize = SIM_driver_size( Ctotal, Period / 8 );
+
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        psize = SIM_driver_size( Ctotal, period / 8 );
+
 	nsize = psize * Wdecinvn / Wdecinvp;
 	/* WHS: omit gate cap of driver due to modeling difficulty */
 	Ctotal += SIM_draincap( psize, PCH, 1 ) + SIM_draincap( nsize, NCH, 1 );
@@ -686,7 +710,13 @@ double SIM_array_bitline_report( SIM_array_bitline_t *bitline )
 /* estimate senseamp power dissipation in cache structures (Zyuban's method) */
 static double SIM_array_amp_energy( void )
 {
-	return ( Vdd / 8 * Period * PARM( amp_Idsat ));
+//	return ( Vdd / 8 * Period * PARM( amp_Idsat ));
+
+	TimeValue timeValue;
+	NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+	Time globalClock = timeValue.Get ();
+	double period = globalClock.GetSeconds ();
+	return ( Vdd / 8 * period * PARM( amp_Idsat ));
 }
 
 
@@ -1453,7 +1483,14 @@ int SIM_array_power_init( SIM_array_info_t *info, SIM_array_t *arr)
 			/* compute precharging size */
 			/* FIXME: should consider n_pre and pre_size simultaneously */
 			Cline = rows * SIM_draincap( Wmemcellr, NCH, 1 ) + bitline_cmetal * bitline_len;
-			pre_size = SIM_driver_size( Cline, Period / 8 );
+//			pre_size = SIM_driver_size( Cline, Period / 8 );
+
+		        TimeValue timeValue;
+		        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+		        Time globalClock = timeValue.Get ();
+		        double period = globalClock.GetSeconds ();
+		        pre_size = SIM_driver_size( Cline, period / 8 );
+
 			/* WHS: ?? compensate for not having an nmos pre-charging */
 			pre_size += pre_size * Wdecinvn / Wdecinvp; 
 
@@ -1558,7 +1595,14 @@ int SIM_array_power_init( SIM_array_info_t *info, SIM_array_t *arr)
 				/* compute precharging size */
 				/* FIXME: should consider n_pre and pre_size simultaneously */
 				Cline = rows * SIM_draincap( Wmemcellr, NCH, 1 ) + bitline_cmetal * bitline_len;
-				pre_size = SIM_driver_size( Cline, Period / 8 );
+//				pre_size = SIM_driver_size( Cline, Period / 8 );
+
+                                TimeValue timeValue;
+                                NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+                                Time globalClock = timeValue.Get ();
+                                double period = globalClock.GetSeconds ();
+                                pre_size = SIM_driver_size( Cline, period / 8 );
+
 				/* WHS: ?? compensate for not having an nmos pre-charging */
 				pre_size += pre_size * Wdecinvn / Wdecinvp; 
 
@@ -1601,7 +1645,14 @@ int SIM_array_power_init( SIM_array_info_t *info, SIM_array_t *arr)
 					/* compute precharging size */
 					/* FIXME: should consider n_pre and pre_size simultaneously */
 					Cline = rows * SIM_draincap( Wmemcellr, NCH, 1 ) + bitline_cmetal * bitline_len;
-					pre_size = SIM_driver_size( Cline, Period / 8 );
+//					pre_size = SIM_driver_size( Cline, Period / 8 );
+
+		                        TimeValue timeValue;
+		                        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+		                        Time globalClock = timeValue.Get ();
+		                        double period = globalClock.GetSeconds ();
+		                        pre_size = SIM_driver_size( Cline, period / 8 );
+
 					/* WHS: ?? compensate for not having an nmos pre-charging */
 					pre_size += pre_size * Wdecinvn / Wdecinvp; 
 

@@ -261,7 +261,7 @@ int SIM_dump_tech_para(void)
 {
 	fprintf(stderr, "technology: 0.%dum\n", PARM(TECH_POINT));
 	fprintf(stderr, "Vdd: %gV\n", Vdd);
-	fprintf(stderr, "frequency: %gHz\n", PARM(Freq));
+//	fprintf(stderr, "frequency: %gHz\n", PARM(Freq));
 	fprintf(stderr, "minimal spacing metal capacitance: %gF/um\n", CCmetal);
 	fprintf(stderr, "2x minimal spacing metal capacitance: %gF/um\n", CC2metal);
 	fprintf(stderr, "distant metal capacitance: %gF/um\n", Cmetal);

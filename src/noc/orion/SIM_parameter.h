@@ -96,9 +96,9 @@
 
 /* Useful macros related to parameters defined by users */
 #define Vdd             (PARM(Vdd))
-#define Period          ((double)1/(double)PARM(Freq))
+//#define Period          ((double)1/(double)PARM(Freq))
 
-#define Powerfactor		((PARM(Freq))*Vdd*Vdd)
+//#define Powerfactor		((PARM(Freq))*Vdd*Vdd)
 #define EnergyFactor	(Vdd*Vdd)
 /* End useful macros related to parameters defined by users */
 

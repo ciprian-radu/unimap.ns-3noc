@@ -38,23 +38,24 @@
 #define PARM_TECH_POINT       90
 #define PARM_TRANSISTOR_TYPE  NVT   /* transistor type, HVT, NVT, or LVT */
 #define PARM_Vdd              1.0
+// the next parameter is given by ns-3 NoC
 //#define PARM_Freq             0.746e9
 
 /* router module parameters */
 /* general parameters */
-//#define PARM_in_port 		5	/* # of router input ports */
+#define PARM_in_port 		5	/* # of router input ports */
 #define PARM_cache_in_port	0	/* # of cache input ports */
 #define PARM_mc_in_port		0	/* # of memory controller input ports */
 #define PARM_io_in_port		0	/* # of I/O device input ports */
-//#define PARM_out_port		5
+#define PARM_out_port		5	
 #define PARM_cache_out_port	0	/* # of cache output ports */
 #define PARM_mc_out_port	0	/* # of memory controller output ports */
 #define PARM_io_out_port	0	/* # of I/O device output ports */
-//#define PARM_flit_width		32	/* flit width in bits */
+#define PARM_flit_width		32	/* flit width in bits */
 
 /* virtual channel parameters */
 #define PARM_v_class        1   /* # of total message classes */
-//#define PARM_v_channel		4	/* # of virtual channels per virtual message class*/
+#define PARM_v_channel		4	/* # of virtual channels per virtual message class*/
 #define PARM_cache_class	0	/* # of cache port virtual classes */
 #define PARM_mc_class		0	/* # of memory controller port virtual classes */
 #define PARM_io_class		0	/* # of I/O device port virtual classes */

@@ -123,6 +123,24 @@ namespace ns3
     virtual void
     SetNocNode (Ptr<NocNode> nocNode);
 
+    /**
+     * \return how many input ports the router has
+     */
+    virtual uint32_t
+    GetNumberOfInputPorts ();
+
+    /**
+     * \return how many output ports the router has
+     */
+    virtual uint32_t
+    GetNumberOfOutputPorts ();
+
+    /**
+     * \return how many virtual channels the router has
+     */
+    virtual uint32_t
+    GetNumberOfVirtualChannels ();
+
   protected:
 
     IrvineRouter (std::string name);

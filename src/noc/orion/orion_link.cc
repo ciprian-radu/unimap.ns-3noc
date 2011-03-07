@@ -65,14 +65,18 @@ int main(int argc, char **argv)
 	link_len = link_len * 1e-6; //unit meter
 	load = atof(argv[2]);
 
-	freq = PARM(Freq);
-	data_width = PARM(flit_width);
+//	freq = PARM(Freq);
+	freq = 0.746e9;
+//	data_width = PARM(flit_width);
+	data_width = 32;
 
 	Pdynamic = 0.5 * load * LinkDynamicEnergyPerBitPerMeter(link_len, Vdd) * freq * link_len * (double)data_width;
 	Pleakage = LinkLeakagePowerPerMeter(link_len, Vdd) * link_len * data_width;
-	Ptotal = (Pdynamic + Pleakage) * PARM(in_port);
+//	Ptotal = (Pdynamic + Pleakage) * PARM(in_port);
+	Ptotal = (Pdynamic + Pleakage) * 5;
 
-	link_area = LinkArea(link_len, data_width) * PARM(in_port); 
+//	link_area = LinkArea(link_len, data_width) * PARM(in_port);
+	link_area = LinkArea(link_len, data_width) * 5;
 
 	fprintf(stdout, "Link power is %g\n", Ptotal);
 	fprintf(stdout, "Link area is %g\n", link_area);

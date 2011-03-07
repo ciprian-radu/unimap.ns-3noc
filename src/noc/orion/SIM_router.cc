@@ -37,6 +37,10 @@
 
 #include "SIM_router.h"
 #include "SIM_util.h"
+#include "ns3/noc-registry.h"
+#include "ns3/integer.h"
+
+using namespace ns3;
 
 /* global variables */
 GLOBDEF(SIM_router_power_t, router_power);
@@ -50,21 +54,30 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 
 	/* PHASE 1: set parameters */
 	/* general parameters */
-	info->n_in = PARM(in_port);
+//	info->n_in = PARM(in_port);
+	info->n_in = 5;
 	info->n_cache_in = PARM(cache_in_port);
 	info->n_mc_in = PARM(mc_in_port);
 	info->n_io_in = PARM(io_in_port);
-	info->n_total_in = PARM(in_port) + PARM(cache_in_port) + PARM(mc_in_port) + PARM(io_in_port);
-	info->n_out = PARM(out_port);
+//	info->n_total_in = PARM(in_port) + PARM(cache_in_port) + PARM(mc_in_port) + PARM(io_in_port);
+	info->n_total_in = 5 + PARM(cache_in_port) + PARM(mc_in_port) + PARM(io_in_port);
+//	info->n_out = PARM(out_port);
+	info->n_out = 5;
 	info->n_cache_out = PARM(cache_out_port);
 	info->n_mc_out = PARM(mc_out_port);
 	info->n_io_out = PARM(io_out_port);
-	info->n_total_out = PARM(out_port) + PARM(cache_out_port) + PARM(mc_out_port) + PARM(io_out_port);
-	info->flit_width = PARM(flit_width);
+//	info->n_total_out = PARM(out_port) + PARM(cache_out_port) + PARM(mc_out_port) + PARM(io_out_port);
+	info->n_total_out = 5 + PARM(cache_out_port) + PARM(mc_out_port) + PARM(io_out_port);
+//	info->flit_width = PARM(flit_width);
+
+        IntegerValue integerValue;
+        NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+        uint32_t flitSize = integerValue.Get ();
+        info->flit_width = flitSize;
 
 	/* virtual channel parameters */
-	info->n_v_channel = MAX(PARM(v_channel), 1);
-	info->n_v_class = MAX(PARM(v_class), 1); 
+	info->n_v_channel = MAX(4, 1);
+	info->n_v_class = MAX(PARM(v_class), 1);
 	info->cache_class = MAX(PARM(cache_class), 1);
 	info->mc_class = MAX(PARM(mc_class), 1);
 	info->io_class = MAX(PARM(io_class), 1);
@@ -102,7 +115,11 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	info->in_buffer_model = PARM(in_buffer_type);
 	if(info->in_buf){
 		outdrv = !info->in_share_buf && info->in_share_switch;
-		SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, PARM(in_buf_set), PARM(flit_width), outdrv, info->in_buffer_model);
+//		SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, PARM(in_buf_set), PARM(flit_width), outdrv, info->in_buffer_model);
+	        IntegerValue integerValue;
+	        NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+	        uint32_t flitSize = integerValue.Get ();
+	        SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, PARM(in_buf_set), flitSize, outdrv, info->in_buffer_model);
 	}
 
 	if (PARM(cache_in_port)){
@@ -112,11 +129,16 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 			if (PARM(cache_class) > 1){
     			share_buf = info->in_share_buf;
     			outdrv = !share_buf && info->in_share_switch;
-			}	
+			}
 			else{
     			outdrv = share_buf = 0;
 			}
-    		SIM_array_init(&info->cache_in_buf_info, 1, PARM(cache_in_buf_rport), 1, PARM(cache_in_buf_set), PARM(flit_width), outdrv, SRAM);
+//    		SIM_array_init(&info->cache_in_buf_info, 1, PARM(cache_in_buf_rport), 1, PARM(cache_in_buf_set), PARM(flit_width), outdrv, SRAM);
+
+                IntegerValue integerValue;
+                NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+                uint32_t flitSize = integerValue.Get ();
+                SIM_array_init(&info->cache_in_buf_info, 1, PARM(cache_in_buf_rport), 1, PARM(cache_in_buf_set), flitSize, outdrv, SRAM);
 		}
 	}
 
@@ -131,7 +153,12 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 			else{
     			outdrv = share_buf = 0;
 			}
-    		SIM_array_init(&info->mc_in_buf_info, 1, PARM(mc_in_buf_rport), 1, PARM(mc_in_buf_set), PARM(flit_width), outdrv, SRAM);
+//    		SIM_array_init(&info->mc_in_buf_info, 1, PARM(mc_in_buf_rport), 1, PARM(mc_in_buf_set), PARM(flit_width), outdrv, SRAM);
+
+    	        IntegerValue integerValue;
+    	        NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+    	        uint32_t flitSize = integerValue.Get ();
+    	        SIM_array_init(&info->mc_in_buf_info, 1, PARM(mc_in_buf_rport), 1, PARM(mc_in_buf_set), flitSize, outdrv, SRAM);
 		}
 	}
 
@@ -146,7 +173,12 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 			else{
     			outdrv = share_buf = 0;
 			}
-    		SIM_array_init(&info->io_in_buf_info, 1, PARM(io_in_buf_rport), 1, PARM(io_in_buf_set), PARM(flit_width), outdrv, SRAM);
+//    		SIM_array_init(&info->io_in_buf_info, 1, PARM(io_in_buf_rport), 1, PARM(io_in_buf_set), PARM(flit_width), outdrv, SRAM);
+
+                IntegerValue integerValue;
+                NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+                uint32_t flitSize = integerValue.Get ();
+                SIM_array_init(&info->io_in_buf_info, 1, PARM(io_in_buf_rport), 1, PARM(io_in_buf_set), flitSize, outdrv, SRAM);
 		}
 	}
 
@@ -155,7 +187,12 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	info->out_buffer_model = PARM(out_buffer_type);
 	if (info->out_buf){
 		/* output buffer has no tri-state buffer anyway */
-		SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), PARM(out_buf_set), PARM(flit_width), 0, info->out_buffer_model);
+//		SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), PARM(out_buf_set), PARM(flit_width), 0, info->out_buffer_model);
+
+	        IntegerValue integerValue;
+	        NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+	        uint32_t flitSize = integerValue.Get ();
+	        SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), PARM(out_buf_set), flitSize, 0, info->out_buffer_model);
 	}
 
 	/* central buffer */
@@ -163,7 +200,12 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	if (info->central_buf){
 		info->pipe_depth = PARM(pipe_depth);
 		/* central buffer is no FIFO */
-		SIM_array_init(&info->central_buf_info, 0, PARM(cbuf_rport), PARM(cbuf_wport), PARM(cbuf_set), PARM(cbuf_width) * PARM(flit_width), 0, SRAM);
+//		SIM_array_init(&info->central_buf_info, 0, PARM(cbuf_rport), PARM(cbuf_wport), PARM(cbuf_set), PARM(cbuf_width) * PARM(flit_width), 0, SRAM);
+
+	        IntegerValue integerValue;
+	        NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+	        uint32_t flitSize = integerValue.Get ();
+	        SIM_array_init(&info->central_buf_info, 0, PARM(cbuf_rport), PARM(cbuf_wport), PARM(cbuf_set), PARM(cbuf_width) * flitSize, 0, SRAM);
 		/* dirty hack */
 		info->cbuf_ff_model = NEG_DFF;
 	}
@@ -219,7 +261,7 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	/* virtual channel allocator type */
 	if (info->n_v_channel > 1) {
 		info->vc_allocator_type = PARM(vc_allocator_type);
-	} 
+	}
 	else
 		info->vc_allocator_type = SIM_NO_MODEL;
 
@@ -227,7 +269,7 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	if ( info->n_v_channel > 1 && info->n_in > 1) {
 	        info->vc_in_arb_model = PARM(vc_in_arb_model);
 		if (info->vc_in_arb_model) {
-			if (PARM(vc_in_arb_model) == QUEUE_ARBITER) { 
+			if (PARM(vc_in_arb_model) == QUEUE_ARBITER) {
 				SIM_array_init(&info->vc_in_arb_queue_info, 1, 1, 1, info->n_v_channel, SIM_logtwo(info->n_v_channel), 0, REGISTER);
 				info->vc_in_arb_ff_model = SIM_NO_MODEL;
 			}
@@ -338,7 +380,7 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	else
 		info->n_switch_out += info->n_out;
 
-	/* clock related parameters */	
+	/* clock related parameters */
     info->pipeline_stages = PARM(pipeline_stages);
     info->H_tree_clock = PARM(H_tree_clock);
     info->router_diagonal = PARM(router_diagonal);
@@ -375,7 +417,11 @@ int SIM_buf_power_data_read(SIM_array_info_t *info, SIM_array_t *arr, LIB_Type_m
 /* record write data bitline and memory cell activity */
 int SIM_buf_power_data_write(SIM_array_info_t *info, SIM_array_t *arr, u_char *data_line, u_char *old_data, u_char *new_data)
 {
-#define N_ITEM	(PARM(flit_width) / 8 + (PARM(flit_width) % 8 ? 1:0))
+  IntegerValue integerValue;
+  NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
+  uint32_t flitSize = integerValue.Get ();
+
+#define N_ITEM	(flitSize / 8 + (flitSize % 8 ? 1:0))
 	/* drive the wordline */
 	SIM_array_dec(info, arr, NULL, 0, SIM_ARRAY_WRITE);
 	/* write data */
