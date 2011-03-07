@@ -171,4 +171,32 @@ namespace ns3
     return outputDevices;
   }
 
+  uint32_t
+  FourWayRouter::GetNumberOfInputPorts ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    return 5; // injection + N + E + S + W
+  }
+
+  uint32_t
+  FourWayRouter::GetNumberOfOutputPorts ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    return 5; // ejection + N + E + S + W
+  }
+
+  /**
+   * \return how many virtual channels the router has
+   */
+  uint32_t
+  FourWayRouter::GetNumberOfVirtualChannels ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    // TODO change this if virtual channels are added
+    return 0;
+  }
+
 } // namespace ns3

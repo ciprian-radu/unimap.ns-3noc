@@ -296,6 +296,24 @@ namespace ns3
   public:
 
     /**
+     * \return how many input ports the router has
+     */
+    virtual uint32_t
+    GetNumberOfInputPorts () = 0;
+
+    /**
+     * \return how many output ports the router has
+     */
+    virtual uint32_t
+    GetNumberOfOutputPorts () = 0;
+
+    /**
+     * \return how many virtual channels the router has
+     */
+    virtual uint32_t
+    GetNumberOfVirtualChannels () = 0;
+
+    /**
      * Uses ORION to measure this router's area.
      *
      * \return the area, in um^2

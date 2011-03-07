@@ -52,6 +52,9 @@
 #include "SIM_cam.h"
 #include "SIM_util.h"
 #include "SIM_time.h"
+#include "ns3/noc-registry.h"
+
+using namespace ns3;
 
 /* local macros */
 #define IS_DIRECT_MAP( info )		((info)->assoc == 1)
@@ -555,7 +558,13 @@ double SIM_array_stat_energy(SIM_array_info_t *info, SIM_array_t *arr, double n_
 		}
 
 		/* static power */
-		Estatic = arr->I_static * Vdd * Period * SCALE_S;
+//		Estatic = arr->I_static * Vdd * Period * SCALE_S;
+
+	        TimeValue timeValue;
+	        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+	        Time globalClock = timeValue.Get ();
+	        double period = globalClock.GetSeconds ();
+	        Estatic = arr->I_static * Vdd * period * SCALE_S;
 
 		SIM_print_stat_energy(SIM_strcat(path, "static energy"), Estatic, next_depth);
 		SIM_res_path(path, path_len);
@@ -599,7 +608,13 @@ double SIM_array_stat_energy(SIM_array_info_t *info, SIM_array_t *arr, double n_
 		Eavg = Estruct; 
 
 		/* static power */
-		Estatic = arr->ff.I_static * Vdd * Period * SCALE_S;
+//		Estatic = arr->ff.I_static * Vdd * Period * SCALE_S;
+
+                TimeValue timeValue;
+                NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+                Time globalClock = timeValue.Get ();
+                double period = globalClock.GetSeconds ();
+                Estatic = arr->ff.I_static * Vdd * period * SCALE_S;
 
 		SIM_print_stat_energy(SIM_strcat(path, "static energy"), Estatic, next_depth);
 		SIM_res_path(path, path_len);

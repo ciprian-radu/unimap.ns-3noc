@@ -23,6 +23,7 @@ def build(bld):
     	'SIM_time.cc',
         ]
     orion.target = 'orion'
+    orion.uselib_local = 'ns3'
 
 # test_alu cannot be compiled because we miss SIM_power_ALU.h
 #    obj = bld.create_ns3_program('test_alu', ['orion'])
@@ -47,6 +48,7 @@ def build(bld):
     obj.source = 'orion_router_power.cc SIM_router_power.cc SIM_crossbar.cc SIM_time.cc SIM_util.cc SIM_static.cc SIM_array_l.cc SIM_cam.cc SIM_misc.cc SIM_arbiter.cc SIM_array_m.cc SIM_clock.cc SIM_router.cc SIM_link.cc SIM_router_area.cc'
     obj.includes = '.'
     obj.lib = 'm'
+    obj.uselib_local = 'ns3'
     obj.target = 'orion_router_power'
       
     obj = bld.new_task_gen()
@@ -54,4 +56,5 @@ def build(bld):
     obj.source = 'orion_router_area.cc SIM_router.cc SIM_link.cc SIM_router_area.cc SIM_array_l.cc SIM_time.cc SIM_util.cc SIM_static.cc SIM_misc.cc SIM_router_power.cc SIM_clock.cc SIM_array_m.cc SIM_arbiter.cc SIM_crossbar.cc SIM_cam.cc'
     obj.includes = '.'
     obj.lib = 'm'
+    obj.uselib_local = 'ns3'
     obj.target = 'orion_router_area'

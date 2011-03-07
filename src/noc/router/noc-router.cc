@@ -21,6 +21,8 @@
 #include "ns3/log.h"
 #include "noc-router.h"
 #include "ns3/noc-node.h"
+#include "ns3/integer.h"
+#include "ns3/noc-registry.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocRouter");
 
@@ -245,20 +247,22 @@ namespace ns3
 
     /* PHASE 1: set parameters */
     /* general parameters */
-    info->n_in = PARM(in_port);
+    info->n_in = GetNumberOfInputPorts ();
     info->n_cache_in = PARM(cache_in_port);
     info->n_mc_in = PARM(mc_in_port);
     info->n_io_in = PARM(io_in_port);
-    info->n_total_in = PARM(in_port) + PARM(cache_in_port) + PARM(mc_in_port) + PARM(io_in_port);
-    info->n_out = PARM(out_port);
+    info->n_total_in = GetNumberOfInputPorts () + PARM(cache_in_port) + PARM(mc_in_port) + PARM(io_in_port);
+    info->n_out = GetNumberOfOutputPorts ();
     info->n_cache_out = PARM(cache_out_port);
     info->n_mc_out = PARM(mc_out_port);
     info->n_io_out = PARM(io_out_port);
-    info->n_total_out = PARM(out_port) + PARM(cache_out_port) + PARM(mc_out_port) + PARM(io_out_port);
-    info->flit_width = PARM(flit_width);
+    info->n_total_out = GetNumberOfOutputPorts () + PARM(cache_out_port) + PARM(mc_out_port) + PARM(io_out_port);
+    IntegerValue flitSize;
+    NocRegistry::GetInstance ()->GetAttribute ("FlitSize", flitSize);
+    info->flit_width = flitSize.Get ();
 
     /* virtual channel parameters */
-    info->n_v_channel = MAX(PARM(v_channel), 1);
+    info->n_v_channel = MAX(GetNumberOfVirtualChannels (), 1);
     info->n_v_class = MAX(PARM(v_class), 1);
     info->cache_class = MAX(PARM(cache_class), 1);
     info->mc_class = MAX(PARM(mc_class), 1);
@@ -297,7 +301,7 @@ namespace ns3
     info->in_buffer_model = PARM(in_buffer_type);
     if(info->in_buf){
             outdrv = !info->in_share_buf && info->in_share_switch;
-            SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, PARM(in_buf_set), PARM(flit_width), outdrv, info->in_buffer_model);
+            SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, PARM(in_buf_set), flitSize.Get (), outdrv, info->in_buffer_model);
     }
 
     if (PARM(cache_in_port)){
@@ -311,7 +315,7 @@ namespace ns3
                     else{
                     outdrv = share_buf = 0;
                     }
-            SIM_array_init(&info->cache_in_buf_info, 1, PARM(cache_in_buf_rport), 1, PARM(cache_in_buf_set), PARM(flit_width), outdrv, SRAM);
+            SIM_array_init(&info->cache_in_buf_info, 1, PARM(cache_in_buf_rport), 1, PARM(cache_in_buf_set), flitSize.Get (), outdrv, SRAM);
             }
     }
 
@@ -326,7 +330,7 @@ namespace ns3
                     else{
                     outdrv = share_buf = 0;
                     }
-            SIM_array_init(&info->mc_in_buf_info, 1, PARM(mc_in_buf_rport), 1, PARM(mc_in_buf_set), PARM(flit_width), outdrv, SRAM);
+            SIM_array_init(&info->mc_in_buf_info, 1, PARM(mc_in_buf_rport), 1, PARM(mc_in_buf_set), flitSize.Get (), outdrv, SRAM);
             }
     }
 
@@ -341,7 +345,7 @@ namespace ns3
                     else{
                     outdrv = share_buf = 0;
                     }
-            SIM_array_init(&info->io_in_buf_info, 1, PARM(io_in_buf_rport), 1, PARM(io_in_buf_set), PARM(flit_width), outdrv, SRAM);
+            SIM_array_init(&info->io_in_buf_info, 1, PARM(io_in_buf_rport), 1, PARM(io_in_buf_set), flitSize.Get (), outdrv, SRAM);
             }
     }
 
@@ -350,7 +354,7 @@ namespace ns3
     info->out_buffer_model = PARM(out_buffer_type);
     if (info->out_buf){
             /* output buffer has no tri-state buffer anyway */
-            SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), PARM(out_buf_set), PARM(flit_width), 0, info->out_buffer_model);
+            SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), PARM(out_buf_set), flitSize.Get (), 0, info->out_buffer_model);
     }
 
     /* central buffer */
@@ -358,7 +362,7 @@ namespace ns3
     if (info->central_buf){
             info->pipe_depth = PARM(pipe_depth);
             /* central buffer is no FIFO */
-            SIM_array_init(&info->central_buf_info, 0, PARM(cbuf_rport), PARM(cbuf_wport), PARM(cbuf_set), PARM(cbuf_width) * PARM(flit_width), 0, SRAM);
+            SIM_array_init(&info->central_buf_info, 0, PARM(cbuf_rport), PARM(cbuf_wport), PARM(cbuf_set), PARM(cbuf_width) * flitSize.Get (), 0, SRAM);
             /* dirty hack */
             info->cbuf_ff_model = NEG_DFF;
     }
@@ -556,6 +560,7 @@ info->router_diagonal = PARM(router_diagonal);
     NS_LOG_FUNCTION_NOARGS ();
     double area = 0;
 
+    // SIM_router_init(&GLOB(router_info), NULL, &GLOB(router_area));
     routerInitForOrion(&GLOB(router_info), NULL, &GLOB(router_area));
 
     // area = SIM_router_area(&GLOB(router_area));

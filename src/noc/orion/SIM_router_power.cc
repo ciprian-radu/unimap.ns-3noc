@@ -48,6 +48,9 @@
 #include "SIM_static.h"
 #include "SIM_clock.h"
 #include "SIM_util.h"
+#include "ns3/noc-registry.h"
+
+using namespace ns3;
 
 /* FIXME: request wire length estimation is ad hoc */
 int SIM_router_power_init(SIM_router_info_t *info, SIM_router_power_t *router)
@@ -421,7 +424,14 @@ double SIM_router_stat_energy(SIM_router_info_t *info, SIM_router_power_t *route
 	}
 
 	/* static power */
-	Estatic = router->I_static * Vdd * Period * SCALE_S;
+//	Estatic = router->I_static * Vdd * Period * SCALE_S;
+
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        double period = globalClock.GetSeconds ();
+        Estatic = router->I_static * Vdd * period * SCALE_S;
+
 	SIM_print_stat_energy(SIM_strcat(path, "static energy"), Estatic, next_depth);
 	SIM_res_path(path, path_len);
 	Eavg += Estatic;

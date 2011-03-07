@@ -41,9 +41,9 @@
 #define Vbitpre     (Vdd)   
 #define Vbitsense   (0.08)    
 
-#define SensePowerfactor3 (PARM(Freq))*(Vbitsense)*(Vbitsense)
-#define SensePowerfactor2 (PARM(Freq))*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
-#define SensePowerfactor  (PARM(Freq))*Vdd*(Vdd/2)
+//#define SensePowerfactor3 (PARM(Freq))*(Vbitsense)*(Vbitsense)
+//#define SensePowerfactor2 (PARM(Freq))*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
+//#define SensePowerfactor  (PARM(Freq))*Vdd*(Vdd/2)
 #define SenseEnergyFactor (Vdd*Vdd/2)
 
 /* scaling factors from 65nm to 45nm and 32nm*/

@@ -596,4 +596,32 @@ namespace ns3
     return occupancy;
   }
 
+  uint32_t
+  IrvineRouter::GetNumberOfInputPorts ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    return 8; // injection left + injection right + N1 + N2 + E + S1 + S2 + W
+  }
+
+  uint32_t
+  IrvineRouter::GetNumberOfOutputPorts ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    return 7; // ejection + N1 + N2 + E + S1 + S2 + W
+  }
+
+  /**
+   * \return how many virtual channels the router has
+   */
+  uint32_t
+  IrvineRouter::GetNumberOfVirtualChannels ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    // TODO change this if virtual channels are added
+    return 0;
+  }
+
 } // namespace ns3

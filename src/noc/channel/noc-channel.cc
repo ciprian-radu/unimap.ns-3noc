@@ -29,7 +29,6 @@
 #include "ns3/boolean.h"
 #include "ns3/double.h"
 #include "ns3/noc-registry.h"
-#include "src/noc/orion/SIM_parameter.h"
 #include "src/noc/orion/SIM_link.h"
 #include <math.h>
 
