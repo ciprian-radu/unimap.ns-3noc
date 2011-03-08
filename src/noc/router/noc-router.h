@@ -35,6 +35,9 @@
 #include "src/noc/orion/SIM_router_power.h"
 #include "src/noc/orion/SIM_router_area.h"
 #include "src/noc/orion/SIM_util.h"
+#include "src/noc/orion/SIM_clock.h"
+
+using namespace std;
 
 namespace ns3
 {
@@ -60,9 +63,9 @@ namespace ns3
     static TypeId
     GetTypeId();
 
-    NocRouter (std::string name);
+    NocRouter (string name);
 
-    NocRouter (std::string name, Ptr<LoadRouterComponent> loadComponent);
+    NocRouter (string name, Ptr<LoadRouterComponent> loadComponent);
 
     virtual
     ~NocRouter ();
@@ -159,22 +162,19 @@ namespace ns3
     GetSwitchingProtocol ();
 
     /**
-     * Allows the router to manage the packet. Package management means switching and routing.
-     *
-     * For requesting routing information, all packets must go through this request.
-     *
+     * Allows the router to manage the flit.
+     * This implies the flit enters the router and traverses the pipeline stages (e.g.: routing, switching).
      *
      * \param source        source NoC net device
      * \param destination   destination address
-     * \param packet        the packet to be resolved (needed the whole packet, because
-     *                      routing information is added as tags or headers). The packet
+     * \param flit          the flit to be resolved (needed the whole flit, because
+     *                      routing information is added as tags or headers). The flit
      *                      will be returned to reply callback.
-     * \param protocolType  protocol ID, needed to form a proper MAC-layer header
      *
      * \return the route, if a valid route is already known, NULL otherwise
      */
     virtual Ptr<Route>
-    ManagePacket (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
+    ManageFlit (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> flit);
 
     /**
      * \param packet the packet to be sent
@@ -185,7 +185,7 @@ namespace ns3
     virtual Ptr<NocNetDevice>
     GetInjectionNetDevice (Ptr<Packet> packet, Ptr<NocNode> destination) = 0;
 
-    virtual std::vector<Ptr<NocNetDevice> >
+    virtual vector<Ptr<NocNetDevice> >
     GetInjectionNetDevices () = 0;
 
     /**
@@ -232,7 +232,7 @@ namespace ns3
      *
      * \return an array with the output net devices
      */
-    virtual std::vector<Ptr<NocNetDevice> >
+    virtual vector<Ptr<NocNetDevice> >
     GetOutputNetDevices (Ptr<Packet> packet, Ptr<NocNetDevice> sender) = 0;
 
     /**
@@ -280,7 +280,7 @@ namespace ns3
     /**
      * \return the name of this routing protocol
      */
-    virtual std::string
+    virtual string
     GetName () const;
 
   private:
@@ -291,7 +291,43 @@ namespace ns3
      * (the PARM approach is not very useful).
      */
     int
-    routerInitForOrion (SIM_router_info_t *info, SIM_router_power_t *router_power, SIM_router_area_t *router_area);
+    RouterInitForOrion (SIM_router_info_t *info, SIM_router_power_t *router_power, SIM_router_area_t *router_area);
+
+    /*
+     * This is a replica of ORION's SIM_router_stat_energy (...) function.
+     * We modified the original function so that we can avoid printing the results and grab them for usage.
+     *
+     * time unit:   1 cycle
+     * e_fin:       average # of flits received by one input port during unit time
+     *                (at most 0.5 for InfiniBand router)
+     * e_buf_wrt:   average # of input buffer writes of all ports during unit time
+     *              e_buf_wrt = e_fin * n_buf_in
+     * e_buf_rd:    average # of input buffer reads of all ports during unit time
+     *              e_buf_rd = e_buf_wrt
+     *                (splitted into different input ports in program)
+     * e_cbuf_fin:  average # of flits passing through the switch during unit time
+     *              e_cbuf_fin = e_fin * n_total_in
+     * e_cbuf_wrt:  average # of central buffer writes during unit time
+     *              e_cbuf_wrt = e_cbuf_fin / (pipe_depth * pipe_width)
+     * e_cbuf_rd:   average # of central buffer reads during unit time
+     *              e_cbuf_rd = e_cbuf_wrt
+     * e_arb:       average # of arbitrations per arbiter during unit time
+     *              assume e_arb = 1
+     *
+     * NOTES: (1) negative print_depth means infinite print depth
+     *
+     */
+    virtual double
+    ComputeRouterEnergyAndPowerWithOrion (SIM_router_info_t *info, SIM_router_power_t *router, int print_depth, char *path, int max_avg, double e_fin, int plot_flag, double freq);
+
+    /**
+     * Uses ORION to measure this router's power and energy, consumed for sending the specified flit.
+     *
+     * \param flit the flit
+     *
+     */
+    virtual void
+    MeasurePowerAndEnergy (Ptr<Packet> flit);
 
   public:
 
@@ -312,6 +348,31 @@ namespace ns3
      */
     virtual uint32_t
     GetNumberOfVirtualChannels () = 0;
+
+    /**
+     * Uses ORION to get the dynamic power consumed by this router.
+     *
+     * \return the dynamic power, in Watt
+     */
+    virtual double
+    GetDynamicPower ();
+
+    /**
+     * Uses ORION to get the leakage power consumed by this router.
+     *
+     * \return the dynamic power, in Watt
+     */
+    virtual double
+    GetLeakagePower ();
+
+    /**
+     * \see GetDynamicPower
+     * \see GetLeakagePower
+     *
+     * \return the dynamic + leakage power, in Watt
+     */
+    virtual double
+    GetTotalPower ();
 
     /**
      * Uses ORION to measure this router's area.
@@ -338,7 +399,7 @@ namespace ns3
      */
     Ptr<NocSwitchingProtocol> m_switchingProtocol;
 
-    std::vector<Ptr<NocNetDevice> > m_devices;
+    vector<Ptr<NocNetDevice> > m_devices;
 
     /**
      * the load router component
@@ -348,14 +409,36 @@ namespace ns3
     /**
      * stores the injection net device for each head packet encountered
      */
-    std::map<uint32_t, Ptr<NocNetDevice> > m_headPacketsInjectionNetDevice;
+    map<uint32_t, Ptr<NocNetDevice> > m_headPacketsInjectionNetDevice;
 
   private:
 
     /**
      * the name of the routing protocol
      */
-    std::string m_name;
+    string m_name;
+
+    /**
+     * how many times power consumption was measured
+     */
+    uint64_t m_powerCounter;
+
+    /**
+     * the number of flits arrived at the router's all input ports, only during one clock cycle
+     */
+    uint64_t m_arrivedFlits;
+
+    /**
+     * the dynamic power consumed during all clock cycles
+     * (divide this with m_powerCounter to get the (average) dynamic power consumed by this router)
+     */
+    double m_dynamicPower;
+
+    /**
+     * the leakage power consumed during all clock cycles
+     * (divide this with m_powerCounter to get the (average) leakage power consumed by this router)
+     */
+    double m_leakagePower;
 
   };
 

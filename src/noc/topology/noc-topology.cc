@@ -173,6 +173,14 @@ namespace ns3
               }
           }
       }
+    for (uint32_t i = 0; i < m_nodes.GetN (); i++)
+      {
+        Ptr<NocNode> nocNode = m_nodes.Get (i)->GetObject<NocNode> ();
+        Ptr<NocRouter> router = nocNode->GetRouter ();
+        double routerPower = router->GetDynamicPower ();
+        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a dynamic power of " << routerPower << " um^2");
+        power += routerPower;
+      }
 
     NS_LOG_DEBUG ("NoC dynamic power is " << power << " W");
     return power;
@@ -201,6 +209,14 @@ namespace ns3
                 processedChannels[channelId] = true;
               }
           }
+      }
+    for (uint32_t i = 0; i < m_nodes.GetN (); i++)
+      {
+        Ptr<NocNode> nocNode = m_nodes.Get (i)->GetObject<NocNode> ();
+        Ptr<NocRouter> router = nocNode->GetRouter ();
+        double routerPower = router->GetLeakagePower ();
+        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a leakage power of " << routerPower << " um^2");
+        power += routerPower;
       }
 
     NS_LOG_DEBUG ("NoC leakage power is " << power << " W");
@@ -231,6 +247,14 @@ namespace ns3
               }
           }
       }
+    for (uint32_t i = 0; i < m_nodes.GetN (); i++)
+      {
+        Ptr<NocNode> nocNode = m_nodes.Get (i)->GetObject<NocNode> ();
+        Ptr<NocRouter> router = nocNode->GetRouter ();
+        double routerPower = router->GetTotalPower ();
+        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a total power of " << routerPower << " um^2");
+        power += routerPower;
+      }
 
     NS_LOG_DEBUG ("NoC total power is " << power << " W");
     return power;
@@ -259,10 +283,13 @@ namespace ns3
                 processedChannels[channelId] = true;
               }
           }
-        Ptr<NocNode> node = device->GetNode ()->GetObject<NocNode> ();
-        Ptr<NocRouter> router = node->GetRouter ();
+      }
+    for (uint32_t i = 0; i < m_nodes.GetN (); i++)
+      {
+        Ptr<NocNode> nocNode = m_nodes.Get (i)->GetObject<NocNode> ();
+        Ptr<NocRouter> router = nocNode->GetRouter ();
         double routerArea = router->GetArea ();
-        NS_LOG_DEBUG ("Router " << node->GetId () << " requires an area of " << routerArea << " um^2");
+        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " requires an area of " << routerArea << " um^2");
         area += routerArea;
       }
 

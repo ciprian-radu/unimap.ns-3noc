@@ -66,14 +66,14 @@ namespace ns3
   }
 
   Ptr<Route>
-  NocFaultyRouter::ManagePacket (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
+  NocFaultyRouter::ManageFlit (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> flit)
   {
     NS_LOG_FUNCTION_NOARGS();
 
     Ptr<Route> route = 0;
     if (!m_faulty)
       {
-        route = NocRouter::ManagePacket (source, destination, packet);
+        route = NocRouter::ManageFlit (source, destination, flit);
       }
     else
       {

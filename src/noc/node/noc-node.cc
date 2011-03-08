@@ -96,7 +96,7 @@ namespace ns3
 
     NocHeader header;
     packet->PeekHeader (header);
-    Ptr<Route> route = GetRouter ()->ManagePacket (source, destination, packet);
+    Ptr<Route> route = GetRouter ()->ManageFlit (source, destination, packet);
     NS_LOG_DEBUG ("The route for packet with UID " << packet->GetUid ()
         << " is from " << route->GetSourceDevice ()->GetAddress ()
         << " to " << route->GetDestinationDevice ()->GetAddress ());
