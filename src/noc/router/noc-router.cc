@@ -43,6 +43,7 @@ namespace ns3
     NS_ASSERT_MSG (loadComponent != 0, "The load router component must be specified!"
         " If you do not want to use a load router component, use another constructor.");
     m_name = name;
+    m_powerCounter = 0;
     m_loadComponent = loadComponent;
     NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
   }
@@ -62,7 +63,7 @@ namespace ns3
   }
 
   Ptr<Route>
-  NocRouter::ManagePacket (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet)
+  NocRouter::ManageFlit (const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> flit)
   {
     NS_LOG_FUNCTION_NOARGS();
     NS_ASSERT (source != 0);
@@ -78,7 +79,14 @@ namespace ns3
       }
     else
       {
-        route = GetRoutingProtocol()->RequestRoute (source, destination, packet);
+        m_powerCounter++;
+        m_arrivedFlits++;
+        MeasurePowerAndEnergy (flit);
+        NS_LOG_LOGIC ("The router received a flit at input port (net device) "
+            << source->GetAddress () << ". This generated a dynamic power of "
+            << m_dynamicPower << " W and a leakage power of " << m_leakagePower << " W");
+
+        route = GetRoutingProtocol()->RequestRoute (source, destination, flit);
       }
     return route;
   }
@@ -240,7 +248,7 @@ namespace ns3
   }
 
   int
-  NocRouter::routerInitForOrion (SIM_router_info_t *info, SIM_router_power_t *router_power, SIM_router_area_t *router_area)
+  NocRouter::RouterInitForOrion (SIM_router_info_t *info, SIM_router_power_t *router_power, SIM_router_area_t *router_area)
   {
     u_int line_width;
     int share_buf, outdrv;
@@ -297,11 +305,19 @@ namespace ns3
     info->exp_out_seg = PARM(exp_out_seg);
 
     /* input buffer */
-    info->in_buf = PARM(in_buf);
+    info->in_buf = 1;
     info->in_buffer_model = PARM(in_buffer_type);
     if(info->in_buf){
             outdrv = !info->in_share_buf && info->in_share_switch;
-            SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, PARM(in_buf_set), flitSize.Get (), outdrv, info->in_buffer_model);
+
+            uint64_t sizeOfInputBuffers = 0;
+            for (uint32_t i = 0; i < GetNDevices (); ++i)
+              {
+                sizeOfInputBuffers += GetDevice (i)->GetInQueueSize ();
+              }
+            NS_LOG_DEBUG ("The input buffers of this router have a total size of " << sizeOfInputBuffers << " flits");
+
+            SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, sizeOfInputBuffers, flitSize.Get (), outdrv, info->in_buffer_model);
     }
 
     if (PARM(cache_in_port)){
@@ -350,11 +366,18 @@ namespace ns3
     }
 
     /* output buffer */
-    info->out_buf = PARM(out_buf);
+    info->out_buf = 0;
     info->out_buffer_model = PARM(out_buffer_type);
     if (info->out_buf){
+            uint64_t sizeOfOutputBuffers = 0;
+            for (uint32_t i = 0; i < GetNDevices (); ++i)
+              {
+                sizeOfOutputBuffers += GetDevice (i)->GetOutQueueSize ();
+              }
+            NS_LOG_DEBUG ("The output buffers of this router have a total size of " << sizeOfOutputBuffers << " flits");
+
             /* output buffer has no tri-state buffer anyway */
-            SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), PARM(out_buf_set), flitSize.Get (), 0, info->out_buffer_model);
+            SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), sizeOfOutputBuffers, flitSize.Get (), 0, info->out_buffer_model);
     }
 
     /* central buffer */
@@ -555,13 +578,326 @@ info->router_diagonal = PARM(router_diagonal);
   }
 
   double
+  NocRouter::ComputeRouterEnergyAndPowerWithOrion (SIM_router_info_t *info, SIM_router_power_t *router, int print_depth, char *path, int max_avg, double e_fin, int plot_flag, double freq)
+  {
+          double Eavg = 0, Eatomic, Estruct, Estatic = 0;
+          double Pbuf = 0, Pxbar = 0, Pvc_arbiter = 0, Psw_arbiter = 0, Pclock = 0, Ptotal = 0;
+          double Pbuf_static = 0, Pxbar_static = 0, Pvc_arbiter_static = 0, Psw_arbiter_static = 0, Pclock_static = 0;
+          double Pbuf_dyn = 0, Pxbar_dyn = 0, Pvc_arbiter_dyn = 0, Psw_arbiter_dyn = 0, Pclock_dyn = 0;
+          double e_in_buf_rw, e_cache_in_buf_rw, e_mc_in_buf_rw, e_io_in_buf_rw;
+          double e_cbuf_fin, e_cbuf_rw, e_out_buf_rw;
+          int next_depth;
+          u_int path_len, n_regs;
+          int vc_allocator_enabled = 1;
+
+          /* expected value computation */
+          e_in_buf_rw       = e_fin * info->n_in;
+          e_cache_in_buf_rw = e_fin * info->n_cache_in;
+          e_mc_in_buf_rw    = e_fin * info->n_mc_in;
+          e_io_in_buf_rw    = e_fin * info->n_io_in;
+          e_cbuf_fin        = e_fin * info->n_total_in;
+          e_out_buf_rw      = e_cbuf_fin / info->n_total_out * info->n_out;
+          e_cbuf_rw         = e_cbuf_fin * info->flit_width / info->central_buf_info.blk_bits;
+
+          next_depth = NEXT_DEPTH(print_depth);
+          path_len = SIM_strlen(path);
+
+          /* input buffers */
+          if (info->in_buf) {
+                  Eavg += SIM_array_stat_energy(&info->in_buf_info, &router->in_buf, e_in_buf_rw, e_in_buf_rw, next_depth, SIM_strcat(path, "input buffer"), max_avg);
+                  SIM_res_path(path, path_len);
+          }
+          if (info->cache_in_buf) {
+                  Eavg += SIM_array_stat_energy(&info->cache_in_buf_info, &router->cache_in_buf, e_cache_in_buf_rw, e_cache_in_buf_rw, next_depth, SIM_strcat(path, "cache input buffer"), max_avg);
+                  SIM_res_path(path, path_len);
+          }
+          if (info->mc_in_buf) {
+                  Eavg += SIM_array_stat_energy(&info->mc_in_buf_info, &router->mc_in_buf, e_mc_in_buf_rw, e_mc_in_buf_rw, next_depth, SIM_strcat(path, "memory controller input buffer"), max_avg);
+                  SIM_res_path(path, path_len);
+          }
+          if (info->io_in_buf) {
+                  Eavg += SIM_array_stat_energy(&info->io_in_buf_info, &router->io_in_buf, e_io_in_buf_rw, e_io_in_buf_rw, next_depth, SIM_strcat(path, "I/O input buffer"), max_avg);
+                  SIM_res_path(path, path_len);
+          }
+
+          /* output buffers */
+          if (info->out_buf) {
+                  /* local output ports don't use router buffers */
+                  Eavg += SIM_array_stat_energy(&info->out_buf_info, &router->out_buf, e_out_buf_rw, e_out_buf_rw, next_depth, SIM_strcat(path, "output buffer"), max_avg);
+                  SIM_res_path(path, path_len);
+          }
+
+          /* central buffer */
+          if (info->central_buf) {
+                  Eavg += SIM_array_stat_energy(&info->central_buf_info, &router->central_buf, e_cbuf_rw, e_cbuf_rw, next_depth, SIM_strcat(path, "central buffer"), max_avg);
+                  SIM_res_path(path, path_len);
+
+                  Eavg += SIM_crossbar_stat_energy(&router->in_cbuf_crsbar, next_depth, SIM_strcat(path, "central buffer input crossbar"), max_avg, e_cbuf_fin);
+                  SIM_res_path(path, path_len);
+
+                  Eavg += SIM_crossbar_stat_energy(&router->out_cbuf_crsbar, next_depth, SIM_strcat(path, "central buffer output crossbar"), max_avg, e_cbuf_fin);
+                  SIM_res_path(path, path_len);
+
+                  /* dirty hack, REMEMBER to REMOVE Estruct and Eatomic */
+                  Estruct = 0;
+                  n_regs = info->central_buf_info.n_set * (info->central_buf_info.read_ports + info->central_buf_info.write_ports);
+
+                  /* ignore e_switch for now because we overestimate wordline driver cap */
+
+                  Eatomic = router->cbuf_ff.e_keep_0 * (info->pipe_depth - 1) * (n_regs - 2 * (e_cbuf_rw + e_cbuf_rw));
+                  SIM_print_stat_energy(SIM_strcat(path, "central buffer pipeline registers/keep 0"), Eatomic, NEXT_DEPTH(next_depth));
+                  SIM_res_path(path, path_len);
+                  Estruct += Eatomic;
+
+                  Eatomic = router->cbuf_ff.e_clock * (info->pipe_depth - 1) * n_regs;
+                  SIM_print_stat_energy(SIM_strcat(path, "central buffer pipeline registers/clock"), Eatomic, NEXT_DEPTH(next_depth));
+                  SIM_res_path(path, path_len);
+                  Estruct += Eatomic;
+
+                  SIM_print_stat_energy(SIM_strcat(path, "central buffer pipeline registers"), Estruct, next_depth);
+                  SIM_res_path(path, path_len);
+                  Eavg += Estruct;
+          }
+
+          Pbuf_dyn = Eavg * freq;
+          Pbuf_static = router->I_buf_static * Vdd * SCALE_S;
+          Pbuf = Pbuf_dyn + Pbuf_static;
+
+          /* main crossbar */
+          if (info->crossbar_model) {
+                  Eavg += SIM_crossbar_stat_energy(&router->crossbar, next_depth, SIM_strcat(path, "crossbar"), max_avg, e_cbuf_fin);
+                  SIM_res_path(path, path_len);
+          }
+
+          Pxbar_dyn = (Eavg * freq - Pbuf_dyn);
+          Pxbar_static = router->I_crossbar_static * Vdd * SCALE_S;
+          Pxbar = Pxbar_dyn + Pxbar_static;
+
+          /* switch allocation (arbiter energy only) */
+          /* input (local) arbiter for switch allocation*/
+          if (info->sw_in_arb_model) {
+                  /* assume # of active input arbiters is (info->in_n_switch * info->n_in * e_fin)
+                   * assume (info->n_v_channel*info->n_v_class)/2 vcs are making request at each arbiter */
+
+                  Eavg += SIM_arbiter_stat_energy(&router->sw_in_arb, &info->sw_in_arb_queue_info, (info->n_v_channel*info->n_v_class)/2, next_depth, SIM_strcat(path, "switch allocator input arbiter"), max_avg) * info->in_n_switch * info->n_in * e_fin;
+                  SIM_res_path(path, path_len);
+
+                  if (info->n_cache_in) {
+                          Eavg += SIM_arbiter_stat_energy(&router->cache_in_arb, &info->cache_in_arb_queue_info, e_fin / info->cache_n_switch, next_depth, SIM_strcat(path, "cache input arbiter"), max_avg) * info->cache_n_switch * info->n_cache_in;
+                          SIM_res_path(path, path_len);
+                  }
+
+                  if (info->n_mc_in) {
+                          Eavg += SIM_arbiter_stat_energy(&router->mc_in_arb, &info->mc_in_arb_queue_info, e_fin / info->mc_n_switch, next_depth, SIM_strcat(path, "memory controller input arbiter"), max_avg) * info->mc_n_switch * info->n_mc_in;
+                          SIM_res_path(path, path_len);
+                  }
+
+                  if (info->n_io_in) {
+                          Eavg += SIM_arbiter_stat_energy(&router->io_in_arb, &info->io_in_arb_queue_info, e_fin / info->io_n_switch, next_depth, SIM_strcat(path, "I/O input arbiter"), max_avg) * info->io_n_switch * info->n_io_in;
+                          SIM_res_path(path, path_len);
+                  }
+          }
+
+          /* output (global) arbiter for switch allocation*/
+          if (info->sw_out_arb_model) {
+                  /* assume # of active output arbiters is (info->n_switch_out * (e_cbuf_fin/info->n_switch_out))
+                   * assume (info->n_in)/2 request at each output arbiter */
+
+                  Eavg += SIM_arbiter_stat_energy(&router->sw_out_arb, &info->sw_out_arb_queue_info, info->n_in / 2, next_depth, SIM_strcat(path, "switch allocator output arbiter"), max_avg) * info->n_switch_out * (e_cbuf_fin / info->n_switch_out);
+
+                  SIM_res_path(path, path_len);
+          }
+
+          if(info->sw_out_arb_model || info->sw_out_arb_model){
+                  Psw_arbiter_dyn = Eavg * freq - Pbuf_dyn - Pxbar_dyn;
+                  Psw_arbiter_static = router->I_sw_arbiter_static * Vdd * SCALE_S;
+                  Psw_arbiter = Psw_arbiter_dyn + Psw_arbiter_static;
+          }
+
+          /* virtual channel allocation (arbiter energy only) */
+          /* HACKs:
+           *   - assume 1 header flit in every 5 flits for now, hence * 0.2  */
+
+          if(info->vc_allocator_type == ONE_STAGE_ARB && info->vc_out_arb_model  ){
+                  /* one stage arbitration (vc allocation)*/
+                  /* # of active arbiters */
+                  double nActiveArbs = e_fin * info->n_in * 0.2 / 2; //flit_rate * n_in * 0.2 / 2
+
+                  /* assume for each active arbiter, there is 2 requests on average (should use expected value from simulation) */
+                  Eavg += SIM_arbiter_stat_energy(&router->vc_out_arb, &info->vc_out_arb_queue_info,
+                                  1, next_depth,
+                                  SIM_strcat(path, "vc allocation arbiter"),
+                                  max_avg) * nActiveArbs;
+
+                  SIM_res_path(path, path_len);
+          }
+          else if(info->vc_allocator_type == TWO_STAGE_ARB && info->vc_in_arb_model && info->vc_out_arb_model){
+                  /* first stage arbitration (vc allocation)*/
+                  if (info->vc_in_arb_model) {
+                          // # of active stage-1 arbiters (# of new header flits)
+                          double nActiveArbs = e_fin * info->n_in * 0.2;
+
+
+                          /* assume an active arbiter has n_v_channel/2 requests on average (should use expected value from simulation) */
+                          Eavg += SIM_arbiter_stat_energy(&router->vc_in_arb, &info->vc_in_arb_queue_info, info->n_v_channel/2, next_depth,
+                                          SIM_strcat(path, "vc allocation arbiter (stage 1)"),
+                                          max_avg) * nActiveArbs;
+
+                          SIM_res_path(path, path_len);
+                  }
+
+                  /* second stage arbitration (vc allocation)*/
+                  if (info->vc_out_arb_model) {
+                          /* # of active stage-2 arbiters */
+                          double nActiveArbs = e_fin * info->n_in * 0.2 / 2; //flit_rate * n_in * 0.2 / 2
+
+                          /* assume for each active arbiter, there is 2 requests on average (should use expected value from simulation) */
+                          Eavg += SIM_arbiter_stat_energy(&router->vc_out_arb, &info->vc_out_arb_queue_info,
+                                          2, next_depth,
+                                          SIM_strcat(path, "vc allocation arbiter (stage 2)"),
+                                          max_avg) * nActiveArbs;
+
+                          SIM_res_path(path, path_len);
+                  }
+          }
+          else if(info->vc_allocator_type == VC_SELECT && info->n_v_channel > 1 && info->n_in > 1){
+                  double n_read = e_fin * info->n_in * 0.2;
+                  double n_write = e_fin * info->n_in * 0.2;
+                  Eavg += SIM_array_stat_energy(&info->vc_select_buf_info, &router->vc_select_buf, n_read , n_write, next_depth, SIM_strcat(path, "vc selection"), max_avg);
+                  SIM_res_path(path, path_len);
+
+          }
+          else{
+                  vc_allocator_enabled = 0; //set to 0 means no vc allocator is used
+          }
+
+          if(info->n_v_channel > 1 && vc_allocator_enabled){
+                  Pvc_arbiter_dyn = Eavg * freq - Pbuf_dyn - Pxbar_dyn - Psw_arbiter_dyn;
+                  Pvc_arbiter_static = router->I_vc_arbiter_static * Vdd * SCALE_S;
+                  Pvc_arbiter = Pvc_arbiter_dyn + Pvc_arbiter_static;
+          }
+
+          /*router clock power (supported for 90nm and below) */
+          if(PARM(TECH_POINT) <=90){
+                  Eavg += SIM_total_clockEnergy(info, router);
+                  Pclock_dyn = Eavg * freq - Pbuf_dyn - Pxbar_dyn - Pvc_arbiter_dyn - Psw_arbiter_dyn;
+                  Pclock_static = router->I_clock_static * Vdd * SCALE_S;
+                  Pclock = Pclock_dyn + Pclock_static;
+          }
+
+          /* static power */
+  //      Estatic = router->I_static * Vdd * Period * SCALE_S;
+
+          TimeValue timeValue;
+          NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+          Time globalClock = timeValue.Get ();
+          double period = globalClock.GetSeconds ();
+          Estatic = router->I_static * Vdd * period * SCALE_S;
+
+          SIM_print_stat_energy(SIM_strcat(path, "static energy"), Estatic, next_depth);
+          SIM_res_path(path, path_len);
+          Eavg += Estatic;
+          Ptotal = Eavg * freq;
+
+          SIM_print_stat_energy(path, Eavg, print_depth);
+
+          m_leakagePower += Estatic * freq;
+          m_dynamicPower += (Eavg - Estatic) * freq;
+
+          if (plot_flag)
+            {
+              NS_LOG_DEBUG ("Buffer dynamic power: " << Pbuf);
+              NS_LOG_DEBUG ("Crossbar dynamic power: " << Pxbar);
+              NS_LOG_DEBUG ("VC_allocator dynamic power: " << Pvc_arbiter);
+              NS_LOG_DEBUG ("SW_allocator dynamic power: " << Psw_arbiter);
+              NS_LOG_DEBUG ("Clock dynamic power: " << Pclock);
+
+              NS_LOG_LOGIC ("Router static power (consumed so far): " << m_leakagePower);
+              NS_LOG_LOGIC ("Router dynamic power (consumed so far): " << m_dynamicPower);
+              NS_LOG_LOGIC ("Total router power (static + dynamic, consumed so far): " << Ptotal);
+            }
+
+          return Eavg;
+  }
+
+  void
+  NocRouter::MeasurePowerAndEnergy (Ptr<Packet> flit)
+  {
+    NS_LOG_FUNCTION (*flit);
+
+    TimeValue timeValue;
+    NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+    Time globalClock = timeValue.Get ();
+
+    double freq = 1 / globalClock.GetSeconds ();
+    NS_LOG_DEBUG ("NoC clock frequency is " << freq << " Hz");
+    double dataWidth = flit->GetSize () * 8; // in bits
+    NS_LOG_DEBUG ("Arrived flit has size " << dataWidth);
+    NS_LOG_DEBUG ("arrived flits " << m_arrivedFlits);
+    NS_LOG_DEBUG ("simulator now " << Simulator::Now ().GetPicoSeconds () << " ps");
+    NS_LOG_DEBUG ("global clock " << globalClock.GetPicoSeconds () << " ps");
+    double clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
+    NS_LOG_DEBUG ("clock number " << clockNumber);
+    NS_LOG_DEBUG ("# input ports " << GetNumberOfInputPorts ());
+    double load = m_arrivedFlits / (GetNumberOfInputPorts () * clockNumber);
+    NS_LOG_DEBUG ("Router load is " << load);
+    NS_ASSERT_MSG (load >= 0 && load <= 1, "Router load in [0,1] interval");
+    char routerName[] = "NoC router";
+
+    //SIM_router_init(&GLOB(router_info), &GLOB(router_power), NULL);
+    RouterInitForOrion(&GLOB(router_info), &GLOB(router_power), NULL);
+    //SIM_router_stat_energy(&GLOB(router_info), &GLOB(router_power), print_depth, name, max_flag, load, plot_flag, PARM(Freq));
+    ComputeRouterEnergyAndPowerWithOrion (&GLOB(router_info), &GLOB(router_power), 0, routerName, 0, load, 1, freq);
+
+  }
+
+  double
+  NocRouter::GetDynamicPower ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    double power = 0;
+    if (m_powerCounter > 0)
+      {
+        power = m_dynamicPower / m_powerCounter;
+      }
+
+    return power;
+  }
+
+  double
+  NocRouter::GetLeakagePower ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    double power = 0;
+    if (m_powerCounter > 0)
+      {
+        power = m_leakagePower / m_powerCounter;
+      }
+
+    return power;
+  }
+
+  double
+  NocRouter::GetTotalPower ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    double power = 0;
+    if (m_powerCounter > 0)
+      {
+        power = (m_dynamicPower + m_leakagePower) / m_powerCounter;
+      }
+
+    return power;
+  }
+
+  double
   NocRouter::GetArea ()
   {
     NS_LOG_FUNCTION_NOARGS ();
     double area = 0;
 
     // SIM_router_init(&GLOB(router_info), NULL, &GLOB(router_area));
-    routerInitForOrion(&GLOB(router_info), NULL, &GLOB(router_area));
+    RouterInitForOrion(&GLOB(router_info), NULL, &GLOB(router_area));
 
     // area = SIM_router_area(&GLOB(router_area));
     area = GLOB(router_area).buffer + GLOB(router_area).crossbar + GLOB(router_area).vc_allocator

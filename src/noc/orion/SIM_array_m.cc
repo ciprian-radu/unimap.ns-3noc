@@ -611,7 +611,8 @@ double SIM_array_stat_energy(SIM_array_info_t *info, SIM_array_t *arr, double n_
 //		Estatic = arr->ff.I_static * Vdd * Period * SCALE_S;
 
                 TimeValue timeValue;
-                NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+                Ptr<NocRegistry> registry = NocRegistry::GetInstance ();
+                registry->GetAttribute ("GlobalClock", timeValue);
                 Time globalClock = timeValue.Get ();
                 double period = globalClock.GetSeconds ();
                 Estatic = arr->ff.I_static * Vdd * period * SCALE_S;

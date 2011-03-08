@@ -145,26 +145,19 @@ namespace ns3
     GetSwitchingProtocol ();
 
     /**
-     * Allows the router to manage the packet. Package management means switching and routing.
-     *
-     * For requesting routing information, all packets must go through this request.
-     *
-     * Note that route discovery works async. -- RequestRoute returns immediately, while
-     * reply callback will be called when routing information will be available.
+     * Allows the router to manage the flit.
+     * This implies the flit enters the router and traverses the pipeline stages (e.g.: routing, switching).
      *
      * \param source        source NoC net device
      * \param destination   destination address
-     * \param packet        the packet to be resolved (needed the whole packet, because
-     *                      routing information is added as tags or headers). The packet
+     * \param flit          the flit to be resolved (needed the whole flit, because
+     *                      routing information is added as tags or headers). The flit
      *                      will be returned to reply callback.
-     * \param protocolType  protocol ID, needed to form a proper MAC-layer header
-     * \param routeReply    callback to be invoked after route discovery procedure, supposed
-     *                      to really send packet using routing information.
      *
      * \return the route, if a valid route is already known, NULL otherwise
      */
     virtual Ptr<Route>
-    ManagePacket(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> packet);
+    ManageFlit(const Ptr<NocNetDevice> source, const Ptr<NocNode> destination, Ptr<Packet> flit);
 
     /**
      * \param packet the packet to be sent

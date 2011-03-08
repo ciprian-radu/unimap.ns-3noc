@@ -111,7 +111,7 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	info->exp_out_seg = PARM(exp_out_seg);
 
 	/* input buffer */
-	info->in_buf = PARM(in_buf);
+	info->in_buf = 1;
 	info->in_buffer_model = PARM(in_buffer_type);
 	if(info->in_buf){
 		outdrv = !info->in_share_buf && info->in_share_switch;
@@ -119,7 +119,7 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	        IntegerValue integerValue;
 	        NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
 	        uint32_t flitSize = integerValue.Get ();
-	        SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, PARM(in_buf_set), flitSize, outdrv, info->in_buffer_model);
+	        SIM_array_init(&info->in_buf_info, 1, PARM(in_buf_rport), 1, 8, flitSize, outdrv, info->in_buffer_model);
 	}
 
 	if (PARM(cache_in_port)){
@@ -183,7 +183,7 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	}
 
 	/* output buffer */
-	info->out_buf = PARM(out_buf);
+	info->out_buf = 0;
 	info->out_buffer_model = PARM(out_buffer_type);
 	if (info->out_buf){
 		/* output buffer has no tri-state buffer anyway */
@@ -192,7 +192,7 @@ int SIM_router_init(SIM_router_info_t *info, SIM_router_power_t *router_power, S
 	        IntegerValue integerValue;
 	        NocRegistry::GetInstance ()->GetAttribute ("FlitSize", integerValue);
 	        uint32_t flitSize = integerValue.Get ();
-	        SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), PARM(out_buf_set), flitSize, 0, info->out_buffer_model);
+	        SIM_array_init(&info->out_buf_info, 1, 1, PARM(out_buf_wport), 1, flitSize, 0, info->out_buffer_model);
 	}
 
 	/* central buffer */

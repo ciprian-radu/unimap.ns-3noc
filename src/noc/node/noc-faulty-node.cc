@@ -130,7 +130,7 @@ namespace ns3
 
     if (!m_faulty)
       {
-        Ptr<Route> route = GetRouter ()->ManagePacket (source, destination, packet);
+        Ptr<Route> route = GetRouter ()->ManageFlit (source, destination, packet);
         // note the packet returned by the route has its header updated!
         // => packet->PeekHeader (...) <> route->GetPacket ()->PeekHeader (...)
         NocHeader header;
