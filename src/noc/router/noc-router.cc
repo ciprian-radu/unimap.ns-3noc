@@ -44,6 +44,8 @@ namespace ns3
         " If you do not want to use a load router component, use another constructor.");
     m_name = name;
     m_powerCounter = 0;
+    m_lastClock = 0;
+    m_arrivedFlits = 0;
     m_loadComponent = loadComponent;
     NS_LOG_DEBUG ("Using the load router component " << loadComponent->GetName ());
   }
@@ -80,11 +82,29 @@ namespace ns3
     else
       {
         m_powerCounter++;
-        m_arrivedFlits++;
-        MeasurePowerAndEnergy (flit);
-        NS_LOG_LOGIC ("The router received a flit at input port (net device) "
-            << source->GetAddress () << ". This generated a dynamic power of "
-            << m_dynamicPower << " W and a leakage power of " << m_leakagePower << " W");
+        TimeValue timeValue;
+        NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+        Time globalClock = timeValue.Get ();
+        uint64_t clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
+        NS_LOG_DEBUG ("clock number " << clockNumber);
+        NS_LOG_DEBUG ("last clock " << m_lastClock);
+        if (clockNumber > m_lastClock)
+          {
+            // the following loop measures the power consumed by the flits from the previous clock cycle (m_lastClock)
+            for (unsigned int i = 0; i < m_flitsFromLastClock.size (); ++i)
+              {
+                MeasurePowerAndEnergy (m_flitsFromLastClock[i]);
+              }
+
+            m_flitsFromLastClock.clear ();
+            m_arrivedFlits = 1;
+            m_lastClock = clockNumber;
+          }
+        else
+          {
+            m_arrivedFlits++;
+          }
+        m_flitsFromLastClock.insert (m_flitsFromLastClock.end (), flit);
 
         route = GetRoutingProtocol()->RequestRoute (source, destination, flit);
       }
@@ -834,12 +854,8 @@ info->router_diagonal = PARM(router_diagonal);
     double dataWidth = flit->GetSize () * 8; // in bits
     NS_LOG_DEBUG ("Arrived flit has size " << dataWidth);
     NS_LOG_DEBUG ("arrived flits " << m_arrivedFlits);
-    NS_LOG_DEBUG ("simulator now " << Simulator::Now ().GetPicoSeconds () << " ps");
-    NS_LOG_DEBUG ("global clock " << globalClock.GetPicoSeconds () << " ps");
-    double clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
-    NS_LOG_DEBUG ("clock number " << clockNumber);
     NS_LOG_DEBUG ("# input ports " << GetNumberOfInputPorts ());
-    double load = m_arrivedFlits / (GetNumberOfInputPorts () * clockNumber);
+    double load = m_arrivedFlits * 1.0 / GetNumberOfInputPorts ();
     NS_LOG_DEBUG ("Router load is " << load);
     NS_ASSERT_MSG (load >= 0 && load <= 1, "Router load in [0,1] interval");
     char routerName[] = "NoC router";
@@ -851,11 +867,33 @@ info->router_diagonal = PARM(router_diagonal);
 
   }
 
+  void
+  NocRouter::MeasurePowerAndEnergyForLastClock ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    TimeValue timeValue;
+    NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+    Time globalClock = timeValue.Get ();
+    uint64_t clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
+    // the following loop measures the power consumed by the flits from the previous clock cycle (m_lastClock)
+    for (unsigned int i = 0; i < m_flitsFromLastClock.size (); ++i)
+      {
+        MeasurePowerAndEnergy (m_flitsFromLastClock[i]);
+      }
+
+    m_flitsFromLastClock.clear ();
+    m_arrivedFlits = 0;
+    m_lastClock = clockNumber;
+  }
+
   double
   NocRouter::GetDynamicPower ()
   {
     NS_LOG_FUNCTION_NOARGS ();
+    MeasurePowerAndEnergyForLastClock ();
     double power = 0;
+    NS_LOG_DEBUG ("Power was measured for " << m_powerCounter << " flits");
     if (m_powerCounter > 0)
       {
         power = m_dynamicPower / m_powerCounter;
@@ -868,7 +906,9 @@ info->router_diagonal = PARM(router_diagonal);
   NocRouter::GetLeakagePower ()
   {
     NS_LOG_FUNCTION_NOARGS ();
+    MeasurePowerAndEnergyForLastClock ();
     double power = 0;
+    NS_LOG_DEBUG ("Power was measured for " << m_powerCounter << " flits");
     if (m_powerCounter > 0)
       {
         power = m_leakagePower / m_powerCounter;
@@ -881,7 +921,9 @@ info->router_diagonal = PARM(router_diagonal);
   NocRouter::GetTotalPower ()
   {
     NS_LOG_FUNCTION_NOARGS ();
+    MeasurePowerAndEnergyForLastClock ();
     double power = 0;
+    NS_LOG_DEBUG ("Power was measured for " << m_powerCounter << " flits");
     if (m_powerCounter > 0)
       {
         power = (m_dynamicPower + m_leakagePower) / m_powerCounter;
