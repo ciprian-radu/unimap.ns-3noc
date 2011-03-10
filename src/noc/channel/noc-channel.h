@@ -30,6 +30,8 @@
 #include "ns3/noc-net-device.h"
 #include <map>
 
+using namespace std;
+
 namespace ns3
 {
 
@@ -180,6 +182,15 @@ private:
     virtual double
     GetLeakagePower (Ptr<Packet> flit);
 
+    /**
+     * Power is measured for the previous clock cycle.
+     * This method is invoked when methods GetDynamicPower () and GetLeakagePower () are called,
+     * with the purpose to measure power for the last clock too.
+     * The method has effect only if there are flits for which power wasn't measured.
+     */
+    void
+    MeasurePowerForLastClock ();
+
 public:
 
     /**
@@ -225,7 +236,7 @@ public:
     /**
      * The two net devices connected at this channel.
      */
-    std::vector<Ptr<NocNetDevice> > m_devices;
+    vector<Ptr<NocNetDevice> > m_devices;
 
     /**
      * The assigned data rate of the channel
@@ -246,14 +257,29 @@ public:
      * Current state of each physical link of the channel.
      * There are 2 physical links in full-duplex mode and only one in half-duplex.
      */
-    std::vector<WireState> m_state;
+    vector<WireState> m_state;
 
     /**
      * The Packet that is currently being transmitted on the channel (or the last
      * packet to have been transmitted on the channel if the channel is
      * free). Note that each physical link of the channel may transmit a packet.
      */
-    std::vector<Ptr<Packet> > m_currentPkt;
+    vector<Ptr<Packet> > m_currentPkt;
+
+    /**
+     * how many times power consumption was measured
+     */
+    uint64_t m_powerCounter;
+
+    /**
+     * the last clock when power consumption was measured
+     */
+    uint64_t m_lastClock;
+
+    /**
+     * the flits from the previous clock cycle, for which power will have to be measured
+     */
+    vector<Ptr<Packet> > m_flitsFromLastClock;
 
     /**
      * the number of transmitted flits
@@ -271,12 +297,12 @@ public:
      * has a net device which can send a packet (in full-duplex mode, both net
      * devices may send a packet at the same moment of time).
      */
-    std::vector<std::map<uint32_t, Ptr<NocNetDevice> > > m_packetOriginalDevice;
+    vector<map<uint32_t, Ptr<NocNetDevice> > > m_packetOriginalDevice;
 
     /**
      * The current destination net device (one for each physical channel)
      */
-    std::vector<Ptr<NocNetDevice> > m_currentDestDevice;
+    vector<Ptr<NocNetDevice> > m_currentDestDevice;
 
   };
 

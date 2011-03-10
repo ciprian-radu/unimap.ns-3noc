@@ -299,11 +299,32 @@ namespace ns3
         NS_LOG_LOGIC ("switched to IDLE (for link " << (int)link << ")");
     }
 
-    m_trasmittedFlits++;
-    m_dynamicPower += GetDynamicPower (m_currentPkt[link]);
-    m_leakagePower += GetLeakagePower (m_currentPkt[link]);
-    NS_LOG_LOGIC ("The channel transmitted " << m_trasmittedFlits << " flits. This generated a dynamic power of "
-        << m_dynamicPower << " W and a leakage power of " << m_leakagePower << " W");
+    m_powerCounter++;
+    TimeValue timeValue;
+    NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+    Time globalClock = timeValue.Get ();
+    uint64_t clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
+    NS_LOG_DEBUG ("clock number " << clockNumber);
+    NS_LOG_DEBUG ("last clock " << m_lastClock);
+    if (clockNumber > m_lastClock)
+      {
+        // the following loop measures the power consumed by the flits from the previous clock cycle (m_lastClock)
+        for (unsigned int i = 0; i < m_flitsFromLastClock.size (); ++i)
+          {
+            m_dynamicPower += GetDynamicPower (m_flitsFromLastClock[i]);
+            m_leakagePower += GetLeakagePower (m_flitsFromLastClock[i]);
+          }
+
+        m_flitsFromLastClock.clear ();
+        m_trasmittedFlits = 1;
+        m_lastClock = clockNumber;
+      }
+    else
+      {
+        m_trasmittedFlits++;
+      }
+    m_flitsFromLastClock.insert (m_flitsFromLastClock.end (), m_currentPkt[link]);
+
   }
 
   uint32_t
@@ -408,12 +429,8 @@ namespace ns3
     NS_LOG_DEBUG ("NoC clock frequency is " << freq << " Hz");
     double dataWidth = flit->GetSize () * 8; // in bits
     NS_LOG_DEBUG ("Transmitted flit has size " << dataWidth);
-    NS_LOG_DEBUG ("transmitted flits " << m_trasmittedFlits << " ps");
-    NS_LOG_DEBUG ("simulator now " << Simulator::Now ().GetPicoSeconds () << " ps");
-    NS_LOG_DEBUG ("global clock " << globalClock.GetPicoSeconds () << " ps");
-    double clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
-    NS_LOG_DEBUG ("clock number " << clockNumber);
-    double load = m_trasmittedFlits / clockNumber;
+    NS_LOG_DEBUG ("transmitted flits " << m_trasmittedFlits);
+    double load = m_trasmittedFlits * 1.0 / m_currentPkt.size ();
     NS_LOG_DEBUG ("Channel load is " << load);
     NS_ASSERT_MSG (load >= 0 && load <= 1, "Channel load in [0,1] interval");
 
@@ -438,12 +455,8 @@ namespace ns3
     NS_LOG_DEBUG ("NoC clock frequency is " << freq << " Hz");
     double dataWidth = flit->GetSize () * 8; // in bits
     NS_LOG_DEBUG ("Transmitted flit has size " << dataWidth);
-    NS_LOG_DEBUG ("transmitted flits " << m_trasmittedFlits << " ps");
-    NS_LOG_DEBUG ("simulator now " << Simulator::Now ().GetPicoSeconds () << " ps");
-    NS_LOG_DEBUG ("global clock " << globalClock.GetPicoSeconds () << " ps");
-    double clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
-    NS_LOG_DEBUG ("clock number " << clockNumber);
-    double load = m_trasmittedFlits / clockNumber;
+    NS_LOG_DEBUG ("transmitted flits " << m_trasmittedFlits);
+    double load = m_trasmittedFlits * 1.0 / m_currentPkt.size ();
     NS_LOG_DEBUG ("Channel load is " << load);
     NS_ASSERT_MSG (load >= 0 && load <= 1, "Channel load in [0,1] interval");
 
@@ -454,10 +467,32 @@ namespace ns3
     return power;
   }
 
+  void
+  NocChannel::MeasurePowerForLastClock ()
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    TimeValue timeValue;
+    NocRegistry::GetInstance ()->GetAttribute ("GlobalClock", timeValue);
+    Time globalClock = timeValue.Get ();
+    uint64_t clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
+    // the following loop measures the power consumed by the flits from the previous clock cycle (m_lastClock)
+    for (unsigned int i = 0; i < m_flitsFromLastClock.size (); ++i)
+      {
+        m_dynamicPower += GetDynamicPower (m_flitsFromLastClock[i]);
+        m_leakagePower += GetLeakagePower (m_flitsFromLastClock[i]);
+      }
+
+    m_flitsFromLastClock.clear ();
+    m_trasmittedFlits = 0;
+    m_lastClock = clockNumber;
+  }
+
   double
   NocChannel::GetDynamicPower ()
   {
     NS_LOG_FUNCTION_NOARGS ();
+    MeasurePowerForLastClock ();
     return m_dynamicPower;
   }
 
@@ -465,6 +500,7 @@ namespace ns3
   NocChannel::GetLeakagePower ()
   {
     NS_LOG_FUNCTION_NOARGS ();
+    MeasurePowerForLastClock ();
     return m_leakagePower;
   }
 
@@ -472,6 +508,7 @@ namespace ns3
   NocChannel::GetTotalPower ()
   {
     NS_LOG_FUNCTION_NOARGS ();
+    MeasurePowerForLastClock ();
     return m_dynamicPower + m_leakagePower;
   }
 

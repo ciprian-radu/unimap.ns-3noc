@@ -178,7 +178,7 @@ namespace ns3
         Ptr<NocNode> nocNode = m_nodes.Get (i)->GetObject<NocNode> ();
         Ptr<NocRouter> router = nocNode->GetRouter ();
         double routerPower = router->GetDynamicPower ();
-        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a dynamic power of " << routerPower << " um^2");
+        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a dynamic power of " << routerPower << " W");
         power += routerPower;
       }
 
@@ -215,7 +215,7 @@ namespace ns3
         Ptr<NocNode> nocNode = m_nodes.Get (i)->GetObject<NocNode> ();
         Ptr<NocRouter> router = nocNode->GetRouter ();
         double routerPower = router->GetLeakagePower ();
-        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a leakage power of " << routerPower << " um^2");
+        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a leakage power of " << routerPower << " W");
         power += routerPower;
       }
 
@@ -252,7 +252,7 @@ namespace ns3
         Ptr<NocNode> nocNode = m_nodes.Get (i)->GetObject<NocNode> ();
         Ptr<NocRouter> router = nocNode->GetRouter ();
         double routerPower = router->GetTotalPower ();
-        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a total power of " << routerPower << " um^2");
+        NS_LOG_DEBUG ("Router " << nocNode->GetId () << " consumed a total power of " << routerPower << " W");
         power += routerPower;
       }
 

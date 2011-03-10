@@ -329,6 +329,15 @@ namespace ns3
     virtual void
     MeasurePowerAndEnergy (Ptr<Packet> flit);
 
+    /**
+     * Power and energy are measured for the previous clock cycle.
+     * This method is invoked when method GetDynamicPower (), GetLeakagePower () or GetTotalPower () are called,
+     * with the purpose to measure power and energy for the last clock too.
+     * The method has effect only if there are flits for which power wasn't measured.
+     */
+    void
+    MeasurePowerAndEnergyForLastClock ();
+
   public:
 
     /**
@@ -422,6 +431,16 @@ namespace ns3
      * how many times power consumption was measured
      */
     uint64_t m_powerCounter;
+
+    /**
+     * the last clock when power consumption was measured
+     */
+    uint64_t m_lastClock;
+
+    /**
+     * the flits from the previous clock cycle, for which power will have to be measured
+     */
+    vector<Ptr<Packet> > m_flitsFromLastClock;
 
     /**
      * the number of flits arrived at the router's all input ports, only during one clock cycle
