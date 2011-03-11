@@ -85,9 +85,9 @@ namespace ns3
     // (this implies changing the source code of the Packet class, by introducing)
     // a virtual destructor
 
-    NocHeader header;
-    packet->PeekHeader(header);
-    if (!header.IsEmpty())
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
       {
         // head packet
         NS_LOG_DEBUG ("A route was requested for the head packet " << *packet

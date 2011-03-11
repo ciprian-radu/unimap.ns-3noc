@@ -45,8 +45,8 @@ namespace ns3
      * \param dataFlitCount the number of data flits (packets) that the message having this header will have
      * \param dataPacketSize the size of the head packet (without including the size of the header)
      */
-    NocPacket (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX,
-        uint32_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize);
+    NocPacket (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
+        uint8_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize);
 
     /**
      * Constructor - creates a data packet

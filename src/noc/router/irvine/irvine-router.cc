@@ -111,26 +111,29 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS();
     Ptr<NocNetDevice> netDevice = 0;
 
-    NocHeader nocHeader;
-    packet->PeekHeader (nocHeader);
-
-    if (!nocHeader.IsEmpty ())
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
       {
-        bool isEast = nocHeader.HasEastDirection ();
-        if (!isEast)
+        NocHeader nocHeader;
+        packet->PeekHeader (nocHeader);
+
+        if (!nocHeader.IsEmpty ())
           {
-            netDevice = m_internalLeftInputDevice;
+            bool isEast = nocHeader.HasEastDirection ();
+            if (!isEast)
+              {
+                netDevice = m_internalLeftInputDevice;
+              }
+            else
+              {
+                netDevice = m_internalRightInputDevice;
+              }
+            m_headPacketsInjectionNetDevice[packet->GetUid ()] = netDevice;
           }
-        else
-          {
-            netDevice = m_internalRightInputDevice;
-          }
-        m_headPacketsInjectionNetDevice[packet->GetUid ()] = netDevice;
       }
     else
       {
-        NocPacketTag tag;
-        packet->PeekPacketTag (tag);
         uint32_t headUid = tag.GetPacketHeadUid ();
         netDevice = m_headPacketsInjectionNetDevice[headUid];
       }
@@ -404,8 +407,14 @@ namespace ns3
     NS_ASSERT_MSG (!isRightIrvineRouter || !isLeftIrvineRouter, "The packet came through net device "
         << sender->GetAddress () << " This is from both right and left routers.");
 
+
     NocHeader header;
-    packet->PeekHeader (header);
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        packet->PeekHeader (header);
+      }
     NS_ASSERT (!header.IsEmpty ());
 
     if (isRightIrvineRouter)

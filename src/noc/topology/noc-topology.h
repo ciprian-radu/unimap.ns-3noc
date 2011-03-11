@@ -263,7 +263,7 @@ namespace ns3
      *
      * \return an array with the destination's relative position in each dimension
      */
-    virtual vector<uint32_t>
+    virtual vector<uint8_t>
     GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId) = 0;
 
     /**

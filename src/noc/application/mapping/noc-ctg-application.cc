@@ -134,10 +134,12 @@ namespace ns3
       }
 
     uint32_t dataSize = packet->GetSize ();
-    NocHeader header;
-    packet->PeekHeader (header);
-    if (!header.IsEmpty ())
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
       {
+        NocHeader header;
+        packet->PeekHeader (header);
         dataSize -= header.GetSerializedSize ();
       }
 
@@ -550,10 +552,10 @@ namespace ns3
         NocRegistry::GetInstance ()->GetAttribute ("NoCTopology", nocPointer);
         Ptr<NocTopology> nocTopology = nocPointer.Get<NocTopology> ();
         NS_ASSERT_MSG (nocTopology != 0, "The NoC topology was not registered in NocRegistry!");
-        vector<uint32_t> relativepositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
+        vector<uint8_t> relativePositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
             destinationNodeId);
-        uint32_t relativeX = relativepositions[0];
-        uint32_t relativeY = relativepositions[1];
+        uint8_t relativeX = relativePositions[0];
+        uint8_t relativeY = relativePositions[1];
         // end traffic pattern
 
         NS_ASSERT_MSG (m_numberOfFlits >= 1,

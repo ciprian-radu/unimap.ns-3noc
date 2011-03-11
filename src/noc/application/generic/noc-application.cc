@@ -404,10 +404,10 @@ namespace ns3
         NocRegistry::GetInstance ()->GetAttribute ("NoCTopology", nocPointer);
         Ptr<NocTopology> nocTopology = nocPointer.Get<NocTopology> ();
         NS_ASSERT_MSG (nocTopology != 0, "The NoC topology was not registered in NocRegistry!");
-        vector<uint32_t> relativepositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
+        vector<uint8_t> relativepositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
             destinationNodeId);
-        uint32_t relativeX = relativepositions[0];
-        uint32_t relativeY = relativepositions[1];
+        uint8_t relativeX = relativepositions[0];
+        uint8_t relativeY = relativepositions[1];
         // end traffic pattern
 
         NS_ASSERT_MSG (m_numberOfPackets >= 1,

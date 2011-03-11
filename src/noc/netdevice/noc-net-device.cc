@@ -417,7 +417,12 @@ namespace ns3
     // Tracing as sent (in the .tr file) is an event that occurs after the packet was routed but,
     // we want to put in the trace file the original header of the packet (as it was before routing)
     NocHeader originalHeader;
-    packet->RemoveHeader (originalHeader);
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        packet->RemoveHeader (originalHeader);
+      }
 
     bool result;
 
@@ -462,7 +467,12 @@ namespace ns3
         packetToSend = packet;
         Ptr<Packet> tracedPacket = packetToSend->Copy ();
         NocHeader removedHeader;
-        tracedPacket->RemoveHeader (removedHeader);
+        NocPacketTag tag;
+        tracedPacket->PeekPacketTag (tag);
+        if (NocPacket::HEAD == tag.GetPacketType ())
+          {
+            tracedPacket->RemoveHeader (removedHeader);
+          }
         if (!removedHeader.IsEmpty() && !originalHeader.IsEmpty ())
           {
             tracedPacket->AddHeader (originalHeader);
@@ -573,7 +583,12 @@ namespace ns3
                       {
                         Ptr<Packet> tracedPacket = packetToSend->Copy ();
                         NocHeader removedHeader;
-                        tracedPacket->RemoveHeader (removedHeader);
+                        NocPacketTag tag;
+                        tracedPacket->PeekPacketTag (tag);
+                        if (NocPacket::HEAD == tag.GetPacketType ())
+                          {
+                            tracedPacket->RemoveHeader (removedHeader);
+                          }
                         if (!removedHeader.IsEmpty() && !originalHeader.IsEmpty ())
                           {
                             tracedPacket->AddHeader (originalHeader);
@@ -644,9 +659,9 @@ namespace ns3
                 else
                   {
                     int speedup = 1;
-                    NocHeader header;
-                    packetToSend->PeekHeader (header);
-                    if (header.IsEmpty ())
+                    NocPacketTag tag;
+                    packetToSend->PeekPacketTag (tag);
+                    if (NocPacket::HEAD == tag.GetPacketType ())
                       {
                         // a data packet will be sent
                         IntegerValue dataFlitSpeedup;
@@ -698,9 +713,9 @@ namespace ns3
   void
   NocNetDevice::MarkHeadPacketAsBlocked (Ptr<Packet> packet)
   {
-    NocHeader header;
-    packet->PeekHeader (header);
-    if (!header.IsEmpty ())
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
       {
         NocPacketTag tag;
         packet->RemovePacketTag (tag);
@@ -717,9 +732,9 @@ namespace ns3
   void
   NocNetDevice::MarkHeadPacketAsUnblocked (Ptr<Packet> packet)
   {
-    NocHeader header;
-    packet->PeekHeader (header);
-    if (!header.IsEmpty ())
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
       {
         NocPacketTag tag;
         packet->RemovePacketTag (tag);

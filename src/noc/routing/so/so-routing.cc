@@ -21,6 +21,7 @@
 #include "so-routing.h"
 #include "ns3/log.h"
 #include "ns3/noc-header.h"
+#include "ns3/noc-packet-tag.h"
 #include "ns3/noc-channel.h"
 #include "ns3/random-variable.h"
 #include "ns3/integer.h"
@@ -79,7 +80,12 @@ namespace ns3
     NS_LOG_FUNCTION_NOARGS ();
 
     NocHeader nocHeader;
-    packet->PeekHeader (nocHeader);
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+        {
+          packet->PeekHeader (nocHeader);
+        }
     NS_ASSERT (!nocHeader.IsEmpty ());
 
     std::vector<Ptr<NocNetDevice> > devices = DoRoutingFunction (source, destination, packet);
@@ -145,7 +151,13 @@ namespace ns3
         if (devices[i]->GetRoutingDirection() != source->GetRoutingDirection ())
           {
             NocHeader header;
-            packet->PeekHeader (header);
+            NocPacketTag tag;
+            packet->PeekPacketTag (tag);
+            if (NocPacket::HEAD == tag.GetPacketType ())
+                {
+                  packet->PeekHeader (header);
+                }
+            NS_ASSERT (!header.IsEmpty ());
             if ((header.GetXOffset ()) == 0)
               {
                 // eliminate the East and West directions
@@ -273,7 +285,12 @@ namespace ns3
     if (channel->IsBusy (device))
       {
         NocHeader header;
-        packet->PeekHeader (header);
+        NocPacketTag tag;
+        packet->PeekPacketTag (tag);
+        if (NocPacket::HEAD == tag.GetPacketType ())
+            {
+              packet->PeekHeader (header);
+            }
         if (!header.IsEmpty ())
           {
             m_dataLength = header.GetDataFlitCount ();
@@ -314,7 +331,12 @@ namespace ns3
     bool isProgressive = false;
 
     NocHeader header;
-    packet->PeekHeader (header);
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+        {
+          packet->PeekHeader (header);
+        }
     NS_ASSERT (!header.IsEmpty());
 
     NS_LOG_DEBUG ("xOffset " << header.GetXOffset () << " direction "
@@ -375,7 +397,12 @@ namespace ns3
   {
     NS_LOG_FUNCTION (packet << device->GetAddress () << source->GetAddress ());
     NocHeader nocHeader;
-    packet->RemoveHeader (nocHeader);
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        packet->RemoveHeader (nocHeader);
+      }
     NS_ASSERT (!nocHeader.IsEmpty ());
 
     int xOffset = nocHeader.GetXOffset ();

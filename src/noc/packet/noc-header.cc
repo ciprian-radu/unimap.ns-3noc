@@ -45,7 +45,7 @@ namespace ns3
     m_load = 0;
   }
 
-  NocHeader::NocHeader (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX, uint32_t sourceY, uint16_t dataFlitCount)
+  NocHeader::NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX, uint8_t sourceY, uint16_t dataFlitCount)
   {
     NocHeader::m_xDistance = xDistance;
     NocHeader::m_yDistance = yDistance;
@@ -89,15 +89,15 @@ namespace ns3
   {
     // The 1 byte-constant (the first 2 bits are 1 and the rest are 0;
     // the 6 zeroes represent the packet type)
-    start.WriteU8 (HEADER_ID);
+//    start.WriteU8 (HEADER_ID);
 
-    start.WriteU32 (m_xDistance);
+    start.WriteU8 (m_xDistance);
 
-    start.WriteU32 (m_yDistance);
+    start.WriteU8 (m_yDistance);
 
-    start.WriteU32 (m_sourceX);
+    start.WriteU8 (m_sourceX);
 
-    start.WriteU32 (m_sourceY);
+    start.WriteU8 (m_sourceY);
 
     start.WriteU8 (m_subdataId);
 
@@ -111,19 +111,18 @@ namespace ns3
   uint32_t
   NocHeader::Deserialize (Buffer::Iterator start)
   {
-    uint32_t size = 0;
-    uint8_t tmp;
-    tmp = start.ReadU8 ();
-    // if tmp == 0 then we have a data packet
-    if (tmp != 0)
-      {
-        NS_ASSERT (tmp == HEADER_ID);
+//    uint8_t tmp;
+//    tmp = start.ReadU8 ();
+//    // if tmp == 0 then we have a data packet
+//    if (tmp != 0)
+//      {
+//        NS_ASSERT (tmp == HEADER_ID);
 
-        m_xDistance = start.ReadU32 ();
-        m_yDistance = start.ReadU32 ();
+        m_xDistance = start.ReadU8 ();
+        m_yDistance = start.ReadU8 ();
 
-        m_sourceX = start.ReadU32 ();
-        m_sourceY = start.ReadU32 ();
+        m_sourceX = start.ReadU8 ();
+        m_sourceY = start.ReadU8 ();
 
         m_subdataId = start.ReadU8 ();
 
@@ -133,10 +132,9 @@ namespace ns3
 
         m_load = start.ReadU8 ();
 
-        size = HEADER_SIZE;
-      }
+//      }
 
-    return size; // the number of bytes consumed.
+    return HEADER_SIZE; // the number of bytes consumed.
   }
 
   void
@@ -145,43 +143,34 @@ namespace ns3
     std::string xDir;
     std::string yDir;
 
-	if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
-	  {
-		xDir = "W";
-	  }
-	else
-	  {
-		if (m_xDistance != 0)
-		  {
-			xDir = "E";
-		  }
-	  }
-	if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
-	  {
-		yDir = "N";
-	  }
-	else
-	  {
-		if (m_yDistance != 0)
-		  {
-			yDir = "S";
-		  }
-	  }
+    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+      {
+        xDir = "W";
+      }
+    else
+      {
+        if (m_xDistance != 0)
+          {
+            xDir = "E";
+          }
+      }
+    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+      {
+        yDir = "N";
+      }
+    else
+      {
+        if (m_yDistance != 0)
+          {
+            yDir = "S";
+          }
+      }
 
-	os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
-		<< "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
-		<< "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
-		<< (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
-		<< (long) m_dataFlitCount << " load=" << (int) m_load;
-  }
-
-  /**
-   * \return the size of the header, in bytes
-   */
-  uint8_t
-  NocHeader::GetHeaderSize () const
-  {
-    return HEADER_SIZE;
+    os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
+            << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
+            << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
+            << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
+            << (long) m_dataFlitCount << " load=" << (int) m_load;
   }
 
   bool
@@ -240,7 +229,7 @@ namespace ns3
   }
 
   void
-  NocHeader::SetXOffset (uint32_t xOffset)
+  NocHeader::SetXOffset (uint8_t xOffset)
   {
     if (HasEastDirection ())
       {
@@ -253,7 +242,7 @@ namespace ns3
   }
 
   void
-  NocHeader::SetYOffset (uint32_t yOffset)
+  NocHeader::SetYOffset (uint8_t yOffset)
   {
     if (HasSouthDirection ())
       {
@@ -265,25 +254,25 @@ namespace ns3
       }
   }
 
-  uint32_t
+  uint8_t
   NocHeader::GetXOffset ()
   {
     return m_xDistance & OFFSET_BIT_MASK;
   }
 
-  uint32_t
+  uint8_t
   NocHeader::GetYOffset ()
   {
     return m_yDistance & OFFSET_BIT_MASK;
   }
 
   void
-  NocHeader::SetSourceX (uint32_t sourceX)
+  NocHeader::SetSourceX (uint8_t sourceX)
   {
     m_sourceX = sourceX;
   }
 
-  uint32_t
+  uint8_t
   const
   NocHeader::GetSourceX ()
   {
@@ -291,12 +280,12 @@ namespace ns3
   }
 
   void
-  NocHeader::SetSourceY (uint32_t sourceY)
+  NocHeader::SetSourceY (uint8_t sourceY)
   {
     m_sourceY = sourceY;
   }
 
-  uint32_t
+  uint8_t
   const
   NocHeader::GetSourceY ()
   {

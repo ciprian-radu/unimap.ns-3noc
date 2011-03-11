@@ -135,7 +135,7 @@ main (int argc, char *argv[])
   NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
 
-  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (256)); // 32 bytes
+  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (80)); // 10 bytes
 
   uint64_t packetLength = 3; // flits per packet
 
