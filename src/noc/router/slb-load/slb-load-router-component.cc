@@ -21,6 +21,7 @@
 #include "ns3/log.h"
 #include "slb-load-router-component.h"
 #include "ns3/noc-header.h"
+#include "ns3/noc-packet-tag.h"
 #include "ns3/noc-application.h"
 #include "ns3/integer.h"
 #include "ns3/noc-registry.h"
@@ -63,11 +64,16 @@ namespace ns3
     int dataFlitSpeedup = speedup.Get ();
 
     NS_ASSERT (sourceDevice != 0);
-    NocHeader header;
-    packet->PeekHeader (header);
-    if (!header.IsEmpty ())
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
       {
-        m_dataLength = header.GetDataFlitCount ();
+        NocHeader header;
+        packet->PeekHeader (header);
+        if (!header.IsEmpty ())
+          {
+            m_dataLength = header.GetDataFlitCount ();
+          }
       }
     NS_LOG_DEBUG ("Message has " << m_dataLength << " data packets");
     NS_ASSERT (m_dataLength >= 0);

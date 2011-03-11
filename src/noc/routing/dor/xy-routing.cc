@@ -26,6 +26,7 @@
 #include "xy-routing.h"
 #include "ns3/log.h"
 #include "ns3/noc-header.h"
+#include "ns3/noc-packet-tag.h"
 #include "ns3/boolean.h"
 
 NS_LOG_COMPONENT_DEFINE ("XyRouting");
@@ -92,6 +93,9 @@ namespace ns3
     ss.str ("");
 
     NocHeader nocHeader;
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    NS_ASSERT (NocPacket::HEAD == tag.GetPacketType ());
     packet->RemoveHeader (nocHeader);
 
     bool isEast = nocHeader.HasEastDirection ();

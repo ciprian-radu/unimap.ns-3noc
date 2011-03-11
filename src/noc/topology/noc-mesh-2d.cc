@@ -52,7 +52,7 @@ namespace ns3
             "how many nodes the 2D mesh will have on one horizontal line",
             UintegerValue (4),
             MakeUintegerAccessor (&NocMesh2D::m_hSize),
-            MakeUintegerChecker<uint32_t> (1));
+            MakeUintegerChecker<uint8_t> (1, 127));
     return tid;
   }
 
@@ -188,19 +188,19 @@ namespace ns3
     return m_devices;
   }
 
-  vector<uint32_t>
+  vector<uint8_t>
   NocMesh2D::GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId)
   {
     NS_LOG_FUNCTION (sourceNodeId << destinationNodeId);
 
-    vector<uint32_t> relativePositions;
+    vector<uint8_t> relativePositions;
 
-    uint32_t sourceX = sourceNodeId % m_hSize;
-    uint32_t sourceY = sourceNodeId / m_hSize;
-    uint32_t destinationX = destinationNodeId % m_hSize;
-    uint32_t destinationY = destinationNodeId / m_hSize;
-    uint32_t relativeX = 0;
-    uint32_t relativeY = 0;
+    uint8_t sourceX = sourceNodeId % m_hSize;
+    uint8_t sourceY = sourceNodeId / m_hSize;
+    uint8_t destinationX = destinationNodeId % m_hSize;
+    uint8_t destinationY = destinationNodeId / m_hSize;
+    uint8_t relativeX = 0;
+    uint8_t relativeY = 0;
     if (destinationX < sourceX)
       {
         // 0 = East; 1 = West
@@ -212,9 +212,23 @@ namespace ns3
         relativeY = NocHeader::DIRECTION_BIT_MASK;
       }
     relativeX = relativeX | std::abs ((int) (destinationX - sourceX));
-    NS_LOG_DEBUG ("relativeX " << relativeX);
+    if ((relativeX & NocHeader::DIRECTION_BIT_MASK) == NocHeader::DIRECTION_BIT_MASK)
+      {
+        NS_LOG_DEBUG ("relativeX -" << (int) (relativeX & NocHeader::OFFSET_BIT_MASK));
+      }
+    else
+      {
+        NS_LOG_DEBUG ("relativeX " << (int) (relativeX & NocHeader::OFFSET_BIT_MASK));
+      }
     relativeY = relativeY | std::abs ((int) (destinationY - sourceY));
-    NS_LOG_DEBUG ("relativeY " << relativeY);
+    if ((relativeY & NocHeader::DIRECTION_BIT_MASK) == NocHeader::DIRECTION_BIT_MASK)
+      {
+        NS_LOG_DEBUG ("relativeY -" << (int) (relativeY & NocHeader::OFFSET_BIT_MASK));
+      }
+    else
+      {
+        NS_LOG_DEBUG ("relativeY " << (int) (relativeY & NocHeader::OFFSET_BIT_MASK));
+      }
 
     relativePositions.insert (relativePositions.end (), relativeX);
     relativePositions.insert (relativePositions.end (), relativeY);

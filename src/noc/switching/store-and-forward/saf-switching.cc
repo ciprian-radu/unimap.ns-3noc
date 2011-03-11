@@ -55,7 +55,12 @@ namespace ns3
   {
     bool canDoRouting = true;
     NocHeader header;
-    packet->PeekHeader(header);
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        packet->PeekHeader(header);
+      }
     if (!header.IsEmpty())
       {
         // head packet

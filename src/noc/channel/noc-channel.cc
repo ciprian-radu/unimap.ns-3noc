@@ -21,6 +21,7 @@
 #include "noc-channel.h"
 #include "ns3/noc-net-device.h"
 #include "ns3/noc-packet.h"
+#include "ns3/noc-packet-tag.h"
 #include "ns3/simulator.h"
 #include "ns3/log.h"
 #include "ns3/noc-node.h"
@@ -182,9 +183,9 @@ namespace ns3
     int speedup = 1;
     if (m_currentPkt[link] != 0)
       {
-        NocHeader header;
-        m_currentPkt[link]->PeekHeader (header);
-        if (header.IsEmpty ())
+        NocPacketTag tag;
+        m_currentPkt[link]->PeekPacketTag (tag);
+        if (NocPacket::HEAD == tag.GetPacketType ())
           {
             // a data packet will be sent
             IntegerValue dataFlitSpeedup;
@@ -265,12 +266,17 @@ namespace ns3
         NS_LOG_DEBUG ("Load component found");
 
         loadComponent->IncreaseLoad ();
-        NocHeader nocHeader;
-        m_currentPkt[link]->PeekHeader (nocHeader);
-        if (!nocHeader.IsEmpty ())
+        NocPacketTag tag;
+        m_currentPkt[link]->PeekPacketTag (tag);
+        if (NocPacket::HEAD == tag.GetPacketType ())
           {
-            uint8_t load = nocHeader.GetLoad ();
-            router->AddNeighborLoad ((int) load, srcNocNetDevice);
+            NocHeader nocHeader;
+            m_currentPkt[link]->PeekHeader (nocHeader);
+            if (!nocHeader.IsEmpty ())
+              {
+                uint8_t load = nocHeader.GetLoad ();
+                router->AddNeighborLoad ((int) load, srcNocNetDevice);
+              }
           }
       }
     else

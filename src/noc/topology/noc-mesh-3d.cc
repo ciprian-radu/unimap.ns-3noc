@@ -50,7 +50,7 @@ namespace ns3
     	.AddAttribute ("hSize",
     		"how many nodes the 3D mesh will have on one horizontal line",
     		UintegerValue (4), MakeUintegerAccessor (&NocMesh3D::m_hSize),
-    		MakeUintegerChecker<uint32_t> (1));
+    		MakeUintegerChecker<uint32_t> (1, 127));
     return tid;
   }
 
@@ -233,7 +233,7 @@ namespace ns3
     return m_devices;
   }
 
-  vector<uint32_t>
+  vector<uint8_t>
   NocMesh3D::GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId)
   {
     NS_LOG_ERROR ("This method must be implemented! Exiting...");

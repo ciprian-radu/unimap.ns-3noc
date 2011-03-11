@@ -29,8 +29,8 @@ NS_LOG_COMPONENT_DEFINE ("NocPacket");
 namespace ns3
 {
 
-  NocPacket::NocPacket (uint32_t xDistance, uint32_t yDistance, uint32_t sourceX,
-      uint32_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize) :
+  NocPacket::NocPacket (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
+      uint8_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize) :
     Packet (dataPacketSize)
   {
     NocHeader nocHeader (xDistance, yDistance, sourceX, sourceY, dataFlitCount);

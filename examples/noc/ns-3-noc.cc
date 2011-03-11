@@ -106,9 +106,6 @@ void FlitReceivedCallback (int dummy, std::string path, Ptr<const Packet> flit)
 
   LatencyTimes latencyTimes;
 
-  NocHeader header;
-  flit->PeekHeader (header);
-
   uint32_t uid;
   NocPacketTag tag;
   flit->PeekPacketTag (tag);

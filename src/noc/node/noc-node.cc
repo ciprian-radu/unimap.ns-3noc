@@ -95,7 +95,12 @@ namespace ns3
     NS_LOG_DEBUG ("source " << source->GetAddress () << ", packet UID " << packet->GetUid () << ", destination " << destination->GetId ());
 
     NocHeader header;
-    packet->PeekHeader (header);
+    NocPacketTag tag;
+    packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        packet->PeekHeader (header);
+      }
     Ptr<Route> route = GetRouter ()->ManageFlit (source, destination, packet);
     NS_LOG_DEBUG ("The route for packet with UID " << packet->GetUid ()
         << " is from " << route->GetSourceDevice ()->GetAddress ()
@@ -104,7 +109,7 @@ namespace ns3
     // => packet->PeekHeader (...) <> route->GetPacket ()->PeekHeader (...)
     Ptr<Packet> routedPacket = route->GetRoutedPacket ();
     // add the original header as well
-    if (!header.IsEmpty ())
+    if (NocPacket::HEAD == tag.GetPacketType () && !header.IsEmpty ())
       {
         routedPacket->AddHeader (header);
       }

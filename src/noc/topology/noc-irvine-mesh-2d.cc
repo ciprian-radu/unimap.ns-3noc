@@ -52,7 +52,7 @@ namespace ns3
             "how many nodes the 2D mesh will have on one horizontal line",
             UintegerValue (4),
             MakeUintegerAccessor (&NocIrvineMesh2D::m_hSize),
-            MakeUintegerChecker<uint32_t> (1));
+            MakeUintegerChecker<uint32_t> (1, 127));
     return tid;
   }
 
@@ -196,19 +196,19 @@ namespace ns3
     return m_devices;
   }
 
-  vector<uint32_t>
+  vector<uint8_t>
   NocIrvineMesh2D::GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId)
   {
     NS_LOG_FUNCTION (sourceNodeId << destinationNodeId);
 
-    vector<uint32_t> relativePositions;
+    vector<uint8_t> relativePositions;
 
-    uint32_t sourceX = sourceNodeId % m_hSize;
-    uint32_t sourceY = sourceNodeId / m_hSize;
-    uint32_t destinationX = destinationNodeId % m_hSize;
-    uint32_t destinationY = destinationNodeId / m_hSize;
-    uint32_t relativeX = 0;
-    uint32_t relativeY = 0;
+    uint8_t sourceX = sourceNodeId % m_hSize;
+    uint8_t sourceY = sourceNodeId / m_hSize;
+    uint8_t destinationX = destinationNodeId % m_hSize;
+    uint8_t destinationY = destinationNodeId / m_hSize;
+    uint8_t relativeX = 0;
+    uint8_t relativeY = 0;
     if (destinationX < sourceX)
       {
         // 0 = East; 1 = West
