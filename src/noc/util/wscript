@@ -1,7 +1,7 @@
 ## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
 def build(bld):
-    util = bld.create_ns3_module('util', ['core', 'simulator'])
+    util = bld.create_ns3_module('util', ['core', 'simulator', 'packet'])
     util.source = [
         'noc-registry.cc',
         'file-utils.cc',         

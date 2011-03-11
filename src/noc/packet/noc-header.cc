@@ -39,10 +39,8 @@ namespace ns3
     NocHeader::m_yDistance = 0;
     NocHeader::m_sourceX = 0;
     NocHeader::m_sourceY = 0;
-    NocHeader::m_subdataId = 0;
-    NocHeader::m_peGroupAddress = 0;
-    NocHeader::m_dataFlitCount = 0;
-    m_load = 0;
+//    NocHeader::m_subdataId = 0;
+//    NocHeader::m_peGroupAddress = 0;
   }
 
   NocHeader::NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX, uint8_t sourceY, uint16_t dataFlitCount)
@@ -51,10 +49,8 @@ namespace ns3
     NocHeader::m_yDistance = yDistance;
     NocHeader::m_sourceX = sourceX;
     NocHeader::m_sourceY = sourceY;
-    NocHeader::m_subdataId = 0;
-    NocHeader::m_peGroupAddress = 0;
-    NocHeader::m_dataFlitCount = dataFlitCount;
-    m_load = 0;
+//    NocHeader::m_subdataId = 0;
+//    NocHeader::m_peGroupAddress = 0;
   }
 
   NocHeader::~NocHeader ()
@@ -99,13 +95,10 @@ namespace ns3
 
     start.WriteU8 (m_sourceY);
 
-    start.WriteU8 (m_subdataId);
+//    start.WriteU8 (m_subdataId);
 
-    start.WriteHtonU16 (m_peGroupAddress);
+//    start.WriteHtonU16 (m_peGroupAddress);
 
-    start.WriteHtonU16 (m_dataFlitCount);
-
-    start.WriteU8 (m_load);
   }
 
   uint32_t
@@ -124,13 +117,9 @@ namespace ns3
         m_sourceX = start.ReadU8 ();
         m_sourceY = start.ReadU8 ();
 
-        m_subdataId = start.ReadU8 ();
+//        m_subdataId = start.ReadU8 ();
 
-        m_peGroupAddress = start.ReadNtohU16 ();
-
-        m_dataFlitCount = start.ReadNtohU16 ();
-
-        m_load = start.ReadU8 ();
+//        m_peGroupAddress = start.ReadNtohU16 ();
 
 //      }
 
@@ -167,17 +156,22 @@ namespace ns3
       }
 
     os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
-            << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
-            << "sourceX=" << (int) m_sourceX << " sourceY=" << (int) m_sourceY << " subdataId="
-            << (int) m_subdataId << " peGroupAddress=" << (long) m_peGroupAddress << " dataFlitCount="
-            << (long) m_dataFlitCount << " load=" << (int) m_load;
+       << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
+       << "sourceX=" << (int) m_sourceX
+       << " sourceY=" << (int) m_sourceY;
+//       << " subdataId=" << (int) m_subdataId
+//       << " peGroupAddress=" << (long) m_peGroupAddress
   }
 
   bool
   NocHeader::IsEmpty () const
   {
-    return (m_xDistance == 0) && (m_yDistance == 0) && (m_sourceX == 0) && (m_sourceY == 0) && (m_subdataId == 0)
-        && (m_peGroupAddress == 0) && (m_dataFlitCount == 0) && (m_load == 0);
+    return (m_xDistance == 0)
+        && (m_yDistance == 0)
+        && (m_sourceX == 0)
+        && (m_sourceY == 0);
+//        && (m_subdataId == 0)
+//        && (m_peGroupAddress == 0)
   }
 
   //  void
@@ -292,56 +286,30 @@ namespace ns3
     return m_sourceY;
   }
 
-  void
-  NocHeader::SetSubdataId (uint8_t subdataId)
-  {
-    m_subdataId = subdataId;
-  }
+//  void
+//  NocHeader::SetSubdataId (uint8_t subdataId)
+//  {
+//    m_subdataId = subdataId;
+//  }
+//
+//  uint8_t
+//  const
+//  NocHeader::GetSubdataId ()
+//  {
+//    return m_subdataId;
+//  }
 
-  uint8_t
-  const
-  NocHeader::GetSubdataId ()
-  {
-    return m_subdataId;
-  }
-
-  void
-  NocHeader::SetPeGroupAddress (uint16_t peGroupAddress)
-  {
-    m_peGroupAddress = peGroupAddress;
-  }
-
-  uint16_t
-  const
-  NocHeader::GetPeGroupAddress ()
-  {
-    return m_peGroupAddress;
-  }
-
-  void
-  NocHeader::SetDataFlitCount (uint16_t dataFlitCount)
-  {
-    m_dataFlitCount = dataFlitCount;
-  }
-
-  uint16_t
-  const
-  NocHeader::GetDataFlitCount ()
-  {
-    return m_dataFlitCount;
-  }
-
-  void
-  NocHeader::SetLoad (uint8_t load)
-  {
-    m_load = load;
-  }
-
-  uint8_t
-  const
-  NocHeader::GetLoad ()
-  {
-    return m_load;
-  }
+//  void
+//  NocHeader::SetPeGroupAddress (uint16_t peGroupAddress)
+//  {
+//    m_peGroupAddress = peGroupAddress;
+//  }
+//
+//  uint16_t
+//  const
+//  NocHeader::GetPeGroupAddress ()
+//  {
+//    return m_peGroupAddress;
+//  }
 
 } // namespace ns3

@@ -135,9 +135,9 @@ main (int argc, char *argv[])
   NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
 
-  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (80)); // 10 bytes
+  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (32)); // 4 bytes
 
-  uint64_t packetLength = 3; // flits per packet
+  uint64_t packetLength = 5; // flits per packet
 
   NS_LOG_INFO ("Create Applications.");
   NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);

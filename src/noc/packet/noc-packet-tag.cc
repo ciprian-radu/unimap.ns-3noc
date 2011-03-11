@@ -28,6 +28,8 @@ namespace ns3 {
 
   NocPacketTag::NocPacketTag ()
     {
+      m_dataFlitCount = 0;
+      m_load = 0;
       m_packetBlocked = false;
     }
 
@@ -46,6 +48,16 @@ namespace ns3 {
                      "Head packet UID",
                      EmptyAttributeValue (),
                      MakeUintegerAccessor (&NocPacketTag::GetPacketHeadUid),
+                     MakeUintegerChecker<uint32_t> ())
+      .AddAttribute ("DataFlitCount",
+                     "the number of data flits from the packet",
+                     EmptyAttributeValue (),
+                     MakeUintegerAccessor (&NocPacketTag::GetDataFlitCount),
+                     MakeUintegerChecker<uint16_t> ())
+      .AddAttribute ("Load",
+                     "the load of a router (as a percentage number), propagated with the packet that has this header",
+                     EmptyAttributeValue (),
+                     MakeUintegerAccessor (&NocPacketTag::GetLoad),
                      MakeUintegerChecker<uint8_t> ())
       .AddAttribute ("PacketBlocked",
                      "Packet blocked",
@@ -75,7 +87,7 @@ namespace ns3 {
   uint32_t
   NocPacketTag::GetSerializedSize () const
   {
-    return 22; // 1 + 4 + 1 + 8 + 8
+    return 25; // 1 + 4 + 2 + 1 + 1 + 8 + 8
   }
 
   void
@@ -83,6 +95,8 @@ namespace ns3 {
   {
     i.WriteU8 (m_type);
     i.WriteU32 (m_headPacketUid);
+    i.WriteU16 (m_dataFlitCount);
+    i.WriteU8 (m_load);
     i.WriteU8 (m_packetBlocked);
     i.WriteU64 (m_injectionTime.GetPicoSeconds ());
     i.WriteU64 (m_receiveTime.GetPicoSeconds ());
@@ -109,6 +123,8 @@ namespace ns3 {
         break;
     }
     m_headPacketUid = i.ReadU32 ();
+    m_dataFlitCount = i.ReadU16 ();
+    m_load = i.ReadU8 ();
     m_packetBlocked = i.ReadU8 ();
     m_injectionTime = PicoSeconds (i.ReadU64 ());
     m_receiveTime = PicoSeconds (i.ReadU64 ());
@@ -118,10 +134,12 @@ namespace ns3 {
   NocPacketTag::Print (std::ostream &os) const
   {
     os << "type=" << m_type
-        << "headPacketUid=" << m_headPacketUid
-        << "packetBlocked=" << m_packetBlocked
-        << "injectionTime=" << m_injectionTime
-        << "receiveTime=" << m_receiveTime;
+       << "dataFlitCount=" << m_dataFlitCount
+       << "load=" << m_load
+       << "headPacketUid=" << m_headPacketUid
+       << "packetBlocked=" << m_packetBlocked
+       << "injectionTime=" << m_injectionTime
+       << "receiveTime=" << m_receiveTime;
   }
 
   void
@@ -146,6 +164,30 @@ namespace ns3 {
   NocPacketTag::GetPacketHeadUid () const
   {
     return m_headPacketUid;
+  }
+
+  void
+  NocPacketTag::SetDataFlitCount (uint16_t dataFlitCount)
+  {
+    m_dataFlitCount = dataFlitCount;
+  }
+
+  uint16_t
+  NocPacketTag::GetDataFlitCount () const
+  {
+    return m_dataFlitCount;
+  }
+
+  void
+  NocPacketTag::SetLoad (uint8_t load)
+  {
+    m_load = load;
+  }
+
+  uint8_t
+  NocPacketTag::GetLoad () const
+  {
+    return m_load;
   }
 
   void

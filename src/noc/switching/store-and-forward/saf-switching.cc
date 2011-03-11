@@ -65,9 +65,9 @@ namespace ns3
       {
         // head packet
         m_packetCount.erase (packet->GetUid ());
-        m_packetCount.insert (std::pair<uint32_t , uint32_t> (packet->GetUid () , (header.GetDataFlitCount())));
+        m_packetCount.insert (std::pair<uint32_t , uint32_t> (packet->GetUid () , (tag.GetDataFlitCount())));
         NS_LOG_LOGIC ("The packet with UID " << packet->GetUid () << " will be sent forward only after "
-            << (header.GetDataFlitCount()) << " data (body) packets will be received");
+            << (tag.GetDataFlitCount()) << " data (body) packets will be received");
         canDoRouting = false;
       }
     else

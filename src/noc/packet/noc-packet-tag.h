@@ -79,6 +79,18 @@ namespace ns3
     uint32_t
     GetPacketHeadUid () const;
 
+    void
+    SetDataFlitCount (uint16_t dataFlitCount);
+
+    uint16_t
+    GetDataFlitCount () const;
+
+    void
+    SetLoad (uint8_t load);
+
+    uint8_t
+    GetLoad () const;
+
     /**
      * \param isBlocked whether or not this packet is blocked
      */
@@ -127,6 +139,19 @@ namespace ns3
      * (this is useful for data packets)
      */
     uint32_t m_headPacketUid;
+
+    /**
+     * Indicates how many data flits the packet contains;
+     * this helps at determining the end of the packet
+     *
+     * Note that we consider a flit to have the size of a packet (to be a packet).
+     */
+    uint16_t m_dataFlitCount;
+
+    /**
+     * The load of a router (as a percentage number), propagated with the packet that has this header
+     */
+    uint8_t m_load;
 
     /**
      * whether or not a head packet is blocked in the network

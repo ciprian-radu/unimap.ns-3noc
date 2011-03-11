@@ -60,7 +60,7 @@ namespace ns3
             .AddAttribute (
                 "FlitSize",
                 "the flit size, in bits",
-                IntegerValue (256), // 32 bytes
+                IntegerValue (32), // 4 bytes
                 MakeIntegerAccessor (&NocRegistry::m_flitSize),
                 MakeIntegerChecker<uint32_t> (8 * NocHeader::HEADER_SIZE))
             .AddAttribute (

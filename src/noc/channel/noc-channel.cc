@@ -274,7 +274,7 @@ namespace ns3
             m_currentPkt[link]->PeekHeader (nocHeader);
             if (!nocHeader.IsEmpty ())
               {
-                uint8_t load = nocHeader.GetLoad ();
+                uint8_t load = tag.GetLoad ();
                 router->AddNeighborLoad ((int) load, srcNocNetDevice);
               }
           }
