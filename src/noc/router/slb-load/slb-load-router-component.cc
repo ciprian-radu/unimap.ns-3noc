@@ -72,7 +72,7 @@ namespace ns3
         packet->PeekHeader (header);
         if (!header.IsEmpty ())
           {
-            m_dataLength = header.GetDataFlitCount ();
+            m_dataLength = tag.GetDataFlitCount ();
           }
       }
     NS_LOG_DEBUG ("Message has " << m_dataLength << " data packets");

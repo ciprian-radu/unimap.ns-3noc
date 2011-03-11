@@ -132,29 +132,17 @@ namespace ns3
     uint8_t
     const GetSourceY ();
 
-    void
-    SetSubdataId (uint8_t subdataId);
+//    void
+//    SetSubdataId (uint8_t subdataId);
+//
+//    uint8_t
+//    const GetSubdataId ();
 
-    uint8_t
-    const GetSubdataId ();
-
-    void
-    SetPeGroupAddress (uint16_t peGroupAddress);
-
-    uint16_t
-    const GetPeGroupAddress ();
-
-    void
-    SetDataFlitCount (uint16_t dataFlitCount);
-
-    uint16_t
-    const GetDataFlitCount ();
-
-    void
-    SetLoad (uint8_t load);
-
-    uint8_t
-    const GetLoad ();
+//    void
+//    SetPeGroupAddress (uint16_t peGroupAddress);
+//
+//    uint16_t
+//    const GetPeGroupAddress ();
 
   public:
 
@@ -162,7 +150,7 @@ namespace ns3
      * the size of this type of header, in bytes
      */
     // Make sure to update this field whenever you modify the structure of the header
-    static const uint32_t HEADER_SIZE = 10;
+    static const uint32_t HEADER_SIZE = 4;
 
   private:
 
@@ -183,30 +171,17 @@ namespace ns3
 
     uint8_t m_sourceY;
 
-    /**
-     * allows package indexing; this is useful when data has to be split
-     * into multiple packets (a package order is required is such a case)
-     */
-    uint8_t m_subdataId;
+//    /**
+//     * allows package indexing; this is useful when data has to be split
+//     * into multiple packets (a package order is required is such a case)
+//     */
+//    uint8_t m_subdataId;
 
-    /**
-     * allows to specify a group of processing elements to which the packet is sent
-     * (this allows multicasting)
-     */
-    uint16_t m_peGroupAddress;
-
-    /**
-     * Indicates how many data flits the packet contains;
-     * this helps at determining the end of the packet
-     *
-     * Note that we consider a flit to have the size of a packet (to be a packet).
-     */
-    uint16_t m_dataFlitCount;
-
-    /**
-     * The load of a router (as a percentage number), propagated with the packet that has this header
-     */
-    uint8_t m_load;
+//    /**
+//     * allows to specify a group of processing elements to which the packet is sent
+//     * (this allows multicasting)
+//     */
+//    uint16_t m_peGroupAddress;
 
   };
 

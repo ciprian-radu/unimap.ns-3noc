@@ -391,7 +391,7 @@ namespace ns3
         NS_ASSERT_MSG (load >= 0 && load <= 100, "The load of a router must be a percentage number ("
             << load << " is not)");
         NS_LOG_DEBUG ("Packet " << packet << " will propagate load " << load);
-        nocHeader.SetLoad (load);
+        tag.SetLoad (load);
       }
     packet->RemoveHeader (nocHeader);
     packet->AddHeader (nocHeader);
