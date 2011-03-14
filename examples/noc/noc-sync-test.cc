@@ -151,37 +151,37 @@ main (int argc, char *argv[])
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (10)); // destination
-  nocSyncAppHelper1.SetAttribute ("MaxFlits", UintegerValue (packetLength));
+  nocSyncAppHelper1.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
   ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (2)); // source
-  //  apps1.Start (Seconds (0.0));
-  //  apps1.Stop (Seconds (10.0));
+  apps1.Start (Seconds (0.0));
+  apps1.Stop (Scalar (10) * globalClock);
 
   NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
   nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (2)); // destination
-  nocSyncAppHelper2.SetAttribute ("MaxFlits", UintegerValue (packetLength));
+  nocSyncAppHelper2.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
   ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (10)); // source
-  //  apps2.Start (Seconds (0.0));
-  //  apps2.Stop (Seconds (10.0));
+  apps2.Start (Seconds (0.0));
+  apps2.Stop (Scalar (10) * globalClock);
 
   NocSyncApplicationHelper nocSyncAppHelper3 (nodes, devs, hSize);
   nocSyncAppHelper3.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper3.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   nocSyncAppHelper3.SetAttribute ("Destination", UintegerValue (7)); // destination
-  nocSyncAppHelper3.SetAttribute ("MaxFlits", UintegerValue (packetLength));
+  nocSyncAppHelper3.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
   ApplicationContainer apps3 = nocSyncAppHelper3.Install (nodes.Get (5)); // source
-  //  apps2.Start (Seconds (0.0));
-  //  apps2.Stop (Seconds (10.0));
+  apps3.Start (Seconds (0.0));
+  apps3.Stop (Scalar (10) * globalClock);
 
   NocSyncApplicationHelper nocSyncAppHelper4 (nodes, devs, hSize);
   nocSyncAppHelper4.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper4.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   nocSyncAppHelper4.SetAttribute ("Destination", UintegerValue (5)); // destination
-  nocSyncAppHelper4.SetAttribute ("MaxFlits", UintegerValue (packetLength));
+  nocSyncAppHelper4.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
   ApplicationContainer apps4 = nocSyncAppHelper4.Install (nodes.Get (7)); // source
-  //  apps2.Start (Seconds (0.0));
-  //  apps2.Stop (Seconds (10.0));
+  apps4.Start (Seconds (0.0));
+  apps4.Stop (Scalar (10) * globalClock);
 
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-sync-test.tr file
