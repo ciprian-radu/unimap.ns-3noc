@@ -73,6 +73,7 @@ main (int argc, char *argv[])
 
   double injectionProbability (1);
   int dataPacketSpeedup (1);
+  Time globalClock = PicoSeconds (1000); // 1 ns -> NoC @ 1GHz
 
   // Set up command line parameters used to control the experiment.
   CommandLine cmd;
@@ -82,7 +83,7 @@ main (int argc, char *argv[])
 
   // set the global parameters
   NocRegistry::GetInstance ()->SetAttribute ("DataPacketSpeedup", IntegerValue (dataPacketSpeedup));
-  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (NanoSeconds (1)));
+  NocRegistry::GetInstance ()->SetAttribute ("GlobalClock", TimeValue (globalClock));
 
   // Here, we will explicitly create four nodes.
   NS_LOG_INFO ("Create nodes.");
@@ -100,9 +101,17 @@ main (int argc, char *argv[])
   // Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
   // Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
-  // Note that the next two channel attributes are not considered with a NocSyncApplication!
-  //  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ("50Mib/s")));
-  //  noc->SetChannelAttribute ("Delay", TimeValue (MilliSeconds (0)));
+
+  uint32_t flitSize = 32; // 4 bytes
+  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize));
+
+  // set channel bandwidth to 1 flit / network clock
+  // the channel's bandwidth is obviously expressed in bits / s
+  // however, in order to avoid losing precision, we work with PicoSeconds (instead of Seconds)
+  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ((uint64_t) (1e12 * (flitSize)
+      / globalClock.GetPicoSeconds ()))));
+  // the channel has no propagation delay
+  noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (0)));
 
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
   //  noc->SetChannelAttribute ("Length", DoubleValue (10)); // 10 micro-meters channel length
@@ -134,8 +143,6 @@ main (int argc, char *argv[])
   NetDeviceContainer devs = noc->Install (nodes);
   NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
-
-  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (32)); // 4 bytes
 
   uint64_t packetLength = 5; // flits per packet
 
