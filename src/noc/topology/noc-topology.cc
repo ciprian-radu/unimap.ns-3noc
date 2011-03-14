@@ -385,9 +385,17 @@ namespace ns3
 
     NocPacketTag tag;
     packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        *stream->GetStream () << " (UID: " << (int) packet->GetUid () << ")";
+      }
     if (NocPacket::TAIL == tag.GetPacketType ())
       {
-        *stream->GetStream () << "(tail flit)";
+        *stream->GetStream () << "(tail flit)" << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
+      }
+    if (NocPacket::DATA == tag.GetPacketType ())
+      {
+        *stream->GetStream ()  << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
       }
 
     *stream->GetStream () << std::endl;
@@ -402,9 +410,17 @@ namespace ns3
 
     NocPacketTag tag;
     packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        *stream->GetStream () << " (UID: " << (int) packet->GetUid () << ")";
+      }
     if (NocPacket::TAIL == tag.GetPacketType ())
       {
-        *stream->GetStream () << "(tail flit)";
+        *stream->GetStream () << "(tail flit)" << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
+      }
+    if (NocPacket::DATA == tag.GetPacketType ())
+      {
+        *stream->GetStream ()  << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
       }
 
     *stream->GetStream () << std::endl;
@@ -419,9 +435,17 @@ namespace ns3
 
     NocPacketTag tag;
     packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        *stream->GetStream () << " (UID: " << (int) packet->GetUid () << ")";
+      }
     if (NocPacket::TAIL == tag.GetPacketType ())
       {
-        *stream->GetStream () << "(tail flit)";
+        *stream->GetStream () << "(tail flit)" << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
+      }
+    if (NocPacket::DATA == tag.GetPacketType ())
+      {
+        *stream->GetStream ()  << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
       }
 
     *stream->GetStream () << std::endl;
@@ -436,9 +460,17 @@ namespace ns3
 
     NocPacketTag tag;
     packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        *stream->GetStream () << " (UID: " << (int) packet->GetUid () << ")";
+      }
     if (NocPacket::TAIL == tag.GetPacketType ())
       {
-        *stream->GetStream () << "(tail flit)";
+        *stream->GetStream () << "(tail flit)" << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
+      }
+    if (NocPacket::DATA == tag.GetPacketType ())
+      {
+        *stream->GetStream ()  << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
       }
 
     *stream->GetStream () << std::endl;
@@ -453,9 +485,17 @@ namespace ns3
 
     NocPacketTag tag;
     packet->PeekPacketTag (tag);
+    if (NocPacket::HEAD == tag.GetPacketType ())
+      {
+        *stream->GetStream () << " (UID: " << (int) packet->GetUid () << ")";
+      }
     if (NocPacket::TAIL == tag.GetPacketType ())
       {
-        *stream->GetStream () << "(tail flit)";
+        *stream->GetStream () << "(tail flit)" << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
+      }
+    if (NocPacket::DATA == tag.GetPacketType ())
+      {
+        *stream->GetStream ()  << " (head flit UID: " << (int) tag.GetPacketHeadUid () << ")";
       }
 
     *stream->GetStream () << std::endl;
