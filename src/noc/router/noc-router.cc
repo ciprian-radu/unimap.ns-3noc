@@ -34,6 +34,9 @@ namespace ns3
   NocRouter::NocRouter (std::string name)
   {
     m_name = name;
+    m_powerCounter = 0;
+    m_lastClock = 0;
+    m_arrivedFlits = 0;
     m_loadComponent = 0;
     NS_LOG_DEBUG ("No load router component is used");
   }

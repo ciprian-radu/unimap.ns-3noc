@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 		printf("%d\n", d_tab[in_p]);
 		cnt += d_tab[in_p];
 	}
-	printf("total: %lu\n", cnt);
+	printf("total: %lu\n", (unsigned long int) cnt);
 
 	exit(0);
 }
