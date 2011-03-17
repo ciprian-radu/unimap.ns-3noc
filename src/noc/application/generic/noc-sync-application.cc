@@ -118,9 +118,9 @@ namespace ns3
                 DoubleValue (0.5), MakeDoubleAccessor (&NocSyncApplication::m_injectionProbability),
                 MakeDoubleChecker<double> (0, 1))
             .AddAttribute("HSize", "The horizontal size of a 2D mesh (how many nodes can be put on a line)."
-                " The vertical size of the 2D mesh is given by number of nodes", UintegerValue(4),
-                MakeUintegerAccessor(&NocSyncApplication::m_hSize),
-                MakeUintegerChecker<uint32_t> (2))
+                " The vertical size of the 2D mesh is given by number of nodes", IntegerValue(4),
+                MakeIntegerAccessor(&NocSyncApplication::m_hSize),
+                MakeIntegerChecker<int> (2))
             .AddAttribute ("NumberOfFlits", "The number of flits composing a packet.", UintegerValue (3),
                 MakeUintegerAccessor (&NocSyncApplication::m_numberOfFlits),
                 MakeUintegerChecker<uint32_t> (2))
@@ -373,7 +373,7 @@ namespace ns3
         case DESTINATION_SPECIFIED:
           destinationX = m_destinationNodeId % m_hSize;
           NS_LOG_DEBUG ("specified destination x = " << destinationX);
-          NS_ASSERT (destinationX < m_hSize);
+          NS_ASSERT ((int) destinationX < m_hSize);
           destinationY = m_destinationNodeId / m_hSize;
           NS_LOG_DEBUG ("specified destination y = " << destinationY);
           NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
@@ -389,7 +389,7 @@ namespace ns3
             }
           destinationX = m_uniformDestinationX;
           NS_LOG_DEBUG("random destination x = " << destinationX);
-          NS_ASSERT (destinationX < m_hSize);
+          NS_ASSERT ((int) destinationX < m_hSize);
           destinationY = m_uniformDestinationY;
           NS_LOG_DEBUG("random destination y = " << destinationY);
           NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
@@ -397,21 +397,21 @@ namespace ns3
 
         case BIT_MATRIX_TRANSPOSE:
           destinationX = ns3::TrafficPattern::MatrixTransposeBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
+          NS_ASSERT ((int) destinationX < m_hSize);
           destinationY = ns3::TrafficPattern::MatrixTransposeBits (sourceY, sizeY);
           NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;
 
         case BIT_COMPLEMENT:
           destinationX = ns3::TrafficPattern::ComplementBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
+          NS_ASSERT ((int) destinationX < m_hSize);
           destinationY = ns3::TrafficPattern::ComplementBits (sourceY, sizeY);
           NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;
 
         case BIT_REVERSE:
           destinationX = ns3::TrafficPattern::ReverseBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
+          NS_ASSERT ((int) destinationX < m_hSize);
           destinationY = ns3::TrafficPattern::ReverseBits (sourceY, sizeY);
           NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
           break;

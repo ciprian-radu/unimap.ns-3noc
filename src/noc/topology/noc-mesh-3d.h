@@ -61,7 +61,7 @@ namespace ns3
     /**
      * how many nodes the 3D mesh will have on one horizontal line
      */
-    uint32_t m_hSize;
+    int m_hSize;
 
   };
 

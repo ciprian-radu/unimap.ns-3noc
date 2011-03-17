@@ -52,7 +52,7 @@
 #include "ns3/noc-packet-tag.h"
 #include "ns3/nstime.h"
 #include "ns3/output-stream-wrapper.h"
-#include "ns3/uinteger.h"
+#include "ns3/integer.h"
 #include "src/noc/topology/noc-torus-2d.h"
 
 
@@ -60,8 +60,8 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("NocSyncTest");
 
-uint32_t numberOfNodes = 16;
-uint32_t hSize = 4;
+int numberOfNodes = 16;
+int hSize = 4;
 
 int
 main (int argc, char *argv[])
@@ -88,7 +88,7 @@ main (int argc, char *argv[])
   // Here, we will explicitly create four nodes.
   NS_LOG_INFO ("Create nodes.");
   NodeContainer nodes;
-  for (unsigned int i = 0; i < numberOfNodes; ++i)
+  for (int i = 0; i < numberOfNodes; ++i)
     {
       Ptr<NocNode> nocNode = CreateObject<NocNode> ();
       nodes.Add (nocNode);
@@ -100,7 +100,7 @@ main (int argc, char *argv[])
   Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
   // Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
   // Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
-  noc->SetAttribute ("hSize", UintegerValue (hSize));
+  noc->SetAttribute ("hSize", IntegerValue (hSize));
 
   uint32_t flitSize = 32; // 4 bytes
   NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize));

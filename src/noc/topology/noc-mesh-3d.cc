@@ -31,7 +31,7 @@
 #include "ns3/wormhole-switching.h"
 #include "ns3/vct-switching.h"
 #include "ns3/noc-packet-tag.h"
-#include "ns3/uinteger.h"
+#include "ns3/integer.h"
 #include "ns3/file-utils.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocMesh3D");
@@ -49,8 +49,8 @@ namespace ns3
     	.AddConstructor<NocMesh3D> ()
     	.AddAttribute ("hSize",
     		"how many nodes the 3D mesh will have on one horizontal line",
-    		UintegerValue (4), MakeUintegerAccessor (&NocMesh3D::m_hSize),
-    		MakeUintegerChecker<uint32_t> (1, 127));
+    		IntegerValue (4), MakeIntegerAccessor (&NocMesh3D::m_hSize),
+    		MakeUintegerChecker<int> (1, 127));
     return tid;
   }
 
@@ -138,7 +138,7 @@ namespace ns3
     for (unsigned int i = 0; i < nodes.GetN (); i = i + m_hSize)
       { k++;
         k=(int)((k)/m_hSize);
-        for (unsigned int j = 0; j < m_hSize; ++j)
+        for (int j = 0; j < m_hSize; ++j)
           {
             Ptr<NocNode> nocNode = nodes.Get (i + j)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)

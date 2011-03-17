@@ -32,7 +32,7 @@
 #include "ns3/wormhole-switching.h"
 #include "ns3/vct-switching.h"
 #include "ns3/noc-packet-tag.h"
-#include "ns3/uinteger.h"
+#include "ns3/integer.h"
 #include "ns3/file-utils.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocIrvineMesh2D");;
@@ -50,9 +50,9 @@ namespace ns3
         .AddConstructor<NocIrvineMesh2D> ()
         .AddAttribute ("hSize",
             "how many nodes the 2D mesh will have on one horizontal line",
-            UintegerValue (4),
-            MakeUintegerAccessor (&NocIrvineMesh2D::m_hSize),
-            MakeUintegerChecker<uint32_t> (1, 127));
+            IntegerValue (4),
+            MakeIntegerAccessor (&NocIrvineMesh2D::m_hSize),
+            MakeIntegerChecker<int> (1, 127));
     return tid;
   }
 
@@ -144,7 +144,7 @@ namespace ns3
     std::vector<Ptr<NocChannel> > columnChannels (2 * m_hSize);
     for (unsigned int i = 0; i < nodes.GetN (); i = i + m_hSize)
       {
-        for (unsigned int j = 0; j < 2 * m_hSize; ++j)
+        for (int j = 0; j < 2 * m_hSize; ++j)
           {
             Ptr<NocNode> nocNode = nodes.Get (i + j % m_hSize)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)

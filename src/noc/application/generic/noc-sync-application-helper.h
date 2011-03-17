@@ -50,7 +50,7 @@ namespace ns3
      * \param hSize the horizontal size of the 2D mesh
      *
      */
-    NocSyncApplicationHelper(NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize);
+    NocSyncApplicationHelper(NodeContainer nodes, NetDeviceContainer devices, int hSize);
 
     /**
      * Helper function used to set the underlying application attributes.
