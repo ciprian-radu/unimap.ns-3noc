@@ -134,7 +134,7 @@ private:
   void
   SendFlit ();
 
-  uint32_t           m_hSize;                   // The horizontal size of a 2D mesh (how many nodes can be put on a line). The vertical size of the 2D mesh is given by number of nodes
+  int                m_hSize;                   // The horizontal size of a 2D mesh (how many nodes can be put on a line). The vertical size of the 2D mesh is given by number of nodes
   NetDeviceContainer m_devices;                 // the net devices from the NoC network
   NodeContainer      m_nodes;                   // the nodes from the NoC network
   double             m_injectionProbability;    // The injection probability

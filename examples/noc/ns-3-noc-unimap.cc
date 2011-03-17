@@ -208,10 +208,10 @@ main (int argc, char *argv[])
   string mappingXmlFilePath;
 
   // the number of nodes from the NoC
-  uint32_t numberOfNodes = 16;
+  int numberOfNodes = 16;
 
   // how many nodes a 2D mesh has horizontally
-  uint32_t hSize = 4;
+  int hSize = 4;
 
   Time globalClock = PicoSeconds (1000); // 1 ns -> NoC @ 1GHz
 
@@ -240,8 +240,8 @@ main (int argc, char *argv[])
   cmd.AddValue<string> ("run", "The run is a unique identifier for this trial with which it's information is tagged for identification in later analysis (mandatory parameter when just-save-topology = false).", run);
   cmd.AddValue<string> ("author", "The author of this simulation (optional parameter).", author);
   cmd.AddValue<string> ("mapping-file-path", "The path to the XML file that contains the application mapping (mandatory parameter when just-save-topology = false)", mappingXmlFilePath);
-  cmd.AddValue<uint32_t> ("nodes", "The number of nodes from the NoC (default is 16)", numberOfNodes);
-  cmd.AddValue<uint32_t> ("h-size", "How many nodes a 2D mesh has horizontally (default is 4)", hSize);
+  cmd.AddValue<int> ("nodes", "The number of nodes from the NoC (default is 16)", numberOfNodes);
+  cmd.AddValue<int> ("h-size", "How many nodes a 2D mesh has horizontally (default is 4)", hSize);
   cmd.AddValue<uint64_t> ("flit-size", "The size of a flit, in bytes (default is 32, minimum value is given by the size of the packet header)", flitSize);
   cmd.AddValue<uint64_t> ("flits-per-packet", "How many flits a packet has (default is 9, minimum value is 2)", flitsPerPacket);
 //  cmd.AddValue<double> ("injection-probability", "The packet injection probability (default is 1 (maximum), minimum is zero).", injectionProbability);
@@ -276,7 +276,7 @@ main (int argc, char *argv[])
   // Here, we will explicitly create the NoC nodes.
   NS_LOG_INFO ("Create nodes.");
   NodeContainer nodes;
-  for (unsigned int i = 0; i < numberOfNodes; ++i)
+  for (int i = 0; i < numberOfNodes; ++i)
     {
       Ptr<NocNode> nocNode = CreateObject<NocNode> ();
       nodes.Add (nocNode);
@@ -285,7 +285,7 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
-  noc->SetAttribute ("hSize", UintegerValue (hSize));
+  noc->SetAttribute ("hSize", IntegerValue (hSize));
 
   // set channel bandwidth to 1 flit / network clock
   // the channel's bandwidth is obviously expressed in bits / s

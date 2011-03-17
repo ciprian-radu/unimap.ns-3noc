@@ -31,7 +31,7 @@
 #include "ns3/wormhole-switching.h"
 #include "ns3/vct-switching.h"
 #include "ns3/noc-packet-tag.h"
-#include "ns3/uinteger.h"
+#include "ns3/integer.h"
 #include "ns3/file-utils.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocTorus2D");
@@ -49,8 +49,8 @@ namespace ns3
     		.AddConstructor<NocTorus2D> ()
     		.AddAttribute("hSize",
     				"how many nodes the 2D torus will have on one horizontal line",
-    				UintegerValue(4), MakeUintegerAccessor(&NocTorus2D::m_hSize),
-    				MakeUintegerChecker<uint32_t> (1, 127));
+    				IntegerValue(4), MakeUintegerAccessor(&NocTorus2D::m_hSize),
+    				MakeUintegerChecker<int> (1, 127));
     return tid;
   }
 
@@ -161,9 +161,9 @@ namespace ns3
     channel = 0;
     std::vector<Ptr<NocChannel> > columnChannels (m_hSize);
     std::vector<Ptr<NocChannel> > columnChannels_torus (m_hSize);
-    for (unsigned int i = 0; i < nodes.GetN (); i = i + m_hSize)
+    for (int i = 0; i < (int) nodes.GetN (); i = i + m_hSize)
       {
-        for (unsigned int j = 0; j < m_hSize; ++j)
+        for (int j = 0; j < m_hSize; ++j)
           {
             Ptr<NocNode> nocNode = nodes.Get (i + j)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)
@@ -180,7 +180,7 @@ namespace ns3
                 nocNode->AddDevice (netDevice);
                 nocNode->GetRouter ()->AddDevice (netDevice);
               }
-            if (i < nodes.GetN () - m_hSize)
+            if (i < (int) nodes.GetN () - m_hSize)
               {
                 channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
                 netDevice = CreateObject<NocNetDevice> ();
@@ -214,7 +214,7 @@ namespace ns3
                 nocNode->GetRouter ()->AddDevice (netDevice);
                 columnChannels_torus[j] = channel;
               }
-            if (i >= nodes.GetN () - m_hSize)
+            if (i >= (int) nodes.GetN () - m_hSize)
               {
                 channel = columnChannels_torus[j];
                 netDevice = CreateObject<NocNetDevice> ();
