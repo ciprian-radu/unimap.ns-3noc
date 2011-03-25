@@ -24,14 +24,14 @@
 #include "noc-mesh-3d.h"
 #include "ns3/config.h"
 #include "ns3/log.h"
-#include "ns3/xy-routing.h"
+#include "ns3/xyz-routing.h"
 #include "ns3/4-way-router.h"
 #include "ns3/irvine-router.h"
 #include "ns3/saf-switching.h"
 #include "ns3/wormhole-switching.h"
 #include "ns3/vct-switching.h"
 #include "ns3/noc-packet-tag.h"
-#include "ns3/integer.h"
+#include "ns3/uinteger.h"
 #include "ns3/file-utils.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocMesh3D");
@@ -45,12 +45,16 @@ namespace ns3
   NocMesh3D::GetTypeId ()
   {
     static TypeId tid = TypeId ("ns3::NocMesh3D")
-    	.SetParent<NocTopology> ()
-    	.AddConstructor<NocMesh3D> ()
-    	.AddAttribute ("hSize",
-    		"how many nodes the 3D mesh will have on one horizontal line",
-    		IntegerValue (4), MakeIntegerAccessor (&NocMesh3D::m_hSize),
-    		MakeUintegerChecker<int> (1, 127));
+        .SetParent<NocTopology> ()
+        .AddConstructor<NocMesh3D> ()
+        .AddAttribute ("hSize",
+                "how many nodes the 3D mesh will have on one horizontal line",
+                UintegerValue (4), MakeUintegerAccessor (&NocMesh3D::m_hSize),
+                MakeUintegerChecker<uint32_t> (1, 127))
+        .AddAttribute ("vSize",
+                "how many nodes the 3D mesh will have on one vertical line",
+                UintegerValue (4), MakeUintegerAccessor (&NocMesh3D::m_vSize),
+                MakeUintegerChecker<uint32_t> (1, 127));
     return tid;
   }
 
@@ -69,10 +73,12 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
     NS_LOG_DEBUG ("hSize " << m_hSize);
+    NS_LOG_DEBUG ("vSize " << m_vSize);
 
     m_nodes = nodes;
 
-    uint32_t numberOfNodesXY = m_hSize * m_hSize;
+    uint32_t numberOfNodesXY = m_hSize * m_vSize;
+    NS_LOG_DEBUG ("XYNodes " << numberOfNodesXY);
 
     Ptr<NocChannel> channel = 0;
     Ptr<NocNetDevice> netDevice;
@@ -134,11 +140,9 @@ namespace ns3
     // create the vertical channels (and net devices)
     channel = 0;
     std::vector<Ptr<NocChannel> > columnChannels (m_hSize);
-    int k = -1;
     for (unsigned int i = 0; i < nodes.GetN (); i = i + m_hSize)
-      { k++;
-        k=(int)((k)/m_hSize);
-        for (int j = 0; j < m_hSize; ++j)
+      {
+        for (unsigned int j = 0; j < m_hSize; ++j)
           {
             Ptr<NocNode> nocNode = nodes.Get (i + j)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)
@@ -236,8 +240,79 @@ namespace ns3
   vector<uint8_t>
   NocMesh3D::GetDestinationRelativeDimensionalPosition (uint32_t sourceNodeId, uint32_t destinationNodeId)
   {
-    NS_LOG_ERROR ("This method must be implemented! Exiting...");
-    exit(-1);
+    NS_LOG_FUNCTION (sourceNodeId << destinationNodeId);
+
+    vector<uint8_t> relativePositions;
+
+    uint32_t sourceX = sourceNodeId % m_hSize;
+    uint32_t sourceY = sourceNodeId % (m_hSize * m_vSize) / m_hSize;
+    uint32_t sourceZ = sourceNodeId / m_hSize / m_vSize;
+    NS_LOG_DEBUG ("source X = " << sourceX);
+    NS_LOG_DEBUG ("source Y = " << sourceY);
+    NS_LOG_DEBUG ("source Z = " << sourceZ);
+
+    uint8_t destinationX = destinationNodeId % m_hSize;
+    uint8_t destinationY = destinationNodeId % (m_hSize * m_vSize) / m_hSize;
+    uint8_t destinationZ = destinationNodeId / m_hSize / m_vSize;
+    NS_LOG_DEBUG ("destination X = " <<(int) destinationX);
+    NS_LOG_DEBUG ("destination Y = " <<(int) destinationY);
+    NS_LOG_DEBUG ("destination Z = " <<(int) destinationZ);
+
+    uint8_t relativeX = 0;
+    uint8_t relativeY = 0;
+    uint8_t relativeZ = 0;
+
+    if (destinationX < sourceX)
+      {
+        // 0 = East; 1 = West
+        relativeX = NocHeader::DIRECTION_BIT_MASK;
+      }
+    if (destinationY < sourceY)
+      {
+        // 0 = South; 1 = North
+        relativeY = NocHeader::DIRECTION_BIT_MASK;
+      }
+    if (destinationZ < sourceZ)
+      {
+        // 0 = Down; 1 = Up
+        relativeZ = NocHeader::DIRECTION_BIT_MASK;
+      }
+    NS_LOG_DEBUG ("relative X = " <<(int) relativeX);
+    NS_LOG_DEBUG ("relative Y = " <<(int) relativeY);
+    NS_LOG_DEBUG ("relative Z = " <<(int) relativeZ);
+    relativeX = relativeX | std::abs ((int) (destinationX - sourceX));
+    if ((relativeX & NocHeader::DIRECTION_BIT_MASK) == NocHeader::DIRECTION_BIT_MASK)
+      {
+        NS_LOG_DEBUG ("relativeX -" << (int) (relativeX & NocHeader::OFFSET_BIT_MASK));
+      }
+    else
+      {
+        NS_LOG_DEBUG ("relativeX " << (int) (relativeX & NocHeader::OFFSET_BIT_MASK));
+      }
+    relativeY = relativeY | std::abs ((int) (destinationY - sourceY));
+    if ((relativeY & NocHeader::DIRECTION_BIT_MASK) == NocHeader::DIRECTION_BIT_MASK)
+      {
+        NS_LOG_DEBUG ("relativeY -" << (int) (relativeY & NocHeader::OFFSET_BIT_MASK));
+      }
+    else
+      {
+        NS_LOG_DEBUG ("relativeY " << (int) (relativeY & NocHeader::OFFSET_BIT_MASK));
+      }
+    relativeZ = relativeZ | std::abs ((int) (destinationZ - sourceZ));
+    if ((relativeZ & NocHeader::DIRECTION_BIT_MASK) == NocHeader::DIRECTION_BIT_MASK)
+      {
+        NS_LOG_DEBUG ("relativeZ -" << (int) (relativeZ & NocHeader::OFFSET_BIT_MASK));
+      }
+    else
+      {
+        NS_LOG_DEBUG ("relativeZ " << (int) (relativeZ & NocHeader::OFFSET_BIT_MASK));
+      }
+
+    relativePositions.insert (relativePositions.end (), relativeX);
+    relativePositions.insert (relativePositions.end (), relativeY);
+    relativePositions.insert (relativePositions.end (), relativeZ);
+
+    return relativePositions;
   }
 
   void
@@ -246,7 +321,7 @@ namespace ns3
     NS_LOG_FUNCTION (directoryPath);
 
     stringstream ss;
-    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_hSize << FILE_SEPARATOR << "nodes";
+    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_vSize << FILE_SEPARATOR << "nodes";
     string nodesXmlDirectoryPath = ss.str ();
     FileUtils::MkdirRecursive (nodesXmlDirectoryPath.c_str ());
 
@@ -339,7 +414,7 @@ namespace ns3
       }
 
     ss.str ("");
-    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_hSize << FILE_SEPARATOR << "links";
+    ss << directoryPath << FILE_SEPARATOR << m_hSize << "x" << nodes.GetN () / m_vSize << FILE_SEPARATOR << "links";
     string linksXmlDirectoryPath = ss.str ();
     FileUtils::MkdirRecursive (linksXmlDirectoryPath.c_str ());
 
@@ -412,4 +487,3 @@ namespace ns3
   }
 
 } // namespace ns3
-

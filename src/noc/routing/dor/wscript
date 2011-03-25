@@ -4,11 +4,12 @@ def build(bld):
     dor = bld.create_ns3_module('dor', ['core', 'simulator', 'routing'])
     dor.source = [
         'xy-routing.cc',              
-        ]
+    	'xyz-routing.cc',            
+    	]
 
     headers = bld.new_task_gen('ns3header')
     headers.module = 'dor'
     headers.source = [
         'xy-routing.h',              
-        ]
-
+    	'xyz-routing.h',            
+    	]

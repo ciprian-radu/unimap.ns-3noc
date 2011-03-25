@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009 - 2011
  *               - Advanced Computer Architecture and Processing Systems (ACAPS),
- *               						Lucian Blaga University of Sibiu, Romania
+ *                                                              Lucian Blaga University of Sibiu, Romania
  *               - Systems and Networking, University of Augsburg, Germany
  *
  * This program is free software; you can redistribute it and/or modify
@@ -61,7 +61,11 @@ namespace ns3
     /**
      * how many nodes the 2D mesh will have on one horizontal line
      */
-    int m_hSize;
+    uint8_t m_hSize;
+    /**
+     * how many nodes the 2D mesh will have on one vertical line
+     */
+    uint8_t m_vSize;
 
   };
 

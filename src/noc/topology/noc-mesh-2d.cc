@@ -26,13 +26,14 @@
 #include "ns3/config.h"
 #include "ns3/log.h"
 #include "ns3/xy-routing.h"
+#include "ns3/xyz-routing.h"
 #include "ns3/4-way-router.h"
 #include "ns3/irvine-router.h"
 #include "ns3/saf-switching.h"
 #include "ns3/wormhole-switching.h"
 #include "ns3/vct-switching.h"
 #include "ns3/noc-packet-tag.h"
-#include "ns3/integer.h"
+#include "ns3/uinteger.h"
 #include "ns3/file-utils.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocMesh2D");
@@ -50,9 +51,15 @@ namespace ns3
         .AddConstructor<NocMesh2D> ()
         .AddAttribute ("hSize",
             "how many nodes the 2D mesh will have on one horizontal line",
-            IntegerValue (4),
-            MakeIntegerAccessor (&NocMesh2D::m_hSize),
-            MakeIntegerChecker<int> (1, 127));
+            UintegerValue (4),
+            MakeUintegerAccessor (&NocMesh2D::m_hSize),
+            MakeUintegerChecker<uint8_t> (1, 127))
+        .AddAttribute ("vSize",
+            "how many nodes the 2D mesh will have on one vertical line",
+            UintegerValue (4),
+            MakeUintegerAccessor (&NocMesh2D::m_vSize),
+            MakeUintegerChecker<uint8_t> (1, 127));
+
     return tid;
   }
 
@@ -136,7 +143,7 @@ namespace ns3
     std::vector<Ptr<NocChannel> > columnChannels (m_hSize);
     for (unsigned int i = 0; i < nodes.GetN (); i = i + m_hSize)
       {
-        for (int j = 0; j < m_hSize; ++j)
+        for (unsigned int j = 0; j < m_hSize; ++j)
           {
             Ptr<NocNode> nocNode = nodes.Get (i + j)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)
@@ -197,10 +204,13 @@ namespace ns3
 
     uint8_t sourceX = sourceNodeId % m_hSize;
     uint8_t sourceY = sourceNodeId / m_hSize;
+
     uint8_t destinationX = destinationNodeId % m_hSize;
     uint8_t destinationY = destinationNodeId / m_hSize;
+
     uint8_t relativeX = 0;
     uint8_t relativeY = 0;
+    uint8_t relativeZ = 0;
     if (destinationX < sourceX)
       {
         // 0 = East; 1 = West
@@ -232,6 +242,7 @@ namespace ns3
 
     relativePositions.insert (relativePositions.end (), relativeX);
     relativePositions.insert (relativePositions.end (), relativeY);
+    relativePositions.insert (relativePositions.end (), relativeZ);
 
     return relativePositions;
   }
@@ -406,4 +417,3 @@ namespace ns3
   }
 
 } // namespace ns3
-

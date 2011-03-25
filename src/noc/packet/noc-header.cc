@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009 - 2011
  *               - Advanced Computer Architecture and Processing Systems (ACAPS),
- *               						Lucian Blaga University of Sibiu, Romania
+ *                 Lucian Blaga University of Sibiu, Romania
  *               - Systems and Networking, University of Augsburg, Germany
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Authors: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
- *         		http://webspace.ulbsibiu.ro/ciprian.radu/
+ *                       http://webspace.ulbsibiu.ro/ciprian.radu/
  *          Andreea Gancea <andreea.gancea@ulbsibiu.ro>
  */
 
@@ -37,18 +37,33 @@ namespace ns3
   {
     NocHeader::m_xDistance = 0;
     NocHeader::m_yDistance = 0;
+    NocHeader::m_zDistance = 0;
     NocHeader::m_sourceX = 0;
     NocHeader::m_sourceY = 0;
+    NocHeader::m_sourceZ = 0;
 //    NocHeader::m_subdataId = 0;
 //    NocHeader::m_peGroupAddress = 0;
   }
 
   NocHeader::NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX, uint8_t sourceY, uint16_t dataFlitCount)
+    {
+      NocHeader::m_xDistance = xDistance;
+      NocHeader::m_yDistance = yDistance;
+      NocHeader::m_zDistance = 0;
+      NocHeader::m_sourceX = sourceX;
+      NocHeader::m_sourceY = sourceY;
+      NocHeader::m_sourceZ = 0;
+  //    NocHeader::m_subdataId = 0;
+  //    NocHeader::m_peGroupAddress = 0;
+    }
+  NocHeader::NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t zDistance, uint8_t sourceX, uint8_t sourceY, uint8_t sourceZ, uint16_t dataFlitCount)
   {
     NocHeader::m_xDistance = xDistance;
     NocHeader::m_yDistance = yDistance;
+    NocHeader::m_zDistance = zDistance;
     NocHeader::m_sourceX = sourceX;
     NocHeader::m_sourceY = sourceY;
+    NocHeader::m_sourceZ = sourceZ;
 //    NocHeader::m_subdataId = 0;
 //    NocHeader::m_peGroupAddress = 0;
   }
@@ -61,10 +76,10 @@ namespace ns3
   TypeId
   NocHeader::GetTypeId ()
   {
-	static TypeId tid = TypeId ("NocHeader")
-	  .SetParent<Header> ()
-	  .AddConstructor<NocHeader> ()
-	;
+        static TypeId tid = TypeId ("NocHeader")
+          .SetParent<Header> ()
+          .AddConstructor<NocHeader> ()
+        ;
     return tid;
   }
 
@@ -91,9 +106,13 @@ namespace ns3
 
     start.WriteU8 (m_yDistance);
 
+    start.WriteU8 (m_zDistance);
+
     start.WriteU8 (m_sourceX);
 
     start.WriteU8 (m_sourceY);
+
+    start.WriteU8 (m_sourceZ);
 
 //    start.WriteU8 (m_subdataId);
 
@@ -113,9 +132,11 @@ namespace ns3
 
         m_xDistance = start.ReadU8 ();
         m_yDistance = start.ReadU8 ();
+        m_zDistance = start.ReadU8 ();
 
         m_sourceX = start.ReadU8 ();
         m_sourceY = start.ReadU8 ();
+        m_sourceZ = start.ReadU8 ();
 
 //        m_subdataId = start.ReadU8 ();
 
@@ -131,34 +152,48 @@ namespace ns3
   {
     std::string xDir;
     std::string yDir;
+    std::string zDir;
 
-    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK && (m_xDistance != DIRECTION_BIT_MASK))
       {
         xDir = "W";
       }
     else
       {
-        if (m_xDistance != 0)
+        if ((m_xDistance != 0) && (m_xDistance != DIRECTION_BIT_MASK))
           {
             xDir = "E";
           }
       }
-    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK)
+    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK && (m_yDistance != DIRECTION_BIT_MASK))
       {
         yDir = "N";
       }
     else
       {
-        if (m_yDistance != 0)
+        if ((m_yDistance != 0) && (m_yDistance != DIRECTION_BIT_MASK))
           {
             yDir = "S";
+          }
+      }
+    if ((m_zDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK && (m_zDistance != DIRECTION_BIT_MASK))
+      {
+        zDir = "U";
+      }
+    else
+      {
+        if ((m_zDistance != 0) && (m_zDistance != DIRECTION_BIT_MASK))
+          {
+            zDir = "D";
           }
       }
 
     os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
        << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
+       << "z=<" << (int) (m_zDistance & OFFSET_BIT_MASK) << ", " << zDir << "> "
        << "sourceX=" << (int) m_sourceX
-       << " sourceY=" << (int) m_sourceY;
+       << " sourceY=" << (int) m_sourceY
+       << " sourceZ=" << (int) m_sourceZ;
 //       << " subdataId=" << (int) m_subdataId
 //       << " peGroupAddress=" << (long) m_peGroupAddress
   }
@@ -168,8 +203,10 @@ namespace ns3
   {
     return (m_xDistance == 0)
         && (m_yDistance == 0)
+        && (m_zDistance == 0)
         && (m_sourceX == 0)
-        && (m_sourceY == 0);
+        && (m_sourceY == 0)
+        && (m_sourceZ == 0);
 //        && (m_subdataId == 0)
 //        && (m_peGroupAddress == 0)
   }
@@ -222,6 +259,18 @@ namespace ns3
     return (m_yDistance & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
   }
 
+  bool
+   NocHeader::HasUpDirection ()
+   {
+     return !HasDownDirection ();
+   }
+
+   bool
+   NocHeader::HasDownDirection ()
+   {
+     return (m_zDistance & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
+   }
+
   void
   NocHeader::SetXOffset (uint8_t xOffset)
   {
@@ -248,6 +297,19 @@ namespace ns3
       }
   }
 
+  void
+    NocHeader::SetZOffset (uint8_t zOffset)
+    {
+      if (HasDownDirection ())
+        {
+          m_zDistance = zOffset;
+        }
+      else
+        {
+          m_zDistance = zOffset | DIRECTION_BIT_MASK;
+        }
+    }
+
   uint8_t
   NocHeader::GetXOffset ()
   {
@@ -259,6 +321,12 @@ namespace ns3
   {
     return m_yDistance & OFFSET_BIT_MASK;
   }
+
+  uint8_t
+    NocHeader::GetZOffset ()
+    {
+      return m_zDistance & OFFSET_BIT_MASK;
+    }
 
   void
   NocHeader::SetSourceX (uint8_t sourceX)
@@ -284,6 +352,19 @@ namespace ns3
   NocHeader::GetSourceY ()
   {
     return m_sourceY;
+  }
+
+  void
+  NocHeader::SetSourceZ (uint8_t sourceZ)
+  {
+    m_sourceZ = sourceZ;
+  }
+
+  uint8_t
+  const
+  NocHeader::GetSourceZ ()
+  {
+    return m_sourceZ;
   }
 
 //  void

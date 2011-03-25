@@ -52,8 +52,21 @@ namespace ns3
      * \param sourceY the Y coordinate of the source node
      * \param dataFlitCount the number of data flits (packets) that the message having this header will have
      */
-    NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
-        uint8_t sourceY, uint16_t dataFlitCount);
+    NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX, uint8_t sourceY, uint16_t dataFlitCount);
+
+    /**
+     * Constructor - creates a header
+     *
+     * \param xDistance the X (horizontal) offset to the destination
+     * \param yDistance the Y (vertical) offset to the destination
+     * \param yDistance the Z offset to the destination
+     * \param sourceX the X coordinate of the source node
+     * \param sourceY the Y coordinate of the source node
+     * \param sourceY the Z coordinate of the source node
+     * \param dataFlitCount the number of data flits (packets) that the message having this header will have
+     */
+    NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t zDistance,
+        uint8_t sourceX, uint8_t sourceY, uint8_t sourceZ,  uint16_t dataFlitCount);
 
     virtual
     ~NocHeader ();
@@ -108,6 +121,12 @@ namespace ns3
     bool
     HasSouthDirection ();
 
+    bool
+    HasUpDirection ();
+
+    bool
+    HasDownDirection ();
+
     void
     SetXOffset (uint8_t xOffset);
 
@@ -121,6 +140,12 @@ namespace ns3
     GetYOffset ();
 
     void
+    SetZOffset (uint8_t zOffset);
+
+    uint8_t
+    GetZOffset ();
+
+    void
     SetSourceX (uint8_t sourceX);
 
     uint8_t
@@ -131,6 +156,12 @@ namespace ns3
 
     uint8_t
     const GetSourceY ();
+
+    void
+    SetSourceZ (uint8_t sourceZ);
+
+    uint8_t
+    const GetSourceZ ();
 
 //    void
 //    SetSubdataId (uint8_t subdataId);
@@ -150,7 +181,7 @@ namespace ns3
      * the size of this type of header, in bytes
      */
     // Make sure to update this field whenever you modify the structure of the header
-    static const uint32_t HEADER_SIZE = 4;
+    static const uint32_t HEADER_SIZE = 6;
 
   private:
 
@@ -159,17 +190,21 @@ namespace ns3
 //     */
 //    static const uint8_t HEADER_ID = 0x0C;
 
-    // m_xDistance and m_yDistance determine the destination address
+    // m_xDistance, m_yDistance and m_zDistance determine the destination address
 
     uint8_t m_xDistance;
 
     uint8_t m_yDistance;
 
-    // m_sourceX and m_sourceY for the source address
+    uint8_t m_zDistance;
+
+    // m_sourceX, m_sourceY and m_sourceZ for the source address
 
     uint8_t m_sourceX;
 
     uint8_t m_sourceY;
+
+    uint8_t m_sourceZ;
 
 //    /**
 //     * allows package indexing; this is useful when data has to be split

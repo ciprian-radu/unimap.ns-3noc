@@ -59,9 +59,10 @@ namespace ns3
   private:
 
     /**
-     * how many nodes the 3D mesh will have on one horizontal line
+     * how many nodes the 3D mesh will have on one horizontal and vertical line
      */
-    int m_hSize;
+    uint32_t m_hSize;
+    uint32_t m_vSize;
 
   };
 
