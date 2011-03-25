@@ -25,13 +25,14 @@
 #include "ns3/config.h"
 #include "ns3/log.h"
 #include "ns3/xy-routing.h"
+#include "ns3/xyz-routing.h"
 #include "ns3/4-way-router.h"
 #include "ns3/irvine-router.h"
 #include "ns3/saf-switching.h"
 #include "ns3/wormhole-switching.h"
 #include "ns3/vct-switching.h"
 #include "ns3/noc-packet-tag.h"
-#include "ns3/integer.h"
+#include "ns3/uinteger.h"
 #include "ns3/file-utils.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocTorus2D");
@@ -45,12 +46,16 @@ namespace ns3
   NocTorus2D::GetTypeId ()
   {
     static TypeId tid = TypeId("ns3::NocTorus2D")
-    		.SetParent<NocTopology> ()
-    		.AddConstructor<NocTorus2D> ()
-    		.AddAttribute("hSize",
-    				"how many nodes the 2D torus will have on one horizontal line",
-    				IntegerValue(4), MakeUintegerAccessor(&NocTorus2D::m_hSize),
-    				MakeUintegerChecker<int> (1, 127));
+                .SetParent<NocTopology> ()
+                .AddConstructor<NocTorus2D> ()
+                .AddAttribute("hSize",
+                                "how many nodes the 2D torus will have on one horizontal line",
+                                UintegerValue(4), MakeUintegerAccessor(&NocTorus2D::m_hSize),
+                                MakeUintegerChecker<uint32_t> (1, 127))
+                .AddAttribute("vSize",
+                                "how many nodes the 2D torus will have on one vertical line",
+                                UintegerValue(4), MakeUintegerAccessor(&NocTorus2D::m_vSize),
+                                MakeUintegerChecker<uint32_t> (1, 127));
     return tid;
   }
 
@@ -161,9 +166,9 @@ namespace ns3
     channel = 0;
     std::vector<Ptr<NocChannel> > columnChannels (m_hSize);
     std::vector<Ptr<NocChannel> > columnChannels_torus (m_hSize);
-    for (int i = 0; i < (int) nodes.GetN (); i = i + m_hSize)
+    for (unsigned int i = 0; i < nodes.GetN (); i = i + m_hSize)
       {
-        for (int j = 0; j < m_hSize; ++j)
+        for (unsigned int j = 0; j < m_hSize; ++j)
           {
             Ptr<NocNode> nocNode = nodes.Get (i + j)->GetObject<NocNode> ();
             if (columnChannels[j] != 0)
@@ -180,7 +185,7 @@ namespace ns3
                 nocNode->AddDevice (netDevice);
                 nocNode->GetRouter ()->AddDevice (netDevice);
               }
-            if (i < (int) nodes.GetN () - m_hSize)
+            if (i < nodes.GetN () - m_hSize)
               {
                 channel = m_channelFactory.Create ()->GetObject<NocChannel> ();
                 netDevice = CreateObject<NocNetDevice> ();
@@ -214,7 +219,7 @@ namespace ns3
                 nocNode->GetRouter ()->AddDevice (netDevice);
                 columnChannels_torus[j] = channel;
               }
-            if (i >= (int) nodes.GetN () - m_hSize)
+            if (i >= nodes.GetN () - m_hSize)
               {
                 channel = columnChannels_torus[j];
                 netDevice = CreateObject<NocNetDevice> ();
@@ -257,7 +262,9 @@ namespace ns3
     uint8_t destinationY = destinationNodeId / m_hSize;
     uint8_t relativeX = 0;
     uint8_t relativeY = 0;
-    int xOffset = (destinationX - sourceX) % m_hSize;
+    uint8_t relativeZ = 0;
+    int xOffset = ((int) (destinationX - sourceX)) >= 0 ? (destinationX - sourceX) % m_hSize : (m_hSize + destinationX
+        - sourceX) % m_hSize;
     if (xOffset > (int) (m_hSize / 2))
       {
         xOffset = xOffset - m_hSize;
@@ -271,7 +278,7 @@ namespace ns3
     relativeX = relativeX | xOffset;
     NS_LOG_DEBUG ("relativeX " << relativeX);
 
-    int yOffset = (destinationY - sourceY) % (m_nodes.GetN () / m_hSize);
+    int yOffset = ((int) (destinationY - sourceY)) >= 0 ? (destinationY - sourceY)% m_vSize:(m_vSize+destinationY - sourceY)% m_vSize;
     if (yOffset > (int) ((m_nodes.GetN () / m_hSize) / 2))
       {
         yOffset = yOffset - (m_nodes.GetN () / m_hSize);
@@ -287,6 +294,7 @@ namespace ns3
 
     relativePositions.insert (relativePositions.end (), relativeX);
     relativePositions.insert (relativePositions.end (), relativeY);
+    relativePositions.insert (relativePositions.end (), relativeZ);
 
     return relativePositions;
   }
@@ -452,4 +460,3 @@ namespace ns3
   }
 
 } // namespace ns3
-

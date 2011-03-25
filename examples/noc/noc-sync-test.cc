@@ -52,7 +52,7 @@
 #include "ns3/noc-packet-tag.h"
 #include "ns3/nstime.h"
 #include "ns3/output-stream-wrapper.h"
-#include "ns3/integer.h"
+#include "ns3/uinteger.h"
 #include "src/noc/topology/noc-torus-2d.h"
 
 
@@ -60,8 +60,9 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("NocSyncTest");
 
-int numberOfNodes = 16;
-int hSize = 4;
+uint32_t numberOfNodes = 8;
+uint32_t hSize = 2;
+uint32_t vSize = 2;
 
 int
 main (int argc, char *argv[])
@@ -70,6 +71,11 @@ main (int argc, char *argv[])
       "The number of nodes ("<< numberOfNodes
       <<") must be a multiple of the number of nodes on the horizontal axis ("
       << hSize << ")");
+
+  NS_ASSERT_MSG (numberOfNodes % vSize == 0,
+        "The number of nodes ("<< numberOfNodes
+        <<") must be a multiple of the number of nodes on the vertical axis ("
+        << hSize << ")");
 
   double injectionProbability (1);
   int dataPacketSpeedup (1);
@@ -88,7 +94,7 @@ main (int argc, char *argv[])
   // Here, we will explicitly create four nodes.
   NS_LOG_INFO ("Create nodes.");
   NodeContainer nodes;
-  for (int i = 0; i < numberOfNodes; ++i)
+  for (unsigned int i = 0; i < numberOfNodes; ++i)
     {
       Ptr<NocNode> nocNode = CreateObject<NocNode> ();
       nodes.Add (nocNode);
@@ -97,12 +103,15 @@ main (int argc, char *argv[])
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
-  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+  //Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
   // Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
-  // Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
-  noc->SetAttribute ("hSize", IntegerValue (hSize));
+//  Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
+  Ptr<NocTopology> noc = CreateObject<NocMesh3D> ();
+  //Ptr<NocTopology> noc = CreateObject<NocTorus3D> ();
+  noc->SetAttribute ("hSize", UintegerValue (hSize));
+  noc->SetAttribute ("vSize", UintegerValue (vSize));
 
-  uint32_t flitSize = 32; // 4 bytes
+  uint32_t flitSize = 56; // 4 bytes
   NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize));
 
   // set channel bandwidth to 1 flit / network clock
@@ -111,7 +120,7 @@ main (int argc, char *argv[])
   noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ((uint64_t) (1e12 * (flitSize)
       / globalClock.GetPicoSeconds ()))));
   // the channel has no propagation delay
-  noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (0)));
+  noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (10)));
 
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
   //  noc->SetChannelAttribute ("Length", DoubleValue (10)); // 10 micro-meters channel length
@@ -128,8 +137,14 @@ main (int argc, char *argv[])
   // noc->SetRouterAttribute ("LoadComponent", TypeIdValue (TypeId::LookupByName ("ns3::SoLoadRouterComponent")));
   // Do not forget about changing the routing protocol when changing the load router component
 
-   noc->SetRoutingProtocol ("ns3::XyRouting");
+  // noc->SetRoutingProtocol ("ns3::XyRouting");
   // noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
+
+   noc->SetRoutingProtocol ("ns3::XyzRouting");
+   noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (true));
+   noc->SetRoutingProtocolAttribute ("RouteXSecond", BooleanValue (true));
+   noc->SetRoutingProtocolAttribute ("RouteYFirst", BooleanValue (false));
+   noc->SetRoutingProtocolAttribute ("RouteYSecond", BooleanValue (true));
 
   // noc->SetRoutingProtocol ("ns3::SlbRouting");
   // noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
@@ -144,44 +159,44 @@ main (int argc, char *argv[])
   NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
 
-  uint64_t packetLength = 5; // flits per packet
+  uint64_t packetLength = 2; // flits per packet
 
   NS_LOG_INFO ("Create Applications.");
-  NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize);
+  NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize, vSize);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (10)); // destination
+  nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (1)); // destination
   nocSyncAppHelper1.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
-  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (2)); // source
+  ApplicationContainer apps1 = nocSyncAppHelper1.Install (nodes.Get (6)); // source
   apps1.Start (Seconds (0.0));
   apps1.Stop (Scalar (10) * globalClock);
 
-  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
-  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
-  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (2)); // destination
-  nocSyncAppHelper2.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
-  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (10)); // source
-  apps2.Start (Seconds (0.0));
-  apps2.Stop (Scalar (10) * globalClock);
+//  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
+//  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
+//  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
+//  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (2)); // destination
+//  nocSyncAppHelper2.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
+//  ApplicationContainer apps2 = nocSyncAppHelper2.Install (nodes.Get (10)); // source
+//  apps2.Start (Seconds (0.0));
+//  apps2.Stop (Scalar (10) * globalClock);
 
-  NocSyncApplicationHelper nocSyncAppHelper3 (nodes, devs, hSize);
-  nocSyncAppHelper3.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
-  nocSyncAppHelper3.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper3.SetAttribute ("Destination", UintegerValue (7)); // destination
-  nocSyncAppHelper3.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
-  ApplicationContainer apps3 = nocSyncAppHelper3.Install (nodes.Get (5)); // source
-  apps3.Start (Seconds (0.0));
-  apps3.Stop (Scalar (10) * globalClock);
-
-  NocSyncApplicationHelper nocSyncAppHelper4 (nodes, devs, hSize);
-  nocSyncAppHelper4.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
-  nocSyncAppHelper4.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
-  nocSyncAppHelper4.SetAttribute ("Destination", UintegerValue (5)); // destination
-  nocSyncAppHelper4.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
-  ApplicationContainer apps4 = nocSyncAppHelper4.Install (nodes.Get (7)); // source
-  apps4.Start (Seconds (0.0));
-  apps4.Stop (Scalar (10) * globalClock);
+//  NocSyncApplicationHelper nocSyncAppHelper3 (nodes, devs, hSize);
+//  nocSyncAppHelper3.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
+//  nocSyncAppHelper3.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
+//  nocSyncAppHelper3.SetAttribute ("Destination", UintegerValue (7)); // destination
+//  nocSyncAppHelper3.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
+//  ApplicationContainer apps3 = nocSyncAppHelper3.Install (nodes.Get (5)); // source
+//  apps3.Start (Seconds (0.0));
+//  apps3.Stop (Scalar (10) * globalClock);
+//
+//  NocSyncApplicationHelper nocSyncAppHelper4 (nodes, devs, hSize);
+//  nocSyncAppHelper4.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
+//  nocSyncAppHelper4.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
+//  nocSyncAppHelper4.SetAttribute ("Destination", UintegerValue (5)); // destination
+//  nocSyncAppHelper4.SetAttribute ("NumberOfFlits", UintegerValue (packetLength));
+//  ApplicationContainer apps4 = nocSyncAppHelper4.Install (nodes.Get (7)); // source
+//  apps4.Start (Seconds (0.0));
+//  apps4.Stop (Scalar (10) * globalClock);
 
   // Configure tracing of all enqueue, dequeue, and NetDevice receive events
   // Trace output will be sent to the noc-sync-test.tr file
@@ -197,10 +212,10 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Run ();
 
-  NS_LOG_INFO ("NoC dynamic power: " << noc->GetDynamicPower () << " W");
-  NS_LOG_INFO ("NoC leakage power: " << noc->GetLeakagePower () << " W");
-  NS_LOG_INFO ("NoC total power: " << noc->GetTotalPower () << " W");
-  NS_LOG_INFO ("NoC area: " << noc->GetArea () << " um^2");
+//  NS_LOG_INFO ("NoC dynamic power: " << noc->GetDynamicPower () << " W");
+//  NS_LOG_INFO ("NoC leakage power: " << noc->GetLeakagePower () << " W");
+//  NS_LOG_INFO ("NoC total power: " << noc->GetTotalPower () << " W");
+//  NS_LOG_INFO ("NoC area: " << noc->GetArea () << " um^2");
 
   Simulator::Destroy ();
   NS_LOG_INFO ("Done.");

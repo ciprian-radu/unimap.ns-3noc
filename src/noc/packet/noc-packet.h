@@ -46,7 +46,22 @@ namespace ns3
      * \param dataPacketSize the size of the head packet (without including the size of the header)
      */
     NocPacket (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX,
-        uint8_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize);
+            uint8_t sourceY, uint16_t dataFlitCount, uint32_t dataPacketSize);
+
+    /**
+     * Constructor - creates a head packet
+     *
+     * \param xDistance the X (horizontal) offset to the destination
+     * \param yDistance the Y (vertical) offset to the destination
+     * \param yDistance the Z offset to the destination
+     * \param sourceX the X coordinate of the source node
+     * \param sourceY the Y coordinate of the source node
+     * \param sourceZ the Z coordinate of the source node
+     * \param dataFlitCount the number of data flits (packets) that the message having this header will have
+     * \param dataPacketSize the size of the head packet (without including the size of the header)
+     */
+    NocPacket (uint8_t xDistance, uint8_t yDistance, uint8_t zDistance, uint8_t sourceX,
+        uint8_t sourceY, uint8_t sourceZ, uint16_t dataFlitCount, uint32_t dataPacketSize);
 
     /**
      * Constructor - creates a data packet

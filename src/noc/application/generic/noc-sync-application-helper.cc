@@ -23,19 +23,28 @@
 #include "ns3/packet-socket-address.h"
 #include "ns3/net-device-container.h"
 #include "ns3/string.h"
-#include "ns3/integer.h"
+#include "ns3/uinteger.h"
 #include "ns3/names.h"
 
 namespace ns3
 {
 
-  NocSyncApplicationHelper::NocSyncApplicationHelper (NodeContainer nodes, NetDeviceContainer devices, int hSize)
+  NocSyncApplicationHelper::NocSyncApplicationHelper (NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize)
   {
     m_nodes = nodes;
     m_devices = devices;
     m_factory.SetTypeId ("ns3::NocSyncApplication");
-    m_factory.Set ("HSize", IntegerValue (hSize));
+    m_factory.Set ("HSize", UintegerValue (hSize));
   }
+
+  NocSyncApplicationHelper::NocSyncApplicationHelper (NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize, uint32_t vSize)
+    {
+      m_nodes = nodes;
+      m_devices = devices;
+      m_factory.SetTypeId ("ns3::NocSyncApplication");
+      m_factory.Set ("HSize", UintegerValue (hSize));
+      m_factory.Set ("VSize", UintegerValue (vSize));
+    }
 
   void
   NocSyncApplicationHelper::SetAttribute (std::string name, const AttributeValue &value)

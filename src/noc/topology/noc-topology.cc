@@ -25,6 +25,7 @@
 #include "ns3/config.h"
 #include "ns3/log.h"
 #include "ns3/xy-routing.h"
+#include "ns3/xyz-routing.h"
 #include "ns3/4-way-router.h"
 #include "ns3/irvine-router.h"
 #include "ns3/saf-switching.h"
@@ -502,4 +503,3 @@ namespace ns3
   }
 
 } // namespace ns3
-

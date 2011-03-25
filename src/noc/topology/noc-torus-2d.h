@@ -63,11 +63,13 @@ namespace ns3
     /**
      * how many nodes the 2D torus will have on one horizontal line
      */
-    int m_hSize;
-
+    uint32_t m_hSize;
+    /**
+     * how many nodes the 2D torus will have on one vertical line
+     */
+    uint32_t m_vSize;
   };
 
 } // namespace ns3
 
 #endif /* NOCTORUS2D_H_ */
-
