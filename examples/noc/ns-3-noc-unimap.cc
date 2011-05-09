@@ -285,7 +285,7 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
-  noc->SetAttribute ("hSize", IntegerValue (hSize));
+  noc->SetAttribute ("hSize", UintegerValue (hSize));
 
   // set channel bandwidth to 1 flit / network clock
   // the channel's bandwidth is obviously expressed in bits / s
@@ -346,7 +346,7 @@ main (int argc, char *argv[])
   if (!justSaveTopology) {
     NocCtgApplicationHelper ctgApplicationHelper (
         mappingXmlFilePath,
-        2, // the number of CTG iterations
+        10, // the number of CTG iterations
         flitsPerPacket,
         simulationCycles,
         nodes,
@@ -424,7 +424,7 @@ main (int argc, char *argv[])
     NS_LOG_INFO ("Run Simulation.");
     Simulator::Run ();
     NS_LOG_INFO ("Done.");
-    NS_LOG_INFO ("Simulation time is " << Simulator::Now ());
+    NS_LOG_INFO ("Simulated time is " << Simulator::Now ());
     Simulator::Destroy ();
 
     // this must be done after the simulation ended
