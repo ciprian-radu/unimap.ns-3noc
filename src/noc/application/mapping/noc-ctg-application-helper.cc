@@ -133,14 +133,15 @@ namespace ns3
         auto_ptr<mappingType> theMappingType (research::noc::application_mapping::unified_framework::schema::mapping::mapping (
             m_mappingXmlFilePath, flags::dont_validate));
 
-        string ctgFilePath = m_mappingXmlFilePath.substr (0, m_mappingXmlFilePath.find_last_of (FILE_SEPARATOR));
-
         for (mappingType::map_const_iterator i (theMappingType->map ().begin ()); i != theMappingType->map ().end (); i++)
           {
             mapType theMapType = *i;
             NS_LOG_INFO ("\t node: " << theMapType.node ());
             NS_LOG_INFO ("\t core: " << theMapType.core ());
 
+            string ctgFilePath = m_mappingXmlFilePath.substr (0, m_mappingXmlFilePath.find_last_of (FILE_SEPARATOR));
+            ctgFilePath = ctgFilePath.substr (0, ctgFilePath.find_last_of (FILE_SEPARATOR))
+                + FILE_SEPARATOR + "ctg-" + theMapType.apcg ().substr (0, theMapType.apcg ().find_last_of ("_"));
             string apcgXmlFilePath = ctgFilePath + FILE_SEPARATOR + "apcg-" + theMapType.apcg () + ".xml";
             NS_LOG_LOGIC ("APCG XML file path is " << apcgXmlFilePath);
 
@@ -309,6 +310,9 @@ namespace ns3
                 NS_LOG_ERROR ("The node ID " << theMapType.node () << " is not a number");
               }
 
+            NS_ASSERT_MSG (m_nodes.GetN () > nodeId, "Cannot find NoC node "
+                << nodeId << " because the NoC has only " << m_nodes.GetN () << " nodes. Check to see if this mapping is for this NoC topology!");
+
             ApplicationContainer apps = Install (m_nodes.Get (nodeId)); // source
             uint64_t startTime = 0;
             apps.Start (PicoSeconds (startTime));
@@ -330,6 +334,8 @@ namespace ns3
     Ptr<NocCtgApplication> app = m_factory.Create<NocCtgApplication> ();
     app->SetNetDeviceContainer (m_devices);
     app->SetNodeContainer (m_nodes);
+
+    NS_LOG_DEBUG ("Installing an application on NoC node " << node->GetId ());
 
     node->AddApplication (app);
 
