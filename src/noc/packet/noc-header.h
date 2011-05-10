@@ -68,6 +68,16 @@ namespace ns3
     NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t zDistance,
         uint8_t sourceX, uint8_t sourceY, uint8_t sourceZ,  uint16_t dataFlitCount);
 
+    /**
+     * Constructor - creates a header
+     *
+     * \param distance the offset to the destination
+     * \param source the coordinate of the source node
+     * \param dataFlitCount the number of data flits (packets) that the message having this header will have
+     */
+
+    NocHeader (std::vector <uint8_t> distance, std::vector <uint8_t> source, uint16_t dataFlitCount);
+
     virtual
     ~NocHeader ();
 
@@ -127,6 +137,12 @@ namespace ns3
     bool
     HasDownDirection ();
 
+    bool
+    HasForwardDirection (int index);
+
+    bool
+    HasBackDirection (int index);
+
     void
     SetXOffset (uint8_t xOffset);
 
@@ -146,6 +162,12 @@ namespace ns3
     GetZOffset ();
 
     void
+    SetOffset (std::vector <uint8_t> offset);
+
+    std::vector<uint8_t>
+    GetOffset ();
+
+    void
     SetSourceX (uint8_t sourceX);
 
     uint8_t
@@ -162,6 +184,18 @@ namespace ns3
 
     uint8_t
     const GetSourceZ ();
+
+    void
+    SetSource (std::vector<uint8_t> source);
+
+    std::vector<uint8_t>
+    const GetSource ();
+
+    /**
+     * the size of this type of header, in bytes
+     */
+    static uint32_t
+    const GetHeaderSize ();
 
 //    void
 //    SetSubdataId (uint8_t subdataId);
@@ -181,7 +215,7 @@ namespace ns3
      * the size of this type of header, in bytes
      */
     // Make sure to update this field whenever you modify the structure of the header
-    static const uint32_t HEADER_SIZE = 6;
+//    static const uint32_t HEADER_SIZE = 6;
 
   private:
 
@@ -190,21 +224,25 @@ namespace ns3
 //     */
 //    static const uint8_t HEADER_ID = 0x0C;
 
+    // m_Distance determine the destination address
+
+    std::vector <uint8_t> m_distance;
+
     // m_xDistance, m_yDistance and m_zDistance determine the destination address
 
-    uint8_t m_xDistance;
+//    uint8_t m_xDistance;
 
-    uint8_t m_yDistance;
-
-    uint8_t m_zDistance;
+//    uint8_t m_yDistance;
 
     // m_sourceX, m_sourceY and m_sourceZ for the source address
 
-    uint8_t m_sourceX;
+    std::vector <uint8_t> m_source;
 
-    uint8_t m_sourceY;
+    // m_sourceX, m_sourceY and m_sourceZ for the source address
 
-    uint8_t m_sourceZ;
+//    uint8_t m_sourceX;
+
+//    uint8_t m_sourceY;
 
 //    /**
 //     * allows package indexing; this is useful when data has to be split

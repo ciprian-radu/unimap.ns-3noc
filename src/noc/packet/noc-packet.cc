@@ -50,6 +50,16 @@ namespace ns3
     AddPacketTag (tag);
   }
 
+  NocPacket::NocPacket (std::vector<uint8_t> distance, std::vector<uint8_t> source, uint16_t dataFlitCount,
+       uint32_t dataPacketSize): Packet (dataPacketSize)
+   {
+     NocHeader nocHeader (distance, source, dataFlitCount);
+     AddHeader (nocHeader);
+     NocPacketTag tag;
+     tag.SetPacketType (HEAD);
+     AddPacketTag (tag);
+   }
+
   NocPacket::NocPacket (uint32_t headPacketUid, uint32_t dataPacketSize, bool isTailPacket) :
     Packet (dataPacketSize)
   {

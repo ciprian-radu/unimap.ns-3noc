@@ -64,6 +64,17 @@ namespace ns3
         uint8_t sourceY, uint8_t sourceZ, uint16_t dataFlitCount, uint32_t dataPacketSize);
 
     /**
+     * Constructor - creates a head packet
+     *
+     * \param distance the  offsets to the destination
+     * \param source the coordinates of the source node
+     * \param dataFlitCount the number of data flits (packets) that the message having this header will have
+     * \param dataPacketSize the size of the head packet (without including the size of the header)
+     */
+    NocPacket (std::vector <uint8_t> distance, std::vector<uint8_t> source, uint16_t dataFlitCount,
+        uint32_t dataPacketSize);
+
+    /**
      * Constructor - creates a data packet
      *
      * \param headPacketUid the UID of the head packet

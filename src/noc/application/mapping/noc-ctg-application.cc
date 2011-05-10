@@ -507,7 +507,7 @@ namespace ns3
 
     uint64_t upperValue = (uint64_t)ceil((dtd.GetData() / 8) / m_flitSize);
     // the following test is to account for the smaller payload carried by the head flit
-    if ((upperValue - 1) * m_flitSize + m_flitSize - NocHeader::HEADER_SIZE < dtd.GetData() / 8)
+    if ((upperValue - 1) * m_flitSize + m_flitSize - NocHeader::GetHeaderSize() < dtd.GetData() / 8)
       {
         // add another data flit
         upperValue++;
@@ -562,9 +562,11 @@ namespace ns3
             "The number of flits must be at least 1 (the head flit) but it is " << m_numberOfFlits);
         if (m_currentFlitIndex[iteration] == 0)
           {
-            NS_ASSERT_MSG (m_flitSize >= (uint32_t) NocHeader::HEADER_SIZE, "The flit size must be at least " << NocHeader::HEADER_SIZE << " (the flit header size)");
+            NS_ASSERT_MSG (m_flitSize >= (uint64_t) NocHeader::GetHeaderSize(),
+                "The flit size must be at least " << NocHeader::GetHeaderSize()
+                << " bytes (the packet header size), but it is " << m_flitSize << "!");
             m_currentHeadFlit[iteration] = Create<NocPacket> (relativeX, relativeY, sourceX,
-                sourceY, m_numberOfFlits - 1, m_flitSize - NocHeader::HEADER_SIZE);
+                sourceY, m_numberOfFlits - 1, m_flitSize - NocHeader::GetHeaderSize());
             NS_LOG_LOGIC ("Preparing to inject flit " << *m_currentHeadFlit[iteration]);
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
@@ -572,8 +574,8 @@ namespace ns3
               }
             sourceNode->InjectPacket (m_currentHeadFlit[iteration], destinationNode);
             m_currentFlitIndex[iteration]++;
-            m_totBytes[iteration] += m_flitSize - NocHeader::HEADER_SIZE;
-            m_totalTaskBytes[iteration] += m_flitSize - NocHeader::HEADER_SIZE;
+            m_totBytes[iteration] += m_flitSize - NocHeader::GetHeaderSize();
+            m_totalTaskBytes[iteration] += m_flitSize - NocHeader::GetHeaderSize();
           }
         else
           {

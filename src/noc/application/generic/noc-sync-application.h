@@ -31,6 +31,7 @@
 #include "ns3/net-device-container.h"
 #include "ns3/noc-packet.h"
 #include "ns3/traffic-pattern.h"
+#include "ns3/noc-value.h"
 
 namespace ns3 {
 
@@ -99,6 +100,9 @@ public:
   virtual ~NocSyncApplication ();
 
   void
+  SetDimensionSize (std::vector<Ptr<NocValue> > size);
+
+  void
   SetMaxBytes (uint32_t maxBytes);
 
   void
@@ -134,8 +138,7 @@ private:
   void
   SendFlit ();
 
-  uint32_t           m_hSize;                   // The horizontal size of a 2D mesh (how many nodes can be put on a line)
-  uint32_t           m_vSize;                   // The vertical size of a 2D mesh (how many nodes can be put on a line)
+  std::vector<Ptr<NocValue> > m_size;           // The dimensions size of a nD mesh (how many nodes can be put on each dimension).
   NetDeviceContainer m_devices;                 // the net devices from the NoC network
   NodeContainer      m_nodes;                   // the nodes from the NoC network
   double             m_injectionProbability;    // The injection probability
@@ -151,9 +154,7 @@ private:
   EventId            m_startEvent;              // Event id for next start event
   EventId            m_sendEvent;               // Event id of pending send packet event
   ns3::TrafficPattern    m_trafficPattern;
-  uint32_t           m_uniformDestinationX;     // the X coordinate of the last destination node (generated in an uniform random manner)
-  uint32_t           m_uniformDestinationY;     // the Y coordinate of the last destination node (generated in an uniform random manner)
-  uint32_t           m_uniformDestinationZ;     // the Z coordinate of the last destination node (generated in an uniform random manner)
+  std::vector<uint32_t> m_uniformDestination;   // the coordinates of the last destination node (generated in an uniform random manner)
   
   /**
    * Allows tracing injected packets into the network.

@@ -29,6 +29,8 @@
 #include "ns3/net-device-container.h"
 #include "ns3/node-container.h"
 #include "ns3/application-container.h"
+#include "ns3/object-vector.h"
+#include "ns3/noc-value.h"
 
 namespace ns3
 {
@@ -65,6 +67,19 @@ namespace ns3
      *
      */
     NocSyncApplicationHelper(NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize, uint32_t vSize);
+
+    /**
+     * Create a NocSyncApplicationHelper to make it easier to work with NoC applications
+     *
+     * \param nodes the nodes from the NoC network
+     *
+     * \param devices the net devices from the NoC network
+     *
+     * \param size the size of every nD mesh dimension
+     *
+     */
+    NocSyncApplicationHelper (NodeContainer nodes, NetDeviceContainer devices, std::vector<Ptr<NocValue> > size);
+
     /**
      * Helper function used to set the underlying application attributes.
      *
@@ -121,6 +136,7 @@ namespace ns3
     ObjectFactory m_factory;
     NetDeviceContainer m_devices;
     NodeContainer m_nodes;
+    std::vector<Ptr<NocValue> > m_size;
   };
 
 } // namespace ns3

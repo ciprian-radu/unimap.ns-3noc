@@ -159,10 +159,10 @@ namespace ns3
     bool isEast = nocHeader.HasEastDirection ();
     int xOffset = nocHeader.GetXOffset ();
 
-    bool isSouth = nocHeader.HasSouthDirection ();
+    bool isNorth = nocHeader.HasNorthDirection ();
     int yOffset = nocHeader.GetYOffset ();
 
-    bool isDown = nocHeader.HasDownDirection ();
+    bool isUp= nocHeader.HasUpDirection ();
     int zOffset = nocHeader.GetZOffset ();
 
     RoutingDirection xDirection = NocRoutingProtocol::NONE;
@@ -170,8 +170,8 @@ namespace ns3
     RoutingDirection zDirection = NocRoutingProtocol::NONE;
 
     NS_LOG_DEBUG ("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
-    NS_LOG_DEBUG ("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
-    NS_LOG_DEBUG ("zOffset " << zOffset << " direction " << (isDown ? "up" : "down"));
+    NS_LOG_DEBUG ("yOffset " << yOffset << " direction " << (isNorth ? "north" : "south"));
+    NS_LOG_DEBUG ("zOffset " << zOffset << " direction " << (isUp? "up" : "down"));
 
     if (m_routeXFirst)
       {
@@ -197,15 +197,15 @@ namespace ns3
                 if (yOffset != 0)
                   {
                     yOffset--;
-                    if (isSouth)
-                      {
-                        NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-                        yDirection = NocRoutingProtocol::BACK;
-                      }
-                    else
+                    if (isNorth)
                       {
                         NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
                         yDirection = NocRoutingProtocol::FORWARD;
+                      }
+                    else
+                      {
+                        NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+                        yDirection = NocRoutingProtocol::BACK;
                       }
                     nocHeader.SetYOffset (yOffset);
                   }
@@ -214,15 +214,15 @@ namespace ns3
                     if (zOffset != 0)
                       {
                         zOffset--;
-                        if (isDown)
-                          {
-                            NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
-                            zDirection = NocRoutingProtocol::BACK;
-                          }
-                        else
+                        if (isUp)
                           {
                             NS_ASSERT_MSG (zOffset >= 0, "A packet going to Up will have the offset < 0");
                             zDirection = NocRoutingProtocol::FORWARD;
+                          }
+                        else
+                          {
+                            NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
+                            zDirection = NocRoutingProtocol::BACK;
                           }
                         nocHeader.SetZOffset (zOffset);
                       }
@@ -233,15 +233,15 @@ namespace ns3
                 if (zOffset != 0)
                   {
                     zOffset--;
-                    if (isDown)
-                      {
-                        NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
-                        zDirection = NocRoutingProtocol::BACK;
-                      }
-                    else
+                    if (isUp)
                       {
                         NS_ASSERT_MSG (zOffset >= 0, "A packet going to Up will have the offset < 0");
                         zDirection = NocRoutingProtocol::FORWARD;
+                      }
+                    else
+                      {
+                        NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
+                        zDirection = NocRoutingProtocol::BACK;
                       }
                     nocHeader.SetZOffset (zOffset);
                   }
@@ -250,19 +250,17 @@ namespace ns3
                     if (yOffset != 0)
                       {
                         yOffset--;
-                        if (isSouth)
+                        if (isNorth)
+                          {
+                            NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
+                            yDirection = NocRoutingProtocol::FORWARD;
+                          }
+                        else
                           {
                             NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
                             yDirection = NocRoutingProtocol::BACK;
                           }
-                        else
-                          {
-                              {
-                                NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
-                                yDirection = NocRoutingProtocol::FORWARD;
-                              }
-                            nocHeader.SetYOffset (yOffset);
-                          }
+                        nocHeader.SetYOffset (yOffset);
                       }
                   }
               }
@@ -275,15 +273,15 @@ namespace ns3
             if (yOffset != 0)
               {
                 yOffset--;
-                if (isSouth)
-                  {
-                    NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-                    yDirection = NocRoutingProtocol::BACK;
-                  }
-                else
+                if (isNorth)
                   {
                     NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
                     yDirection = NocRoutingProtocol::FORWARD;
+                  }
+                else
+                  {
+                    NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+                    yDirection = NocRoutingProtocol::BACK;
                   }
                 nocHeader.SetYOffset (yOffset);
               }
@@ -312,15 +310,15 @@ namespace ns3
                         if (zOffset != 0)
                           {
                             zOffset--;
-                            if (isDown)
-                              {
-                                NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
-                                zDirection = NocRoutingProtocol::BACK;
-                              }
-                            else
+                            if (isUp)
                               {
                                 NS_ASSERT_MSG (zOffset >= 0, "A packet going to Up will have the offset < 0");
                                 zDirection = NocRoutingProtocol::FORWARD;
+                              }
+                            else
+                              {
+                                NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
+                                zDirection = NocRoutingProtocol::BACK;
                               }
                             nocHeader.SetZOffset (zOffset);
                           }
@@ -331,15 +329,15 @@ namespace ns3
                     if (zOffset != 0)
                       {
                         zOffset--;
-                        if (isDown)
-                          {
-                            NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
-                            zDirection = NocRoutingProtocol::BACK;
-                          }
-                        else
+                        if (isUp)
                           {
                             NS_ASSERT_MSG (zOffset >= 0, "A packet going to Up will have the offset < 0");
                             zDirection = NocRoutingProtocol::FORWARD;
+                          }
+                        else
+                          {
+                            NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
+                            zDirection = NocRoutingProtocol::BACK;
                           }
                         nocHeader.SetZOffset (zOffset);
                       }
@@ -369,15 +367,15 @@ namespace ns3
             if (zOffset != 0)
               {
                 zOffset--;
-                if (isDown)
-                  {
-                    NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
-                    zDirection = NocRoutingProtocol::BACK;
-                  }
-                else
+                if (isUp)
                   {
                     NS_ASSERT_MSG (zOffset >= 0, "A packet going to Up will have the offset < 0");
                     zDirection = NocRoutingProtocol::FORWARD;
+                  }
+                else
+                  {
+                    NS_ASSERT_MSG (zOffset >= 0, "A packet going to Down will have the offset < 0");
+                    zDirection = NocRoutingProtocol::BACK;
                   }
                 nocHeader.SetZOffset (zOffset);
               }
@@ -405,15 +403,15 @@ namespace ns3
                         if (yOffset != 0)
                           {
                             yOffset--;
-                            if (isSouth)
-                              {
-                                NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-                                yDirection = NocRoutingProtocol::BACK;
-                              }
-                            else
+                            if (isNorth)
                               {
                                 NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
                                 yDirection = NocRoutingProtocol::FORWARD;
+                              }
+                            else
+                              {
+                                NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+                                yDirection = NocRoutingProtocol::BACK;
                               }
                             nocHeader.SetYOffset (yOffset);
                           }
@@ -424,15 +422,15 @@ namespace ns3
                     if (yOffset != 0)
                       {
                         yOffset--;
-                        if (isSouth)
-                          {
-                            NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-                            yDirection = NocRoutingProtocol::BACK;
-                          }
-                        else
+                        if (isNorth)
                           {
                             NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
                             yDirection = NocRoutingProtocol::FORWARD;
+                          }
+                        else
+                          {
+                            NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+                            yDirection = NocRoutingProtocol::BACK;
                           }
                         nocHeader.SetYOffset (yOffset);
                       }

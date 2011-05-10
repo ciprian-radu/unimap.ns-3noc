@@ -85,6 +85,11 @@ namespace ns3
      */
     Ptr<NocTopology> m_nocTopology;
 
+    /**
+     * the NoC topology number of dimensions
+     */
+    uint32_t m_nocTopologyDimension;
+
   };
 
 } // namespace ns3
