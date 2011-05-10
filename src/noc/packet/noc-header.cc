@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009 - 2011
  *               - Advanced Computer Architecture and Processing Systems (ACAPS),
- *                 Lucian Blaga University of Sibiu, Romania
+ *               						Lucian Blaga University of Sibiu, Romania
  *               - Systems and Networking, University of Augsburg, Germany
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Authors: Ciprian Radu <ciprian.radu@ulbsibiu.ro>
- *                       http://webspace.ulbsibiu.ro/ciprian.radu/
+ *         		http://webspace.ulbsibiu.ro/ciprian.radu/
  *          Andreea Gancea <andreea.gancea@ulbsibiu.ro>
  */
 
 #include "noc-header.h"
 #include "ns3/log.h"
+#include <stdint.h>
+#include "ns3/uinteger.h"
+#include "ns3/integer.h"
+#include "ns3/noc-registry.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocHeader");
 
@@ -35,37 +39,65 @@ namespace ns3
 
   NocHeader::NocHeader ()
   {
-    NocHeader::m_xDistance = 0;
-    NocHeader::m_yDistance = 0;
-    NocHeader::m_zDistance = 0;
-    NocHeader::m_sourceX = 0;
-    NocHeader::m_sourceY = 0;
-    NocHeader::m_sourceZ = 0;
-//    NocHeader::m_subdataId = 0;
-//    NocHeader::m_peGroupAddress = 0;
-  }
+    IntegerValue integerValue;
+    NocRegistry::GetInstance ()->GetAttribute ("NoCDimensions", integerValue);
+    uint32_t topologyDimension = integerValue.Get ();
+    NocHeader::m_source = vector<uint8_t> ();
+    NocHeader::m_distance = vector<uint8_t> ();
+    for (unsigned int i = 0; i < topologyDimension; i ++)
+      {
+        NocHeader::m_source.insert(m_source.end(), 0);
+        NocHeader::m_distance.insert(m_distance.end(), 0);
+      }
 
+    //    NocHeader::m_subdataId = 0;
+    //    NocHeader::m_peGroupAddress = 0;
+  }
   NocHeader::NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t sourceX, uint8_t sourceY, uint16_t dataFlitCount)
     {
-      NocHeader::m_xDistance = xDistance;
-      NocHeader::m_yDistance = yDistance;
-      NocHeader::m_zDistance = 0;
-      NocHeader::m_sourceX = sourceX;
-      NocHeader::m_sourceY = sourceY;
-      NocHeader::m_sourceZ = 0;
+      IntegerValue integerValue;
+      NocRegistry::GetInstance ()->GetAttribute ("NoCDimensions", integerValue);
+      uint32_t topologyDimension = integerValue.Get ();
+      NocHeader::m_source = vector<uint8_t> ();
+      NocHeader::m_distance = vector<uint8_t> ();
+      for (unsigned int i = 0; i < topologyDimension; i ++)
+        {
+          NocHeader::m_source.insert(m_source.end(), 0);
+          NocHeader::m_distance.insert(m_distance.end(), 0);
+        }
+      NocHeader::m_distance.at(0) = xDistance;
+      NocHeader::m_distance.at(1) = yDistance;
+      NocHeader::m_source.at(0) = sourceX;
+      NocHeader::m_source.at(1) = sourceY;
   //    NocHeader::m_subdataId = 0;
   //    NocHeader::m_peGroupAddress = 0;
     }
+
   NocHeader::NocHeader (uint8_t xDistance, uint8_t yDistance, uint8_t zDistance, uint8_t sourceX, uint8_t sourceY, uint8_t sourceZ, uint16_t dataFlitCount)
   {
-    NocHeader::m_xDistance = xDistance;
-    NocHeader::m_yDistance = yDistance;
-    NocHeader::m_zDistance = zDistance;
-    NocHeader::m_sourceX = sourceX;
-    NocHeader::m_sourceY = sourceY;
-    NocHeader::m_sourceZ = sourceZ;
-//    NocHeader::m_subdataId = 0;
-//    NocHeader::m_peGroupAddress = 0;
+    IntegerValue integerValue;
+    NocRegistry::GetInstance ()->GetAttribute ("NoCDimensions", integerValue);
+    uint32_t topologyDimension = integerValue.Get ();
+    NocHeader::m_source = vector<uint8_t> ();
+    NocHeader::m_distance = vector<uint8_t> ();
+    for (unsigned int i = 0; i < topologyDimension; i ++)
+      {
+        NocHeader::m_source.insert(m_source.end(), 0);
+        NocHeader::m_distance.insert(m_distance.end(), 0);
+      }
+    NocHeader::m_distance.at (0) = xDistance;
+    NocHeader::m_distance.at (1) = yDistance;
+    NocHeader::m_distance.at (2) = zDistance;
+    NocHeader::m_source.at (0) = sourceX;
+    NocHeader::m_source.at (1) = sourceY;
+    NocHeader::m_source.at (2) = sourceZ;
+    //    NocHeader::m_subdataId = 0;
+    //    NocHeader::m_peGroupAddress = 0;
+  }
+  NocHeader::NocHeader (std::vector<uint8_t> distance, std::vector<uint8_t> source, uint16_t dataFlitCount)
+  {
+    NocHeader::m_distance = distance;
+    NocHeader::m_source = source;
   }
 
   NocHeader::~NocHeader ()
@@ -92,7 +124,7 @@ namespace ns3
   uint32_t
   NocHeader::GetSerializedSize () const
   {
-    return HEADER_SIZE; // bytes
+    return GetHeaderSize (); // bytes
   }
 
   void
@@ -100,115 +132,101 @@ namespace ns3
   {
     // The 1 byte-constant (the first 2 bits are 1 and the rest are 0;
     // the 6 zeroes represent the packet type)
-//    start.WriteU8 (HEADER_ID);
+    //    start.WriteU8 (HEADER_ID);
 
-    start.WriteU8 (m_xDistance);
+    for (unsigned int i = 0; i < m_distance.size (); i++)
+      {
+        start.WriteU8 (m_distance.at (i));
+      }
+    for (unsigned int i = 0; i < m_source.size (); i++)
+      {
+        start.WriteU8 (m_source.at (i));
+      }
 
-    start.WriteU8 (m_yDistance);
+    //    start.WriteU8 (m_subdataId);
 
-    start.WriteU8 (m_zDistance);
-
-    start.WriteU8 (m_sourceX);
-
-    start.WriteU8 (m_sourceY);
-
-    start.WriteU8 (m_sourceZ);
-
-//    start.WriteU8 (m_subdataId);
-
-//    start.WriteHtonU16 (m_peGroupAddress);
+    //    start.WriteHtonU16 (m_peGroupAddress);
 
   }
 
   uint32_t
   NocHeader::Deserialize (Buffer::Iterator start)
   {
-//    uint8_t tmp;
-//    tmp = start.ReadU8 ();
-//    // if tmp == 0 then we have a data packet
-//    if (tmp != 0)
-//      {
-//        NS_ASSERT (tmp == HEADER_ID);
+    //    uint8_t tmp;
+    //    tmp = start.ReadU8 ();
+    //    // if tmp == 0 then we have a data packet
+    //    if (tmp != 0)
+    //      {
+    //        NS_ASSERT (tmp == HEADER_ID);
+    for (unsigned int i = 0; i < m_distance.size (); i++)
+      {
+        m_distance.at (i) = start.ReadU8 ();
+      }
 
-        m_xDistance = start.ReadU8 ();
-        m_yDistance = start.ReadU8 ();
-        m_zDistance = start.ReadU8 ();
+    for (unsigned int i = 0; i < m_source.size (); i++)
+      {
+        m_source.at (i) = start.ReadU8 ();
+      }
 
-        m_sourceX = start.ReadU8 ();
-        m_sourceY = start.ReadU8 ();
-        m_sourceZ = start.ReadU8 ();
 
-//        m_subdataId = start.ReadU8 ();
+    //        m_subdataId = start.ReadU8 ();
 
-//        m_peGroupAddress = start.ReadNtohU16 ();
+    //        m_peGroupAddress = start.ReadNtohU16 ();
 
-//      }
+    //      }
 
-    return HEADER_SIZE; // the number of bytes consumed.
+    return GetHeaderSize (); // the number of bytes consumed.
   }
 
   void
   NocHeader::Print (std::ostream &os) const
   {
-    std::string xDir;
-    std::string yDir;
-    std::string zDir;
-
-    if ((m_xDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK && (m_xDistance != DIRECTION_BIT_MASK))
+    std::vector<string> dir(m_distance.size());
+    for (unsigned int i = 0; i < m_distance.size (); i++)
       {
-        xDir = "W";
-      }
-    else
-      {
-        if ((m_xDistance != 0) && (m_xDistance != DIRECTION_BIT_MASK))
+        if ((m_distance.at (i) & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK && (m_distance.at (i) != DIRECTION_BIT_MASK))
           {
-            xDir = "E";
+            dir.at(i)= "B";
           }
-      }
-    if ((m_yDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK && (m_yDistance != DIRECTION_BIT_MASK))
-      {
-        yDir = "N";
-      }
-    else
-      {
-        if ((m_yDistance != 0) && (m_yDistance != DIRECTION_BIT_MASK))
+        else
           {
-            yDir = "S";
+            if ((m_distance.at (i) != 0) && (m_distance.at (i) != DIRECTION_BIT_MASK))
+              {
+                dir.at(i)= "F";
+              }
           }
+        os << "dimension " << (i+1) << "=<" << (int) (m_distance.at (i) & OFFSET_BIT_MASK) << ", " << dir.at (i) << "> ";
       }
-    if ((m_zDistance & DIRECTION_BIT_MASK) == DIRECTION_BIT_MASK && (m_zDistance != DIRECTION_BIT_MASK))
+    for (unsigned int i = 0; i < m_source.size (); i++)
       {
-        zDir = "U";
+        os <<" dimension " << (i+1) << " source=" << (int) m_source.at (i);
       }
-    else
-      {
-        if ((m_zDistance != 0) && (m_zDistance != DIRECTION_BIT_MASK))
-          {
-            zDir = "D";
-          }
-      }
-
-    os << "x=<" << (int) (m_xDistance & OFFSET_BIT_MASK) << ", " << xDir << "> "
-       << "y=<" << (int) (m_yDistance & OFFSET_BIT_MASK) << ", " << yDir << "> "
-       << "z=<" << (int) (m_zDistance & OFFSET_BIT_MASK) << ", " << zDir << "> "
-       << "sourceX=" << (int) m_sourceX
-       << " sourceY=" << (int) m_sourceY
-       << " sourceZ=" << (int) m_sourceZ;
-//       << " subdataId=" << (int) m_subdataId
-//       << " peGroupAddress=" << (long) m_peGroupAddress
   }
 
   bool
   NocHeader::IsEmpty () const
   {
-    return (m_xDistance == 0)
-        && (m_yDistance == 0)
-        && (m_zDistance == 0)
-        && (m_sourceX == 0)
-        && (m_sourceY == 0)
-        && (m_sourceZ == 0);
-//        && (m_subdataId == 0)
-//        && (m_peGroupAddress == 0)
+    bool empty = true;
+
+    for (unsigned int i = 0; i < m_distance.size (); i++)
+      {
+        if (m_distance.at (i) != 0)
+          {
+            empty = false;
+            break;
+          }
+      }
+
+    for (unsigned int i = 0; i < m_source.size (); i++)
+      {
+        if (m_source.at (i) != 0)
+          {
+            empty = false;
+            break;
+          }
+      }
+
+    return empty;
   }
 
   //  void
@@ -238,7 +256,7 @@ namespace ns3
   bool
   NocHeader::HasEastDirection ()
   {
-    return (m_xDistance & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
+    return (m_distance.at(0) & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
   }
 
   bool
@@ -250,121 +268,184 @@ namespace ns3
   bool
   NocHeader::HasNorthDirection ()
   {
-    return !HasSouthDirection ();
+    return (m_distance.at(1) & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
   }
 
   bool
   NocHeader::HasSouthDirection ()
   {
-    return (m_yDistance & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
+    return !HasNorthDirection();
   }
 
   bool
-   NocHeader::HasUpDirection ()
-   {
-     return !HasDownDirection ();
-   }
+  NocHeader::HasUpDirection ()
+  {
+    return (m_distance.at(2) & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
+  }
 
-   bool
-   NocHeader::HasDownDirection ()
-   {
-     return (m_zDistance & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
-   }
+  bool
+  NocHeader::HasDownDirection ()
+  {
+    return !HasUpDirection ();
+  }
+
+  bool
+  NocHeader::HasForwardDirection (int index)
+  {
+    return (m_distance.at (index) & DIRECTION_BIT_MASK) != DIRECTION_BIT_MASK;
+  }
+
+  bool
+  NocHeader::HasBackDirection (int index)
+  {
+    return !HasForwardDirection (index);
+  }
 
   void
   NocHeader::SetXOffset (uint8_t xOffset)
   {
     if (HasEastDirection ())
       {
-        m_xDistance = xOffset;
+        m_distance.at(0) = xOffset;
       }
     else
       {
-        m_xDistance = xOffset | DIRECTION_BIT_MASK;
+        m_distance.at(0) = xOffset | DIRECTION_BIT_MASK;
       }
   }
 
   void
   NocHeader::SetYOffset (uint8_t yOffset)
   {
-    if (HasSouthDirection ())
+    if (HasNorthDirection ())
       {
-        m_yDistance = yOffset;
+        m_distance.at(1) = yOffset;
       }
     else
       {
-        m_yDistance = yOffset | DIRECTION_BIT_MASK;
+        m_distance.at(1) = yOffset | DIRECTION_BIT_MASK;
       }
   }
 
   void
-    NocHeader::SetZOffset (uint8_t zOffset)
-    {
-      if (HasDownDirection ())
-        {
-          m_zDistance = zOffset;
-        }
-      else
-        {
-          m_zDistance = zOffset | DIRECTION_BIT_MASK;
-        }
-    }
+  NocHeader::SetZOffset (uint8_t zOffset)
+  {
+    if (HasUpDirection ())
+      {
+        m_distance.at(2) = zOffset;
+      }
+    else
+      {
+        m_distance.at(2) = zOffset | DIRECTION_BIT_MASK;
+      }
+  }
+
+  void
+  NocHeader::SetOffset (vector<uint8_t> offset)
+  {
+    for (unsigned int i = 0; i < m_distance.size (); i++)
+      {
+        if (HasForwardDirection (i))
+          {
+            m_distance.at (i) = offset.at (i);
+          }
+        else
+          {
+            m_distance.at (i) = offset.at (i) | DIRECTION_BIT_MASK;
+          }
+      }
+  }
 
   uint8_t
   NocHeader::GetXOffset ()
   {
-    return m_xDistance & OFFSET_BIT_MASK;
+    return m_distance.at(0) & OFFSET_BIT_MASK;
   }
 
   uint8_t
   NocHeader::GetYOffset ()
   {
-    return m_yDistance & OFFSET_BIT_MASK;
+    return m_distance.at(1) & OFFSET_BIT_MASK;
   }
 
   uint8_t
-    NocHeader::GetZOffset ()
-    {
-      return m_zDistance & OFFSET_BIT_MASK;
-    }
+  NocHeader::GetZOffset ()
+  {
+    return m_distance.at(2) & OFFSET_BIT_MASK;
+  }
+
+  vector<uint8_t>
+  NocHeader::GetOffset ()
+  {
+    std::vector<uint8_t> distance;
+
+    for (unsigned int i = 0; i < m_distance.size (); i++)
+      {
+        distance.insert (distance.end (), m_distance.at (i) & OFFSET_BIT_MASK);
+      }
+    return distance;
+  }
 
   void
   NocHeader::SetSourceX (uint8_t sourceX)
   {
-    m_sourceX = sourceX;
+    m_source.at(0) = sourceX;
   }
 
   uint8_t
   const
   NocHeader::GetSourceX ()
   {
-    return m_sourceX;
+    return m_source.at(0);
   }
 
   void
   NocHeader::SetSourceY (uint8_t sourceY)
   {
-    m_sourceY = sourceY;
+    m_source.at(1) = sourceY;
   }
 
   uint8_t
   const
   NocHeader::GetSourceY ()
   {
-    return m_sourceY;
+    return m_source.at(1);
   }
 
   void
   NocHeader::SetSourceZ (uint8_t sourceZ)
   {
-    m_sourceZ = sourceZ;
+    m_source.at(2) = sourceZ;
   }
 
   uint8_t
   const
   NocHeader::GetSourceZ ()
   {
-    return m_sourceZ;
+    return m_source.at(2);
+  }
+
+  void
+  NocHeader::SetSource (vector<uint8_t> source)
+  {
+    m_source = source;
+  }
+
+  vector<uint8_t>
+  const
+  NocHeader::GetSource ()
+  {
+    return m_source;
+  }
+
+  uint32_t
+  const
+  NocHeader::GetHeaderSize ()
+  {
+    IntegerValue integerValue;
+    NocRegistry::GetInstance ()->GetAttribute ("NoCDimensions", integerValue);
+    uint32_t topologyDimension = integerValue.Get ();
+    return (2 * topologyDimension);
   }
 
 //  void

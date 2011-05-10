@@ -25,26 +25,18 @@
 #include "ns3/string.h"
 #include "ns3/uinteger.h"
 #include "ns3/names.h"
+#include "ns3/noc-value.h"
 
 namespace ns3
 {
 
-  NocSyncApplicationHelper::NocSyncApplicationHelper (NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize)
+  NocSyncApplicationHelper::NocSyncApplicationHelper (NodeContainer nodes, NetDeviceContainer devices, std::vector<Ptr<NocValue> > size)
   {
     m_nodes = nodes;
     m_devices = devices;
+    m_size = size;
     m_factory.SetTypeId ("ns3::NocSyncApplication");
-    m_factory.Set ("HSize", UintegerValue (hSize));
   }
-
-  NocSyncApplicationHelper::NocSyncApplicationHelper (NodeContainer nodes, NetDeviceContainer devices, uint32_t hSize, uint32_t vSize)
-    {
-      m_nodes = nodes;
-      m_devices = devices;
-      m_factory.SetTypeId ("ns3::NocSyncApplication");
-      m_factory.Set ("HSize", UintegerValue (hSize));
-      m_factory.Set ("VSize", UintegerValue (vSize));
-    }
 
   void
   NocSyncApplicationHelper::SetAttribute (std::string name, const AttributeValue &value)
@@ -81,6 +73,7 @@ namespace ns3
   NocSyncApplicationHelper::InstallPriv (Ptr<Node> node) const
   {
     Ptr<NocSyncApplication> app = m_factory.Create<NocSyncApplication> ();
+    app->SetDimensionSize (m_size);
     app->SetNetDeviceContainer (m_devices);
     app->SetNodeContainer (m_nodes);
     node->AddApplication (app);

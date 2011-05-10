@@ -60,9 +60,9 @@ namespace ns3
             .AddAttribute (
                 "FlitSize",
                 "the flit size, in bits",
-                IntegerValue (32), // 4 bytes
+                IntegerValue (8 * 3), // in bits; 3 bytes by default
                 MakeIntegerAccessor (&NocRegistry::m_flitSize),
-                MakeIntegerChecker<uint32_t> (8 * NocHeader::HEADER_SIZE))
+                MakeIntegerChecker<uint32_t> (8 * 1)) // in bits; at least 1 byte
             .AddAttribute (
                 "DataPacketSpeedup",
                 "How many times a data flit is routed faster than a head flit",
@@ -81,6 +81,12 @@ namespace ns3
                 PointerValue (),
                 MakePointerAccessor (&NocRegistry::m_nocTopology),
                 MakePointerChecker<NocTopology> ())
+            .AddAttribute (
+                "NoCDimensions",
+                "The Network-on-Chip topology number of dimensions",
+                IntegerValue (2),
+                MakeIntegerAccessor(&NocRegistry::m_nocTopologyDimension),
+                MakeIntegerChecker<uint32_t> (1, 127))
             ;
     return tid;
   }

@@ -253,7 +253,7 @@ main (int argc, char *argv[])
       "The number of nodes ("<< numberOfNodes
       <<") must be a multiple of the number of nodes on the horizontal axis ("
       << hSize << ")");
-  NS_ASSERT_MSG (flitSize >= (uint64_t) NocHeader::HEADER_SIZE, "The flit size must be at least " << NocHeader::HEADER_SIZE << "(the packet header size)!");
+  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize));
   NS_ASSERT_MSG (flitsPerPacket >= 2, "At least 2 flits per packet are required!");
   NS_ASSERT_MSG (injectionProbability >= 0 && injectionProbability <= 1, "Injection probability must be in [0,1]!");
   NS_ASSERT_MSG (dataFlitSpeedup >= 1, "Data packet speedup must be >= 1!");
@@ -277,6 +277,11 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Build Topology.");
   Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
+  int64_t dimensions = 2;
+  vector<Ptr<NocValue> > size(dimensions);
+  NocRegistry::GetInstance ()->SetAttribute ("NoCDimensions", IntegerValue (dimensions));
+  size.at (0) = CreateObject<NocValue> (hSize);
+  size.at (1) = CreateObject<NocValue> (numberOfNodes / hSize);
 
   // set channel bandwidth to 1 flit / network clock
   // the channel's bandwidth is obviously expressed in bits / s
@@ -312,13 +317,15 @@ main (int argc, char *argv[])
   // Do not forget about changing the routing protocol when changing the load router component
 
   // setting the routing protocol
-  noc->SetRoutingProtocol ("ns3::XyRouting");
+//  noc->SetRoutingProtocol ("ns3::XyRouting");
 //  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
 //  noc->SetRoutingProtocol ("ns3::SlbRouting");
 //  noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
 
 //  noc->SetRoutingProtocol ("ns3::SoRouting");
+
+  noc->SetRoutingProtocol ("ns3::DorRouting");
 
   // setting the switching mechanism
 //  noc->SetSwitchingProtocol ("ns3::SafSwitching");
@@ -327,13 +334,14 @@ main (int argc, char *argv[])
 
   // installing the topology
   NetDeviceContainer devs = noc->Install (nodes);
+  NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
 
   NS_LOG_INFO ("Create Applications.");
   
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
     {
-      NocSyncApplicationHelper nocSyncAppHelper (nodes, devs, hSize);
+      NocSyncApplicationHelper nocSyncAppHelper (nodes, devs, size);
       nocSyncAppHelper.SetAttribute ("FlitSize", UintegerValue (flitSize));
       nocSyncAppHelper.SetAttribute ("NumberOfFlits", UintegerValue (flitsPerPacket));
       nocSyncAppHelper.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));

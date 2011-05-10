@@ -53,7 +53,6 @@
 #include "ns3/nstime.h"
 #include "ns3/output-stream-wrapper.h"
 #include "ns3/uinteger.h"
-#include "src/noc/topology/noc-torus-2d.h"
 
 
 using namespace ns3;
@@ -103,15 +102,27 @@ main (int argc, char *argv[])
 
   // use a helper function to connect our nodes to the shared channel.
   NS_LOG_INFO ("Build Topology.");
-  //Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
-  // Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
-//  Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
-  Ptr<NocTopology> noc = CreateObject<NocMesh3D> ();
-  //Ptr<NocTopology> noc = CreateObject<NocTorus3D> ();
-  noc->SetAttribute ("hSize", UintegerValue (hSize));
-  noc->SetAttribute ("vSize", UintegerValue (vSize));
+  // Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
 
-  uint32_t flitSize = 56; // 4 bytes
+  // Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
+
+  // Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
+
+  // Ptr<NocTopology> noc = CreateObject<NocMesh3D> ();
+  // noc->SetAttribute ("hSize", UintegerValue (hSize));
+  // noc->SetAttribute ("vSize", UintegerValue (vSize));
+
+  // Ptr<NocTopology> noc = CreateObject<NocTorus3D> ();
+
+  int64_t dimensions = 3;
+  vector<Ptr<NocValue> > size(dimensions);
+  NocRegistry::GetInstance ()->SetAttribute ("NoCDimensions", IntegerValue (dimensions));
+  size.at (0) = CreateObject<NocValue> (hSize);
+  size.at (1) = CreateObject<NocValue> (vSize);
+  size.at (2) = CreateObject<NocValue> (numberOfNodes / hSize / vSize);
+  Ptr<NocTopology> noc = CreateObject<NocMeshND> (size);
+
+  uint32_t flitSize = 8 * 6; // 3 bytes
   NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize));
 
   // set channel bandwidth to 1 flit / network clock
@@ -140,16 +151,18 @@ main (int argc, char *argv[])
   // noc->SetRoutingProtocol ("ns3::XyRouting");
   // noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
-   noc->SetRoutingProtocol ("ns3::XyzRouting");
-   noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (true));
-   noc->SetRoutingProtocolAttribute ("RouteXSecond", BooleanValue (true));
-   noc->SetRoutingProtocolAttribute ("RouteYFirst", BooleanValue (false));
-   noc->SetRoutingProtocolAttribute ("RouteYSecond", BooleanValue (true));
+//   noc->SetRoutingProtocol ("ns3::XyzRouting");
+//   noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (true));
+//   noc->SetRoutingProtocolAttribute ("RouteXSecond", BooleanValue (true));
+//   noc->SetRoutingProtocolAttribute ("RouteYFirst", BooleanValue (false));
+//   noc->SetRoutingProtocolAttribute ("RouteYSecond", BooleanValue (true));
 
   // noc->SetRoutingProtocol ("ns3::SlbRouting");
   // noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
 
   // noc->SetRoutingProtocol ("ns3::SoRouting");
+
+   noc->SetRoutingProtocol ("ns3::DorRouting");
 
   noc->SetSwitchingProtocol ("ns3::WormholeSwitching");
   // noc->SetSwitchingProtocol ("ns3::SafSwitching");
@@ -162,7 +175,7 @@ main (int argc, char *argv[])
   uint64_t packetLength = 2; // flits per packet
 
   NS_LOG_INFO ("Create Applications.");
-  NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, hSize, vSize);
+  NocSyncApplicationHelper nocSyncAppHelper1 (nodes, devs, size);
   nocSyncAppHelper1.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
   nocSyncAppHelper1.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
   nocSyncAppHelper1.SetAttribute ("Destination", UintegerValue (1)); // destination
@@ -171,7 +184,7 @@ main (int argc, char *argv[])
   apps1.Start (Seconds (0.0));
   apps1.Stop (Scalar (10) * globalClock);
 
-//  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, hSize);
+//  NocSyncApplicationHelper nocSyncAppHelper2 (nodes, devs, size);
 //  nocSyncAppHelper2.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
 //  nocSyncAppHelper2.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
 //  nocSyncAppHelper2.SetAttribute ("Destination", UintegerValue (2)); // destination
@@ -180,7 +193,7 @@ main (int argc, char *argv[])
 //  apps2.Start (Seconds (0.0));
 //  apps2.Stop (Scalar (10) * globalClock);
 
-//  NocSyncApplicationHelper nocSyncAppHelper3 (nodes, devs, hSize);
+//  NocSyncApplicationHelper nocSyncAppHelper3 (nodes, devs, size);
 //  nocSyncAppHelper3.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
 //  nocSyncAppHelper3.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
 //  nocSyncAppHelper3.SetAttribute ("Destination", UintegerValue (7)); // destination
@@ -189,7 +202,7 @@ main (int argc, char *argv[])
 //  apps3.Start (Seconds (0.0));
 //  apps3.Stop (Scalar (10) * globalClock);
 //
-//  NocSyncApplicationHelper nocSyncAppHelper4 (nodes, devs, hSize);
+//  NocSyncApplicationHelper nocSyncAppHelper4 (nodes, devs, size);
 //  nocSyncAppHelper4.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
 //  nocSyncAppHelper4.SetAttribute ("TrafficPattern", EnumValue (NocSyncApplication::DESTINATION_SPECIFIED));
 //  nocSyncAppHelper4.SetAttribute ("Destination", UintegerValue (5)); // destination

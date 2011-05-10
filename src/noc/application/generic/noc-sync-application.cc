@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009 - 2011
  *               - Advanced Computer Architecture and Processing Systems (ACAPS),
- *                                                              Lucian Blaga University of Sibiu, Romania
+ *               						Lucian Blaga University of Sibiu, Romania
  *               - Systems and Networking, University of Augsburg, Germany
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,8 @@
 #include "ns3/config.h"
 #include "ns3/noc-packet-tag.h"
 #include "ns3/pointer.h"
+#include "ns3/noc-value.h"
+#include "ns3/object-vector.h"
 
 NS_LOG_COMPONENT_DEFINE ("NocSyncApplication");
 
@@ -117,12 +119,10 @@ namespace ns3
             .AddAttribute ("InjectionProbability", "The injection probability",
                 DoubleValue (0.5), MakeDoubleAccessor (&NocSyncApplication::m_injectionProbability),
                 MakeDoubleChecker<double> (0, 1))
-            .AddAttribute("HSize", "The horizontal size of a mesh (how many nodes can be put on a line).",
-                UintegerValue(4), MakeUintegerAccessor(&NocSyncApplication::m_hSize),
-                MakeUintegerChecker<uint32_t> (2))
-            .AddAttribute("VSize", "The vertical size of a mesh (how many nodes can be put on a line).",
-                UintegerValue(4), MakeUintegerAccessor(&NocSyncApplication::m_vSize),
-                MakeUintegerChecker<uint32_t> (2))
+            .AddAttribute ("Size",
+                "how many nodes the nD mesh will have on each line", ObjectVectorValue(),
+                MakeObjectVectorAccessor (&NocSyncApplication::m_size),
+                MakeObjectVectorChecker<NocValue> ())
             .AddAttribute ("NumberOfFlits", "The number of flits composing a packet.", UintegerValue (3),
                 MakeUintegerAccessor (&NocSyncApplication::m_numberOfFlits),
                 MakeUintegerChecker<uint32_t> (2))
@@ -197,6 +197,12 @@ namespace ns3
       }
   }
 
+  void
+  NocSyncApplication::SetDimensionSize (std::vector<Ptr<NocValue> > size)
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+    m_size=size;
+  }
   void
   NocSyncApplication::SetMaxBytes(uint32_t maxBytes)
   {
@@ -348,109 +354,135 @@ namespace ns3
     Ptr<NocNode> sourceNode = GetNode ()->GetObject<NocNode> ();
     uint32_t sourceNodeId = sourceNode->GetId ();
 
-    uint32_t sourceX = sourceNodeId % m_hSize;
-    uint32_t sourceY = sourceNodeId % (m_hSize * m_vSize) / m_hSize;
-    uint32_t sourceZ = sourceNodeId / m_hSize / m_vSize;
+    std::vector <uint8_t> source=vector<uint8_t> ();
+    uint32_t numberOfNodes=1;
 
-    NS_LOG_DEBUG ("source X = " << sourceX);
-    NS_LOG_DEBUG ("source Y = " << sourceY);
-    NS_LOG_DEBUG ("source Z = " << sourceZ);
+    for (unsigned int k = 0; k < m_size.size (); k++)
+      {
+        if (m_size.at (k)->GetValue () != 0)
+          {
+            if (k != 0)
+              {
+                numberOfNodes *= m_size.at (k - 1)->GetValue();
+              }
+            else
+              {
+                numberOfNodes = 1;
+              }
+            source.insert(source.end(), sourceNodeId / numberOfNodes % m_size.at (k)->GetValue());
+          }
+        else
+          {
+            source.at (k) = 0;
+          }
+        NS_LOG_DEBUG ("dimension " << (k+1) << " source " << (int) source.at (k));
+      }
 
-    uint32_t destinationX;
-    uint32_t destinationY;
-    uint32_t destinationZ;
+    std::vector <uint32_t> destination=vector<uint32_t> ();
 
     double log = 0;
-    if (m_hSize > 0)
+    std::vector<uint8_t> size = vector<uint8_t> ();
+    for (unsigned int k = 0; k < m_size.size (); k++)
       {
-        log = log2(m_hSize);
+        if (m_size.at (k)->GetValue() > 0)
+          {
+            log = log2 (m_size.at (k)->GetValue());
+          }
+        size.insert (size.end (), (uint8_t) floor (log));
+        NS_LOG_DEBUG ("dimension " << (k+1) << " size " << (int) size.at (k));
       }
-    uint8_t sizeX = (uint8_t)floor(log);
 
-    log = 0;
-    if (m_vSize > 0)
-      {
-        log = log2 (m_vSize);
-    }
-    uint8_t sizeY = (uint8_t)floor(log);
+    numberOfNodes=1;
 
-    log = 0;
-    if ((m_nodes.GetN() / m_hSize / m_vSize) > 0)
-      {
-        log = log2(m_nodes.GetN() / m_hSize / m_vSize);
-      }
-    uint8_t sizeZ = (uint8_t)floor(log);
-
-    NS_LOG_DEBUG ("size X = " << (int) sizeX);
-    NS_LOG_DEBUG ("size Y = " << (int) sizeY);
-    NS_LOG_DEBUG ("size Z = " << (int) sizeZ);
     switch (m_trafficPatternEnum)
       {
         case DESTINATION_SPECIFIED:
-          destinationX = m_destinationNodeId % m_hSize;
-          NS_LOG_DEBUG ("specified destination x = " << destinationX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = m_destinationNodeId % (m_hSize * m_vSize) / m_hSize;
-          NS_LOG_DEBUG ("specified destination y = " << destinationY);
-          NS_ASSERT (destinationY < m_vSize);
-          destinationZ = m_destinationNodeId  / m_hSize / m_vSize;
-          NS_LOG_DEBUG ("specified destination z = " << destinationZ);
-          NS_ASSERT (destinationZ < m_nodes.GetN() / m_hSize / m_vSize);
-          break;
-
+          for (unsigned int k = 0; k < m_size.size (); k++)
+            {
+              if (m_size.at (k)->GetValue () != 0)
+                {
+                  if (k != 0)
+                    {
+                      numberOfNodes *= m_size.at (k - 1)->GetValue();
+                    }
+                  else
+                    {
+                      numberOfNodes = 1;
+                    }
+                  destination.insert (destination.end(), m_destinationNodeId / numberOfNodes % m_size.at (k)->GetValue());
+                }
+              else
+                {
+                  source.at (k) = 0;
+                }NS_LOG_DEBUG ("dimension "<<(k+1)<<" specified destination " <<(int) destination.at(k)); NS_ASSERT (destination.at(k) < m_size.at(k)->GetValue());
+            }
+      break;
         case UNIFORM_RANDOM:
           if (m_currentFlitIndex == 0)
             {
-              m_uniformDestinationX = m_trafficPattern.GetUniformRandomNumber (0, m_hSize - 1);
-              m_uniformDestinationY = m_trafficPattern.GetUniformRandomNumber (0, m_vSize - 1);
-              m_uniformDestinationZ = m_trafficPattern.GetUniformRandomNumber (0, m_nodes.GetN() / m_hSize / m_vSize - 1);
-//              m_uniformDestinationX = rand () % m_hSize;
-//              m_uniformDestinationY = rand () % (m_nodes.GetN() / m_hSize);
+              for (unsigned int k = 0; k < m_size.size (); k++)
+                {
+
+                  m_uniformDestination.insert (m_uniformDestination.end(), m_trafficPattern.GetUniformRandomNumber (0,
+                      m_size.at (k)->GetValue()- 1));
+                }
             }
-          destinationX = m_uniformDestinationX;
-          NS_LOG_DEBUG("random destination x = " << destinationX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = m_uniformDestinationY;
-          NS_LOG_DEBUG("random destination y = " << destinationY);
-          NS_ASSERT (destinationY < m_vSize);
-          destinationZ = m_uniformDestinationZ;
-          NS_LOG_DEBUG("random destination z = " << destinationZ);
-          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize / m_vSize);
+          for (unsigned int k = 0; k < m_size.size (); k++)
+            {
+              destination.insert (destination.end (), m_uniformDestination.at (k));
+              NS_LOG_DEBUG("dimension "<<(k+1)<<" random destination = "<<(int) destination.at(k));
+              NS_ASSERT (destination.at(k) < m_size.at(k)->GetValue());
+            }
           break;
 
         case BIT_MATRIX_TRANSPOSE:
-          destinationX = ns3::TrafficPattern::MatrixTransposeBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = ns3::TrafficPattern::MatrixTransposeBits (sourceY, sizeY);
-          NS_ASSERT (destinationY < m_vSize);
-          destinationZ = ns3::TrafficPattern::MatrixTransposeBits (sourceZ, sizeZ);
-          NS_ASSERT (destinationZ < m_nodes.GetN() / m_hSize / m_vSize);
+          for (unsigned int k = 0; k < m_size.size (); k++)
+            {
+              destination.insert(destination.end(), ns3::TrafficPattern::MatrixTransposeBits(source.at(k), size.at(k)));
+              NS_ASSERT (destination.at(k) < m_size.at(k)->GetValue());
+            }
           break;
 
         case BIT_COMPLEMENT:
-          destinationX = ns3::TrafficPattern::ComplementBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = ns3::TrafficPattern::ComplementBits (sourceY, sizeY);
-          NS_ASSERT (destinationY < m_vSize);
-          destinationZ = ns3::TrafficPattern::ComplementBits (sourceZ, sizeZ);
-          NS_ASSERT (destinationZ < m_nodes.GetN() / m_hSize / m_vSize);
+          for (unsigned int k = 0; k < m_size.size (); k++)
+            {
+              destination.insert (destination.end (), ns3::TrafficPattern::ComplementBits(source.at (k), size.at (k)));
+              NS_ASSERT (destination.at(k) < m_size.at(k)->GetValue());
+            }
           break;
 
         case BIT_REVERSE:
-          destinationX = ns3::TrafficPattern::ReverseBits (sourceX, sizeX);
-          NS_ASSERT (destinationX < m_hSize);
-          destinationY = ns3::TrafficPattern::ReverseBits (sourceY, sizeY);
-          NS_ASSERT (destinationY < m_nodes.GetN() / m_hSize);
-          destinationZ = ns3::TrafficPattern::ReverseBits (sourceZ, sizeZ);
-          NS_ASSERT (destinationZ < m_nodes.GetN() / m_hSize / m_vSize);
+          for (unsigned int k = 0; k < m_size.size (); k++)
+           {
+             destination.insert(destination.end(), ns3::TrafficPattern::ReverseBits(source.at(k), size.at(k)));
+             NS_ASSERT (destination.at(k) < m_size.at(k)->GetValue());
+           };
           break;
 
         default:
           break;
       }
 
-    uint32_t destinationNodeId = destinationZ * m_hSize * m_vSize + destinationY * m_hSize + destinationX;
+    uint32_t destinationNodeId=0;
+    numberOfNodes=1;
+    for (unsigned int k = 0; k < m_size.size (); k++)
+      {
+        if (m_size.at (k)->GetValue () != 0)
+          {
+            if (k != 0)
+              {
+                numberOfNodes *= m_size.at (k - 1)->GetValue ();
+              }
+            else
+              {
+                numberOfNodes = 1;
+              }
+            destinationNodeId += destination.at (k) * numberOfNodes;
+          }
+      }
+
     NS_LOG_DEBUG ("destinationNodeId = " << destinationNodeId);
+
     Ptr<NocNode> destinationNode;
     for (NetDeviceContainer::Iterator i = m_devices.Begin(); i
         != m_devices.End(); ++i)
@@ -479,15 +511,15 @@ namespace ns3
         NocRegistry::GetInstance ()->GetAttribute ("NoCTopology", nocPointer);
         Ptr<NocTopology> nocTopology = nocPointer.Get<NocTopology> ();
         NS_ASSERT_MSG (nocTopology != 0, "The NoC topology was not registered in NocRegistry!");
-        vector<uint8_t> relativePositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
+        std::vector<uint8_t> relativePositions = nocTopology->GetDestinationRelativeDimensionalPosition (sourceNodeId,
             destinationNodeId);
-        uint8_t relativeX = relativePositions[0];
-        uint8_t relativeY = relativePositions[1];
-        uint8_t relativeZ = relativePositions[2];
+        std::vector <uint8_t> relative=vector<uint8_t>();
 
-        NS_LOG_DEBUG ("relative X = " << (int) relativeX);
-        NS_LOG_DEBUG ("relative Y = " << (int) relativeY);
-        NS_LOG_DEBUG ("relative Z = " << (int) relativeZ);
+        for (unsigned int k = 0; k < relativePositions.size (); k++)
+          {
+            relative.insert(relative.end(), relativePositions.at(k));
+            NS_LOG_DEBUG ("dimension "<<(k+1)<<" relative = " << (int) relative.at(k));
+          }
 
         NS_ASSERT_MSG (m_numberOfFlits >= 1,
             "The number of flits must be at least 1 (the head flit) but it is " << m_numberOfFlits);
@@ -497,15 +529,14 @@ namespace ns3
             randomValue = randomValue % 100 + 1; // 1 .. 100
             if (randomValue <= m_injectionProbability * 100)
               {
-                NS_LOG_LOGIC ("A new message is injected into the network (injection probability is "
+                NS_LOG_LOGIC ("A new packet is injected into the network (injection probability is "
                     << m_injectionProbability << ")");
 
-//                m_currentHeadFlit = Create<NocPacket> (relativeX, relativeY, relativeZ, sourceX,
-//                    sourceY, sourceZ, m_numberOfFlits - 1, m_flitSize - NocHeader::HEADER_SIZE);
-
-                // ns-3 doesn't provide a Create<T> method with more than 7 parameters
-                m_currentHeadFlit = Ptr<NocPacket> (new NocPacket (relativeX, relativeY, relativeZ, sourceX,
-                    sourceY, sourceZ, m_numberOfFlits - 1, m_flitSize - NocHeader::HEADER_SIZE), false);
+                NS_ASSERT_MSG (m_flitSize >= (uint64_t) NocHeader::GetHeaderSize(),
+                    "The flit size must be at least " << NocHeader::GetHeaderSize()
+                    << " bytes (the packet header size), but it is " << m_flitSize << "!");
+                m_currentHeadFlit = Create<NocPacket> (relative, source, m_numberOfFlits - 1, (m_flitSize
+                    - NocHeader::GetHeaderSize ()));
                 NS_LOG_LOGIC ("Preparing to inject packet " << *m_currentHeadFlit);
                 if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
                   {
@@ -513,11 +544,11 @@ namespace ns3
                   }
                 sourceNode->InjectPacket (m_currentHeadFlit, destinationNode);
                 m_currentFlitIndex++;
-                m_totBytes += m_flitSize - NocHeader::HEADER_SIZE;
+                m_totBytes += m_flitSize - NocHeader::GetHeaderSize();
               }
             else
               {
-                NS_LOG_LOGIC ("A new message is not injected into the network (injection probability is "
+                NS_LOG_LOGIC ("A new packet is not injected into the network (injection probability is "
                     << m_injectionProbability << ")");
               }
           }

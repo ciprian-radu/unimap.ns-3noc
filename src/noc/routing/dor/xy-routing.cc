@@ -101,13 +101,13 @@ namespace ns3
     bool isEast = nocHeader.HasEastDirection ();
     int xOffset = nocHeader.GetXOffset ();
 
-    bool isSouth = nocHeader.HasSouthDirection ();
+    bool isNorth = nocHeader.HasNorthDirection ();
     int yOffset = nocHeader.GetYOffset ();
 
     RoutingDirection xDirection = NocRoutingProtocol::NONE;
     RoutingDirection yDirection = NocRoutingProtocol::NONE;
     NS_LOG_DEBUG ("xOffset " << xOffset << " direction " << (isEast ? "east" : "west"));
-    NS_LOG_DEBUG ("yOffset " << yOffset << " direction " << (isSouth ? "south" : "north"));
+    NS_LOG_DEBUG ("yOffset " << yOffset << " direction " << (isNorth ? "north" : "south"));
 
 	if (m_routeXFirst)
 	  {
@@ -131,15 +131,15 @@ namespace ns3
 			if (yOffset != 0)
 			  {
 				yOffset--;
-				if (isSouth)
-				  {
-					NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-					yDirection = NocRoutingProtocol::BACK;
-				  }
-				else
+				if (isNorth)
 				  {
 					NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
 					yDirection = NocRoutingProtocol::FORWARD;
+				  }
+				else
+				  {
+					NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+					yDirection = NocRoutingProtocol::BACK;
 				  }
 				nocHeader.SetYOffset (yOffset);
 			  }
@@ -150,15 +150,15 @@ namespace ns3
 		if (yOffset != 0)
 		  {
 			yOffset--;
-			if (isSouth)
-			  {
-				NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
-				yDirection = NocRoutingProtocol::BACK;
-			  }
-			else
+			if (isNorth)
 			  {
 				NS_ASSERT_MSG (yOffset >= 0, "A packet going to North will have the offset < 0");
 				yDirection = NocRoutingProtocol::FORWARD;
+			  }
+			else
+			  {
+				NS_ASSERT_MSG (yOffset >= 0, "A packet going to South will have the offset < 0");
+				yDirection = NocRoutingProtocol::BACK;
 			  }
 			nocHeader.SetYOffset (yOffset);
 		  }
