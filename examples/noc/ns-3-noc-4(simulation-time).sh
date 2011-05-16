@@ -67,6 +67,7 @@ then
 
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:bin/:/usr/local/lib/:${HOME}/workspace/ns3dev/build/debug/src/noc/orion
 	export NS_LOG="ns-3NoCUniMap=level_info:*=level_error|prefix_func|prefix_time"
+	cd $HOME/workspace/ns3dev/examples/noc
 
 	if [ -e ../../data.db ]
 	then
