@@ -213,7 +213,7 @@ main (int argc, char *argv[])
   // how many nodes a 2D mesh has horizontally
   int hSize = 4;
 
-  Time globalClock = PicoSeconds (1000); // 1 ns -> NoC @ 1GHz
+  uint64_t nocFrequency = 1000000000; // NoC @ 1GHz
 
   uint64_t flitSize = 32; // in bytes
 
@@ -223,12 +223,20 @@ main (int argc, char *argv[])
 
   int dataFlitSpeedup (1);
 
+  uint64_t channelBandwidth;
+
+  uint64_t channelDelay = 0;
+
   uint64_t bufferSize (9);
 
   uint64_t warmupCycles = 1000;
 
   // the number of simulation cycles includes the warmup cycles
   uint64_t simulationCycles = 10000;
+
+  uint64_t ctgIterations = 1;
+
+  std::string outputFilePath ("./ns-3-noc-output.txt"); // mandatory
 
   // Set up command line parameters used to control the experiment.
   CommandLine cmd;
@@ -240,18 +248,26 @@ main (int argc, char *argv[])
   cmd.AddValue<string> ("run", "The run is a unique identifier for this trial with which it's information is tagged for identification in later analysis (mandatory parameter when just-save-topology = false).", run);
   cmd.AddValue<string> ("author", "The author of this simulation (optional parameter).", author);
   cmd.AddValue<string> ("mapping-file-path", "The path to the XML file that contains the application mapping (mandatory parameter when just-save-topology = false)", mappingXmlFilePath);
+  cmd.AddValue<uint64_t> ("frequency", "The NoC operating frequency, expressed in Hertz (default is 1000000000 Hz, i.e. 1 GHz)", nocFrequency);
   cmd.AddValue<int> ("nodes", "The number of nodes from the NoC (default is 16)", numberOfNodes);
   cmd.AddValue<int> ("h-size", "How many nodes a 2D mesh has horizontally (default is 4)", hSize);
   cmd.AddValue<uint64_t> ("flit-size", "The size of a flit, in bytes (default is 32, minimum value is given by the size of the packet header)", flitSize);
   cmd.AddValue<uint64_t> ("flits-per-packet", "How many flits a packet has (default is 9, minimum value is 2)", flitsPerPacket);
 //  cmd.AddValue<double> ("injection-probability", "The packet injection probability (default is 1 (maximum), minimum is zero).", injectionProbability);
-  cmd.AddValue<int> ("data-packet-speedup", "The speedup used for data packets (compared to head packets) (default is 1 (minimum value) - no speedup)", dataFlitSpeedup);
+  cmd.AddValue<int> ("data-flit-speedup", "The speedup used for data flits (compared to head flits) (default is 1 (minimum value) - no speedup)", dataFlitSpeedup);
+  cmd.AddValue<uint64_t> ("channel-bandwidth", "The NoC channels bandwidth, in bits per second (default is the value that allows 1 flit per NoC clock cycle)", channelBandwidth);
+  cmd.AddValue<uint64_t> ("channel-delay", "The NoC channels propagation delay, in picoseconds (default is zero)", channelDelay);
   cmd.AddValue<uint64_t> ("buffer-size", "The size of the input channel buffers (measured in multiples of packet size) (default is 9)", bufferSize);
   cmd.AddValue<uint64_t> ("warmup-cycles", "The number of simulation warm-up cycles (default is 1000)", warmupCycles);
   cmd.AddValue<uint64_t> ("simulation-cycles", "The number of simulation cycles (includes the warm-up cycles, default is 10000)", simulationCycles);
+  cmd.AddValue<uint64_t> ("ctg-iterations", "How many times a Communication Task Graph has to be iterated (default value is 1, i.e. the CTG is not reiterated)", ctgIterations);
+  cmd.AddValue<string> ("output-file", "The path to a file where the simulator will put its output. The path must also contain the name of the output file. Default is: ./ns-3-noc-output.txt", outputFilePath);
   cmd.Parse (argc, argv);
 
   NS_LOG_INFO ("ns-3 NoC simulator for UniMap");
+
+  Time globalClock = PicoSeconds ((uint64_t) (1e12 * 1.0 / nocFrequency)); // 1 ns -> NoC @ 1GHz
+  channelBandwidth = (uint64_t) (1e12 * (flitSize * 8) / globalClock.GetPicoSeconds ());
 
   if (!justSaveTopology) {
       NS_ASSERT_MSG (mappingXmlFilePath.size() > 0, "Please specify the file path for the XML containing the mapping!");
@@ -297,10 +313,9 @@ main (int argc, char *argv[])
   // set channel bandwidth to 1 flit / network clock
   // the channel's bandwidth is obviously expressed in bits / s
   // however, in order to avoid losing precision, we work with PicoSeconds (instead of Seconds)
-  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate ((uint64_t) (1e12 * (flitSize * 8)
-      / globalClock.GetPicoSeconds ()))));
+  noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate (channelBandwidth)));
   // the channel has no propagation delay
-  noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (0)));
+  noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (channelDelay)));
 
 // By default, we use full-duplex communication
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
@@ -311,8 +326,10 @@ main (int argc, char *argv[])
       "MaxPackets", UintegerValue (bufferSize));
 
   // configure the routers
-  noc->SetRouter ("ns3::FourWayRouter");
-//  noc->SetRouter ("ns3::IrvineLoadRouter");
+  string routerClass;
+  routerClass = "ns3::FourWayRouter";
+//  routerClass = "ns3::IrvineLoadRouter";
+  noc->SetRouter (routerClass);
 
   // WARNING setting properties for objects in this manner means that all the created objects
   // will refer to the *same* object
@@ -328,20 +345,22 @@ main (int argc, char *argv[])
   // Do not forget about changing the routing protocol when changing the load router component
 
   // setting the routing protocol
-  noc->SetRoutingProtocol ("ns3::XyRouting");
+  string routingProtocolClass;
+  routingProtocolClass = "ns3::XyRouting";
+//  routingProtocolClass = "ns3::SlbRouting";
+//  routingProtocolClass = "ns3::SoRouting";
+//  routingProtocolClass = "ns3::DorRouting";
+  noc->SetRoutingProtocol (routingProtocolClass);
 //  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
 
-//  noc->SetRoutingProtocol ("ns3::SlbRouting");
 //  noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
 
-//  noc->SetRoutingProtocol ("ns3::SoRouting");
-
-//  noc->SetRoutingProtocol ("ns3::DorRouting");
-
   // setting the switching mechanism
-//  noc->SetSwitchingProtocol ("ns3::SafSwitching");
-//  noc->SetSwitchingProtocol ("ns3::VctSwitching");
-  noc->SetSwitchingProtocol ("ns3::WormholeSwitching");
+  string switchingProtocolClass;
+  switchingProtocolClass = "ns3::WormholeSwitching";
+//  switchingProtocolClass = "ns3::VctSwitching";
+//  switchingProtocolClass = "ns3::SafSwitching";
+  noc->SetSwitchingProtocol (switchingProtocolClass);
 
   // installing the topology
   NetDeviceContainer devs = noc->Install (nodes);
@@ -355,7 +374,7 @@ main (int argc, char *argv[])
   if (!justSaveTopology) {
     NocCtgApplicationHelper ctgApplicationHelper (
         mappingXmlFilePath,
-        10, // the number of CTG iterations
+        ctgIterations, // the number of CTG iterations
         flitsPerPacket,
         simulationCycles,
         nodes,
@@ -433,11 +452,100 @@ main (int argc, char *argv[])
     NS_LOG_INFO ("Run Simulation.");
     Simulator::Run ();
     NS_LOG_INFO ("Done.");
-    NS_LOG_INFO ("Simulated time is " << Simulator::Now ());
+    Time simulatedTime = Simulator:: Now ();
+    NS_LOG_INFO ("Simulated time is " << simulatedTime);
+    NS_LOG_INFO ("NoC dynamic power: " << noc->GetDynamicPower () << " W");
+    NS_LOG_INFO ("NoC leakage power: " << noc->GetLeakagePower () << " W");
+    NS_LOG_INFO ("NoC total power: " << noc->GetTotalPower () << " W");
+    NS_LOG_INFO ("NoC area: " << noc->GetArea () << " um^2");
     Simulator::Destroy ();
 
     // this must be done after the simulation ended
     ComputeLatenciesOfPackets (latencyStat);
+
+    // Write the simulation results in the output file
+    ofstream outputFile (outputFilePath.c_str ());
+
+    time_t rawtime;
+    time (&rawtime);
+    outputFile << "# Simulation results produced with the ns-3 Network-on-Chip (ns-3 NoC) simulator, on " << ctime (&rawtime);
+    outputFile << "# ns-3 NoC is part of UniMap framework ( https://code.google.com/p/unimap/ )" << endl;
+    outputFile << "# UniMap is part of the PhD work of Ciprian Radu ( http://webspace.ulbsibiu.ro/ciprian.radu/ ) and is available under GNU GPL v3 license" << endl;
+    outputFile << endl;
+    outputFile << "####################" << endl;
+    outputFile << "# Input parameters #" << endl;
+    outputFile << "####################" << endl;
+    outputFile << endl;
+    outputFile << "# Network-on-Chip operating frequency, in Hertz" << endl;
+    outputFile << "# frequency " << nocFrequency << endl;
+    outputFile << endl;
+    outputFile << "# NoC topology" << endl;
+    outputFile << "# topology " << noc->GetInstanceTypeId () << endl;
+    outputFile << endl;
+    // FIXME add topology size after working with NocMeshND
+    outputFile << "# Router" << endl;
+    outputFile << "# " << routerClass << endl;
+    outputFile << endl;
+    outputFile << "# Routing protocol" << endl;
+    outputFile << "# " << routingProtocolClass << endl;
+    outputFile << endl;
+    outputFile << "# Switching protocol" << endl;
+    outputFile << "# " << switchingProtocolClass << endl;
+    outputFile << endl;
+    outputFile << "# Flit size, in bytes" << endl;
+    outputFile << "# flit-size " << flitSize << endl;
+    outputFile << endl;
+    outputFile << "# Packet size, in flits" << endl;
+    outputFile << "# flits-per-packet " << flitsPerPacket << endl;
+    outputFile << endl;
+    outputFile << "# Data flit speedup" << endl;
+    outputFile << "# data-flit-speedup " << dataFlitSpeedup << endl;
+    outputFile << endl;
+    outputFile << "# The size of each NoC buffer" << endl;
+    outputFile << "# buffer-size " << bufferSize << endl;
+    outputFile << endl;
+    outputFile << "# NoC channel bandwidth, in bits per second" << endl;
+    outputFile << "# channel-bandwidth " << channelBandwidth << endl;
+    outputFile << endl;
+    outputFile << "# NoC channel propagation delay, in picoseconds" << endl;
+    outputFile << "# channel-delay " << channelDelay << endl;
+    outputFile << endl;
+//    outputFile << "# The number of warmup cycles" << endl;
+//    outputFile << "# warmup-cycles " << warmupCycles << endl;
+//    outputFile << endl;
+//    outputFile << "# The number of simulation cycles" << endl;
+//    outputFile << "# simulation-cycles " << simulationCycles << endl;
+//    outputFile << endl;
+    outputFile << "# The number of CTG iterations" << endl;
+    outputFile << "# ctg-iterations " << ctgIterations << endl;
+    outputFile << endl;
+    outputFile << "# Mapping file path" << endl;
+    outputFile << "# mapping-file-path " << mappingXmlFilePath << endl;
+    outputFile << endl;
+    outputFile << "#####################" << endl;
+    outputFile << "# Output parameters #" << endl;
+    outputFile << "#####################" << endl;
+    outputFile << endl;
+    outputFile << "# Application runtime represents the amount of simulated time. It is expressed in seconds." << endl;
+    outputFile << "application-runtime " << (simulatedTime.GetPicoSeconds () * 1.0 / 1e12) << endl;
+    outputFile << endl;
+    outputFile << "# The dynamic power consumed by the entire Network-on-Chip architecture. It is expressed in Watts." << endl;
+    outputFile << "dynamic-power " << noc->GetDynamicPower () << endl;
+    outputFile << endl;
+    outputFile << "# The leakage power consumed by the entire Network-on-Chip architecture. It is expressed in Watts." << endl;
+    outputFile << "leakage-power " << noc->GetLeakagePower () << endl;
+    outputFile << endl;
+    outputFile << "# The total power consumed by the entire Network-on-Chip architecture (dynamic power + leakage power). It is expressed in Watts." << endl;
+    outputFile << "total-power " << noc->GetTotalPower () << endl;
+    outputFile << endl;
+    outputFile << "# The area occupied by Network-on-Chip architecture. It is expressed in mm^2 (square millimeters)." << endl;
+    outputFile << "area " << (noc->GetArea () / 1e6) << endl;
+    outputFile << endl;
+    outputFile << "# The energy consumed by the entire Network-on-Chip architecture. It is expressed in Joule and it is the product between total energy and application runtime." << endl;
+    outputFile << "energy " << noc->GetTotalPower () * (simulatedTime.GetPicoSeconds () * 1.0 / 1e12) << endl;
+    outputFile << endl;
+
+    outputFile.close ();
 
     // Generate statistics output
 
