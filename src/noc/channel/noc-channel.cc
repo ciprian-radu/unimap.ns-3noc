@@ -441,6 +441,7 @@ namespace ns3
     NS_ASSERT_MSG (load >= 0 && load <= 1, "Channel load in [0,1] interval");
 
     double linkLength = m_length * 1e-6; //unit meter
+    NS_LOG_DEBUG ("Channel length is " << m_length << " micrometers");
     power = 0.5 * load * LinkDynamicEnergyPerBitPerMeter(linkLength, Vdd) * freq * linkLength * dataWidth;
     NS_LOG_LOGIC ("Flit " << *flit << " required " << power << " W of dynamic power to be sent through this link");
 
@@ -467,6 +468,7 @@ namespace ns3
     NS_ASSERT_MSG (load >= 0 && load <= 1, "Channel load in [0,1] interval");
 
     double linkLength = m_length * 1e-6; //unit meter
+    NS_LOG_DEBUG ("Channel length is " << m_length << " micrometers");
     power = 0.5 * load * LinkLeakagePowerPerMeter(linkLength, Vdd) * linkLength * dataWidth;
     NS_LOG_LOGIC ("Flit " << *flit << " required " << power << " W of leakage power to be sent through this link");
 
@@ -525,6 +527,7 @@ namespace ns3
     double area = 0;
 
     double linkLength = m_length * 1e-6; //unit meter
+    NS_LOG_DEBUG ("Channel length is " << m_length << " micrometers");
 
     IntegerValue flitSize;
     NocRegistry::GetInstance ()->GetAttribute ("FlitSize", flitSize);
