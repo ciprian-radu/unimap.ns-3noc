@@ -56,6 +56,12 @@ namespace ns3
     m_factory.Set (name, value);
   }
 
+  list<NocCtgApplicationHelper::CoreData>
+  NocCtgApplicationHelper::GetCoreDataList ()
+  {
+    return m_coreDataList;
+  }
+
   apcgType::core_type
   NocCtgApplicationHelper::FindCoreInApcg (apcgType theApcgType, string coreId)
   {
@@ -189,6 +195,13 @@ namespace ns3
                 << theCoreType->width () << " (mm) idle power: "
                 << theCoreType->idlePower () << " (W) )");
 
+            CoreData coreData;
+            coreData.m_uid = theApcgCoreType.uid ();
+            coreData.m_id = theCoreType->ID ();
+            coreData.m_apcgId = theApcgType->id ();
+            coreData.m_area = theCoreType->height ().get () * theCoreType->width ().get ();
+            coreData.m_idlePower = theCoreType->idlePower ().get ();
+
             list<NocCtgApplication::TaskData> taskList;
             list<NocCtgApplication::DependentTaskData> taskSenderList;
             list<NocCtgApplication::DependentTaskData> taskReceiverList;
@@ -229,6 +242,9 @@ namespace ns3
 //                        break;
 //                      }
 //                  }
+
+                coreData.m_power[theApcgTaskType.id ()] = theApcgTaskType.power ().get ();
+                coreData.m_execTime[theApcgTaskType.id ()] = theApcgTaskType.execTime ().get ();
 
                 taskData
                     = new NocCtgApplication::TaskData (theApcgTaskType.id (), Seconds (theApcgTaskType.execTime ().get ()));
@@ -297,6 +313,8 @@ namespace ns3
                       }
                   }
               }
+
+            m_coreDataList.insert (m_coreDataList.end (), coreData);
 
             SetAttribute ("Period", TimeValue (Seconds (theCtgType->period ().get ())));
             //          SetAttribute ("MaxFlits", UintegerValue (100));

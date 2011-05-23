@@ -64,6 +64,36 @@ namespace ns3
   public:
 
     /**
+     * Simple data structure that keeps information regarding core power and area.
+     */
+    class CoreData
+     {
+       public:
+
+         /** the unique ID of the core */
+         string m_uid;
+
+         /** the ID (type) of the core */
+         string m_id;
+
+         /** the ID of the APCG to which the core belongs */
+         string m_apcgId;
+
+         /** the power consumed by the core when idle, in Watts */
+         double m_idlePower;
+
+         /** how much power (in Watts) the core requires for executing a task assigned to it. (task ID, power/task) pairs are used. */
+         map<string, double> m_power;
+
+         /** how much time (in seconds) the core needs for executing a task assigned to it. (task ID, time/task) pairs are used. */
+         map<string, double> m_execTime;
+
+         /** the core area, in mm^2 */
+         double m_area;
+
+     };
+
+    /**
      * Create a NocCtgApplicationHelper to make it easier to work with NoC applications
      *
      * \param mappingXmlFilePaths the mapping XML file path
@@ -102,6 +132,9 @@ namespace ns3
      */
     void
     SetAttribute (std::string name, const AttributeValue &value);
+
+    list<CoreData>
+    GetCoreDataList ();
 
   private:
 
@@ -161,6 +194,11 @@ namespace ns3
      * (this is passed to NocCtgApplication)
      **/
     list<NocCtgApplication::DependentTaskData> m_taskDestinationList;
+
+    /**
+     * keeps power and area information about all the core
+     */
+    list<CoreData> m_coreDataList;
 
   };
 

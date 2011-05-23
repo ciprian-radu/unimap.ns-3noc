@@ -51,6 +51,7 @@
 #include <map>
 #include <list>
 #include "ns3/output-stream-wrapper.h"
+#include <sys/time.h>
 
 using namespace ns3;
 using namespace std;
@@ -227,6 +228,8 @@ main (int argc, char *argv[])
 
   uint64_t channelDelay = 0;
 
+  double channelLength = 50;
+
   uint64_t bufferSize (9);
 
   uint64_t warmupCycles = 1000;
@@ -257,7 +260,8 @@ main (int argc, char *argv[])
   cmd.AddValue<int> ("data-flit-speedup", "The speedup used for data flits (compared to head flits) (default is 1 (minimum value) - no speedup)", dataFlitSpeedup);
   cmd.AddValue<uint64_t> ("channel-bandwidth", "The NoC channels bandwidth, in bits per second (default is the value that allows 1 flit per NoC clock cycle)", channelBandwidth);
   cmd.AddValue<uint64_t> ("channel-delay", "The NoC channels propagation delay, in picoseconds (default is zero)", channelDelay);
-  cmd.AddValue<uint64_t> ("buffer-size", "The size of the input channel buffers (measured in multiples of packet size) (default is 9)", bufferSize);
+  cmd.AddValue<double> ("channel-length", "The NoC channels length, in micrometers (default is 50)", channelLength);
+  cmd.AddValue<uint64_t> ("buffer-size", "The size of the input channel buffers (measured in flits) (default is 9)", bufferSize);
   cmd.AddValue<uint64_t> ("warmup-cycles", "The number of simulation warm-up cycles (default is 1000)", warmupCycles);
   cmd.AddValue<uint64_t> ("simulation-cycles", "The number of simulation cycles (includes the warm-up cycles, default is 10000)", simulationCycles);
   cmd.AddValue<uint64_t> ("ctg-iterations", "How many times a Communication Task Graph has to be iterated (default value is 1, i.e. the CTG is not reiterated)", ctgIterations);
@@ -316,6 +320,8 @@ main (int argc, char *argv[])
   noc->SetChannelAttribute ("DataRate", DataRateValue (DataRate (channelBandwidth)));
   // the channel has no propagation delay
   noc->SetChannelAttribute ("Delay", TimeValue (PicoSeconds (channelDelay)));
+  // the channel length, in micrometers
+  noc->SetChannelAttribute ("Length", DoubleValue (channelLength));
 
 // By default, we use full-duplex communication
   //  noc->SetChannelAttribute ("FullDuplex", BooleanValue (false));
@@ -367,20 +373,17 @@ main (int argc, char *argv[])
   NocRegistry::GetInstance ()->SetAttribute ("NoCTopology", PointerValue (noc));
   // done with installing the topology
 
+  NS_LOG_INFO ("Saving the NoC topology in XML format.");
+  noc->SaveTopology (nodes, "../NoC-XML/src/ro/ulbsibiu/acaps/noc/topology/mesh2D");
+
   NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (256)); // 32 bytes
 
-  NS_LOG_INFO ("Create CTG based Applications.");
-
-  if (!justSaveTopology) {
-    NocCtgApplicationHelper ctgApplicationHelper (
-        mappingXmlFilePath,
-        ctgIterations, // the number of CTG iterations
-        flitsPerPacket,
-        simulationCycles,
-        nodes,
-        devs,
-        hSize);
-    ctgApplicationHelper.Initialize ();
+  if (!justSaveTopology)
+    {
+      NS_LOG_INFO ("Create CTG based Applications.");
+      NocCtgApplicationHelper ctgApplicationHelper (mappingXmlFilePath, ctgIterations, // the number of CTG iterations
+          flitsPerPacket, simulationCycles, nodes, devs, hSize);
+      ctgApplicationHelper.Initialize ();
 
     // Configure tracing of all enqueue, dequeue, and NetDevice receive events
     // Trace output will be sent to the ns-3NoCUniMap.tr file
@@ -388,11 +391,7 @@ main (int argc, char *argv[])
     NS_LOG_INFO ("Configure Tracing.");
     Ptr<OutputStreamWrapper> stream = Create<OutputStreamWrapper> ("ns-3NoCUniMap.tr", std::ios_base::binary | std::ios_base::out);
     noc->EnableAsciiAll (stream);
-  }
 
-  noc->SaveTopology (nodes, "../NoC-XML/src/ro/ulbsibiu/acaps/noc/topology/mesh2D");
-
-  if (!justSaveTopology) {
   //  GtkConfigStore configstore;
   //  configstore.ConfigureAttributes();
 
@@ -450,15 +449,54 @@ main (int argc, char *argv[])
     // start the simulation
 
     NS_LOG_INFO ("Run Simulation.");
+    timespec startTime;
+    clock_gettime(CLOCK_REALTIME, &startTime);
     Simulator::Run ();
+    timespec endTime;
+    clock_gettime(CLOCK_REALTIME, &endTime);
     NS_LOG_INFO ("Done.");
+
     Time simulatedTime = Simulator:: Now ();
+    double applicationRuntime = simulatedTime.GetPicoSeconds () * 1.0 / 1e12; // application runtime, in seconds
     NS_LOG_INFO ("Simulated time is " << simulatedTime);
-    NS_LOG_INFO ("NoC dynamic power: " << noc->GetDynamicPower () << " W");
-    NS_LOG_INFO ("NoC leakage power: " << noc->GetLeakagePower () << " W");
-    NS_LOG_INFO ("NoC total power: " << noc->GetTotalPower () << " W");
-    NS_LOG_INFO ("NoC area: " << noc->GetArea () << " um^2");
+    double nocDynamicPower = noc->GetDynamicPower ();
+    NS_LOG_INFO ("NoC dynamic power: " << nocDynamicPower << " W");
+    double nocLeakagePower = noc->GetLeakagePower ();
+    NS_LOG_INFO ("NoC leakage power: " << nocLeakagePower << " W");
+    double nocTotalPower = noc->GetTotalPower ();
+    NS_LOG_INFO ("NoC total power: " << nocTotalPower << " W");
+    double nocArea = noc->GetArea ();
+    NS_LOG_INFO ("NoC area: " << nocArea << " um^2");
     Simulator::Destroy ();
+
+    double coresArea = 0; // the area occupied by the cores, in mm^2
+    double coresEnergy = 0; // the energy consumed by the cores, in Joule
+
+    list<NocCtgApplicationHelper::CoreData> coreDataList = ctgApplicationHelper.GetCoreDataList ();
+    for (list<NocCtgApplicationHelper::CoreData>::iterator it = coreDataList.begin(); it != coreDataList.end(); it++)
+      {
+        NocCtgApplicationHelper::CoreData coreData = *it;
+        NS_LOG_DEBUG ("Core with UID " << coreData.m_uid << ", ID " << coreData.m_id
+            << ", APCG " << coreData.m_apcgId << ", has area " << coreData.m_area << " mm^2");
+        coresArea += coreData.m_area;
+
+        double coreTotalExecTime = 0;
+        for (map<string, double>::iterator it = coreData.m_power.begin(); it != coreData.m_power.end(); it++)
+          {
+            string taskId = it->first;
+            double power = it->second;
+            double execTime = coreData.m_execTime[taskId];
+            NS_LOG_DEBUG ("This core consumed " << power << " Watts " << " for " << execTime << " seconds, to execute task with ID " << taskId);
+            coresEnergy += power * execTime;
+            coreTotalExecTime += execTime;
+          }
+        NS_ASSERT_MSG (coreTotalExecTime <= applicationRuntime, "Core total execution time is higher than application time!");
+        NS_LOG_DEBUG ("This core was idle for " << applicationRuntime - coreTotalExecTime << " seconds (idle power is " << coreData.m_idlePower << ")");
+        coresEnergy += coreData.m_idlePower * (applicationRuntime - coreTotalExecTime);
+      }
+
+    NS_LOG_INFO ("Cores area: " << coresArea << " mm^2");
+    NS_LOG_INFO ("Cores energy: " << coresEnergy << " Joule");
 
     // this must be done after the simulation ended
     ComputeLatenciesOfPackets (latencyStat);
@@ -476,11 +514,11 @@ main (int argc, char *argv[])
     outputFile << "# Input parameters #" << endl;
     outputFile << "####################" << endl;
     outputFile << endl;
-    outputFile << "# Network-on-Chip operating frequency, in Hertz" << endl;
-    outputFile << "# frequency " << nocFrequency << endl;
+    outputFile << "# NoC operating frequency, in Hertz" << endl;
+    outputFile << "# noc-frequency = " << nocFrequency << endl;
     outputFile << endl;
     outputFile << "# NoC topology" << endl;
-    outputFile << "# topology " << noc->GetInstanceTypeId () << endl;
+    outputFile << "# noc-topology = " << noc->GetInstanceTypeId () << endl;
     outputFile << endl;
     // FIXME add topology size after working with NocMeshND
     outputFile << "# Router" << endl;
@@ -493,56 +531,74 @@ main (int argc, char *argv[])
     outputFile << "# " << switchingProtocolClass << endl;
     outputFile << endl;
     outputFile << "# Flit size, in bytes" << endl;
-    outputFile << "# flit-size " << flitSize << endl;
+    outputFile << "# noc-flit-size = " << flitSize << endl;
     outputFile << endl;
     outputFile << "# Packet size, in flits" << endl;
-    outputFile << "# flits-per-packet " << flitsPerPacket << endl;
+    outputFile << "# noc-flits-per-packet = " << flitsPerPacket << endl;
     outputFile << endl;
-    outputFile << "# Data flit speedup" << endl;
-    outputFile << "# data-flit-speedup " << dataFlitSpeedup << endl;
+    outputFile << "# Data flit speedup (how many times a data flit is sent faster than a header flit)" << endl;
+    outputFile << "# noc-data-flit-speedup = " << dataFlitSpeedup << endl;
     outputFile << endl;
-    outputFile << "# The size of each NoC buffer" << endl;
-    outputFile << "# buffer-size " << bufferSize << endl;
+    outputFile << "# The size of each NoC buffer, in flits" << endl;
+    outputFile << "# noc-buffer-size = " << bufferSize << endl;
     outputFile << endl;
     outputFile << "# NoC channel bandwidth, in bits per second" << endl;
-    outputFile << "# channel-bandwidth " << channelBandwidth << endl;
+    outputFile << "# noc-channel-bandwidth = " << channelBandwidth << endl;
     outputFile << endl;
     outputFile << "# NoC channel propagation delay, in picoseconds" << endl;
-    outputFile << "# channel-delay " << channelDelay << endl;
+    outputFile << "# noc-channel-delay = " << channelDelay << endl;
+    outputFile << endl;
+    outputFile << "# NoC channel length, in micrometers" << endl;
+    outputFile << "# noc-channel-length = " << channelLength << endl;
     outputFile << endl;
 //    outputFile << "# The number of warmup cycles" << endl;
-//    outputFile << "# warmup-cycles " << warmupCycles << endl;
+//    outputFile << "# warmup-cycles  = " << warmupCycles << endl;
 //    outputFile << endl;
 //    outputFile << "# The number of simulation cycles" << endl;
-//    outputFile << "# simulation-cycles " << simulationCycles << endl;
+//    outputFile << "# simulation-cycles  = " << simulationCycles << endl;
 //    outputFile << endl;
     outputFile << "# The number of CTG iterations" << endl;
-    outputFile << "# ctg-iterations " << ctgIterations << endl;
+    outputFile << "# ctg-iterations = " << ctgIterations << endl;
     outputFile << endl;
     outputFile << "# Mapping file path" << endl;
-    outputFile << "# mapping-file-path " << mappingXmlFilePath << endl;
+    outputFile << "# mapping-file-path = " << mappingXmlFilePath << endl;
     outputFile << endl;
     outputFile << "#####################" << endl;
     outputFile << "# Output parameters #" << endl;
     outputFile << "#####################" << endl;
     outputFile << endl;
     outputFile << "# Application runtime represents the amount of simulated time. It is expressed in seconds." << endl;
-    outputFile << "application-runtime " << (simulatedTime.GetPicoSeconds () * 1.0 / 1e12) << endl;
+    outputFile << "application-runtime = " << applicationRuntime << endl;
     outputFile << endl;
     outputFile << "# The dynamic power consumed by the entire Network-on-Chip architecture. It is expressed in Watts." << endl;
-    outputFile << "dynamic-power " << noc->GetDynamicPower () << endl;
+    outputFile << "noc-dynamic-power = " << nocDynamicPower << endl;
     outputFile << endl;
     outputFile << "# The leakage power consumed by the entire Network-on-Chip architecture. It is expressed in Watts." << endl;
-    outputFile << "leakage-power " << noc->GetLeakagePower () << endl;
+    outputFile << "noc-leakage-power = " << nocLeakagePower << endl;
     outputFile << endl;
     outputFile << "# The total power consumed by the entire Network-on-Chip architecture (dynamic power + leakage power). It is expressed in Watts." << endl;
-    outputFile << "total-power " << noc->GetTotalPower () << endl;
+    outputFile << "noc-power = " << nocTotalPower << endl;
     outputFile << endl;
-    outputFile << "# The area occupied by Network-on-Chip architecture. It is expressed in mm^2 (square millimeters)." << endl;
-    outputFile << "area " << (noc->GetArea () / 1e6) << endl;
+    outputFile << "# The area occupied by the Network-on-Chip architecture. It is expressed in mm^2 (square millimeters)." << endl;
+    outputFile << "noc-area = " << (nocArea / 1e6) << endl;
     outputFile << endl;
     outputFile << "# The energy consumed by the entire Network-on-Chip architecture. It is expressed in Joule and it is the product between total energy and application runtime." << endl;
-    outputFile << "energy " << noc->GetTotalPower () * (simulatedTime.GetPicoSeconds () * 1.0 / 1e12) << endl;
+    outputFile << "noc-energy = " << nocTotalPower * applicationRuntime << endl;
+    outputFile << endl;
+    outputFile << "# The area occupied by the IP cores. It is expressed in mm^2 (square millimeters)." << endl;
+    outputFile << "cores-area = " << coresArea << endl;
+    outputFile << endl;
+    outputFile << "# The energy consumed by the IP cores. It is expressed in Joule." << endl;
+    outputFile << "cores-energy = " << coresEnergy << endl;
+    outputFile << endl;
+    outputFile << "# The area occupied by the entire System on Chip (SoC). It is expressed in mm^2 (square millimeters) and it sums noc-area and cores-area." << endl;
+    outputFile << "soc-area = " << (nocArea + coresArea) << endl;
+    outputFile << endl;
+    outputFile << "# The energy consumed by the entire System on Chip (SoC). It is expressed in Joule and it sums noc-energy and cores-energy." << endl;
+    outputFile << "soc-energy = " << (nocTotalPower * applicationRuntime + coresEnergy) << endl;
+    outputFile << endl;
+    outputFile << "# How much time the simulation took. Is is expressed in seconds." << endl;
+    outputFile << "simulation-runtime = " << endTime.tv_sec - startTime.tv_sec << endl;
     outputFile << endl;
 
     outputFile.close ();
