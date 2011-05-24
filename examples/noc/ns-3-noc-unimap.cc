@@ -276,13 +276,6 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("ns-3 NoC simulator for UniMap ( https://code.google.com/p/unimap/ )");
 
-  cout << "The following command line was used to launch ns-3 NoC:" << endl;
-  for (int i = 0; i < argc; i++)
-    {
-      cout << argv[i] << " ";
-    }
-  cout << endl;
-
   if (redirectStdout)
     {
       stringstream ssOut;
@@ -299,6 +292,13 @@ main (int argc, char *argv[])
       freopen (ssErr.str ().c_str (), "w", stderr);
       NS_LOG_INFO ("ns-3 NoC simulator for UniMap ( https://code.google.com/p/unimap/ )");
     }
+
+  cout << "The following command line was used to launch ns-3 NoC:" << endl;
+  for (int i = 0; i < argc; i++)
+    {
+      cout << argv[i] << " ";
+    }
+  cout << endl;
 
   Time globalClock = PicoSeconds ((uint64_t) (1e12 * 1.0 / nocFrequency)); // 1 ns -> NoC @ 1GHz
   channelBandwidth = (uint64_t) (1e12 * (flitSize * 8) / globalClock.GetPicoSeconds ());
