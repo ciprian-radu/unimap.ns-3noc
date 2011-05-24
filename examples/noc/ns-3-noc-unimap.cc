@@ -276,6 +276,13 @@ main (int argc, char *argv[])
 
   NS_LOG_INFO ("ns-3 NoC simulator for UniMap ( https://code.google.com/p/unimap/ )");
 
+  cout << "The following command line was used to launch ns-3 NoC:" << endl;
+  for (int i = 0; i < argc; i++)
+    {
+      cout << argv[i] << " ";
+    }
+  cout << endl;
+
   if (redirectStdout)
     {
       stringstream ssOut;
@@ -304,7 +311,7 @@ main (int argc, char *argv[])
       <<") must be a multiple of the number of nodes on the horizontal axis ("
       << hSize << ")");
   if (!justSaveTopology) {
-    NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize));
+    NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize * 8));
     NS_ASSERT_MSG (flitsPerPacket >= 2, "At least 2 flits per packet are required!");
 //  NS_ASSERT_MSG (injectionProbability >= 0 && injectionProbability <= 1, "Injection probability must be in [0,1]!");
     NS_ASSERT_MSG (dataFlitSpeedup >= 1, "Data packet speedup must be >= 1!");
