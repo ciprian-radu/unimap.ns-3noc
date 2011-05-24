@@ -239,7 +239,11 @@ main (int argc, char *argv[])
 
   uint64_t ctgIterations = 1;
 
-  std::string outputFilePath ("./ns-3-noc-output.txt"); // mandatory
+  std::string outputFilePath ("./ns-3-noc-output.txt"); // optional
+
+  bool redirectStdout = false; // optional
+
+  bool redirectStderr = false; // optional
 
   // Set up command line parameters used to control the experiment.
   CommandLine cmd;
@@ -266,9 +270,28 @@ main (int argc, char *argv[])
   cmd.AddValue<uint64_t> ("simulation-cycles", "The number of simulation cycles (includes the warm-up cycles, default is 10000)", simulationCycles);
   cmd.AddValue<uint64_t> ("ctg-iterations", "How many times a Communication Task Graph has to be iterated (default value is 1, i.e. the CTG is not reiterated)", ctgIterations);
   cmd.AddValue<string> ("output-file", "The path to a file where the simulator will put its output. The path must also contain the name of the output file. Default is: ./ns-3-noc-output.txt", outputFilePath);
+  cmd.AddValue<bool> ("redirect-stdout", "If set to true, stdout is redirected to a file named like the output file but with .out.log extension (optional parameter, false by default).", redirectStdout);
+  cmd.AddValue<bool> ("redirect-stderr", "If set to true, stderr is redirected to a file named like the output file but with .out.log extension (optional parameter, false by default).", redirectStderr);
   cmd.Parse (argc, argv);
 
-  NS_LOG_INFO ("ns-3 NoC simulator for UniMap");
+  NS_LOG_INFO ("ns-3 NoC simulator for UniMap ( https://code.google.com/p/unimap/ )");
+
+  if (redirectStdout)
+    {
+      stringstream ssOut;
+      ssOut << outputFilePath << ".out.log";
+      NS_LOG_INFO ("Redirecting stdout to " << ssOut.str ());
+      freopen (ssOut.str ().c_str (), "w", stdout);
+    }
+
+  if (redirectStderr)
+    {
+      stringstream ssErr;
+      ssErr << outputFilePath << ".err.log";
+      NS_LOG_INFO ("Redirecting stderr to " << ssErr.str ());
+      freopen (ssErr.str ().c_str (), "w", stderr);
+      NS_LOG_INFO ("ns-3 NoC simulator for UniMap ( https://code.google.com/p/unimap/ )");
+    }
 
   Time globalClock = PicoSeconds ((uint64_t) (1e12 * 1.0 / nocFrequency)); // 1 ns -> NoC @ 1GHz
   channelBandwidth = (uint64_t) (1e12 * (flitSize * 8) / globalClock.GetPicoSeconds ());
@@ -521,6 +544,12 @@ main (int argc, char *argv[])
     outputFile << "# noc-topology = " << noc->GetInstanceTypeId () << endl;
     outputFile << endl;
     // FIXME add topology size after working with NocMeshND
+    outputFile << "# NoC nodes" << endl;
+    outputFile << "# noc-nodes = " << numberOfNodes << endl;
+    outputFile << endl;
+    outputFile << "# NoC horizontal size" << endl;
+    outputFile << "# noc-h-size = " << hSize << endl;
+    outputFile << endl;
     outputFile << "# Router" << endl;
     outputFile << "# " << routerClass << endl;
     outputFile << endl;
