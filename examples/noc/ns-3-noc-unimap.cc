@@ -648,7 +648,7 @@ main (int argc, char *argv[])
 
     // Pick an output writer based in the requested format.
     NS_LOG_INFO ("Creating sqlite formatted data output.");
-    Ptr<DataOutputInterface> output = CreateObject<SqliteDataOutput> ();
+    Ptr<DataOutputInterface> output = CreateObject<SqliteDataOutput> (outputFilePath);
     output->Output (data);
     NS_LOG_INFO ("Finished.");
   }

@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Author: Joe Kopena (tjkopena@cs.drexel.edu)
+ *         Ciprian Radu (ciprian.radu@ulbsibiu.ro): made database file a parameter
  */
 
 #include <sstream>
@@ -38,6 +39,11 @@ NS_LOG_COMPONENT_DEFINE("SqliteDataOutput");
 SqliteDataOutput::SqliteDataOutput()
 {
   m_filePrefix = "data";
+  NS_LOG_FUNCTION_NOARGS();
+}
+SqliteDataOutput::SqliteDataOutput (std::string dbFile)
+{
+  m_filePrefix = dbFile;
   NS_LOG_FUNCTION_NOARGS();
 }
 SqliteDataOutput::~SqliteDataOutput()
