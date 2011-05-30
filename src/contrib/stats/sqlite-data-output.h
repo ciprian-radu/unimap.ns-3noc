@@ -36,6 +36,7 @@ namespace ns3 {
   class SqliteDataOutput : public DataOutputInterface {
   public:
     SqliteDataOutput();
+    SqliteDataOutput (std::string dbFile);
     virtual ~SqliteDataOutput();
 
     virtual void Output(DataCollector &dc);
