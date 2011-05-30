@@ -680,9 +680,14 @@ namespace ns3
                             << " (net device " << GetAddress () << ", last scheduled event was at time "
                             << m_lastScheduledEvent);
                         // find the next network clock cycle
-                        uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetPicoSeconds ()
-                            / globalClock.GetPicoSeconds ()); // 1 + current clock cycle
+                        uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetSeconds ()
+                            / globalClock.GetSeconds ()); // 1 + current clock cycle
                         Time nextClock = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
+                        NS_ASSERT_MSG (nextClock.IsPositive(), "Next clock is negative! next clock = " << nextClock.GetPicoSeconds () << " ps"
+                            << "; globalClock = " << globalClock.GetPicoSeconds () << " ps"
+                            << "; clockMultiplier = " << clockMultiplier
+                            << "; Simulator::Now () = " << Simulator::Now ().GetPicoSeconds () << " ps"
+                            << " (nextClock = globalClock * Scalar (clockMultiplier) - Simulator::Now ())");
                         m_lastScheduledEvent = Simulator::Now () + globalClock / Scalar (speedup);
                         // Simulator::Schedule (...) receives a relative time
                         NS_LOG_LOGIC ("Processing a new buffered flit at " << Simulator::Now () + nextClock);

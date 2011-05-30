@@ -316,9 +316,14 @@ namespace ns3
         else
           {
             // find the next network clock cycle
-            uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetPicoSeconds ()
-                / globalClock.GetPicoSeconds ()); // 1 + current clock cycle
+            uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetSeconds ()
+                / globalClock.GetSeconds ()); // 1 + current clock cycle
             sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
+            NS_ASSERT_MSG (sendAtTime.IsPositive(), "sendAtTime is negative! sendAtTime = " << sendAtTime
+                << "; globalClock = " << globalClock
+                << "; clockMultiplier = " << clockMultiplier
+                << "; Simulator::Now () = Simulator::Now () "
+                << "(sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ())");
           }
         NS_ASSERT_MSG (sendAtTime >= Scalar (0),
            "The next flit injection is scheduled to run at a time less than the current simulation time!");

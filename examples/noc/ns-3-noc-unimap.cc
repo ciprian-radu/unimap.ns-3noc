@@ -301,6 +301,7 @@ main (int argc, char *argv[])
   cout << endl;
 
   Time globalClock = PicoSeconds ((uint64_t) (1e12 * 1.0 / nocFrequency)); // 1 ns -> NoC @ 1GHz
+  NS_LOG_INFO ("NoC clock cycle = " << globalClock.GetPicoSeconds ());
   channelBandwidth = (uint64_t) (1e12 * (flitSize * 8) / globalClock.GetPicoSeconds ());
 
   if (!justSaveTopology) {
@@ -649,6 +650,7 @@ main (int argc, char *argv[])
     NS_LOG_INFO ("Creating sqlite formatted data output.");
     Ptr<DataOutputInterface> output = CreateObject<SqliteDataOutput> ();
     output->Output (data);
+    NS_LOG_INFO ("Finished.");
   }
   return 0;
 }
