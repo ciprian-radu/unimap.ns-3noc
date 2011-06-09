@@ -303,44 +303,53 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    if ((m_maxBytes == 0 || (m_maxBytes > 0 && m_totBytes < m_maxBytes))
-        && (m_maxFlits == 0 || (m_maxFlits > 0 && m_totFlits < m_maxFlits)))
+    if (m_injectionProbability == 0)
       {
-        Time globalClock = GetGlobalClock ();
-        Time sendAtTime;
-        if (m_totBytes == 0)
-          {
-            // the first flit injection event must occur with no delay
-            sendAtTime = PicoSeconds (0);
-          }
-        else
-          {
-            // find the next network clock cycle
-            uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetSeconds ()
-                / globalClock.GetSeconds ()); // 1 + current clock cycle
-            sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
-            NS_LOG_DEBUG ("clockMultiplier " << clockMultiplier);
-            NS_LOG_DEBUG ("globalClock " << globalClock);
-            NS_LOG_DEBUG ("sendAtTime " << sendAtTime);
-            NS_ASSERT_MSG (sendAtTime.IsPositive(), "sendAtTime is negative! sendAtTime = " << sendAtTime
-                << "; globalClock = " << globalClock
-                << "; clockMultiplier = " << clockMultiplier
-                << "; Simulator::Now () = Simulator::Now () "
-                << "(sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ())");
-          }
-        NS_ASSERT_MSG (sendAtTime >= Scalar (0),
-           "The next flit injection is scheduled to run at a time less than the current simulation time!");
-        NS_LOG_DEBUG ("Schedule event (flit injection) to occur at time "
-            << Simulator::Now () + sendAtTime);
-        // Simulator::Schedule (...) receives a relative time
-        m_sendEvent = Simulator::Schedule (sendAtTime, &NocSyncApplication::SendFlit, this);
+        NS_LOG_INFO ("Stopping the application assigned to node "
+            << GetNode ()->GetId () << " because injection probability is set to zero");
+        StopApplication();
       }
     else
-      { // All done, cancel any pending events
-        NS_LOG_DEBUG ("Stopping the application");
-        NS_LOG_DEBUG ("maxBytes = " << m_maxBytes << " totBytes = " << m_totBytes);
-        NS_LOG_DEBUG ("maxFlits = " << m_maxFlits << " totFlits = " << m_totFlits);
-        StopApplication();
+      {
+        if ((m_maxBytes == 0 || (m_maxBytes > 0 && m_totBytes < m_maxBytes))
+            && (m_maxFlits == 0 || (m_maxFlits > 0 && m_totFlits < m_maxFlits)))
+          {
+            Time globalClock = GetGlobalClock ();
+            Time sendAtTime;
+            if (m_totBytes == 0)
+              {
+                // the first flit injection event must occur with no delay
+                sendAtTime = PicoSeconds (0);
+              }
+            else
+              {
+                // find the next network clock cycle
+                uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetSeconds ()
+                    / globalClock.GetSeconds ()); // 1 + current clock cycle
+                sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
+                NS_LOG_DEBUG ("clockMultiplier " << clockMultiplier);
+                NS_LOG_DEBUG ("globalClock " << globalClock);
+                NS_LOG_DEBUG ("sendAtTime " << sendAtTime);
+                NS_ASSERT_MSG (sendAtTime.IsPositive(), "sendAtTime is negative! sendAtTime = " << sendAtTime
+                    << "; globalClock = " << globalClock
+                    << "; clockMultiplier = " << clockMultiplier
+                    << "; Simulator::Now () = Simulator::Now () "
+                    << "(sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ())");
+              }
+            NS_ASSERT_MSG (sendAtTime >= Scalar (0),
+               "The next flit injection is scheduled to run at a time less than the current simulation time!");
+            NS_LOG_DEBUG ("Schedule event (flit injection) to occur at time "
+                << Simulator::Now () + sendAtTime);
+            // Simulator::Schedule (...) receives a relative time
+            m_sendEvent = Simulator::Schedule (sendAtTime, &NocSyncApplication::SendFlit, this);
+          }
+        else
+          { // All done, cancel any pending events
+            NS_LOG_DEBUG ("Stopping the application");
+            NS_LOG_DEBUG ("maxBytes = " << m_maxBytes << " totBytes = " << m_totBytes);
+            NS_LOG_DEBUG ("maxFlits = " << m_maxFlits << " totFlits = " << m_totFlits);
+            StopApplication();
+          }
       }
   }
 
