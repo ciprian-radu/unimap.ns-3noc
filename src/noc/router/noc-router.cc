@@ -91,6 +91,7 @@ namespace ns3
         uint64_t clockNumber = Simulator::Now ().GetPicoSeconds () / globalClock.GetPicoSeconds () + 1;
         NS_LOG_DEBUG ("clock number " << clockNumber);
         NS_LOG_DEBUG ("last clock " << m_lastClock);
+        NS_LOG_DEBUG ("This router belongs to NoC node " << GetNocNode ()->GetId ());
         if (clockNumber > m_lastClock)
           {
             // the following loop measures the power consumed by the flits from the previous clock cycle (m_lastClock)
@@ -101,11 +102,13 @@ namespace ns3
 
             m_flitsFromLastClock.clear ();
             m_arrivedFlits = 1;
+            NS_LOG_DEBUG ("# arrived flits reset to " << m_arrivedFlits);
             m_lastClock = clockNumber;
           }
         else
           {
             m_arrivedFlits++;
+            NS_LOG_DEBUG ("# arrived flits set to " << m_arrivedFlits);
           }
         m_flitsFromLastClock.insert (m_flitsFromLastClock.end (), flit);
 
@@ -887,6 +890,7 @@ info->router_diagonal = PARM(router_diagonal);
 
     m_flitsFromLastClock.clear ();
     m_arrivedFlits = 0;
+    NS_LOG_DEBUG ("# arrived flits reset to " << m_arrivedFlits);
     m_lastClock = clockNumber;
   }
 

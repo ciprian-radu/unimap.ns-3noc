@@ -319,6 +319,9 @@ namespace ns3
             uint64_t clockMultiplier = 1 + (uint64_t) ceil (Simulator::Now ().GetSeconds ()
                 / globalClock.GetSeconds ()); // 1 + current clock cycle
             sendAtTime = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
+            NS_LOG_DEBUG ("clockMultiplier " << clockMultiplier);
+            NS_LOG_DEBUG ("globalClock " << globalClock);
+            NS_LOG_DEBUG ("sendAtTime " << sendAtTime);
             NS_ASSERT_MSG (sendAtTime.IsPositive(), "sendAtTime is negative! sendAtTime = " << sendAtTime
                 << "; globalClock = " << globalClock
                 << "; clockMultiplier = " << clockMultiplier
@@ -427,9 +430,16 @@ namespace ns3
             {
               for (unsigned int k = 0; k < m_size.size (); k++)
                 {
-
-                  m_uniformDestination.insert (m_uniformDestination.end(), m_trafficPattern.GetUniformRandomNumber (0,
-                      m_size.at (k)->GetValue()- 1));
+                  if (m_uniformDestination.size () <= k)
+                    {
+                      m_uniformDestination.insert (m_uniformDestination.end(), m_trafficPattern.GetUniformRandomNumber (0,
+                          m_size.at (k)->GetValue() - 1));
+                    }
+                  else
+                    {
+                      m_uniformDestination.at (k) = m_trafficPattern.GetUniformRandomNumber (0,
+                          m_size.at (k)->GetValue() - 1);
+                    }
                 }
             }
           for (unsigned int k = 0; k < m_size.size (); k++)
@@ -550,6 +560,7 @@ namespace ns3
                 sourceNode->InjectPacket (m_currentHeadFlit, destinationNode);
                 m_currentFlitIndex++;
                 m_totBytes += m_flitSize - NocHeader::GetHeaderSize();
+                NS_LOG_DEBUG ("m_totBytes " << m_totBytes);
               }
             else
               {
@@ -577,6 +588,7 @@ namespace ns3
             sourceNode->InjectPacket (dataFlit, destinationNode);
             m_currentFlitIndex++;
             m_totBytes += m_flitSize;
+            NS_LOG_DEBUG ("m_totBytes " << m_totBytes);
           }
         if (m_currentFlitIndex == m_numberOfFlits)
           {
