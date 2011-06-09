@@ -102,7 +102,7 @@ std::map<uint32_t, LatencyTimes> g_latencyOfPackets;
  */
 void FlitReceivedCallback (int dummy, std::string path, Ptr<const Packet> flit)
 {
-  NS_LOG_LOGIC ("Packet with UID " << flit->GetUid () << " received");
+  NS_LOG_LOGIC ("Flit with UID " << flit->GetUid () << " received");
 
   LatencyTimes latencyTimes;
 
@@ -253,7 +253,7 @@ main (int argc, char *argv[])
       "The number of nodes ("<< numberOfNodes
       <<") must be a multiple of the number of nodes on the horizontal axis ("
       << hSize << ")");
-  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize));
+  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (flitSize * 8));
   NS_ASSERT_MSG (flitsPerPacket >= 2, "At least 2 flits per packet are required!");
   NS_ASSERT_MSG (injectionProbability >= 0 && injectionProbability <= 1, "Injection probability must be in [0,1]!");
   NS_ASSERT_MSG (dataFlitSpeedup >= 1, "Data packet speedup must be >= 1!");
@@ -275,7 +275,8 @@ main (int argc, char *argv[])
 //  nodes.Create (numberOfNodes);
 
   NS_LOG_INFO ("Build Topology.");
-  Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
+  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+//  Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
   int64_t dimensions = 2;
   vector<Ptr<NocValue> > size(dimensions);
@@ -300,7 +301,8 @@ main (int argc, char *argv[])
       "MaxPackets", UintegerValue (bufferSize));
 
   // configure the routers
-  noc->SetRouter ("ns3::IrvineRouter");
+  noc->SetRouter ("ns3::FourWayRouter");
+//  noc->SetRouter ("ns3::IrvineRouter");
 //  noc->SetRouter ("ns3::IrvineLoadRouter");
 
   // WARNING setting properties for objects in this manner means that all the created objects
@@ -342,7 +344,6 @@ main (int argc, char *argv[])
     for (unsigned int i = 0; i < nodes.GetN(); ++i)
     {
       NocSyncApplicationHelper nocSyncAppHelper (nodes, devs, size);
-      nocSyncAppHelper.SetAttribute ("FlitSize", UintegerValue (flitSize));
       nocSyncAppHelper.SetAttribute ("NumberOfFlits", UintegerValue (flitsPerPacket));
       nocSyncAppHelper.SetAttribute ("InjectionProbability", DoubleValue (injectionProbability));
       nocSyncAppHelper.SetAttribute ("TrafficPattern", EnumValue (
@@ -355,7 +356,7 @@ main (int argc, char *argv[])
       apps.Start (PicoSeconds (startTime));
 //      apps.Stop (PicoSeconds (10.0));
       // the application can also be limited by MaxPackets (the two ways of ending the application are equivalent)
-      apps.Stop (PicoSeconds ((uint64_t) (simulationCycles * globalClock + startTime))); // stop = simulationCycles * globalClock + start
+      apps.Stop (PicoSeconds (simulationCycles * globalClock.GetPicoSeconds() + startTime)); // stop = simulationCycles * globalClock + start
     }
  
 // Configure tracing of all enqueue, dequeue, and NetDevice receive events

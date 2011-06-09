@@ -212,10 +212,11 @@ namespace ns3
     }
     // the channel's bandwidth is obviously expressed in bits / s
     // however, in order to avoid losing precision, we create a PicoSeconds object (instead of a Seconds object)
+    NS_LOG_DEBUG ("transmission time " << (uint64_t) (1e12 * m_bps.CalculateTxTime (m_currentPkt[link]->GetSize ())) << " ps");
     Time tEvent = PicoSeconds ((uint64_t) (1e12 * m_bps.CalculateTxTime (m_currentPkt[link]->GetSize ())));
-    NS_LOG_LOGIC ("The channel will send the packet in " << m_delay + tEvent
-        << " (" << m_delay << " + " << tEvent
-        << ") from " << from << " to " << m_currentDestDevice[link]->GetAddress () << " (final destination is " << to << ")");
+    NS_LOG_DEBUG ("The channel will send the packet in " << m_delay + tEvent
+        << " (" << m_delay.GetSeconds () << " s + " << tEvent.GetSeconds ()
+        << " s) from " << from << " to " << m_currentDestDevice[link]->GetAddress () << " (final destination is " << to << ")");
     m_state[link] = PROPAGATING;
     if (!m_fullDuplex) {
         NS_LOG_LOGIC ("switched to PROPAGATING");

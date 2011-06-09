@@ -105,7 +105,7 @@ std::map<uint32_t, LatencyTimes> g_latencyOfPackets;
  */
 void FlitReceivedCallback (int dummy, std::string path, Ptr<const Packet> flit)
 {
-  NS_LOG_LOGIC ("Packet with UID " << flit->GetUid () << " received");
+  NS_LOG_LOGIC ("Flit with UID " << flit->GetUid () << " received");
 
   LatencyTimes latencyTimes;
 
