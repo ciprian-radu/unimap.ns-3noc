@@ -87,6 +87,7 @@ namespace ns3
     packet->AddPacketTag (packetTag);
     Ptr<NocNetDevice> netDevice = GetRouter ()->GetInjectionNetDevice (packet, destination);
     Send (netDevice, packet, destination);
+//    Simulator::ScheduleNow (&NocNode::Send, this, netDevice, packet, destination);
   }
 
   void

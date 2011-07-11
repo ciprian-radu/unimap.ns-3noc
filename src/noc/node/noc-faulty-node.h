@@ -83,9 +83,6 @@ namespace ns3
     virtual void
     Send (Ptr<NocNetDevice> source, Ptr<Packet> packet, Ptr<NocNode> destination);
 
-    virtual void
-    DoSend (Ptr<Packet>packet, Ptr<NocNetDevice> source, Ptr<NocNetDevice> viaNetDevice, Ptr<NetDevice> destination);
-
   private:
 
     /**
