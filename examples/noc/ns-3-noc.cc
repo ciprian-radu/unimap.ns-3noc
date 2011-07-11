@@ -275,7 +275,7 @@ main (int argc, char *argv[])
 //  nodes.Create (numberOfNodes);
 
   NS_LOG_INFO ("Build Topology.");
-  Ptr<NocTopology> noc = CreateObject<NocMesh2D> ();
+  Ptr<NocTopology> noc = CreateObject<NocTorus2D> ();
 //  Ptr<NocTopology> noc = CreateObject<NocIrvineMesh2D> ();
   noc->SetAttribute ("hSize", UintegerValue (hSize));
   int64_t dimensions = 2;

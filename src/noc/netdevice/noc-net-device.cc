@@ -148,6 +148,7 @@ namespace ns3
         NS_ASSERT_MSG (nocTopology != 0, "NoC topology was not set in the NocRegistry!");
         Ptr<NocNetDevice> destinationNetDevice = nocTopology->FindNetDeviceByAddress (to);
         nocNode->Send (this, packet, destinationNetDevice->GetNode ()->GetObject<NocNode> ());
+//        Simulator::ScheduleNow (&NocNode::Send, nocNode, this, packet, destinationNetDevice->GetNode ()->GetObject<NocNode> ());
       }
   }
 

@@ -140,23 +140,5 @@ namespace ns3
       }
   }
 
-  void
-  NocFaultyNode::DoSend (Ptr<Packet> packet, Ptr<NocNetDevice> source, Ptr<NocNetDevice> viaNetDevice, Ptr<NetDevice> destination)
-  {
-    NS_LOG_FUNCTION_NOARGS ();
-
-    if (!m_faulty)
-      {
-        NocNode::DoSend (packet, source, viaNetDevice, destination);
-      }
-    else
-      {
-        NS_LOG_ERROR ("Node " << (int) GetId () << " cannot send a packet because it is faulty!");
-        // just force the simulation to stop
-        NS_ASSERT (!m_faulty);
-      }
-  }
-
-
 } // namespace ns3
 
