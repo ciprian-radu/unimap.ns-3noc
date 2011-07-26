@@ -156,9 +156,24 @@ namespace ns3
 
     	NS_ASSERT_MSG (m_firstRunningIteration < m_iterations, "The last iteration of the CTG that received all the required data is "
             << m_firstRunningIteration << " This exceeds the number of CTG iterations set: " << m_iterations);
-    	ScheduleStartEvent (m_firstRunningIteration);
+
+    	if (m_taskDestinationList.size() == 0)
+    	{
+    		NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " will process this flit after a delay of " << m_totalExecTime << "(it's core execution time)");
+   			Simulator::Schedule (m_totalExecTime * Scalar (m_firstRunningIteration + 1), &NocCtgApplication::ProcessFlit, this);
+		}
+    	else
+		{
+    		ScheduleStartEvent (m_firstRunningIteration);
+    	}
     	m_firstRunningIteration++;
     }
+  }
+
+  void
+  NocCtgApplication::ProcessFlit ()
+  {
+	  NS_LOG_FUNCTION_NOARGS ();
   }
 
   void

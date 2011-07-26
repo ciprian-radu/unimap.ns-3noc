@@ -327,6 +327,9 @@ private:
   FlitReceivedCallback (std::string path, Ptr<const Packet> packet);
 
   void
+  ProcessFlit ();
+
+  void
   ScheduleNextTx (uint64_t iteration);
 
 
