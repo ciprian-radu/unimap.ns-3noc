@@ -232,6 +232,8 @@ main (int argc, char *argv[])
 
   uint64_t bufferSize (9);
 
+  bool routeXFirst = true; // optional
+
   uint64_t warmupCycles = 1000;
 
   // the number of simulation cycles includes the warmup cycles
@@ -266,6 +268,7 @@ main (int argc, char *argv[])
   cmd.AddValue<uint64_t> ("channel-delay", "The NoC channels propagation delay, in picoseconds (default is zero)", channelDelay);
   cmd.AddValue<double> ("channel-length", "The NoC channels length, in micrometers (default is 50)", channelLength);
   cmd.AddValue<uint64_t> ("buffer-size", "The size of the input channel buffers (measured in flits) (default is 9)", bufferSize);
+  cmd.AddValue<bool> ("route-X-first", "If set to false, YX routing is used, not XY (optional parameter, true by default).", routeXFirst);
   cmd.AddValue<uint64_t> ("warmup-cycles", "The number of simulation warm-up cycles (default is 1000)", warmupCycles);
   cmd.AddValue<uint64_t> ("simulation-cycles", "The number of simulation cycles (includes the warm-up cycles, default is 10000)", simulationCycles);
   cmd.AddValue<uint64_t> ("ctg-iterations", "How many times a Communication Task Graph has to be iterated (default value is 1, i.e. the CTG is not reiterated)", ctgIterations);
@@ -388,7 +391,7 @@ main (int argc, char *argv[])
 //  routingProtocolClass = "ns3::SoRouting";
 //  routingProtocolClass = "ns3::DorRouting";
   noc->SetRoutingProtocol (routingProtocolClass);
-//  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (false));
+  noc->SetRoutingProtocolAttribute ("RouteXFirst", BooleanValue (routeXFirst));
 
 //  noc->SetRoutingProtocolAttribute ("LoadThreshold", IntegerValue (30));
 
@@ -516,12 +519,13 @@ main (int argc, char *argv[])
           {
             string taskId = it->first;
             double power = it->second;
-            double execTime = coreData.m_execTime[taskId];
+            double execTime = ctgIterations * coreData.m_execTime[taskId];
             NS_LOG_DEBUG ("This core consumed " << power << " Watts " << " for " << execTime << " seconds, to execute task with ID " << taskId);
             coresEnergy += power * execTime;
             coreTotalExecTime += execTime;
           }
-        NS_ASSERT_MSG (coreTotalExecTime <= applicationRuntime, "Core total execution time is higher than application time!");
+        NS_ASSERT_MSG (coreTotalExecTime <= applicationRuntime,
+        		"Core total execution time (" << coreTotalExecTime << ") is higher than application runtime (" << applicationRuntime << ")!");
         NS_LOG_DEBUG ("This core was idle for " << applicationRuntime - coreTotalExecTime << " seconds (idle power is " << coreData.m_idlePower << ")");
         coresEnergy += coreData.m_idlePower * (applicationRuntime - coreTotalExecTime);
       }
