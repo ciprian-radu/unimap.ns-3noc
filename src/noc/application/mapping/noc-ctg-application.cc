@@ -161,7 +161,7 @@ namespace ns3
     	if (m_taskDestinationList.size() == 0)
     	{
     		NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " does not inject data into the NoC. It will process this flit after a delay of "
-    			<< m_totalExecTime << "(it's core execution time)");
+    			<< m_totalExecTime << " (it's core execution time)");
     		Time startTime = Simulator::Now ();
     		if (Simulator::Now () < m_executionAvailabilityTime)
     		{
@@ -170,7 +170,9 @@ namespace ns3
             		<< m_executionAvailabilityTime << ". Its next execution will be scheduled only at that time (not now).");
     			startTime = m_executionAvailabilityTime;
     		}
+    		NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will process the data at time " << m_totalExecTime + startTime);
    			Simulator::Schedule (m_totalExecTime + startTime - Simulator::Now (), &NocCtgApplication::ProcessFlit, this);
+   			m_executionAvailabilityTime = m_totalExecTime + startTime;
 		}
     	else
 		{
@@ -184,6 +186,7 @@ namespace ns3
   NocCtgApplication::ProcessFlit ()
   {
 	  NS_LOG_FUNCTION_NOARGS ();
+	  NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " finished processing flit");
   }
 
   void
