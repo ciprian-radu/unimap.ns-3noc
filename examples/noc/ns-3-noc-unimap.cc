@@ -410,8 +410,6 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Saving the NoC topology in XML format.");
   noc->SaveTopology (nodes, "../NoC-XML/src/ro/ulbsibiu/acaps/noc/topology/mesh2D");
 
-  NocRegistry::GetInstance ()->SetAttribute ("FlitSize", IntegerValue (256)); // 32 bytes
-
   if (!justSaveTopology)
     {
       NS_LOG_INFO ("Create CTG based Applications.");

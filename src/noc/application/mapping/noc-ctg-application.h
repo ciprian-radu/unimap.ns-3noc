@@ -238,12 +238,10 @@ private:
   uint64_t m_iterations;
 
   /**
-   * Which is the first iteration of the CTG that still that still needs to receive data.
-   * For example, if iterations 0 and 1 of the CTG are in progress, than all the packets arriving at this node are for iteration 0.
-   * Only after iteration 0 is finished, the packets received are for iteration 1.
+   * The CTG iteration at which this core currently is.
    *
    **/
-  uint64_t m_firstRunningIteration;
+  uint64_t m_currentIteration;
 
   uint32_t           m_hSize;                   // The horizontal size of a 2D mesh (how many nodes can be put on a line). The vertical size of the 2D mesh is given by number of nodes
   NetDeviceContainer m_devices;                 // the net devices from the NoC network

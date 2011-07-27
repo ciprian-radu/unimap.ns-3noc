@@ -107,7 +107,7 @@ namespace ns3
     NocRegistry::GetInstance ()->GetAttribute ("FlitSize", flitSize);
     m_flitSize = flitSize.Get () / 8; // in bytes
 
-    m_firstRunningIteration = 0;
+    m_currentIteration = 0;
     m_totalExecTime = Seconds (0);
     m_executionAvailabilityTime = Seconds (0);
     m_totalData = 0;
@@ -122,7 +122,6 @@ namespace ns3
   NocCtgApplication::FlitReceivedCallback (std::string path, Ptr<const Packet> packet)
   {
     NS_LOG_FUNCTION ("path" << path << "packet UID" << packet->GetUid ());
-    NS_LOG_DEBUG ("Received a flit for CTG iteration " << m_firstRunningIteration);
 
     if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
       {
@@ -144,41 +143,53 @@ namespace ns3
         dataSize -= header.GetSerializedSize ();
       }
 
-    m_receivedData[m_firstRunningIteration] += dataSize * 8;
+    uint64_t packetIteration = tag.GetCtgIteration ();
+    NS_LOG_INFO ("Received packet is for CTG iteration " << packetIteration
+    		<< " (CTG iterations are numbered starting from 0). This node is currently at CTG iteration " << m_currentIteration);
 
-    NS_LOG_DEBUG ("Current received data is " << m_receivedData[m_firstRunningIteration] << ". Total data to be received is " << m_totalData);
+	NS_ASSERT_MSG (packetIteration < m_iterations, "This packet's CTG iteration exceeds the number of CTG iterations set: " << m_iterations);
 
-    if (m_receivedData[m_firstRunningIteration] >= m_totalData)
+    m_receivedData[packetIteration] += dataSize * 8;
+
+    NS_LOG_DEBUG ("For packet CTG iteration, current received data is " << m_receivedData[packetIteration] << ". Total data to be received is " << m_totalData);
+
+    if (m_currentIteration < m_iterations)
     {
-        m_receivedData[m_firstRunningIteration] = m_totalData;
+		NS_LOG_DEBUG ("For this core's current CTG iteration, current received data is " << m_receivedData[m_currentIteration] << ". Total data to be received is " << m_totalData);
 
-    	NS_LOG_INFO ("Node " << GetNode ()->GetId () << " received " << m_totalData
-            << " bits of data. Since this is the amount of data expected, node " << GetNode ()->GetId () << " can start injecting flits.");
-
-    	NS_ASSERT_MSG (m_firstRunningIteration < m_iterations, "The last iteration of the CTG that received all the required data is "
-            << m_firstRunningIteration << " This exceeds the number of CTG iterations set: " << m_iterations);
-
-    	if (m_taskDestinationList.size() == 0)
-    	{
-    		NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " does not inject data into the NoC. It will process this flit after a delay of "
-    			<< m_totalExecTime << " (it's core execution time)");
-    		Time startTime = Simulator::Now ();
-    		if (Simulator::Now () < m_executionAvailabilityTime)
-    		{
-            	NS_LOG_LOGIC ("Simulation time is " << Simulator::Now ()
-            		<< ". However, this core is still executing data until time "
-            		<< m_executionAvailabilityTime << ". Its next execution will be scheduled only at that time (not now).");
-    			startTime = m_executionAvailabilityTime;
-    		}
-    		NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will process the data at time " << m_totalExecTime + startTime);
-   			Simulator::Schedule (m_totalExecTime + startTime - Simulator::Now (), &NocCtgApplication::ProcessFlit, this);
-   			m_executionAvailabilityTime = m_totalExecTime + startTime;
-		}
-    	else
+		if (m_receivedData[m_currentIteration] >= m_totalData)
 		{
-    		ScheduleStartEvent (m_firstRunningIteration);
-    	}
-    	m_firstRunningIteration++;
+			m_receivedData[m_currentIteration] = m_totalData;
+
+			NS_LOG_INFO ("Node " << GetNode ()->GetId () << " received " << m_totalData
+				<< " bits of data. Since this is the amount of data expected, node " << GetNode ()->GetId () << " can start injecting flits.");
+
+			if (m_taskDestinationList.size() == 0)
+			{
+				NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " does not inject data into the NoC. It will process this flit after a delay of "
+					<< m_totalExecTime << " (it's core execution time)");
+				Time startTime = Simulator::Now ();
+				if (Simulator::Now () < m_executionAvailabilityTime)
+				{
+					NS_LOG_LOGIC ("Simulation time is " << Simulator::Now ()
+						<< ". However, this core is still executing data until time "
+						<< m_executionAvailabilityTime << ". Its next execution will be scheduled only at that time (not now).");
+					startTime = m_executionAvailabilityTime;
+				}
+				NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will process the data at time " << m_totalExecTime + startTime);
+				Simulator::Schedule (m_totalExecTime + startTime - Simulator::Now (), &NocCtgApplication::ProcessFlit, this);
+				m_executionAvailabilityTime = m_totalExecTime + startTime;
+			}
+			else
+			{
+				ScheduleStartEvent (m_currentIteration);
+			}
+			m_currentIteration++;
+		}
+    }
+    else
+    {
+    	NS_LOG_LOGIC ("This core reached the last CTG iteration. The received packet must be for a previous CTG iteration.");
     }
   }
 
@@ -562,7 +573,7 @@ namespace ns3
       }
 
     NS_LOG_DEBUG (dtd.GetData () / 8 << " bytes to send. Flit size is " << m_flitSize
-        << ". Therefore, the maximum number of flits is " << upperValue);
+        << " bytes. Therefore, the maximum number of flits per packet is " << upperValue);
 
     if (m_numberOfFlits > upperValue)
       {
@@ -615,6 +626,10 @@ namespace ns3
                 << " bytes (the packet header size), but it is " << m_flitSize << "!");
             m_currentHeadFlit[iteration] = Create<NocPacket> (relativeX, relativeY, sourceX,
                 sourceY, m_numberOfFlits - 1, m_flitSize - NocHeader::GetHeaderSize());
+            NocPacketTag packetTag;
+            m_currentHeadFlit[iteration]->RemovePacketTag (packetTag);
+            packetTag.SetCtgIteration (iteration);
+            m_currentHeadFlit[iteration]->AddPacketTag (packetTag);
             NS_LOG_LOGIC ("Preparing to inject flit " << *m_currentHeadFlit[iteration]);
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
@@ -639,6 +654,10 @@ namespace ns3
                 NS_LOG_DEBUG ("About to inject a data flit");
               }
             Ptr<NocPacket> dataFlit = Create<NocPacket> (m_currentHeadFlit[iteration]->GetUid (), m_flitSize, isTail);
+            NocPacketTag packetTag;
+            dataFlit->RemovePacketTag (packetTag);
+            packetTag.SetCtgIteration (iteration);
+            dataFlit->AddPacketTag (packetTag);
             if (Simulator::Now () >= GetGlobalClock () * Scalar (m_warmupCycles))
               {
                 m_flitInjectedTrace (dataFlit);
@@ -660,8 +679,11 @@ namespace ns3
 
         m_totFlits[iteration] ++;
 
+        NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " sent " << m_totalTaskBytes[iteration] << " bytes (in total), at CTG iteration " << iteration);
+
         if (m_totalTaskBytes[iteration] * 8 >= dtd.GetData())
         {
+        	NS_LOG_LOGIC ("All data was sent to the current destination node");
             // the last packet sent might be smaller (i.e. its number of flits is < m_numberOfFlits)
             // this means that it must be traced (m_packetTrace) here because the above tracing will most likely not apply
             if (m_currentFlitIndex[iteration] > 0 && m_currentFlitIndex[iteration] < m_numberOfFlits && Simulator::Now () >= GetGlobalClock ()
