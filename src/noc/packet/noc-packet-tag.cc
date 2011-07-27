@@ -31,6 +31,7 @@ namespace ns3 {
       m_dataFlitCount = 0;
       m_load = 0;
       m_packetBlocked = false;
+      m_ctgIteration = 0;
     }
 
   TypeId
@@ -74,6 +75,11 @@ namespace ns3 {
                      TimeValue (),
                      MakeTimeAccessor (&NocPacketTag::m_receiveTime),
                      MakeTimeChecker ())
+      .AddAttribute ("CtgIteration",
+    		  	     "the CTG iteration for which this packet was created (useful for NoC Communication Task Graph based traffic generator)",
+    		  	     EmptyAttributeValue (),
+    		  	     MakeUintegerAccessor (&NocPacketTag::m_ctgIteration),
+    		  	     MakeUintegerChecker<uint64_t> ())
       ;
     return tid;
   }
@@ -87,7 +93,7 @@ namespace ns3 {
   uint32_t
   NocPacketTag::GetSerializedSize () const
   {
-    return 25; // 1 + 4 + 2 + 1 + 1 + 8 + 8
+    return 33; // 1 + 4 + 2 + 1 + 1 + 8 + 8 + 8
   }
 
   void
@@ -100,6 +106,7 @@ namespace ns3 {
     i.WriteU8 (m_packetBlocked);
     i.WriteU64 (m_injectionTime.GetPicoSeconds ());
     i.WriteU64 (m_receiveTime.GetPicoSeconds ());
+    i.WriteU64 (m_ctgIteration);
   }
 
   void
@@ -128,6 +135,7 @@ namespace ns3 {
     m_packetBlocked = i.ReadU8 ();
     m_injectionTime = PicoSeconds (i.ReadU64 ());
     m_receiveTime = PicoSeconds (i.ReadU64 ());
+    m_ctgIteration = i.ReadU64 ();
   }
 
   void
@@ -224,6 +232,18 @@ namespace ns3 {
   NocPacketTag::GetReceiveTime () const
   {
     return m_receiveTime;
+  }
+
+  uint64_t
+  NocPacketTag::GetCtgIteration () const
+  {
+	  return m_ctgIteration;
+  }
+
+  void
+  NocPacketTag::SetCtgIteration (uint64_t ctgIteration)
+  {
+	  m_ctgIteration = ctgIteration;
   }
 
 }  // namespace ns3

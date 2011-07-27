@@ -127,6 +127,12 @@ namespace ns3
     Time
     GetReceiveTime () const;
 
+    uint64_t
+    GetCtgIteration () const;
+
+    void
+    SetCtgIteration (uint64_t ctgIteration);
+
   private:
 
     /**
@@ -167,6 +173,11 @@ namespace ns3
      * at what (simulation) time the packet was received by the destination node
      */
     Time m_receiveTime;
+
+    /*
+     * the CTG iteration for which this packet was created (useful for NoC Communication Task Graph based traffic generator)
+     */
+    uint64_t m_ctgIteration;
   };
 
 } // namespace ns3
