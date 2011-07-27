@@ -109,6 +109,7 @@ namespace ns3
 
     m_firstRunningIteration = 0;
     m_totalExecTime = Seconds (0);
+    m_executionAvailabilityTime = Seconds (0);
     m_totalData = 0;
   }
 
@@ -159,8 +160,17 @@ namespace ns3
 
     	if (m_taskDestinationList.size() == 0)
     	{
-    		NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " will process this flit after a delay of " << m_totalExecTime << "(it's core execution time)");
-   			Simulator::Schedule (m_totalExecTime * Scalar (m_firstRunningIteration + 1), &NocCtgApplication::ProcessFlit, this);
+    		NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " does not inject data into the NoC. It will process this flit after a delay of "
+    			<< m_totalExecTime << "(it's core execution time)");
+    		Time startTime = Simulator::Now ();
+    		if (Simulator::Now () < m_executionAvailabilityTime)
+    		{
+            	NS_LOG_LOGIC ("Simulation time is " << Simulator::Now ()
+            		<< ". However, this core is still executing data until time "
+            		<< m_executionAvailabilityTime << ". Its next execution will be scheduled only at that time (not now).");
+    			startTime = m_executionAvailabilityTime;
+    		}
+   			Simulator::Schedule (m_totalExecTime + startTime - Simulator::Now (), &NocCtgApplication::ProcessFlit, this);
 		}
     	else
 		{
@@ -475,7 +485,15 @@ namespace ns3
             << delay);
 
         Time globalClock = GetGlobalClock ();
-        uint64_t clockMultiplier = 1 + (uint64_t) ceil ((Simulator::Now () + delay).GetSeconds ()
+        Time startTime = Simulator::Now ();
+        if (Simulator::Now () < m_executionAvailabilityTime)
+        {
+        	NS_LOG_LOGIC ("Simulation time is " << Simulator::Now ()
+        		<< ". However, this core is still executing data until time "
+        		<< m_executionAvailabilityTime << ". Its next execution will be scheduled only at that time (not now).");
+        	startTime = m_executionAvailabilityTime;
+        }
+        uint64_t clockMultiplier = 1 + (uint64_t) ceil ((startTime + delay).GetSeconds ()
             / globalClock.GetSeconds ()); // 1 + current clock cycle
         Time nextClock = globalClock * Scalar (clockMultiplier) - Simulator::Now ();
         NS_ASSERT_MSG (nextClock.IsPositive(), "Next clock is negative! next clock = " << nextClock
@@ -491,6 +509,8 @@ namespace ns3
 
         // Simulator::Schedule (...) receives a relative time
         m_startEvent[iteration] = Simulator::Schedule (nextClock, &NocCtgApplication::StartSending, this, iteration);
+
+        m_executionAvailabilityTime = Simulator::Now () + nextClock;
     }
     else
     {

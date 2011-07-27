@@ -277,6 +277,9 @@ private:
   /** the execution time of all tasks from the task list. This is computed when the task list is set */
   Time m_totalExecTime;
 
+  /** the simulation time when this core finished its last execution (at this moment in time it can start a new execution) */
+  Time m_executionAvailabilityTime;
+
   /** keeps all the remote tasks that send data to this NoC node */
   list<DependentTaskData> m_taskSenderList;
 
