@@ -88,7 +88,7 @@ namespace ns3
          /** how much time (in seconds) the core needs for executing a task assigned to it. (task ID, time/task) pairs are used. */
          map<string, double> m_execTime;
 
-         /** the core area, in mm^2 */
+         /** the core area, in m^2 */
          double m_area;
 
      };

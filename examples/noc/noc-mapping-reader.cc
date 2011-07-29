@@ -155,8 +155,8 @@ main(int argc, char* argv[])
               << " but, core XML says the ID is " << theCoreType->ID() << "!");
           cerr << " (name: " << theCoreType->name() << " frequency: "
               << theCoreType->frequency() << " (Hz) height: "
-              << theCoreType->height() << " (mm) width: "
-              << theCoreType->width() << " (mm) idle power: "
+              << theCoreType->height() << " (m) width: "
+              << theCoreType->width() << " (m) idle power: "
               << theCoreType->idlePower() << " (W) )" << endl;
 
           // Note that I am dereferencing theApcgType. If I am working with the (auto) pointer,

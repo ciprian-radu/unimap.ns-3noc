@@ -501,7 +501,7 @@ main (int argc, char *argv[])
     NS_LOG_INFO ("NoC area: " << nocArea << " um^2");
     Simulator::Destroy ();
 
-    double coresArea = 0; // the area occupied by the cores, in mm^2
+    double coresArea = 0; // the area occupied by the cores, in m^2
     double coresEnergy = 0; // the energy consumed by the cores, in Joule
 
     list<NocCtgApplicationHelper::CoreData> coreDataList = ctgApplicationHelper.GetCoreDataList ();
@@ -509,7 +509,7 @@ main (int argc, char *argv[])
       {
         NocCtgApplicationHelper::CoreData coreData = *it;
         NS_LOG_DEBUG ("Core with UID " << coreData.m_uid << ", ID " << coreData.m_id
-            << ", APCG " << coreData.m_apcgId << ", has area " << coreData.m_area << " mm^2");
+            << ", APCG " << coreData.m_apcgId << ", has area " << coreData.m_area << " m^2");
         coresArea += coreData.m_area;
 
         double coreTotalExecTime = 0;
@@ -625,13 +625,13 @@ main (int argc, char *argv[])
     outputFile << "noc-energy = " << nocTotalPower * applicationRuntime << endl;
     outputFile << endl;
     outputFile << "# The area occupied by the IP cores. It is expressed in mm^2 (square millimeters)." << endl;
-    outputFile << "cores-area = " << coresArea << endl;
+    outputFile << "cores-area = " << (coresArea * 1e6) << endl;
     outputFile << endl;
     outputFile << "# The energy consumed by the IP cores. It is expressed in Joule." << endl;
     outputFile << "cores-energy = " << coresEnergy << endl;
     outputFile << endl;
     outputFile << "# The area occupied by the entire System on Chip (SoC). It is expressed in mm^2 (square millimeters) and it sums noc-area and cores-area." << endl;
-    outputFile << "soc-area = " << (nocArea + coresArea) << endl;
+    outputFile << "soc-area = " << (nocArea / 1e6 + coresArea * 1e6) << endl;
     outputFile << endl;
     outputFile << "# The energy consumed by the entire System on Chip (SoC). It is expressed in Joule and it sums noc-energy and cores-energy." << endl;
     outputFile << "soc-energy = " << (nocTotalPower * applicationRuntime + coresEnergy) << endl;
