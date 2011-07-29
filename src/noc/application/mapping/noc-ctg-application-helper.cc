@@ -191,8 +191,8 @@ namespace ns3
                 << " but, core XML says the ID is " << theCoreType->ID () << "!");
             NS_LOG_INFO ("\t (name: " << theCoreType->name () << " frequency: "
                 << theCoreType->frequency () << " (Hz) height: "
-                << theCoreType->height () << " (mm) width: "
-                << theCoreType->width () << " (mm) idle power: "
+                << theCoreType->height () << " (m) width: "
+                << theCoreType->width () << " (m) idle power: "
                 << theCoreType->idlePower () << " (W) )");
 
             CoreData coreData;
