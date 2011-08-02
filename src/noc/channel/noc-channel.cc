@@ -92,6 +92,7 @@ namespace ns3
     NS_LOG_LOGIC ("switched to IDLE");
     m_devices.clear();
 
+    m_powerCounter = 0;
     m_dynamicPower = 0;
     m_leakagePower = 0;
   }
@@ -502,7 +503,14 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
     MeasurePowerForLastClock ();
-    return m_dynamicPower;
+    double power = 0;
+    NS_LOG_DEBUG ("Power was measured for " << m_powerCounter << " flits");
+    if (m_powerCounter > 0)
+      {
+        power = m_dynamicPower / m_powerCounter;
+      }
+
+    return power;
   }
 
   double
@@ -510,7 +518,14 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
     MeasurePowerForLastClock ();
-    return m_leakagePower;
+    double power = 0;
+    NS_LOG_DEBUG ("Power was measured for " << m_powerCounter << " flits");
+    if (m_powerCounter > 0)
+      {
+        power = m_leakagePower / m_powerCounter;
+      }
+
+    return power;
   }
 
   double
@@ -518,7 +533,14 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
     MeasurePowerForLastClock ();
-    return m_dynamicPower + m_leakagePower;
+    double power = 0;
+    NS_LOG_DEBUG ("Power was measured for " << m_powerCounter << " flits");
+    if (m_powerCounter > 0)
+      {
+        power = (m_dynamicPower + m_leakagePower) / m_powerCounter;
+      }
+
+    return power;
   }
 
   double
