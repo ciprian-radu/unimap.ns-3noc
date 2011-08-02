@@ -144,7 +144,7 @@ namespace ns3
       }
 
     uint64_t packetIteration = tag.GetCtgIteration ();
-    NS_LOG_INFO ("Received packet is for CTG iteration " << packetIteration
+    NS_LOG_LOGIC ("Received packet is for CTG iteration " << packetIteration
     		<< " (CTG iterations are numbered starting from 0). This node is currently at CTG iteration " << m_currentIteration);
 
 	NS_ASSERT_MSG (packetIteration < m_iterations, "This packet's CTG iteration exceeds the number of CTG iterations set: " << m_iterations);
@@ -154,43 +154,50 @@ namespace ns3
     NS_LOG_DEBUG ("For packet CTG iteration, current received data is " << m_receivedData[packetIteration] << ". Total data to be received is " << m_totalData);
 
     if (m_currentIteration < m_iterations)
-    {
-		NS_LOG_DEBUG ("For this core's current CTG iteration, current received data is " << m_receivedData[m_currentIteration] << ". Total data to be received is " << m_totalData);
+      {
+        NS_LOG_DEBUG ("For this core's current CTG iteration, current received data is " << m_receivedData[m_currentIteration] << ". Total data to be received is " << m_totalData);
 
-		if (m_receivedData[m_currentIteration] >= m_totalData)
-		{
-			m_receivedData[m_currentIteration] = m_totalData;
+        if (m_receivedData[m_currentIteration] >= m_totalData)
+          {
+            m_receivedData[m_currentIteration] = m_totalData;
 
-			NS_LOG_INFO ("Node " << GetNode ()->GetId () << " received " << m_totalData
-				<< " bits of data. Since this is the amount of data expected, node " << GetNode ()->GetId () << " can start injecting flits.");
+            NS_LOG_INFO ("Node " << GetNode ()->GetId () << " received " << m_totalData << " bits of data for CTG iteration " << m_currentIteration
+                << ". Since this is the amount of data expected, node " << GetNode ()->GetId () << " can start injecting flits.");
 
-			if (m_taskDestinationList.size() == 0)
-			{
-				NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " does not inject data into the NoC. It will process this flit after a delay of "
+            if (m_localTaskList.size() == 0)
+              {
+                NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " does not inject data into the NoC. It will process this flit after a delay of "
 					<< m_totalExecTime << " (it's core execution time)");
-				Time startTime = Simulator::Now ();
-				if (Simulator::Now () < m_executionAvailabilityTime)
-				{
-					NS_LOG_LOGIC ("Simulation time is " << Simulator::Now ()
-						<< ". However, this core is still executing data until time "
-						<< m_executionAvailabilityTime << ". Its next execution will be scheduled only at that time (not now).");
-					startTime = m_executionAvailabilityTime;
-				}
-				NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will process the data at time " << m_totalExecTime + startTime);
-				Simulator::Schedule (m_totalExecTime + startTime - Simulator::Now (), &NocCtgApplication::ProcessFlit, this);
-				m_executionAvailabilityTime = m_totalExecTime + startTime;
-			}
-			else
-			{
-				ScheduleStartEvent (m_currentIteration);
-			}
-			m_currentIteration++;
-		}
+                Time startTime = Simulator::Now ();
+                if (Simulator::Now () < m_executionAvailabilityTime)
+                  {
+                    NS_LOG_LOGIC ("Simulation time is " << Simulator::Now ()
+                            << ". However, this core is still executing data until time "
+                            << m_executionAvailabilityTime << ". Its next execution will be scheduled only at that time (not now).");
+                    startTime = m_executionAvailabilityTime;
+                  }
+                  NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " will process the data at time " << m_totalExecTime + startTime);
+                  Simulator::Schedule (m_totalExecTime + startTime - Simulator::Now (), &NocCtgApplication::ProcessFlit, this);
+                  m_executionAvailabilityTime = m_totalExecTime + startTime;
+              }
+            else
+              {
+                if (m_currentDestinationIndex[m_currentIteration] < m_localTaskList.size())
+                  {
+                    ScheduleStartEvent(m_currentIteration);
+                  }
+                else
+                  {
+                    NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " already injected all data. No more injections are scheduled.");
+                  }
+              }
+            m_currentIteration++;
+          }
     }
     else
-    {
-    	NS_LOG_LOGIC ("This core reached the last CTG iteration. The received packet must be for a previous CTG iteration.");
-    }
+      {
+        NS_LOG_LOGIC ("This core reached the last CTG iteration. The received packet must be for a previous CTG iteration.");
+      }
   }
 
   void
@@ -266,16 +273,16 @@ namespace ns3
   }
 
   NocCtgApplication::DependentTaskData
-  NocCtgApplication::GetDestinationDependentTaskData (uint32_t index)
+  NocCtgApplication::GetLocalDependentTaskData (uint32_t index)
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    NS_ASSERT (index < m_taskDestinationList.size ());
+    NS_ASSERT (index < m_localTaskList.size ());
 
     uint32_t idx = 0;
-    DependentTaskData dtd = *(m_taskDestinationList.begin ());
+    DependentTaskData dtd = *(m_localTaskList.begin ());
     list<DependentTaskData>::iterator it;
-    for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++)
+    for (it = m_localTaskList.begin (); it != m_localTaskList.end (); it++)
       {
         if (index == idx)
           {
@@ -287,15 +294,50 @@ namespace ns3
     return dtd;
   }
 
-  void
-  NocCtgApplication::SetTaskSenderList (list<DependentTaskData> taskSenderList)
+  bool
+  NocCtgApplication::ContainsNotDependentTask ()
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    m_taskSenderList = taskSenderList;
+    bool contains = false;
+
+    for (list<DependentTaskData>::iterator localIt = m_localTaskList.begin(); localIt != m_localTaskList.end(); localIt++)
+      {
+        string localTaskId = localIt->GetSenderTaskId ();
+        bool found = true;
+        for (list<DependentTaskData>::iterator remoteIt = m_remoteTaskList.begin(); remoteIt != m_remoteTaskList.end(); remoteIt++)
+          {
+            if (localIt->GetSenderTaskId () == remoteIt->GetReceivingTaskId ())
+              {
+                found = false;
+                break;
+              }
+          }
+        if (found)
+          {
+            contains = true;
+            NS_LOG_LOGIC ("Found that task " << localTaskId << " is a non dependent task");
+            break;
+          }
+      }
+
+    if (!contains)
+      {
+        NS_LOG_LOGIC ("All tasks are dependent");
+      }
+
+    return contains;
+  }
+
+  void
+  NocCtgApplication::SetRemoteTaskList (list<DependentTaskData> remoteTaskList)
+  {
+    NS_LOG_FUNCTION_NOARGS ();
+
+    m_remoteTaskList = remoteTaskList;
 
     list<DependentTaskData>::iterator it;
-    for (it = m_taskSenderList.begin (); it != m_taskSenderList.end (); it++)
+    for (it = m_remoteTaskList.begin (); it != m_remoteTaskList.end (); it++)
       {
         if (!TaskListContainsTask (it->GetReceivingTaskId ()))
           {
@@ -313,14 +355,14 @@ namespace ns3
   }
 
   void
-  NocCtgApplication::SetTaskDestinationList (list<DependentTaskData> taskDestinationList)
+  NocCtgApplication::SetLocalTaskList (list<DependentTaskData> localTaskList)
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    m_taskDestinationList = taskDestinationList;
+    m_localTaskList = localTaskList;
 
     list<DependentTaskData>::iterator it;
-    for (it = m_taskDestinationList.begin (); it != m_taskDestinationList.end (); it++)
+    for (it = m_localTaskList.begin (); it != m_localTaskList.end (); it++)
       {
         if (!TaskListContainsTask (it->GetSenderTaskId ()))
           {
@@ -470,7 +512,7 @@ namespace ns3
   {
     NS_LOG_FUNCTION (iteration);
 
-    if (m_receivedData[iteration] == m_totalData && m_taskDestinationList.size() > 0)
+    if ((ContainsNotDependentTask () || m_receivedData[iteration] == m_totalData) && m_localTaskList.size() > 0)
     {
         NS_LOG_LOGIC ("Execution time is " << m_totalExecTime);
         NS_LOG_LOGIC ("CTG period is " << m_period);
@@ -484,7 +526,7 @@ namespace ns3
             // (only before the first flit is injected into the network)
             NS_LOG_LOGIC ("Adding the execution time");
             delay += m_totalExecTime;
-            if (m_taskSenderList.size () == 0)
+            if (ContainsNotDependentTask ())
               {
                 // periodicity applies only to source nodes (CTG roots)
                 NS_LOG_LOGIC ("Adding CTG period because this node is a traffic source");
@@ -495,8 +537,7 @@ namespace ns3
           {
             NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " continues injecting flits from CTG iteration " << iteration);
           }
-        NS_LOG_INFO ("Node " << GetNode ()->GetId () << " will start injecting flits after a delay of "
-            << delay);
+        NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " will start injecting flits after a delay of " << delay);
 
         Time globalClock = GetGlobalClock ();
         Time startTime = Simulator::Now ();
@@ -530,15 +571,15 @@ namespace ns3
     {
         if (m_totalData == 0)
           {
-            NS_LOG_INFO ("Node " << GetNode ()->GetId () << " doesn't have any data to receive!");
+            NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " doesn't have any data to receive!");
           }
-        if (m_receivedData[iteration] < m_totalData)
+        if (!ContainsNotDependentTask () && m_receivedData[iteration] < m_totalData)
           {
-            NS_LOG_INFO ("Node " << GetNode ()->GetId () << " still has to receive data before being able to inject its data into the NoC!");
+            NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " still has to receive data before being able to inject its data into the NoC!");
           }
-        if (m_taskDestinationList.size() == 0)
+        if (m_localTaskList.size() == 0)
           {
-            NS_LOG_INFO ("Node " << GetNode ()->GetId () << " doesn't have any tasks to send data to (task destination list is empty)!");
+            NS_LOG_LOGIC ("Node " << GetNode ()->GetId () << " doesn't have any tasks to send data to (local task list is empty)!");
           }
     }
   }
@@ -557,7 +598,7 @@ namespace ns3
     NS_LOG_DEBUG ("source X = " << sourceX);
     NS_LOG_DEBUG ("source Y = " << sourceY);
 
-    DependentTaskData dtd = GetDestinationDependentTaskData (m_currentDestinationIndex[iteration]);
+    DependentTaskData dtd = GetLocalDependentTaskData (m_currentDestinationIndex[iteration]);
     uint32_t destinationNodeId = dtd.GetReceivingNodeId ();
     uint32_t destinationX = destinationNodeId % m_hSize;
     uint32_t destinationY = destinationNodeId / m_hSize;
@@ -597,7 +638,7 @@ namespace ns3
         NS_LOG_LOGIC ("Trying to send a packet from node " << sourceNodeId << " to node "
             << destinationNodeId << ". Aborting because source and destination nodes are the same.");
 
-        if (m_currentDestinationIndex[iteration] < m_taskDestinationList.size () - 1)
+        if (m_currentDestinationIndex[iteration] < m_localTaskList.size () - 1)
         {
             m_currentDestinationIndex[iteration]++;
             ScheduleNextTx (iteration);
@@ -683,7 +724,7 @@ namespace ns3
 
         if (m_totalTaskBytes[iteration] * 8 >= dtd.GetData())
         {
-        	NS_LOG_LOGIC ("All data was sent to the current destination node");
+            NS_LOG_LOGIC ("All data was sent to the current destination node");
             // the last packet sent might be smaller (i.e. its number of flits is < m_numberOfFlits)
             // this means that it must be traced (m_packetTrace) here because the above tracing will most likely not apply
             if (m_currentFlitIndex[iteration] > 0 && m_currentFlitIndex[iteration] < m_numberOfFlits && Simulator::Now () >= GetGlobalClock ()
@@ -696,7 +737,7 @@ namespace ns3
             m_currentDestinationIndex[iteration]++;
             m_totalTaskBytes[iteration] = 0;
         }
-        if (m_currentDestinationIndex[iteration] < m_taskDestinationList.size ())
+        if (m_currentDestinationIndex[iteration] < m_localTaskList.size ())
         {
             ScheduleNextTx (iteration);
         }

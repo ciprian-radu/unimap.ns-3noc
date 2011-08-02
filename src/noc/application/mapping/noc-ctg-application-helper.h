@@ -187,13 +187,13 @@ namespace ns3
      * keeps all the remote tasks that send data to this NoC node
      * (this is passed to NocCtgApplication)
      **/
-    list<NocCtgApplication::DependentTaskData> m_taskSenderList;
+    list<NocCtgApplication::DependentTaskData> m_remoteTaskList;
 
     /**
      * keeps all the local tasks that send data to tasks from remote NoC nodes
      * (this is passed to NocCtgApplication)
      **/
-    list<NocCtgApplication::DependentTaskData> m_taskDestinationList;
+    list<NocCtgApplication::DependentTaskData> m_localTaskList;
 
     /**
      * keeps power and area information about all the core
