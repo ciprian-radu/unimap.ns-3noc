@@ -203,8 +203,8 @@ namespace ns3
             coreData.m_idlePower = theCoreType->idlePower ().get ();
 
             list<NocCtgApplication::TaskData> taskList;
-            list<NocCtgApplication::DependentTaskData> taskSenderList;
-            list<NocCtgApplication::DependentTaskData> taskReceiverList;
+            list<NocCtgApplication::DependentTaskData> remoteTaskList;
+            list<NocCtgApplication::DependentTaskData> localTakList;
 
             for (apcgType::core_type::task_const_iterator i (theApcgCoreType.task ().begin ()); i
                 != theApcgCoreType.task ().end (); i++)
@@ -223,7 +223,7 @@ namespace ns3
                 NS_ASSERT_MSG (theApcgTaskType.id () == theTaskType->ID (), "APCG XML says the task ID is "
                     << theApcgTaskType.id () << " but, task XML says the ID is " << theTaskType->ID () << "!");
                 NS_LOG_INFO ("\t\t (name: " << theTaskType->name () << " type: "
-                    << theTaskType->type ());
+                    << theTaskType->type () << ")");
 
                 // use the code commented below if you want to access some core information that is not in the APCG
 
@@ -300,15 +300,15 @@ namespace ns3
 
                         if (theCommunicationType.destination ().id () == taskData->GetId ())
                           {
-                            NS_LOG_DEBUG ("Inserting in the task sender list");
+                            NS_LOG_DEBUG ("Inserting in the remote task list");
 
-                            taskSenderList.insert (taskSenderList.end (), dependentTaskData);
+                            remoteTaskList.insert (remoteTaskList.end (), dependentTaskData);
                           }
                         if (theCommunicationType.source ().id () == taskData->GetId ())
                           {
-                            NS_LOG_DEBUG ("Inserting in the task receiver list");
+                            NS_LOG_DEBUG ("Inserting in the local task list");
 
-                            taskReceiverList.insert (taskReceiverList.end (), dependentTaskData);
+                            localTakList.insert (localTakList.end (), dependentTaskData);
                           }
                       }
                   }
@@ -319,8 +319,8 @@ namespace ns3
             SetAttribute ("Period", TimeValue (Seconds (theCtgType->period ().get ())));
             //          SetAttribute ("MaxFlits", UintegerValue (100));
             m_taskList = taskList;
-            m_taskSenderList = taskSenderList;
-            m_taskDestinationList = taskReceiverList;
+            m_remoteTaskList = remoteTaskList;
+            m_localTaskList = localTakList;
 
             uint32_t nodeId;
             if (!FromString<uint32_t> (nodeId, theMapType.node (), std::dec))
@@ -360,8 +360,8 @@ namespace ns3
     // it is better to set the task lists after the application is
     // added to the node because the methods below use the node
     app->SetTaskList (m_taskList);
-    app->SetTaskSenderList (m_taskSenderList);
-    app->SetTaskDestinationList (m_taskDestinationList);
+    app->SetRemoteTaskList (m_remoteTaskList);
+    app->SetLocalTaskList (m_localTaskList);
 
     return app;
   }

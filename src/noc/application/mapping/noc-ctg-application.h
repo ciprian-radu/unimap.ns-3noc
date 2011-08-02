@@ -187,22 +187,22 @@ public:
   SetTaskList (list<TaskData> taskList);
 
   /**
-   * Sets the task sender list. This method should be called right after instantiating
+   * Sets the remote task list. This method should be called right after instantiating
    * this NocCtgApplication.
    *
    * \param keeps all the remote tasks that send data to this NoC node
    */
   void
-  SetTaskSenderList (list<DependentTaskData> taskSenderList);
+  SetRemoteTaskList (list<DependentTaskData> taskSenderList);
 
   /**
-   * Sets the task destination list. This method should be called right after instantiating
+   * Sets the local task list. This method should be called right after instantiating
    * this NocCtgApplication.
    *
    * \param keeps all the local tasks that send data to tasks from remote NoC nodes
    */
   void
-  SetTaskDestinationList (list<DependentTaskData> taskDestinationList);
+  SetLocalTaskList (list<DependentTaskData> taskDestinationList);
 
 protected:
 
@@ -279,7 +279,7 @@ private:
   Time m_executionAvailabilityTime;
 
   /** keeps all the remote tasks that send data to this NoC node */
-  list<DependentTaskData> m_taskSenderList;
+  list<DependentTaskData> m_remoteTaskList;
 
   /** the total amount of data to be received at this node (in bits) */
   double m_totalData;
@@ -288,19 +288,26 @@ private:
   vector<double> m_receivedData;
 
   /** keeps all the local tasks that send data to tasks from remote NoC nodes */
-  list<DependentTaskData> m_taskDestinationList;
+  list<DependentTaskData> m_localTaskList;
 
-  /** marks the element from the m_taskDestinationList list that is currently active for flit injection */
+  /** marks the element from the m_localTaskList list that is currently active for flit injection */
   vector<uint32_t> m_currentDestinationIndex;
 
   /**
-   * Retrieves the item from the task destination list, located at the specified index
+   * Retrieves the item from the local task list, located at the specified index
    *
    * \param the list index (must be >= 0 and < the size of the list)
    *
    * \return the DependentTaskData from the list
    */
-  DependentTaskData GetDestinationDependentTaskData (uint32_t index);
+  DependentTaskData GetLocalDependentTaskData (uint32_t index);
+
+  /**
+   *
+   * \return whether or not this ns-3 CTG application has a task that does not receive data from any other remote task (i.e. it can inject its data immediately)
+   */
+  bool
+  ContainsNotDependentTask ();
 
   /** the total number of bytes sent to the current destination task */
   vector<uint32_t> m_totalTaskBytes;
