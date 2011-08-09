@@ -277,7 +277,7 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    NS_ASSERT (index < m_localTaskList.size ());
+    NS_ASSERT_MSG (index < m_localTaskList.size (), "index = " << index << " m_localTaskList.size () = " << m_localTaskList.size ());
 
     uint32_t idx = 0;
     DependentTaskData dtd = *(m_localTaskList.begin ());
@@ -589,7 +589,7 @@ namespace ns3
   {
     NS_LOG_FUNCTION (iteration);
     NS_LOG_LOGIC ("sending flit at " << Simulator::Now ());
-    NS_ASSERT (m_sendEvent[iteration].IsExpired ());
+//    NS_ASSERT (m_sendEvent[iteration].IsExpired ());
 
     Ptr<NocNode> sourceNode = GetNode ()->GetObject<NocNode> ();
     uint32_t sourceNodeId = sourceNode->GetId ();
@@ -734,7 +734,10 @@ namespace ns3
                 m_packetInjectedTrace (m_currentHeadFlit[iteration]);
               }
             m_currentFlitIndex[iteration] = 0;
-            m_currentDestinationIndex[iteration]++;
+            if (m_currentDestinationIndex[iteration] < m_localTaskList.size () - 1)
+            {
+                m_currentDestinationIndex[iteration]++;
+            }
             m_totalTaskBytes[iteration] = 0;
         }
         if (m_currentDestinationIndex[iteration] < m_localTaskList.size ())
