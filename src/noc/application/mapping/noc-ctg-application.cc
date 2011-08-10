@@ -182,7 +182,9 @@ namespace ns3
               }
             else
               {
-                if (m_currentDestinationIndex[m_currentIteration] < m_localTaskList.size())
+                // a core with non dependent tasks will be scheduled for injection, for all its tasks, by StartApplication ()
+                // thus ScheduleStartEvent (...) must be called here (at receive time) only for cores with non dependent tasks
+                if (!ContainsNotDependentTask () && m_currentDestinationIndex[m_currentIteration] < m_localTaskList.size())
                   {
                     ScheduleStartEvent(m_currentIteration);
                   }
@@ -277,7 +279,7 @@ namespace ns3
   {
     NS_LOG_FUNCTION_NOARGS ();
 
-    NS_ASSERT_MSG (index < m_localTaskList.size (), "index = " << index << " m_localTaskList.size () = " << m_localTaskList.size ());
+    NS_ASSERT_MSG (index < m_localTaskList.size (), "index = " << index << ", m_localTaskList.size () = " << m_localTaskList.size () << ", node = " << GetNode ()->GetId ());
 
     uint32_t idx = 0;
     DependentTaskData dtd = *(m_localTaskList.begin ());
@@ -734,10 +736,9 @@ namespace ns3
                 m_packetInjectedTrace (m_currentHeadFlit[iteration]);
               }
             m_currentFlitIndex[iteration] = 0;
-            if (m_currentDestinationIndex[iteration] < m_localTaskList.size () - 1)
-            {
-                m_currentDestinationIndex[iteration]++;
-            }
+            // when m_currentDestinationIndex[iteration] = m_localTaskList.size () no further injection will be done
+            // (this core injected all the data in the NoC, from all its tasks)
+            m_currentDestinationIndex[iteration]++;
             m_totalTaskBytes[iteration] = 0;
         }
         if (m_currentDestinationIndex[iteration] < m_localTaskList.size ())
