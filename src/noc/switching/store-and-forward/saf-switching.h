@@ -72,11 +72,11 @@ namespace ns3
   private:
 
     /**
-     * for each packet UID count the number of received data (body) packets
+     * for each packet UID count the number of received data (body) flits
      *
      * the counter will start from the required value and will decrease until reaching zero
      */
-    std::map<uint32_t , uint32_t> m_packetCount;
+    std::map<uint32_t , uint32_t> m_flitCount;
 
   };
 

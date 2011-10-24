@@ -189,7 +189,8 @@ namespace ns3
                     flags::dont_validate));
             NS_ASSERT_MSG (theApcgCoreType.id () == theCoreType->ID (), "APCG XML says the core ID is " << theApcgCoreType.id ()
                 << " but, core XML says the ID is " << theCoreType->ID () << "!");
-            NS_LOG_INFO ("\t (name: " << theCoreType->name () << " frequency: "
+            NS_LOG_INFO ("\t (ID: " << theCoreType->ID ()
+                << " name: " << theCoreType->name () << " frequency: "
                 << theCoreType->frequency () << " (Hz) height: "
                 << theCoreType->height () << " (m) width: "
                 << theCoreType->width () << " (m) idle power: "

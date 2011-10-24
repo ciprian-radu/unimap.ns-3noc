@@ -69,9 +69,9 @@ namespace ns3
         if (tag.GetPacketBlocked ())
           {
             NS_LOG_DEBUG ("The head packet " << packet << " (UID " << packet->GetUid () << ") is blocked");
-            m_blockedHeadPackets.insert (packet->GetUid ());
-            m_packetCount.erase (packet->GetUid ());
-            m_packetCount.insert (std::pair<uint32_t , uint32_t> (packet->GetUid () , (tag.GetDataFlitCount())));
+            m_blockedHeadFlits.insert (packet->GetUid ());
+            m_flitCount.erase (packet->GetUid ());
+            m_flitCount.insert (std::pair<uint32_t , uint32_t> (packet->GetUid () , (tag.GetDataFlitCount())));
             NS_LOG_LOGIC ("The packet with UID " << packet->GetUid () << " will be sent forward only after "
                 << (tag.GetDataFlitCount()) << " data (body) packets will be received");
             canDoRouting = false;
@@ -85,16 +85,16 @@ namespace ns3
       {
         // data (body) packet
         uint32_t headPacketUid = tag.GetPacketHeadUid ();
-        std::set<uint32_t>::iterator it = m_blockedHeadPackets.find (headPacketUid);
-        if (it != m_blockedHeadPackets.end ())
+        std::set<uint32_t>::iterator it = m_blockedHeadFlits.find (headPacketUid);
+        if (it != m_blockedHeadFlits.end ())
           {
             NS_LOG_DEBUG ("The data (body) packet " << packet << " (UID " << packet->GetUid () << ") is blocked");
-            uint32_t dataFlitCount = m_packetCount[headPacketUid];
+            uint32_t dataFlitCount = m_flitCount[headPacketUid];
             NS_ASSERT (dataFlitCount >= 0);
-            m_packetCount.erase (headPacketUid);
+            m_flitCount.erase (headPacketUid);
             if ((int) dataFlitCount - 1 > 0)
               {
-                m_packetCount.insert (std::pair<uint32_t , uint32_t> (headPacketUid , (int) dataFlitCount - 1));
+                m_flitCount.insert (std::pair<uint32_t , uint32_t> (headPacketUid , (int) dataFlitCount - 1));
                 NS_LOG_LOGIC ("Still need to receive " << ((int) dataFlitCount - 1)
                     << " data (body) packets until head packet "
                     << (int) headPacketUid << " can be sent forward");
@@ -102,7 +102,7 @@ namespace ns3
               }
             else
               {
-                m_blockedHeadPackets.erase (headPacketUid);
+                m_blockedHeadFlits.erase (headPacketUid);
                 NS_LOG_LOGIC ("Packet with UID " << (int) headPacketUid << " can now be sent forward");
                 canDoRouting = true;
               }
