@@ -64,8 +64,8 @@ namespace ns3
     if (!header.IsEmpty())
       {
         // head packet
-        m_packetCount.erase (packet->GetUid ());
-        m_packetCount.insert (std::pair<uint32_t , uint32_t> (packet->GetUid () , (tag.GetDataFlitCount())));
+        m_flitCount.erase (packet->GetUid ());
+        m_flitCount.insert (std::pair<uint32_t , uint32_t> (packet->GetUid () , (tag.GetDataFlitCount())));
         NS_LOG_LOGIC ("The packet with UID " << packet->GetUid () << " will be sent forward only after "
             << (tag.GetDataFlitCount()) << " data (body) packets will be received");
         canDoRouting = false;
@@ -76,12 +76,12 @@ namespace ns3
         NocPacketTag tag;
         packet->PeekPacketTag (tag);
         uint32_t v = tag.GetPacketHeadUid ();
-        uint32_t dataFlitCount = m_packetCount[v];
+        uint32_t dataFlitCount = m_flitCount[v];
         NS_ASSERT (dataFlitCount >= 0);
-        m_packetCount.erase (v);
+        m_flitCount.erase (v);
         if ((int) dataFlitCount - 1 > 0)
           {
-            m_packetCount.insert (std::pair<uint32_t , uint32_t> (v , (int) dataFlitCount - 1));
+            m_flitCount.insert (std::pair<uint32_t , uint32_t> (v , (int) dataFlitCount - 1));
             NS_LOG_LOGIC ("Still need to receive " << ((int) dataFlitCount - 1)
                 << " data (body) packets until head packet "
                 << (int) v << " can be sent forward");
