@@ -30,6 +30,7 @@
 #include <fstream>
 #include <string>
 #include <cassert>
+#include <iomanip>
 
 #include "ns3/core-module.h"
 #include "ns3/simulator-module.h"
@@ -539,6 +540,7 @@ main (int argc, char *argv[])
 
     time_t rawtime;
     time (&rawtime);
+    outputFile << setprecision (20);
     outputFile << "# Simulation results produced with the ns-3 Network-on-Chip (ns-3 NoC) simulator, on " << ctime (&rawtime);
     outputFile << "# ns-3 NoC is part of UniMap framework ( https://code.google.com/p/unimap/ )" << endl;
     outputFile << "# UniMap is part of the PhD work of Ciprian Radu ( http://webspace.ulbsibiu.ro/ciprian.radu/ ) and is available under GNU GPL v3 license" << endl;
