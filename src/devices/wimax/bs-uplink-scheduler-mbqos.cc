@@ -310,9 +310,7 @@ UplinkSchedulerMBQoS::Schedule (void)
                       timestamp =
                         (*(ssRecord->GetServiceFlows (ServiceFlow::SF_TYPE_UGS).begin ()))->GetRecord ()->GetLastGrantTime ()
                         + MilliSeconds ((*(ssRecord->GetServiceFlows (ServiceFlow::SF_TYPE_UGS).begin ()))->GetUnsolicitedGrantInterval ());
-                      Time
-                      uInterval =
-                        MilliSeconds ((*(ssRecord->GetServiceFlows (ServiceFlow::SF_TYPE_UGS).begin ()))->GetUnsolicitedGrantInterval ());
+                      //Time uInterval = MilliSeconds ((*(ssRecord->GetServiceFlows (ServiceFlow::SF_TYPE_UGS).begin ()))->GetUnsolicitedGrantInterval ());
 
                       Scalar frame = ((timestamp - Simulator::Now ()) / frame_duration);
 
@@ -500,10 +498,10 @@ bool UplinkSchedulerMBQoS::ServiceBandwidthRequestsBytes (ServiceFlow *serviceFl
 {
   uint32_t allocSizeBytes = allocationSizeBytes;
   uint32_t allocSizeSymbols = 0;
-  uint16_t sduSize = 0;
+  //uint16_t sduSize = 0;
 
   ServiceFlowRecord *record = serviceFlow->GetRecord ();
-  sduSize = serviceFlow->GetSduSize ();
+  //sduSize = serviceFlow->GetSduSize ();
 
   uint32_t requiredBandwidth = record->GetRequestedBandwidth ();
 
@@ -656,7 +654,7 @@ UplinkSchedulerMBQoS::CheckDeadline (uint32_t &availableSymbols)
   if (m_uplinkJobs_inter.size () > 0)
     {
       std::list<Ptr<UlJob> >::iterator iter = m_uplinkJobs_inter.begin ();
-      std::list<Ptr<UlJob> >::iterator iterPrev = m_uplinkJobs_inter.begin ();
+      //std::list<Ptr<UlJob> >::iterator iterPrev = m_uplinkJobs_inter.begin ();
 
       while (iter != m_uplinkJobs_inter.end () && availableSymbols)
         {

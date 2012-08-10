@@ -86,8 +86,8 @@ RocketfuelTopologyReader::GenerateFromMapsFile (int argc, char *argv[])
   std::string nuid;
   bool dns = false;
   bool bb = false;
-  int num_neigh = 0;
-  int ext_conn = 0;
+  //int num_neigh = 0;
+  //int ext_conn = 0;
   int radius = 0;
   std::vector <std::string> neigh_list;
   NodeContainer nodes;
@@ -101,12 +101,12 @@ RocketfuelTopologyReader::GenerateFromMapsFile (int argc, char *argv[])
   if (argv[3])
     bb = true;
 
-  num_neigh = ::atoi (argv[4]);
+  //num_neigh = ::atoi (argv[4]);
 
   /* the first char should be '&' */
   if (argv[5])
     {
-      ext_conn = ::atoi (&argv[5][1]);
+      //ext_conn = ::atoi (&argv[5][1]);
     }
 
   /* neighbors */
@@ -187,13 +187,14 @@ RocketfuelTopologyReader::GenerateFromWeightsFile (int argc, char *argv[])
   /* uid @loc [+] [bb] (num_neigh) [&ext] -> <nuid-1> <nuid-2> ... {-euid} ... =name[!] rn */
   std::string sname;
   std::string tname;
-  double weight;
+  //double weight;
   char *endptr;
   NodeContainer nodes;
 
   sname = argv[0];
   tname = argv[1];
-  weight = strtod (argv[2], &endptr);
+  strtod (argv[2], &endptr);
+  //weight = strtod (argv[2], &endptr);
   if (*endptr != '\0')
     {
       NS_LOG_WARN ("invalid weight: " << argv[2]);

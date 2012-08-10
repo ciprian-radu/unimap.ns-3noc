@@ -50,7 +50,7 @@ double SIM_total_clockEnergy(SIM_router_info_t *info, SIM_router_power_t *router
 //		double reg_buffer_clockcap = 0;
 		double pipereg_clockcap = 0;
 		double H_tree_clockcap = 0;
-		double H_tree_resistance = 0;
+//		double H_tree_resistance = 0;
 		double ClockBufferCap = 0; 
 		double ClockEnergy = 0;
 		double Ctotal = 0;
@@ -108,7 +108,7 @@ double SIM_total_clockEnergy(SIM_router_info_t *info, SIM_router_power_t *router
 		if(info->H_tree_clock){
 			if ((PARM(TRANSISTOR_TYPE) == HVT) || (PARM(TRANSISTOR_TYPE) == NVT)) {
 				H_tree_clockcap = (4+4+2+2) * (info->router_diagonal * 1e-6) * (Clockwire);
-				H_tree_resistance = (4+4+2+2) * (info->router_diagonal * 1e-6) * (Reswire);
+				//H_tree_resistance = (4+4+2+2) * (info->router_diagonal * 1e-6) * (Reswire);
 
 				int k;
 				double h;
@@ -122,7 +122,7 @@ double SIM_total_clockEnergy(SIM_router_info_t *info, SIM_router_power_t *router
 			}
 			else if(PARM(TRANSISTOR_TYPE) == LVT) {
 				H_tree_clockcap = (8+4+4+4+4) * (info->router_diagonal * 1e-6)  * (Clockwire);
-				H_tree_resistance = (8+4+4+4+4) * (info->router_diagonal * 1e-6) * (Reswire);
+				//H_tree_resistance = (8+4+4+4+4) * (info->router_diagonal * 1e-6) * (Reswire);
 
 				int k;
 				double h;

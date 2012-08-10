@@ -1081,9 +1081,9 @@ SubscriberStationNetDevice::ProcessDlMap (const DlMap &dlmap)
            mechanism automatically passes it as parameter.*/
         }
 
-      uint8_t temp = iter->GetDiuc ();
-      temp = iter->GetPreamblePresent ();
-      temp = iter->GetStartTime ();
+      //uint8_t temp = iter->GetDiuc ();
+      //temp = iter->GetPreamblePresent ();
+      //temp = iter->GetStartTime ();
     }
 }
 

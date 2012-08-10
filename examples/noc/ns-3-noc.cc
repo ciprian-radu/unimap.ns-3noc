@@ -50,6 +50,7 @@
 #include "ns3/nstime.h"
 #include <map>
 #include "ns3/output-stream-wrapper.h"
+#include "ns3/sqlite-data-output.h"
 
 using namespace ns3;
 

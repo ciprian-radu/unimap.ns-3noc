@@ -202,10 +202,10 @@ namespace ns3
       }
 
     vector<uint32_t> destination = vector<uint32_t> (m_size.size());
-    uint32_t g=0;
+    //uint32_t g=0;
     for (unsigned int k = 0; k < m_size.size(); k++)
       {
-        g=GetNumberOfNodes (k);
+        //g=GetNumberOfNodes (k);
         destination.at (k) = (destinationNodeId / GetNumberOfNodes (k)) % m_size.at (k)->GetValue ();
         NS_LOG_DEBUG ("dimension "<<(k+1)<<" destination " << destination.at(k));
       }

@@ -125,7 +125,7 @@ static bool AsciiToIpv6Host (const char *address, uint8_t addr[16])
   unsigned char* endp = 0;
   unsigned char* colonp = 0;
   const char* xdigits = 0;
-  const char* curtok = 0;
+  //const char* curtok = 0;
   int ch = 0;
   int seen_xdigits = 0;
   unsigned int val = 0;
@@ -141,7 +141,7 @@ static bool AsciiToIpv6Host (const char *address, uint8_t addr[16])
           return (0);
         }
     }
-  curtok = address;
+  //curtok = address;
 
   while ((ch = *address++) != '\0')
     {
@@ -165,7 +165,7 @@ static bool AsciiToIpv6Host (const char *address, uint8_t addr[16])
         }
       if (ch == ':')
         {
-          curtok = address;
+          //curtok = address;
 
           if (!seen_xdigits)
             {

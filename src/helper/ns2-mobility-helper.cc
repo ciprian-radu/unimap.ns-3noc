@@ -404,8 +404,9 @@ bool
 IsNumber (const string& s)
 {
   char *endp;
-  double unused;
-  unused = strtod (s.c_str (), &endp); // declared with warn_unused_result
+  strtod (s.c_str (), &endp);
+  //double unused;
+  //unused = strtod (s.c_str (), &endp); // declared with warn_unused_result
   return endp == s.c_str () + s.size ();
 }
 
