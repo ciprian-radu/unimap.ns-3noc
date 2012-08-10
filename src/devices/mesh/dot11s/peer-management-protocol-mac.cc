@@ -158,7 +158,7 @@ PeerManagementProtocolMac::UpdateOutcomingFrame (Ptr<Packet> packet, WifiMacHead
     {
       WifiActionHeader actionHdr;
       packet->PeekHeader (actionHdr);
-      WifiActionHeader::ActionValue actionValue = actionHdr.GetAction ();
+      //WifiActionHeader::ActionValue actionValue = actionHdr.GetAction ();
       if (actionHdr.GetCategory () == WifiActionHeader::MESH_PEERING_MGT)
         {
           return true;

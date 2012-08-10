@@ -53,6 +53,7 @@
 #include <list>
 #include "ns3/output-stream-wrapper.h"
 #include <sys/time.h>
+#include "ns3/sqlite-data-output.h"
 
 using namespace ns3;
 using namespace std;

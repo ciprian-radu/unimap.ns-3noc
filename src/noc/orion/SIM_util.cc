@@ -109,7 +109,8 @@ u_int SIM_Hamming(LIB_Type_max_uint old_val, LIB_Type_max_uint new_val, LIB_Type
 	rval += h_tab[u.id[7]];
 
 	return rval;
-}
+}
+
 
 
 u_int SIM_Hamming_group(LIB_Type_max_uint d1_new, LIB_Type_max_uint d1_old, LIB_Type_max_uint d2_new, LIB_Type_max_uint d2_old, u_int width, u_int n_grp)
@@ -183,12 +184,13 @@ int SIM_squarify( int rows, int cols )
 
 double SIM_driver_size(double driving_cap, double desiredrisetime)
 {
-	double nsize, psize;
+	//double nsize;
+	double psize;
 	double Rpdrive; 
 
 	Rpdrive = desiredrisetime/(driving_cap*log(PARM(VSINV))*-1.0);
 	psize = SIM_restowidth(Rpdrive,PCH);
-	nsize = SIM_restowidth(Rpdrive,NCH);
+	//nsize = SIM_restowidth(Rpdrive,NCH);
 	if (psize > Wworddrivemax) {
 		psize = Wworddrivemax;
 	}

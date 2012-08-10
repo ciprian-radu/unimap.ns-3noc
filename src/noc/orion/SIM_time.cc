@@ -140,13 +140,13 @@ double SIM_draincap(double width, int nchannel, int stack)
 {
 	double Cdiffside,Cdiffarea,Coverlap,cap;
 
-	double diffArea;
-	double diffPeri;
-	double l = 0.4 * LSCALE;
+	//double diffArea;
+	//double diffPeri;
+	//double l = 0.4 * LSCALE;
 
 
-	diffArea = l * width;
-	diffPeri = 2 * l + 2 * width;
+	//diffArea = l * width;
+	//diffPeri = 2 * l + 2 * width;
 
 #if defined(Pdelta_w)
         double overlapCap;
@@ -547,11 +547,12 @@ double SIM_bitline_delay(int C, int A, int B, int Ndwl, int Ndbl, int Nspd, doub
         double Tbit,Cline,Ccolmux,Rlineb,r1,r2,c1,c2,a,b,c;
         double m,tstep;
         double Cbitrow;    /* bitline capacitance due to access transistor */
-        int rows,cols;
+        int rows;
+	//int cols;
 
         Cbitrow = SIM_draincap(Wmemcella,NCH,1)/2.0; /* due to shared contact */
         rows = C/(B*A*Ndbl*Nspd);
-        cols = 8*B*A*Nspd/Ndwl;
+        //cols = 8*B*A*Nspd/Ndwl;
         if (Ndbl*Nspd == 1) {
            Cline = rows*(Cbitrow+Cbitmetal)+2*SIM_draincap(Wbitpreequ,PCH,1);
            Ccolmux = 2*SIM_gatecap(WsenseQ1to4,10.0);
@@ -599,11 +600,12 @@ double SIM_bitline_tag_delay(int C, int A, int B, int Ntwl, int Ntbl, int Ntspd,
 	double Tbit,Cline,Ccolmux,Rlineb,r1,r2,c1,c2,a,b,c;
 	double m,tstep;
 	double Cbitrow;    /* bitline capacitance due to access transistor */
-	int rows,cols;
+	int rows;
+	//int cols;
 
 	Cbitrow = SIM_draincap(Wmemcella,NCH,1)/2.0; /* due to shared contact */
 	rows = C/(B*A*Ntbl*Ntspd);
-	cols = 8*B*A*Ntspd/Ntwl;
+	//cols = 8*B*A*Ntspd/Ntwl;
 	if (Ntbl*Ntspd == 1) {
 		Cline = rows*(Cbitrow+Cbitmetal)+2*SIM_draincap(Wbitpreequ,PCH,1);
 		Ccolmux = 2*SIM_gatecap(WsenseQ1to4,10.0);

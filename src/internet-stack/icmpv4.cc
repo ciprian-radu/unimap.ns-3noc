@@ -82,8 +82,8 @@ Icmpv4Header::Deserialize (Buffer::Iterator start)
 {
   m_type = start.ReadU8 ();
   m_code = start.ReadU8 ();
-  uint16_t checksum;
-  checksum = start.ReadNtohU16 ();
+  //uint16_t checksum;
+  //checksum = start.ReadNtohU16 ();
   return 4;
 }
 void 

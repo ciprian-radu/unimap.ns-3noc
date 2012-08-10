@@ -85,12 +85,12 @@ SSScheduler::Schedule (uint16_t availableSymbols,
     }
 
   Ptr<Packet> packet;
-  ServiceFlow *serviceFlow;
+  //ServiceFlow *serviceFlow;
 
   while (connection && connection->HasPackets (packetType))
     {
       NS_LOG_INFO ("FRAG_DEBUG: SS Scheduler" << std::endl);
-      serviceFlow = connection->GetServiceFlow ();
+      //serviceFlow = connection->GetServiceFlow ();
 
       uint32_t availableByte = m_ss->GetPhy ()->
         GetNrBytes (availableSymbols, modulationType);

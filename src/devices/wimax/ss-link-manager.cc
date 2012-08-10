@@ -439,9 +439,9 @@ void
 SSLinkManager::AdjustRangingParameters (const RngRsp &rngrsp)
 {
   bool successful = true;
-  uint8_t temp = rngrsp.GetTimingAdjust ();
-  temp = rngrsp.GetPowerLevelAdjust ();
-  temp = rngrsp.GetOffsetFreqAdjust ();
+  //uint8_t temp = rngrsp.GetTimingAdjust ();
+  //temp = rngrsp.GetPowerLevelAdjust ();
+  //temp = rngrsp.GetOffsetFreqAdjust ();
 
   // code for adjusting parameters goes here
 

@@ -390,7 +390,7 @@ DcfManager::RequestAccess (DcfState *state)
 void
 DcfManager::DoGrantAccess (void)
 {
-  Time accessGrantStart = GetAccessGrantStart ();
+  //Time accessGrantStart = GetAccessGrantStart ();
 
   uint32_t k = 0;
   for (States::const_iterator i = m_states.begin (); i != m_states.end (); k++)
